@@ -83,6 +83,19 @@ h2 {
 }
 .sync-dot.linked { background: var(--gold); }
 
+.watermark {
+  height: 26px;
+  width: auto;
+  opacity: 0.9;
+}
+
+.sync-pill-inline {
+  background: var(--green-soft);
+  border: 1px solid var(--border);
+  color: var(--green-deep);
+  margin-bottom: 10px;
+}
+
 /* ---------- Layout ---------- */
 #app {
   max-width: 560px;
@@ -220,8 +233,8 @@ h2 {
 .month-nav-label {
   flex: 1;
   text-align: center;
-  font-weight: 700;
-  font-size: 14px;
+  font-weight: 800;
+  font-size: 20px;
   color: var(--green-deep);
 }
 .alltime-toggle {
@@ -305,6 +318,17 @@ h2 {
   border-radius: var(--radius-lg);
   padding: 18px;
   margin-bottom: 6px;
+}
+.settings-group {
+  margin-bottom: 22px;
+}
+.settings-group-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-mute);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 0 4px 8px;
 }
 .entry-form label, .inline-form label {
   display: block;

@@ -26,10 +26,7 @@
       </svg>
       دخل و خرج
     </span>
-    <button id="syncStatusBtn" class="sync-pill" title="وضعیت همگام‌سازی">
-      <span id="syncDot" class="sync-dot"></span>
-      <span id="syncLabel">محلی</span>
-    </button>
+    <img class="watermark" src="icons/watermark-nelin.png" alt="Nelin" />
   </div>
 </header>
 
@@ -72,7 +69,7 @@
       <button type="button" id="prevMonthBtn" class="month-nav-btn" title="ماه قبل">
         <span class="icon-mask" data-icon="chevron-right" style="width:18px;height:18px;color:var(--green-deep)"></span>
       </button>
-      <span id="monthLabel" class="month-nav-label">مرداد ۱۴۰۵</span>
+      <span id="monthLabel" class="month-nav-label">مرداد</span>
       <button type="button" id="nextMonthBtn" class="month-nav-btn" title="ماه بعد">
         <span class="icon-mask" data-icon="chevron-left" style="width:18px;height:18px;color:var(--green-deep)"></span>
       </button>
@@ -173,55 +170,73 @@
 
   <!-- SETTINGS -->
   <section id="tab-settings" class="tab">
-    <div class="settings-card">
-      <h2>مدیریت دسته‌ها</h2>
-      <form id="categoryForm" class="inline-form">
-        <label>نام گروه جدید
-          <input type="text" id="categoryName" placeholder="مثلاً خوراک، حمل‌ونقل، قبض">
-        </label>
-        <label>آیکون گروه</label>
-        <div class="icon-picker" id="categoryIconPicker"></div>
-        <button type="submit" class="btn btn-neutral full">افزودن گروه</button>
-      </form>
-      <div id="categoryManageList" class="category-manage-list"></div>
+
+    <div class="settings-group">
+      <h3 class="settings-group-title">داده‌ها</h3>
+      <div class="settings-card">
+        <h2>مدیریت دسته‌ها</h2>
+        <form id="categoryForm" class="inline-form">
+          <label>نام گروه جدید
+            <input type="text" id="categoryName" placeholder="مثلاً خوراک، حمل‌ونقل، قبض">
+          </label>
+          <label>آیکون گروه</label>
+          <div class="icon-picker" id="categoryIconPicker"></div>
+          <button type="submit" class="btn btn-neutral full">افزودن گروه</button>
+        </form>
+        <div id="categoryManageList" class="category-manage-list"></div>
+      </div>
     </div>
 
-    <div class="settings-card">
-      <h2>همگام‌سازی بین دستگاه‌ها</h2>
-      <p class="hint">
-        این اپ اطلاعات رو روی خود گوشی ذخیره می‌کنه. برای دیدن یک حساب روی چند دستگاه،
-        یک «کد همگام‌سازی» بساز و همون کد رو توی دستگاه دیگه وارد کن.
-      </p>
-      <div class="sync-code-box">
-        <span class="sync-code-label">کد همگام‌سازی شما</span>
-        <div class="sync-code-value" id="syncCodeDisplay">—</div>
-        <div class="sync-actions">
-          <button id="btnGenerateCode" class="btn btn-neutral">ساخت کد جدید</button>
-          <button id="btnCopyCode" class="btn btn-ghost">کپی کد</button>
+    <div class="settings-group">
+      <h3 class="settings-group-title">حساب و همگام‌سازی</h3>
+      <div class="settings-card">
+        <h2>همگام‌سازی بین دستگاه‌ها</h2>
+        <button id="syncStatusBtn" class="sync-pill sync-pill-inline" title="وضعیت همگام‌سازی">
+          <span id="syncDot" class="sync-dot"></span>
+          <span id="syncLabel">محلی</span>
+        </button>
+        <p class="hint">
+          این اپ اطلاعات رو روی خود گوشی ذخیره می‌کنه. برای دیدن یک حساب روی چند دستگاه،
+          یک «کد همگام‌سازی» بساز و همون کد رو توی دستگاه دیگه وارد کن.
+        </p>
+        <div class="sync-code-box">
+          <span class="sync-code-label">کد همگام‌سازی شما</span>
+          <div class="sync-code-value" id="syncCodeDisplay">—</div>
+          <div class="sync-actions">
+            <button id="btnGenerateCode" class="btn btn-neutral">ساخت کد جدید</button>
+            <button id="btnCopyCode" class="btn btn-ghost">کپی کد</button>
+          </div>
         </div>
+        <div class="sync-join">
+          <label>وارد کردن کد از دستگاه دیگر
+            <input type="text" id="joinCodeInput" placeholder="مثلاً 483920" maxlength="6" inputmode="numeric">
+          </label>
+          <button id="btnJoinCode" class="btn btn-income">اتصال با این کد</button>
+        </div>
+        <button id="btnSyncNow" class="btn btn-neutral full">همگام‌سازی الان</button>
+        <p id="syncMsg" class="sync-msg"></p>
       </div>
-      <div class="sync-join">
-        <label>وارد کردن کد از دستگاه دیگر
-          <input type="text" id="joinCodeInput" placeholder="مثلاً 483920" maxlength="6" inputmode="numeric">
-        </label>
-        <button id="btnJoinCode" class="btn btn-income">اتصال با این کد</button>
-      </div>
-      <button id="btnSyncNow" class="btn btn-neutral full">همگام‌سازی الان</button>
-      <p id="syncMsg" class="sync-msg"></p>
     </div>
 
-    <div class="settings-card">
-      <h2>نصب روی صفحه اصلی</h2>
-      <p class="hint">
-        در آیفون: از مرورگر سافاری، دکمه اشتراک‌گذاری را بزنید و «Add to Home Screen» را انتخاب کنید.
-        در اندروید: از منوی مرورگر «Add to Home screen» یا «Install app» را بزنید.
-      </p>
+    <div class="settings-group">
+      <h3 class="settings-group-title">برنامه</h3>
+      <div class="settings-card">
+        <h2>نصب روی صفحه اصلی</h2>
+        <p class="hint">
+          در آیفون: از مرورگر سافاری، دکمه اشتراک‌گذاری را بزنید و «Add to Home Screen» را انتخاب کنید.
+          در اندروید: از منوی مرورگر «Add to Home screen» یا «Install app» را بزنید.
+        </p>
+      </div>
     </div>
 
-    <div class="settings-card danger-zone">
-      <h2>پاک کردن اطلاعات</h2>
-      <button id="btnResetData" class="btn btn-danger full">حذف همه اطلاعات این دستگاه</button>
+    <div class="settings-group">
+      <h3 class="settings-group-title">منطقه‌ی خطر</h3>
+      <div class="settings-card danger-zone">
+        <h2>پاک کردن اطلاعات</h2>
+        <button id="btnResetData" class="btn btn-danger full">حذف همه اطلاعات این دستگاه</button>
+      </div>
     </div>
+
   </section>
 
 </main>

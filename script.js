@@ -526,7 +526,7 @@ function updateMonthLabel() {
     label.textContent = "همه تراکنش‌ها";
     toggle.classList.add("active");
   } else {
-    label.textContent = `${JALALI_MONTHS[viewedMonth.jm - 1]} ${toPersianDigits(viewedMonth.jy)}`;
+    label.textContent = JALALI_MONTHS[viewedMonth.jm - 1];
     toggle.classList.remove("active");
   }
 }
