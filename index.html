@@ -38,14 +38,24 @@
   <!-- DASHBOARD -->
   <section id="tab-dashboard" class="tab active">
     <div class="scale-card">
-      <div class="scale-labels">
-        <div class="scale-label income-side">
-          <span class="dot dot-income"></span> درآمد
-          <strong id="dashIncomeTotal">۰</strong>
+      <div class="scale-top-row">
+        <div class="scale-stat">
+          <span class="scale-stat-badge income-badge">
+            <span class="icon-mask" data-icon="trending-up" style="width:15px;height:15px;color:#fff"></span>
+          </span>
+          <div class="scale-stat-text">
+            <span class="scale-stat-label">درآمد</span>
+            <strong id="dashIncomeTotal" class="scale-stat-value">۰</strong>
+          </div>
         </div>
-        <div class="scale-label expense-side">
-          مخارج <span class="dot dot-expense"></span>
-          <strong id="dashExpenseTotal">۰</strong>
+        <div class="scale-stat reverse">
+          <div class="scale-stat-text align-left">
+            <span class="scale-stat-label">مخارج</span>
+            <strong id="dashExpenseTotal" class="scale-stat-value">۰</strong>
+          </div>
+          <span class="scale-stat-badge expense-badge">
+            <span class="icon-mask" data-icon="trending-down" style="width:15px;height:15px;color:#fff"></span>
+          </span>
         </div>
       </div>
       <div class="scale-track">
@@ -58,12 +68,19 @@
       </div>
     </div>
 
+    <div class="month-nav">
+      <button type="button" id="prevMonthBtn" class="month-nav-btn" title="ماه قبل">
+        <span class="icon-mask" data-icon="chevron-right" style="width:18px;height:18px;color:var(--green-deep)"></span>
+      </button>
+      <span id="monthLabel" class="month-nav-label">مرداد ۱۴۰۵</span>
+      <button type="button" id="nextMonthBtn" class="month-nav-btn" title="ماه بعد">
+        <span class="icon-mask" data-icon="chevron-left" style="width:18px;height:18px;color:var(--green-deep)"></span>
+      </button>
+      <button type="button" id="allTimeToggle" class="alltime-toggle">کل بازه</button>
+    </div>
+
     <div class="section-heading">
       <h2>مخارج بر اساس دسته</h2>
-      <select id="dashPeriod" class="period-select">
-        <option value="month">این ماه</option>
-        <option value="all">کل بازه</option>
-      </select>
     </div>
     <p class="quick-hint">برای ثبت سریع خرج، روی هر گروه بزن</p>
     <div id="categoryBreakdown" class="quick-cat-grid"></div>
@@ -85,11 +102,11 @@
       </label>
       <label>منبع درآمد
         <select id="incomeSource">
-          <option value="حقوق">💼 حقوق</option>
-          <option value="پاداش">🎉 پاداش</option>
-          <option value="فروش">🏷️ فروش</option>
-          <option value="هدیه">🎁 هدیه</option>
-          <option value="سایر">💰 سایر</option>
+          <option value="حقوق">حقوق</option>
+          <option value="پاداش">پاداش</option>
+          <option value="فروش">فروش</option>
+          <option value="هدیه">هدیه</option>
+          <option value="سایر">سایر</option>
         </select>
       </label>
       <label>تاریخ
@@ -140,8 +157,8 @@
       <label>نام گروه جدید
         <input type="text" id="categoryName" placeholder="مثلاً خوراک، حمل‌ونقل، قبض">
       </label>
-      <label>ایموجی گروه</label>
-      <div class="emoji-picker" id="categoryEmojiPicker"></div>
+      <label>آیکون گروه</label>
+      <div class="icon-picker" id="categoryIconPicker"></div>
       <button type="submit" class="btn btn-neutral">افزودن گروه</button>
     </form>
     <div id="categoryManageList" class="category-manage-list"></div>

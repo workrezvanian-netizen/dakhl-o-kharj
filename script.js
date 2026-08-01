@@ -6,18 +6,31 @@ const CONFIG = {
 };
 
 const STORAGE_KEY = "dnk_data_v1";
-const EMOJI_CHOICES = ["🍔","🚗","🧾","🛍️","🎬","💊","🏠","📚","🎁","✈️","☕","⚡","📱","🐾","👕","🧴","🎮","🧒","💰","📦","🏋️","🎓","🐶","🧹"];
-const DEFAULT_CATEGORIES = [
-  { name: "خوراک", emoji: "🍔" },
-  { name: "حمل‌ونقل", emoji: "🚗" },
-  { name: "قبض‌ها", emoji: "🧾" },
-  { name: "خرید", emoji: "🛍️" },
-  { name: "تفریح", emoji: "🎬" },
-  { name: "درمان", emoji: "💊" },
-  { name: "سایر", emoji: "📦" }
+const ICON_CDN_VERSION = "0.400.0";
+function iconUrl(key) {
+  return `https://cdn.jsdelivr.net/npm/lucide-static@${ICON_CDN_VERSION}/icons/${key}.svg`;
+}
+function iconSpanHTML(key, extraStyle) {
+  return `<span class="icon-mask" style="--icon-url:url('${iconUrl(key)}');${extraStyle || ""}"></span>`;
+}
+
+const ICON_CHOICES = [
+  "utensils", "car", "receipt", "shopping-bag", "film", "stethoscope",
+  "home", "book-open", "gift", "plane", "coffee", "zap",
+  "smartphone", "dog", "shirt", "spray-can", "gamepad-2", "baby",
+  "wallet", "dumbbell", "brush", "graduation-cap", "heart-pulse", "package"
 ];
-const DEFAULT_EMOJI_MAP = { "خوراک": "🍔", "حمل‌ونقل": "🚗", "قبض‌ها": "🧾", "خرید": "🛍️", "تفریح": "🎬", "درمان": "💊", "سایر": "📦" };
-const INCOME_SOURCE_EMOJI = { "حقوق": "💼", "پاداش": "🎉", "فروش": "🏷️", "هدیه": "🎁", "سایر": "💰" };
+const DEFAULT_CATEGORIES = [
+  { name: "خوراک", icon: "utensils" },
+  { name: "حمل‌ونقل", icon: "car" },
+  { name: "قبض‌ها", icon: "receipt" },
+  { name: "خرید", icon: "shopping-bag" },
+  { name: "تفریح", icon: "film" },
+  { name: "درمان", icon: "stethoscope" },
+  { name: "سایر", icon: "package" }
+];
+const DEFAULT_ICON_MAP = { "خوراک": "utensils", "حمل‌ونقل": "car", "قبض‌ها": "receipt", "خرید": "shopping-bag", "تفریح": "film", "درمان": "stethoscope", "سایر": "package" };
+const INCOME_SOURCE_ICON = { "حقوق": "briefcase", "پاداش": "award", "فروش": "tag", "هدیه": "gift", "سایر": "wallet" };
 const CATEGORY_COLORS = ["#1B7A4D", "#C9A227", "#B3452C", "#5B7CB0", "#8D6AB8", "#3C8C82", "#C97A3D", "#6B7A72"];
 const CARD_PALETTE = [
   { bg: "#FBEED9", icon: "#E8A83C" },
@@ -40,7 +53,7 @@ const INCOME_SOURCES = ["حقوق", "پاداش", "فروش", "هدیه", "سا�
 
 let state = loadState();
 let selectedExpenseCategoryName = null;
-let selectedNewCategoryEmoji = EMOJI_CHOICES[0];
+let selectedNewCategoryIcon = ICON_CHOICES[0];
 
 function loadState() {
   try {
@@ -51,8 +64,10 @@ function loadState() {
       if (!categories || !categories.length) {
         categories = DEFAULT_CATEGORIES.slice();
       } else if (typeof categories[0] === "string") {
-        // migrate old string-based categories to {name, emoji}
-        categories = categories.map((name) => ({ name, emoji: DEFAULT_EMOJI_MAP[name] || "🏷️" }));
+        categories = categories.map((name) => ({ name, icon: DEFAULT_ICON_MAP[name] || "package" }));
+      } else if (categories[0] && !categories[0].icon) {
+        // migrate from older emoji-based structure
+        categories = categories.map((c) => ({ name: c.name, icon: DEFAULT_ICON_MAP[c.name] || "package" }));
       }
       return {
         incomes: parsed.incomes || [],
@@ -167,6 +182,13 @@ function todayJalali() {
   return toJalaali(now.getFullYear(), now.getMonth() + 1, now.getDate());
 }
 
+function addMonthsJalali(jy, jm, delta) {
+  let total = (jy * 12 + (jm - 1)) + delta;
+  const ny = Math.floor(total / 12);
+  const nm = (total % 12 + 12) % 12 + 1;
+  return { jy: ny, jm: nm };
+}
+
 // =========================================================
 // Digit / number helpers
 // =========================================================
@@ -221,9 +243,9 @@ function populateDateSelects(prefix, jy, jm, jd) {
   yearSel.innerHTML = years.map((y) => `<option value="${y}">${toPersianDigits(y)}</option>`).join("");
   yearSel.value = jy;
 
-  fillDayOptions(prefix, jd);
+  fillDayOptions(jd);
 
-  function fillDayOptions(prefix, selectedDay) {
+  function fillDayOptions(selectedDay) {
     const len = jalaaliMonthLength(Number(yearSel.value), Number(monthSel.value));
     const days = [];
     for (let d = 1; d <= len; d++) days.push(d);
@@ -231,8 +253,8 @@ function populateDateSelects(prefix, jy, jm, jd) {
     daySel.value = Math.min(selectedDay, len);
   }
 
-  monthSel.addEventListener("change", () => fillDayOptions(prefix, Number(daySel.value) || 1));
-  yearSel.addEventListener("change", () => fillDayOptions(prefix, Number(daySel.value) || 1));
+  monthSel.addEventListener("change", () => fillDayOptions(Number(daySel.value) || 1));
+  yearSel.addEventListener("change", () => fillDayOptions(Number(daySel.value) || 1));
 }
 
 function setDatePickerToToday(prefix) {
@@ -265,10 +287,17 @@ function catColor(name) {
   const idx = state.categories.findIndex((c) => c.name === name);
   return CATEGORY_COLORS[(idx >= 0 ? idx : 0) % CATEGORY_COLORS.length];
 }
-function catEmoji(name) {
+function catIcon(name) {
   const cat = state.categories.find((c) => c.name === name);
-  return cat ? cat.emoji : "🏷️";
+  return cat ? cat.icon : "package";
 }
+
+function applyStaticIcons() {
+  document.querySelectorAll(".icon-mask[data-icon]").forEach((el) => {
+    el.style.setProperty("--icon-url", `url('${iconUrl(el.dataset.icon)}')`);
+  });
+}
+applyStaticIcons();
 
 // ---------- Tabs ----------
 document.querySelectorAll(".nav-btn").forEach((btn) => {
@@ -322,7 +351,7 @@ document.getElementById("categoryForm").addEventListener("submit", (e) => {
   const input = document.getElementById("categoryName");
   const name = input.value.trim();
   if (!name || state.categories.some((c) => c.name === name)) { input.value = ""; return; }
-  state.categories.push({ name, emoji: selectedNewCategoryEmoji });
+  state.categories.push({ name, icon: selectedNewCategoryIcon });
   input.value = "";
   saveState();
 });
@@ -339,7 +368,7 @@ function deleteCategory(name) {
   const inUse = state.expenses.some((x) => x.category === name);
   if (inUse && !confirm("این گروه برای چند خرج ثبت‌شده استفاده شده. حذف بشه؟ خرج‌ها گروه‌شون «سایر» می‌شه.")) return;
   state.categories = state.categories.filter((c) => c.name !== name);
-  if (!state.categories.some((c) => c.name === "سایر")) state.categories.push({ name: "سایر", emoji: "📦" });
+  if (!state.categories.some((c) => c.name === "سایر")) state.categories.push({ name: "سایر", icon: "package" });
   state.expenses.forEach((x) => { if (x.category === name) x.category = "سایر"; });
   saveState();
 }
@@ -364,7 +393,7 @@ function renderExpenseCategoryPicker() {
   }
   wrap.innerHTML = state.categories.map((c) => `
     <button type="button" class="category-chip ${c.name === selectedExpenseCategoryName ? "selected" : ""}" data-name="${c.name}">
-      <span class="chip-emoji">${c.emoji}</span><span class="chip-name">${c.name}</span>
+      ${iconSpanHTML(c.icon)}<span class="chip-name">${c.name}</span>
     </button>
   `).join("");
   wrap.querySelectorAll(".category-chip").forEach((btn) => {
@@ -375,19 +404,21 @@ function renderExpenseCategoryPicker() {
   });
 }
 
-function renderCategoryEmojiPicker() {
-  const wrap = document.getElementById("categoryEmojiPicker");
-  wrap.innerHTML = EMOJI_CHOICES.map((e) => `
-    <button type="button" class="emoji-chip ${e === selectedNewCategoryEmoji ? "selected" : ""}" data-emoji="${e}">${e}</button>
+function renderCategoryIconPicker() {
+  const wrap = document.getElementById("categoryIconPicker");
+  wrap.innerHTML = ICON_CHOICES.map((key) => `
+    <button type="button" class="icon-chip ${key === selectedNewCategoryIcon ? "selected" : ""}" data-icon="${key}">
+      ${iconSpanHTML(key)}
+    </button>
   `).join("");
-  wrap.querySelectorAll(".emoji-chip").forEach((btn) => {
+  wrap.querySelectorAll(".icon-chip").forEach((btn) => {
     btn.addEventListener("click", () => {
-      selectedNewCategoryEmoji = btn.dataset.emoji;
-      renderCategoryEmojiPicker();
+      selectedNewCategoryIcon = btn.dataset.icon;
+      renderCategoryIconPicker();
     });
   });
 }
-renderCategoryEmojiPicker();
+renderCategoryIconPicker();
 
 function renderCategoryManageList() {
   const wrap = document.getElementById("categoryManageList");
@@ -397,7 +428,7 @@ function renderCategoryManageList() {
   }
   wrap.innerHTML = state.categories.map((c) => `
     <div class="category-manage-row">
-      <span class="cat-name"><span class="chip-emoji">${c.emoji}</span>${c.name}</span>
+      <span class="cat-name">${iconSpanHTML(c.icon)}${c.name}</span>
       <button class="entry-delete" onclick="deleteCategory('${c.name.replace(/'/g, "\\'")}')">حذف</button>
     </div>
   `).join("");
@@ -420,12 +451,12 @@ function renderExpenseList() {
 function entryRowHTML(x, type) {
   const isIncome = type === "income";
   const title = isIncome ? x.source : x.category;
-  const iconContent = isIncome ? (INCOME_SOURCE_EMOJI[x.source] || "💰") : catEmoji(x.category);
+  const iconKey = isIncome ? (INCOME_SOURCE_ICON[x.source] || "wallet") : catIcon(x.category);
   const sub = [formatDateFa(x.date), x.note].filter(Boolean).join(" · ");
   return `
     <div class="entry-row">
       <div class="entry-row-main">
-        <span class="entry-icon ${isIncome ? "income-icon" : "expense-icon"}" style="${isIncome ? "" : `background:${catColor(x.category)}`}">${iconContent}</span>
+        <span class="entry-icon ${isIncome ? "income-icon" : "expense-icon"}" style="${isIncome ? "" : `background:${catColor(x.category)}`}">${iconSpanHTML(iconKey)}</span>
         <div>
           <div class="entry-title">${title}</div>
           <div class="entry-sub">${sub}</div>
@@ -438,14 +469,45 @@ function entryRowHTML(x, type) {
     </div>`;
 }
 
+// ---------- Dashboard month navigation ----------
+let dashboardMode = "month"; // "month" | "all"
+let viewedMonth = todayJalali();
+
+function updateMonthLabel() {
+  const label = document.getElementById("monthLabel");
+  const toggle = document.getElementById("allTimeToggle");
+  if (dashboardMode === "all") {
+    label.textContent = "همه تراکنش‌ها";
+    toggle.classList.add("active");
+  } else {
+    label.textContent = `${JALALI_MONTHS[viewedMonth.jm - 1]} ${toPersianDigits(viewedMonth.jy)}`;
+    toggle.classList.remove("active");
+  }
+}
+
+document.getElementById("prevMonthBtn").addEventListener("click", () => {
+  dashboardMode = "month";
+  viewedMonth = addMonthsJalali(viewedMonth.jy, viewedMonth.jm, -1);
+  renderDashboard();
+});
+document.getElementById("nextMonthBtn").addEventListener("click", () => {
+  dashboardMode = "month";
+  viewedMonth = addMonthsJalali(viewedMonth.jy, viewedMonth.jm, 1);
+  renderDashboard();
+});
+document.getElementById("allTimeToggle").addEventListener("click", () => {
+  dashboardMode = dashboardMode === "all" ? "month" : "all";
+  if (dashboardMode === "month") viewedMonth = todayJalali();
+  renderDashboard();
+});
+
 function renderDashboard() {
-  const period = document.getElementById("dashPeriod").value;
-  const todayJ = todayJalali();
+  updateMonthLabel();
   const inPeriod = (dateStr) => {
-    if (period === "all") return true;
+    if (dashboardMode === "all") return true;
     const [gy, gm, gd] = dateStr.split("-").map(Number);
     const j = toJalaali(gy, gm, gd);
-    return j.jy === todayJ.jy && j.jm === todayJ.jm;
+    return j.jy === viewedMonth.jy && j.jm === viewedMonth.jm;
   };
 
   const incomes = state.incomes.filter((x) => inPeriod(x.date));
@@ -478,7 +540,7 @@ function renderDashboard() {
       const amt = byCat[c.name] || 0;
       return `
         <button type="button" class="quick-cat-card" style="background:${palette.bg}" onclick="quickAddExpense('${c.name.replace(/'/g, "\\'")}')">
-          <span class="quick-cat-bubble" style="background:${palette.icon}22; color:${palette.icon}">${c.emoji}</span>
+          <span class="quick-cat-bubble" style="background:${palette.icon}22">${iconSpanHTML(c.icon, `color:${palette.icon}`)}</span>
           <span class="quick-cat-name">${c.name}</span>
           <span class="quick-cat-amount">${fmtAmount(amt)}</span>
         </button>`;
@@ -492,9 +554,10 @@ function renderDashboard() {
   srcWrap.innerHTML = usedSources.map((source, i) => {
     const palette = INCOME_CARD_PALETTE[i % INCOME_CARD_PALETTE.length];
     const amt = bySource[source] || 0;
+    const iconKey = INCOME_SOURCE_ICON[source] || "wallet";
     return `
       <button type="button" class="quick-cat-card" style="background:${palette.bg}" onclick="quickAddIncome('${source.replace(/'/g, "\\'")}')">
-        <span class="quick-cat-bubble" style="background:${palette.icon}22; color:${palette.icon}">${INCOME_SOURCE_EMOJI[source] || "💰"}</span>
+        <span class="quick-cat-bubble" style="background:${palette.icon}22">${iconSpanHTML(iconKey, `color:${palette.icon}`)}</span>
         <span class="quick-cat-name">${source}</span>
         <span class="quick-cat-amount">${fmtAmount(amt)}</span>
       </button>`;
@@ -523,8 +586,6 @@ function quickAddIncome(source) {
   switchTab("income");
   setTimeout(() => document.getElementById("incomeAmount").focus(), 150);
 }
-
-document.getElementById("dashPeriod").addEventListener("change", renderDashboard);
 
 // ---------- Sync ----------
 function genCode() { return String(Math.floor(100000 + Math.random() * 900000)); }
