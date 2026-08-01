@@ -306,13 +306,13 @@ h2 {
   padding: 18px;
   margin-bottom: 6px;
 }
-.entry-form label {
+.entry-form label, .inline-form label {
   display: block;
   font-size: 12.5px;
   color: var(--text-mute);
   margin-bottom: 12px;
 }
-.entry-form input, .entry-form select {
+.entry-form input, .entry-form select, .inline-form input, .inline-form select {
   display: block;
   width: 100%;
   margin-top: 6px;
@@ -329,6 +329,91 @@ input:focus, select:focus {
   outline: 2px solid var(--gold);
   outline-offset: 1px;
 }
+
+/* ---------- Date quick picker ---------- */
+.date-quick-picker {
+  display: flex;
+  gap: 6px;
+  margin: 6px 0 12px;
+}
+.date-quick-btn {
+  flex: 1;
+  padding: 9px 4px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--cream);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-mute);
+  cursor: pointer;
+}
+.date-quick-btn.selected {
+  background: var(--green-deep);
+  border-color: var(--green-deep);
+  color: #fff;
+}
+
+/* ---------- Analysis charts ---------- */
+.chart-period-toggle {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.chart-period-btn {
+  flex: 1;
+  padding: 9px 0;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--cream);
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-mute);
+  cursor: pointer;
+}
+.chart-period-btn.selected {
+  background: var(--green-deep);
+  border-color: var(--green-deep);
+  color: #fff;
+}
+.donut-wrap {
+  position: relative;
+  width: 172px;
+  height: 172px;
+  margin: 4px auto 18px;
+}
+.donut-svg { width: 100%; height: 100%; }
+.donut-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0 24px;
+}
+.donut-center-amt {
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1.5;
+}
+.chart-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.chart-legend-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+}
+.legend-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+.legend-label { flex: 1; font-weight: 600; color: var(--text); }
+.legend-pct { color: var(--text-mute); min-width: 30px; text-align: left; }
+.legend-amt { color: var(--text-mute); font-variant-numeric: tabular-nums; }
 
 /* ---------- Jalali date picker ---------- */
 .jalali-date-picker {

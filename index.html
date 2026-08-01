@@ -88,9 +88,6 @@
     <div class="section-heading"><h2>درآمد بر اساس منبع</h2></div>
     <p class="quick-hint">برای ثبت سریع درآمد، روی هر منبع بزن</p>
     <div id="incomeSourceGrid" class="quick-cat-grid"></div>
-
-    <div class="section-heading"><h2>آخرین تراکنش‌ها</h2></div>
-    <div id="recentList" class="entry-list"></div>
   </section>
 
   <!-- INCOME -->
@@ -109,13 +106,17 @@
           <option value="سایر">سایر</option>
         </select>
       </label>
-      <label>تاریخ
-        <div class="jalali-date-picker">
-          <select id="incomeDay"></select>
-          <select id="incomeMonth"></select>
-          <select id="incomeYear"></select>
-        </div>
-      </label>
+      <label>تاریخ</label>
+      <div class="date-quick-picker" id="incomeDateQuick">
+        <button type="button" class="date-quick-btn selected" data-value="today">امروز</button>
+        <button type="button" class="date-quick-btn" data-value="yesterday">دیروز</button>
+        <button type="button" class="date-quick-btn" data-value="custom">تاریخ دلخواه</button>
+      </div>
+      <div class="jalali-date-picker" id="incomeCustomDate" style="display:none;">
+        <select id="incomeDay"></select>
+        <select id="incomeMonth"></select>
+        <select id="incomeYear"></select>
+      </div>
       <label>یادداشت (اختیاری)
         <input type="text" id="incomeNote" placeholder="توضیح کوتاه">
       </label>
@@ -134,13 +135,17 @@
       </label>
       <label>گروه (دسته‌بندی)</label>
       <div class="category-picker" id="expenseCategoryPicker"></div>
-      <label>تاریخ
-        <div class="jalali-date-picker">
-          <select id="expenseDay"></select>
-          <select id="expenseMonth"></select>
-          <select id="expenseYear"></select>
-        </div>
-      </label>
+      <label>تاریخ</label>
+      <div class="date-quick-picker" id="expenseDateQuick">
+        <button type="button" class="date-quick-btn selected" data-value="today">امروز</button>
+        <button type="button" class="date-quick-btn" data-value="yesterday">دیروز</button>
+        <button type="button" class="date-quick-btn" data-value="custom">تاریخ دلخواه</button>
+      </div>
+      <div class="jalali-date-picker" id="expenseCustomDate" style="display:none;">
+        <select id="expenseDay"></select>
+        <select id="expenseMonth"></select>
+        <select id="expenseYear"></select>
+      </div>
       <label>یادداشت (اختیاری)
         <input type="text" id="expenseNote" placeholder="توضیح کوتاه">
       </label>
@@ -150,22 +155,37 @@
     <div id="expenseList" class="entry-list"></div>
   </section>
 
-  <!-- CATEGORIES -->
-  <section id="tab-categories" class="tab">
-    <form id="categoryForm" class="entry-form">
-      <h2>دسته‌بندی‌های خرج</h2>
-      <label>نام گروه جدید
-        <input type="text" id="categoryName" placeholder="مثلاً خوراک، حمل‌ونقل، قبض">
-      </label>
-      <label>آیکون گروه</label>
-      <div class="icon-picker" id="categoryIconPicker"></div>
-      <button type="submit" class="btn btn-neutral">افزودن گروه</button>
-    </form>
-    <div id="categoryManageList" class="category-manage-list"></div>
+  <!-- ANALYSIS -->
+  <section id="tab-analysis" class="tab">
+    <div class="settings-card">
+      <h2>نسبت درآمد و مخارج</h2>
+      <div class="chart-period-toggle" id="analysisPeriodToggle">
+        <button type="button" class="chart-period-btn selected" data-period="month">این ماه</button>
+        <button type="button" class="chart-period-btn" data-period="all">کل بازه</button>
+      </div>
+      <div id="incomeExpenseChart"></div>
+    </div>
+    <div class="settings-card">
+      <h2>تنوع مخارج</h2>
+      <div id="expenseDiversityChart"></div>
+    </div>
   </section>
 
-  <!-- SETTINGS / SYNC -->
+  <!-- SETTINGS -->
   <section id="tab-settings" class="tab">
+    <div class="settings-card">
+      <h2>مدیریت دسته‌ها</h2>
+      <form id="categoryForm" class="inline-form">
+        <label>نام گروه جدید
+          <input type="text" id="categoryName" placeholder="مثلاً خوراک، حمل‌ونقل، قبض">
+        </label>
+        <label>آیکون گروه</label>
+        <div class="icon-picker" id="categoryIconPicker"></div>
+        <button type="submit" class="btn btn-neutral full">افزودن گروه</button>
+      </form>
+      <div id="categoryManageList" class="category-manage-list"></div>
+    </div>
+
     <div class="settings-card">
       <h2>همگام‌سازی بین دستگاه‌ها</h2>
       <p class="hint">
@@ -219,9 +239,9 @@
     <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
     <span>مخارج</span>
   </button>
-  <button class="nav-btn" data-tab="categories">
-    <svg viewBox="0 0 24 24"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z"/></svg>
-    <span>دسته‌ها</span>
+  <button class="nav-btn" data-tab="analysis">
+    <svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7"/><path d="M2 20h20"/></svg>
+    <span>آنالیز</span>
   </button>
   <button class="nav-btn" data-tab="settings">
     <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>

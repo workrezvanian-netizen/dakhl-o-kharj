@@ -281,6 +281,49 @@ function formatDateFa(iso) {
 setDatePickerToToday("income");
 setDatePickerToToday("expense");
 
+// ---------- Quick date picker (امروز / دیروز / تاریخ دلخواه) ----------
+const dateQuickMode = { income: "today", expense: "today" };
+
+function isoFromDate(d) {
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${d.getFullYear()}-${mm}-${dd}`;
+}
+function isoToday() { return isoFromDate(new Date()); }
+function isoYesterday() {
+  const d = new Date();
+  d.setDate(d.getDate() - 1);
+  return isoFromDate(d);
+}
+
+function getSelectedISO(prefix) {
+  const mode = dateQuickMode[prefix];
+  if (mode === "today") return isoToday();
+  if (mode === "yesterday") return isoYesterday();
+  return getISOFromDatePicker(prefix);
+}
+
+function setupDateQuickPicker(prefix) {
+  const group = document.getElementById(prefix + "DateQuick");
+  const customWrap = document.getElementById(prefix + "CustomDate");
+  group.querySelectorAll(".date-quick-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      group.querySelectorAll(".date-quick-btn").forEach((b) => b.classList.remove("selected"));
+      btn.classList.add("selected");
+      dateQuickMode[prefix] = btn.dataset.value;
+      customWrap.style.display = btn.dataset.value === "custom" ? "grid" : "none";
+    });
+  });
+}
+function resetDateQuickPicker(prefix) {
+  dateQuickMode[prefix] = "today";
+  const group = document.getElementById(prefix + "DateQuick");
+  group.querySelectorAll(".date-quick-btn").forEach((b) => b.classList.toggle("selected", b.dataset.value === "today"));
+  document.getElementById(prefix + "CustomDate").style.display = "none";
+}
+setupDateQuickPicker("income");
+setupDateQuickPicker("expense");
+
 // ---------- Helpers ----------
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
 function catColor(name) {
@@ -320,10 +363,11 @@ document.getElementById("incomeForm").addEventListener("submit", (e) => {
     amount,
     source: document.getElementById("incomeSource").value,
     note: document.getElementById("incomeNote").value.trim(),
-    date: getISOFromDatePicker("income")
+    date: getSelectedISO("income")
   });
   e.target.reset();
   setDatePickerToToday("income");
+  resetDateQuickPicker("income");
   saveState();
 });
 
@@ -338,10 +382,11 @@ document.getElementById("expenseForm").addEventListener("submit", (e) => {
     amount,
     category,
     note: document.getElementById("expenseNote").value.trim(),
-    date: getISOFromDatePicker("expense")
+    date: getSelectedISO("expense")
   });
   e.target.reset();
   setDatePickerToToday("expense");
+  resetDateQuickPicker("expense");
   saveState();
 });
 
@@ -380,6 +425,7 @@ function renderAll() {
   renderDashboard();
   renderIncomeList();
   renderExpenseList();
+  renderAnalysis();
 }
 
 function renderExpenseCategoryPicker() {
@@ -562,15 +608,6 @@ function renderDashboard() {
         <span class="quick-cat-amount">${fmtAmount(amt)}</span>
       </button>`;
   }).join("");
-
-  const recent = [
-    ...state.incomes.map((x) => ({ ...x, _type: "income" })),
-    ...state.expenses.map((x) => ({ ...x, _type: "expense" }))
-  ].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 6);
-  const recentWrap = document.getElementById("recentList");
-  recentWrap.innerHTML = recent.length
-    ? recent.map((x) => entryRowHTML(x, x._type)).join("")
-    : `<p class="empty-hint">هنوز تراکنشی ثبت نشده</p>`;
 }
 
 function quickAddExpense(categoryName) {
@@ -585,6 +622,85 @@ function quickAddIncome(source) {
   if ([...sel.options].some((o) => o.value === source)) sel.value = source;
   switchTab("income");
   setTimeout(() => document.getElementById("incomeAmount").focus(), 150);
+}
+
+// ---------- Analysis charts ----------
+let analysisPeriod = "month";
+document.querySelectorAll("#analysisPeriodToggle .chart-period-btn").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    analysisPeriod = btn.dataset.period;
+    document.querySelectorAll("#analysisPeriodToggle .chart-period-btn").forEach((b) => b.classList.remove("selected"));
+    btn.classList.add("selected");
+    renderAnalysis();
+  });
+});
+
+function renderDonutChart(containerId, segments, centerText) {
+  const wrap = document.getElementById(containerId);
+  const total = segments.reduce((s, x) => s + x.value, 0);
+  if (!total) {
+    wrap.innerHTML = `<p class="empty-hint">داده‌ای برای این بازه نیست</p>`;
+    return;
+  }
+  const r = 62, cx = 80, cy = 80, sw = 24;
+  const circumference = 2 * Math.PI * r;
+  let acc = 0;
+  const visible = segments.filter((s) => s.value > 0);
+  const circles = visible.map((seg) => {
+    const frac = seg.value / total;
+    const dash = frac * circumference;
+    const el = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" style="stroke:${seg.color}" stroke-width="${sw}" stroke-dasharray="${dash} ${circumference - dash}" stroke-dashoffset="${-acc}" transform="rotate(-90 ${cx} ${cy})"></circle>`;
+    acc += dash;
+    return el;
+  }).join("");
+
+  const legend = visible.map((seg) => {
+    const pct = Math.round((seg.value / total) * 100);
+    return `
+      <div class="chart-legend-row">
+        <span class="legend-dot" style="background:${seg.color}"></span>
+        <span class="legend-label">${seg.label}</span>
+        <span class="legend-pct">${toPersianDigits(pct)}٪</span>
+        <span class="legend-amt">${fmtAmount(seg.value)}</span>
+      </div>`;
+  }).join("");
+
+  wrap.innerHTML = `
+    <div class="donut-wrap">
+      <svg viewBox="0 0 160 160" class="donut-svg">
+        <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" style="stroke:var(--border)" stroke-width="${sw}"></circle>
+        ${circles}
+      </svg>
+      <div class="donut-center">${centerText ? `<span class="donut-center-amt">${centerText}</span>` : ""}</div>
+    </div>
+    <div class="chart-legend">${legend}</div>
+  `;
+}
+
+function renderAnalysis() {
+  const inPeriod = (dateStr) => {
+    if (analysisPeriod === "all") return true;
+    const [gy, gm, gd] = dateStr.split("-").map(Number);
+    const j = toJalaali(gy, gm, gd);
+    const t = todayJalali();
+    return j.jy === t.jy && j.jm === t.jm;
+  };
+  const incomes = state.incomes.filter((x) => inPeriod(x.date));
+  const expenses = state.expenses.filter((x) => inPeriod(x.date));
+  const totalIncome = incomes.reduce((s, x) => s + x.amount, 0);
+  const totalExpense = expenses.reduce((s, x) => s + x.amount, 0);
+
+  renderDonutChart("incomeExpenseChart", [
+    { label: "درآمد", value: totalIncome, color: "var(--green)" },
+    { label: "مخارج", value: totalExpense, color: "var(--expense)" }
+  ], `${fmtAmount(totalIncome + totalExpense)}<br>تومان`);
+
+  const byCat = {};
+  expenses.forEach((x) => { byCat[x.category] = (byCat[x.category] || 0) + x.amount; });
+  const segments = Object.entries(byCat)
+    .sort((a, b) => b[1] - a[1])
+    .map(([name, amt]) => ({ label: name, value: amt, color: catColor(name) }));
+  renderDonutChart("expenseDiversityChart", segments, `${fmtAmount(totalExpense)}<br>تومان`);
 }
 
 // ---------- Sync ----------
