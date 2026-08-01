@@ -2,7 +2,7 @@
 // تنظیمات — بعد از دیپلوی Cloudflare Worker، آدرس worker رو اینجا بذار
 // =========================================================
 const CONFIG = {
-  WORKER_URL: "https://dakhl-o-kharj.YOUR-SUBDOMAIN.workers.dev"
+  WORKER_URL: "https://dakhl-o-kharj.work-rezvanian.workers.dev"
 };
 
 const STORAGE_KEY = "dnk_data_v1";
@@ -338,7 +338,7 @@ function scheduleSync() {
 }
 
 async function pushToServer() {
-  if (!state.syncCode || CONFIG.WORKER_URL.includes("https://dakhl-o-kharj.work-rezvanian.workers.dev/")) return;
+  if (!state.syncCode || CONFIG.WORKER_URL.includes("YOUR-SUBDOMAIN")) return;
   try {
     await fetch(`${CONFIG.WORKER_URL}/data?code=${state.syncCode}`, {
       method: "POST",
