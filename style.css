@@ -205,7 +205,7 @@ h2 {
 .entry-icon {
   width: 34px; height: 34px; border-radius: 10px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 13px; font-weight: 700; color: #fff; flex-shrink: 0;
+  font-size: 16px; font-weight: 700; color: #fff; flex-shrink: 0;
 }
 .entry-icon.income-icon { background: var(--green); }
 .entry-icon.expense-icon { background: var(--expense); }
@@ -250,6 +250,114 @@ input:focus, select:focus {
   outline: 2px solid var(--gold);
   outline-offset: 1px;
 }
+
+/* ---------- Jalali date picker ---------- */
+.jalali-date-picker {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr 1fr;
+  gap: 6px;
+  margin-top: 6px;
+}
+.jalali-date-picker select {
+  margin-top: 0;
+  padding: 10px 6px;
+  text-align: center;
+}
+
+/* ---------- Quick-tap category cards (dashboard) ---------- */
+.quick-hint {
+  font-size: 11.5px;
+  color: var(--text-mute);
+  margin: -4px 0 10px;
+}
+.quick-cat-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.quick-cat-card {
+  border: none;
+  border-radius: 18px;
+  padding: 14px 8px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: center;
+  transition: transform .12s ease;
+}
+.quick-cat-card:active { transform: scale(0.96); }
+.quick-cat-bubble {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 19px;
+}
+.quick-cat-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+}
+.quick-cat-amount {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Category picker (expense form) ---------- */
+.category-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 6px 0 14px;
+}
+.category-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 13px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--cream);
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--text);
+  cursor: pointer;
+}
+.category-chip .chip-emoji { font-size: 15px; }
+.category-chip.selected {
+  background: var(--green-soft);
+  border-color: var(--green);
+  color: var(--green-deep);
+  font-weight: 700;
+}
+
+/* ---------- Emoji picker (category creation) ---------- */
+.emoji-picker {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+  margin: 6px 0 14px;
+}
+.emoji-chip {
+  font-size: 19px;
+  padding: 8px 0;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--cream);
+  cursor: pointer;
+}
+.emoji-chip.selected {
+  background: var(--gold-soft);
+  border-color: var(--gold);
+}
+.category-manage-row .chip-emoji { font-size: 16px; margin-left: 2px; }
 
 .btn {
   border: none;

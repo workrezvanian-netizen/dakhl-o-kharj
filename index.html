@@ -65,7 +65,12 @@
         <option value="all">کل بازه</option>
       </select>
     </div>
-    <div id="categoryBreakdown" class="category-breakdown"></div>
+    <p class="quick-hint">برای ثبت سریع خرج، روی هر گروه بزن</p>
+    <div id="categoryBreakdown" class="quick-cat-grid"></div>
+
+    <div class="section-heading"><h2>درآمد بر اساس منبع</h2></div>
+    <p class="quick-hint">برای ثبت سریع درآمد، روی هر منبع بزن</p>
+    <div id="incomeSourceGrid" class="quick-cat-grid"></div>
 
     <div class="section-heading"><h2>آخرین تراکنش‌ها</h2></div>
     <div id="recentList" class="entry-list"></div>
@@ -76,19 +81,23 @@
     <form id="incomeForm" class="entry-form">
       <h2>ثبت درآمد جدید</h2>
       <label>مبلغ (تومان)
-        <input type="number" id="incomeAmount" inputmode="numeric" placeholder="مثلاً ۵۰۰۰۰۰۰" required min="1">
+        <input type="text" id="incomeAmount" inputmode="numeric" placeholder="مثلاً 5,000,000" required>
       </label>
       <label>منبع درآمد
         <select id="incomeSource">
-          <option value="حقوق">حقوق</option>
-          <option value="پاداش">پاداش</option>
-          <option value="فروش">فروش</option>
-          <option value="هدیه">هدیه</option>
-          <option value="سایر">سایر</option>
+          <option value="حقوق">💼 حقوق</option>
+          <option value="پاداش">🎉 پاداش</option>
+          <option value="فروش">🏷️ فروش</option>
+          <option value="هدیه">🎁 هدیه</option>
+          <option value="سایر">💰 سایر</option>
         </select>
       </label>
       <label>تاریخ
-        <input type="date" id="incomeDate" required>
+        <div class="jalali-date-picker">
+          <select id="incomeDay"></select>
+          <select id="incomeMonth"></select>
+          <select id="incomeYear"></select>
+        </div>
       </label>
       <label>یادداشت (اختیاری)
         <input type="text" id="incomeNote" placeholder="توضیح کوتاه">
@@ -104,13 +113,16 @@
     <form id="expenseForm" class="entry-form">
       <h2>ثبت خرج جدید</h2>
       <label>مبلغ (تومان)
-        <input type="number" id="expenseAmount" inputmode="numeric" placeholder="مثلاً ۱۵۰۰۰۰" required min="1">
+        <input type="text" id="expenseAmount" inputmode="numeric" placeholder="مثلاً 150,000" required>
       </label>
-      <label>گروه (دسته‌بندی)
-        <select id="expenseCategory" required></select>
-      </label>
+      <label>گروه (دسته‌بندی)</label>
+      <div class="category-picker" id="expenseCategoryPicker"></div>
       <label>تاریخ
-        <input type="date" id="expenseDate" required>
+        <div class="jalali-date-picker">
+          <select id="expenseDay"></select>
+          <select id="expenseMonth"></select>
+          <select id="expenseYear"></select>
+        </div>
       </label>
       <label>یادداشت (اختیاری)
         <input type="text" id="expenseNote" placeholder="توضیح کوتاه">
@@ -128,6 +140,8 @@
       <label>نام گروه جدید
         <input type="text" id="categoryName" placeholder="مثلاً خوراک، حمل‌ونقل، قبض">
       </label>
+      <label>ایموجی گروه</label>
+      <div class="emoji-picker" id="categoryEmojiPicker"></div>
       <button type="submit" class="btn btn-neutral">افزودن گروه</button>
     </form>
     <div id="categoryManageList" class="category-manage-list"></div>
