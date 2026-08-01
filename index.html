@@ -1,203 +1,64 @@
-<!DOCTYPE html>
-<html lang="fa" dir="rtl">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>دخل و خرج</title>
-<meta name="theme-color" content="#10462B">
-<link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="دخل و خرج">
-<link rel="icon" href="icons/icon-192.png">
-<link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css">
-<link rel="stylesheet" href="style.css">
-</head>
-<body>
+// Cloudflare Worker — بک‌اند همگام‌سازی «دخل و خرج»
+// نیازمند یک KV Namespace با نام DNK_KV که به این Worker باند شده باشه.
 
-<header class="app-header">
-  <div class="header-inner">
-    <span class="brand">
-      <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
-        <rect x="2" y="6" width="20" height="13" rx="3" fill="var(--gold)"/>
-        <rect x="2" y="6" width="20" height="4" rx="2" fill="var(--green-deep)"/>
-        <circle cx="17" cy="13" r="2.4" fill="var(--cream)"/>
-      </svg>
-      دخل و خرج
-    </span>
-    <button id="syncStatusBtn" class="sync-pill" title="وضعیت همگام‌سازی">
-      <span id="syncDot" class="sync-dot"></span>
-      <span id="syncLabel">محلی</span>
-    </button>
-  </div>
-</header>
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type"
+};
 
-<main id="app">
+export default {
+  async fetch(request, env) {
+    const url = new URL(request.url);
 
-  <!-- DASHBOARD -->
-  <section id="tab-dashboard" class="tab active">
-    <div class="scale-card">
-      <div class="scale-labels">
-        <div class="scale-label income-side">
-          <span class="dot dot-income"></span> درآمد
-          <strong id="dashIncomeTotal">۰</strong>
-        </div>
-        <div class="scale-label expense-side">
-          مخارج <span class="dot dot-expense"></span>
-          <strong id="dashExpenseTotal">۰</strong>
-        </div>
-      </div>
-      <div class="scale-track">
-        <div id="scaleIncomeBar" class="scale-fill income"></div>
-        <div id="scaleExpenseBar" class="scale-fill expense"></div>
-      </div>
-      <div class="balance-row">
-        <span>مانده</span>
-        <span id="dashBalance" class="balance-amount">۰ تومان</span>
-      </div>
-    </div>
+    if (request.method === "OPTIONS") {
+      return new Response(null, { headers: CORS_HEADERS });
+    }
 
-    <div class="section-heading">
-      <h2>مخارج بر اساس دسته</h2>
-      <select id="dashPeriod" class="period-select">
-        <option value="month">این ماه</option>
-        <option value="all">کل بازه</option>
-      </select>
-    </div>
-    <div id="categoryBreakdown" class="category-breakdown"></div>
+    if (url.pathname !== "/data") {
+      return new Response("Not found", { status: 404, headers: CORS_HEADERS });
+    }
 
-    <div class="section-heading"><h2>آخرین تراکنش‌ها</h2></div>
-    <div id="recentList" class="entry-list"></div>
-  </section>
+    const code = url.searchParams.get("code");
+    if (!code || !/^\d{6}$/.test(code)) {
+      return new Response(JSON.stringify({ error: "invalid code" }), {
+        status: 400,
+        headers: { ...CORS_HEADERS, "Content-Type": "application/json" }
+      });
+    }
 
-  <!-- INCOME -->
-  <section id="tab-income" class="tab">
-    <form id="incomeForm" class="entry-form">
-      <h2>ثبت درآمد جدید</h2>
-      <label>مبلغ (تومان)
-        <input type="number" id="incomeAmount" inputmode="numeric" placeholder="مثلاً ۵۰۰۰۰۰۰" required min="1">
-      </label>
-      <label>منبع درآمد
-        <select id="incomeSource">
-          <option value="حقوق">حقوق</option>
-          <option value="پاداش">پاداش</option>
-          <option value="فروش">فروش</option>
-          <option value="هدیه">هدیه</option>
-          <option value="سایر">سایر</option>
-        </select>
-      </label>
-      <label>تاریخ
-        <input type="date" id="incomeDate" required>
-      </label>
-      <label>یادداشت (اختیاری)
-        <input type="text" id="incomeNote" placeholder="توضیح کوتاه">
-      </label>
-      <button type="submit" class="btn btn-income">افزودن درآمد</button>
-    </form>
-    <div class="section-heading"><h2>لیست درآمدها</h2></div>
-    <div id="incomeList" class="entry-list"></div>
-  </section>
+    const key = `data:${code}`;
 
-  <!-- EXPENSE -->
-  <section id="tab-expense" class="tab">
-    <form id="expenseForm" class="entry-form">
-      <h2>ثبت خرج جدید</h2>
-      <label>مبلغ (تومان)
-        <input type="number" id="expenseAmount" inputmode="numeric" placeholder="مثلاً ۱۵۰۰۰۰" required min="1">
-      </label>
-      <label>گروه (دسته‌بندی)
-        <select id="expenseCategory" required></select>
-      </label>
-      <label>تاریخ
-        <input type="date" id="expenseDate" required>
-      </label>
-      <label>یادداشت (اختیاری)
-        <input type="text" id="expenseNote" placeholder="توضیح کوتاه">
-      </label>
-      <button type="submit" class="btn btn-expense">افزودن خرج</button>
-    </form>
-    <div class="section-heading"><h2>لیست مخارج</h2></div>
-    <div id="expenseList" class="entry-list"></div>
-  </section>
+    if (request.method === "GET") {
+      const stored = await env.DNK_KV.get(key);
+      if (!stored) {
+        return new Response(JSON.stringify({ error: "not found" }), {
+          status: 404,
+          headers: { ...CORS_HEADERS, "Content-Type": "application/json" }
+        });
+      }
+      return new Response(stored, {
+        headers: { ...CORS_HEADERS, "Content-Type": "application/json" }
+      });
+    }
 
-  <!-- CATEGORIES -->
-  <section id="tab-categories" class="tab">
-    <form id="categoryForm" class="entry-form">
-      <h2>دسته‌بندی‌های خرج</h2>
-      <label>نام گروه جدید
-        <input type="text" id="categoryName" placeholder="مثلاً خوراک، حمل‌ونقل، قبض">
-      </label>
-      <button type="submit" class="btn btn-neutral">افزودن گروه</button>
-    </form>
-    <div id="categoryManageList" class="category-manage-list"></div>
-  </section>
+    if (request.method === "POST") {
+      let body;
+      try {
+        body = await request.json();
+      } catch (e) {
+        return new Response(JSON.stringify({ error: "invalid json" }), {
+          status: 400,
+          headers: { ...CORS_HEADERS, "Content-Type": "application/json" }
+        });
+      }
+      body.updatedAt = Date.now();
+      await env.DNK_KV.put(key, JSON.stringify(body));
+      return new Response(JSON.stringify({ ok: true }), {
+        headers: { ...CORS_HEADERS, "Content-Type": "application/json" }
+      });
+    }
 
-  <!-- SETTINGS / SYNC -->
-  <section id="tab-settings" class="tab">
-    <div class="settings-card">
-      <h2>همگام‌سازی بین دستگاه‌ها</h2>
-      <p class="hint">
-        این اپ اطلاعات رو روی خود گوشی ذخیره می‌کنه. برای دیدن یک حساب روی چند دستگاه،
-        یک «کد همگام‌سازی» بساز و همون کد رو توی دستگاه دیگه وارد کن.
-      </p>
-      <div class="sync-code-box">
-        <span class="sync-code-label">کد همگام‌سازی شما</span>
-        <div class="sync-code-value" id="syncCodeDisplay">—</div>
-        <div class="sync-actions">
-          <button id="btnGenerateCode" class="btn btn-neutral">ساخت کد جدید</button>
-          <button id="btnCopyCode" class="btn btn-ghost">کپی کد</button>
-        </div>
-      </div>
-      <div class="sync-join">
-        <label>وارد کردن کد از دستگاه دیگر
-          <input type="text" id="joinCodeInput" placeholder="مثلاً 483920" maxlength="6" inputmode="numeric">
-        </label>
-        <button id="btnJoinCode" class="btn btn-income">اتصال با این کد</button>
-      </div>
-      <button id="btnSyncNow" class="btn btn-neutral full">همگام‌سازی الان</button>
-      <p id="syncMsg" class="sync-msg"></p>
-    </div>
-
-    <div class="settings-card">
-      <h2>نصب روی صفحه اصلی</h2>
-      <p class="hint">
-        در آیفون: از مرورگر سافاری، دکمه اشتراک‌گذاری را بزنید و «Add to Home Screen» را انتخاب کنید.
-        در اندروید: از منوی مرورگر «Add to Home screen» یا «Install app» را بزنید.
-      </p>
-    </div>
-
-    <div class="settings-card danger-zone">
-      <h2>پاک کردن اطلاعات</h2>
-      <button id="btnResetData" class="btn btn-danger full">حذف همه اطلاعات این دستگاه</button>
-    </div>
-  </section>
-
-</main>
-
-<nav class="bottom-nav">
-  <button class="nav-btn active" data-tab="dashboard">
-    <svg viewBox="0 0 24 24"><path d="M3 13h4v8H3zM10 8h4v13h-4zM17 3h4v18h-4z"/></svg>
-    <span>داشبورد</span>
-  </button>
-  <button class="nav-btn" data-tab="income">
-    <svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
-    <span>درآمد</span>
-  </button>
-  <button class="nav-btn" data-tab="expense">
-    <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
-    <span>مخارج</span>
-  </button>
-  <button class="nav-btn" data-tab="categories">
-    <svg viewBox="0 0 24 24"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z"/></svg>
-    <span>دسته‌ها</span>
-  </button>
-  <button class="nav-btn" data-tab="settings">
-    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
-    <span>تنظیمات</span>
-  </button>
-</nav>
-
-<script src="script.js"></script>
-</body>
-</html>
+    return new Response("Method not allowed", { status: 405, headers: CORS_HEADERS });
+  }
+};
