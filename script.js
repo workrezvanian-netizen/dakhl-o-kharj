@@ -338,7 +338,7 @@ function scheduleSync() {
 }
 
 async function pushToServer() {
-  if (!state.syncCode || CONFIG.WORKER_URL.includes("YOUR-SUBDOMAIN")) return;
+  if (!state.syncCode || CONFIG.WORKER_URL.includes("https://dakhl-o-kharj.work-rezvanian.workers.dev/")) return;
   try {
     await fetch(`${CONFIG.WORKER_URL}/data?code=${state.syncCode}`, {
       method: "POST",
