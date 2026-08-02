@@ -716,34 +716,38 @@ function renderIncomeExpenseRings(containerId, income, expense) {
   `;
 }
 
-function renderDiversityRings(containerId, segments) {
+function polarPoint(cx, cy, r, angleDeg) {
+  const rad = (angleDeg * Math.PI) / 180;
+  return { x: cx + r * Math.sin(rad), y: cy - r * Math.cos(rad) };
+}
+
+function renderPieChart(containerId, segments) {
   const wrap = document.getElementById(containerId);
   const total = segments.reduce((s, x) => s + x.value, 0);
   if (!total) {
     wrap.innerHTML = `<p class="empty-hint">داده‌ای برای این بازه نیست</p>`;
     return;
   }
-  let rings = segments.slice(0, 5);
-  if (segments.length > 5) {
-    const restSum = segments.slice(5).reduce((s, x) => s + x.value, 0);
-    rings = [...rings, { label: "بقیه", value: restSum, color: "#6B7A72", icon: "package" }];
-  }
-  const maxVal = rings[0].value;
-  const cx = 95, cy = 95, sw = 13, gap = 5;
-  let r = 82;
-  const circles = rings.map((seg) => {
-    const c = 2 * Math.PI * r;
-    const frac = seg.value / maxVal;
-    const dash = frac * c;
-    const html = `
-      <circle class="ring-track" cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--cream)" stroke-width="${sw}"/>
-      <circle class="ring-seg" cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${seg.color}" stroke-width="${sw}" stroke-linecap="round"
-        stroke-dasharray="${dash} ${c - dash}" transform="rotate(-90 ${cx} ${cy})"/>`;
-    r -= (sw + gap);
-    return html;
-  }).join("");
+  const visible = segments.filter((s) => s.value > 0);
+  const cx = 95, cy = 95, r = 85;
+  let cumulative = 0;
 
-  const legend = rings.map((seg) => {
+  let slices;
+  if (visible.length === 1) {
+    slices = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${visible[0].color}"/>`;
+  } else {
+    slices = visible.map((seg) => {
+      const startAngle = (cumulative / total) * 360;
+      cumulative += seg.value;
+      const endAngle = (cumulative / total) * 360;
+      const p1 = polarPoint(cx, cy, r, startAngle);
+      const p2 = polarPoint(cx, cy, r, endAngle);
+      const largeArc = endAngle - startAngle > 180 ? 1 : 0;
+      return `<path d="M ${cx} ${cy} L ${p1.x} ${p1.y} A ${r} ${r} 0 ${largeArc} 1 ${p2.x} ${p2.y} Z" fill="${seg.color}" stroke="var(--surface)" stroke-width="2.5"/>`;
+    }).join("");
+  }
+
+  const legend = visible.map((seg) => {
     const pct = Math.round((seg.value / total) * 100);
     const iconHTML = seg.icon
       ? `<span class="legend-icon" style="background:${seg.color}1f">${iconSpanHTML(seg.icon, `color:${seg.color}`)}</span>`
@@ -758,12 +762,15 @@ function renderDiversityRings(containerId, segments) {
   }).join("");
 
   wrap.innerHTML = `
-    <div class="rings-wrap">
-      <svg viewBox="0 0 190 190" class="rings-svg">${circles}</svg>
-      <div class="rings-center">
-        <span class="rings-sub">بیشترین خرج</span>
-        <span class="rings-pct" style="font-size:14px">${rings[0].label}</span>
-      </div>
+    <div class="pie-wrap">
+      <svg viewBox="0 0 190 190" class="pie-svg">
+        <defs>
+          <filter id="pieShadow-${containerId}" x="-30%" y="-30%" width="160%" height="160%">
+            <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#10462B" flood-opacity="0.18"/>
+          </filter>
+        </defs>
+        <g style="filter:url(#pieShadow-${containerId})">${slices}</g>
+      </svg>
     </div>
     <div class="chart-legend">${legend}</div>
   `;
@@ -805,7 +812,7 @@ function renderAnalysis() {
   const segments = Object.entries(byCat)
     .sort((a, b) => b[1] - a[1])
     .map(([name, amt]) => ({ label: name, value: amt, color: catColor(name), icon: catIcon(name) }));
-  renderDiversityRings("expenseDiversityChart", segments);
+  renderPieChart("expenseDiversityChart", segments);
 }
 
 // ---------- AI analysis ----------
@@ -830,12 +837,25 @@ document.getElementById("btnAiAnalyze").addEventListener("click", async () => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ thisMonth, lastMonth })
     });
-    if (!res.ok) throw new Error("bad status");
-    const data = await res.json();
-    if (!data.summary) throw new Error("no summary");
+    const data = await res.json().catch(() => null);
+    if (!res.ok || !data || !data.summary) {
+      const code = data && data.error;
+      let msg = "متأسفانه الان نشد تحلیل کنم، یه‌بار دیگه امتحان کن.";
+      if (code === "no_api_key") {
+        msg = "😅 هنوز کلید هوش مصنوعی روی Worker تنظیم نشده. باید از داشبورد Cloudflare یک Secret به اسم ANTHROPIC_API_KEY اضافه کنی.";
+      } else if (code === "ai_request_failed") {
+        msg = "سرور هوش مصنوعی جواب درستی نداد (شاید کلید API نامعتبره یا اعتبارش تموم شده). یه‌بار دیگه امتحان کن.";
+      } else if (code === "empty_response" || code === "no summary") {
+        msg = "جواب خالی برگشت، یه‌بار دیگه امتحان کن.";
+      } else if (res.status === 404) {
+        msg = "این قابلیت هنوز روی Worker آپلود نشده. مطمئن شو worker.js جدید رو آپلود کردی.";
+      }
+      resultBox.innerHTML = `<div class="ai-result-error">${msg}</div>`;
+      return;
+    }
     resultBox.innerHTML = `<div class="ai-result-text">${data.summary.replace(/\n/g, "<br>")}</div>`;
   } catch (e) {
-    resultBox.innerHTML = `<div class="ai-result-error">متأسفانه الان نشد تحلیل کنم، یه‌بار دیگه امتحان کن.</div>`;
+    resultBox.innerHTML = `<div class="ai-result-error">اتصال به سرور برقرار نشد. اینترنتت رو چک کن و دوباره امتحان کن.</div>`;
   } finally {
     btn.disabled = false;
   }
