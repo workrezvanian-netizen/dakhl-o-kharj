@@ -64,7 +64,7 @@ async function handleAnalyze(request, env) {
 
   let aiRes;
   try {
-    aiRes = await env.AI.run("@cf/meta/llama-3.1-8b-instruct", {
+    aiRes = await env.AI.run("@cf/meta/llama-3.3-70b-instruct-fp8-fast", {
       messages: [{ role: "user", content: prompt }],
       max_tokens: 500
     });
