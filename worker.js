@@ -1,7 +1,7 @@
 // Cloudflare Worker — بک‌اند همگام‌سازی «دخل و خرج»
 // نیازمند یک KV Namespace با نام DNK_KV که به این Worker باند شده باشه.
-// برای فعال شدن تحلیل هوش مصنوعی، یک Secret به اسم ANTHROPIC_API_KEY
-// از داشبورد Cloudflare (Settings → Variables and Secrets) اضافه کن.
+// تحلیل هوش مصنوعی با Cloudflare Workers AI کار می‌کنه (رایگان، بدون نیاز به کلید API)
+// فقط کافیه Binding از نوع Workers AI با اسم AI به این Worker اضافه بشه (توی wrangler.toml هست).
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -36,7 +36,7 @@ function buildAnalysisPrompt(body) {
 - حتماً این ماه رو با ماه قبل مقایسه کن (بیشتر خرج کرده یا کمتر، درآمدش چطور بوده).
 - به دسته‌ای که بیشترین خرج توش بوده اشاره کن.
 - در پایان یک جمله‌ی کوتاه انگیزشی یا نکته‌ی طنزآمیز درباره‌ی ماه بعد بگو.
-- فقط متن تحلیل رو بنویس، بدون مقدمه یا عنوان اضافه.
+- فقط متن تحلیل رو بنویس، بدون مقدمه یا عنوان اضافه. حتماً فقط به فارسی بنویس.
 
 اطلاعات این ماه:
 - درآمد: ${fmtToman(tm.totalIncome)}
@@ -50,8 +50,8 @@ function buildAnalysisPrompt(body) {
 }
 
 async function handleAnalyze(request, env) {
-  if (!env.ANTHROPIC_API_KEY) {
-    return jsonResponse({ error: "no_api_key" }, 500);
+  if (!env.AI) {
+    return jsonResponse({ error: "no_ai_binding" }, 500);
   }
   let body;
   try {
@@ -64,33 +64,15 @@ async function handleAnalyze(request, env) {
 
   let aiRes;
   try {
-    aiRes = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": env.ANTHROPIC_API_KEY,
-        "anthropic-version": "2023-06-01"
-      },
-      body: JSON.stringify({
-        model: "claude-haiku-4-5-20251001",
-        max_tokens: 400,
-        messages: [{ role: "user", content: prompt }]
-      })
+    aiRes = await env.AI.run("@cf/meta/llama-3.1-8b-instruct", {
+      messages: [{ role: "user", content: prompt }],
+      max_tokens: 500
     });
   } catch (e) {
-    return jsonResponse({ error: "network_error" }, 502);
+    return jsonResponse({ error: "ai_request_failed" }, 502);
   }
 
-  if (!aiRes.ok) {
-    return jsonResponse({ error: "ai_request_failed", status: aiRes.status }, 502);
-  }
-
-  const data = await aiRes.json();
-  const text = (data.content || [])
-    .map((block) => block.text || "")
-    .join("\n")
-    .trim();
-
+  const text = aiRes && aiRes.response ? String(aiRes.response).trim() : "";
   if (!text) {
     return jsonResponse({ error: "empty_response" }, 502);
   }
@@ -146,4 +128,5 @@ export default {
     return new Response("Method not allowed", { status: 405, headers: CORS_HEADERS });
   }
 };
+
 

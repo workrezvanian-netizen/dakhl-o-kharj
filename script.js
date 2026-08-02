@@ -841,10 +841,10 @@ document.getElementById("btnAiAnalyze").addEventListener("click", async () => {
     if (!res.ok || !data || !data.summary) {
       const code = data && data.error;
       let msg = "متأسفانه الان نشد تحلیل کنم، یه‌بار دیگه امتحان کن.";
-      if (code === "no_api_key") {
-        msg = "😅 هنوز کلید هوش مصنوعی روی Worker تنظیم نشده. باید از داشبورد Cloudflare یک Secret به اسم ANTHROPIC_API_KEY اضافه کنی.";
+      if (code === "no_ai_binding") {
+        msg = "😅 هنوز Workers AI به این Worker وصل نشده. باید توی wrangler.toml بخش [ai] رو اضافه کنی و دوباره دیپلوی کنی.";
       } else if (code === "ai_request_failed") {
-        msg = "سرور هوش مصنوعی جواب درستی نداد (شاید کلید API نامعتبره یا اعتبارش تموم شده). یه‌بار دیگه امتحان کن.";
+        msg = "سرور هوش مصنوعی جواب درستی نداد. یه‌بار دیگه امتحان کن.";
       } else if (code === "empty_response" || code === "no summary") {
         msg = "جواب خالی برگشت، یه‌بار دیگه امتحان کن.";
       } else if (res.status === 404) {
