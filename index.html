@@ -19,27 +19,19 @@
 <header class="app-header">
   <div class="header-inner">
     <span class="brand">
-      <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
-        <rect x="2" y="6" width="20" height="13" rx="3" fill="var(--gold)"/>
-        <rect x="2" y="6" width="20" height="4" rx="2" fill="var(--green-deep)"/>
-        <circle cx="17" cy="13" r="2.4" fill="var(--cream)"/>
-      </svg>
-      دخل و خرج
+      <span class="brand-badge">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+          <rect x="2" y="6" width="20" height="13" rx="3" fill="var(--gold)"/>
+          <rect x="2" y="6" width="20" height="4" rx="2" fill="var(--green-deep)"/>
+          <circle cx="17" cy="13" r="2.4" fill="var(--cream)"/>
+        </svg>
+      </span>
+      <span class="brand-text">دخل و خرج</span>
     </span>
     <div class="header-side">
       <img class="watermark" src="icons/watermark-nelin.png" alt="Nelin" />
       <button id="dashSettingsBtn" class="header-settings-btn" aria-label="تنظیمات">
-        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-          <circle cx="12" cy="12" r="3.2"/>
-          <line x1="12" y1="2.5" x2="12" y2="5.3"/>
-          <line x1="12" y1="18.7" x2="12" y2="21.5"/>
-          <line x1="2.5" y1="12" x2="5.3" y2="12"/>
-          <line x1="18.7" y1="12" x2="21.5" y2="12"/>
-          <line x1="5.1" y1="5.1" x2="7.1" y2="7.1"/>
-          <line x1="16.9" y1="16.9" x2="18.9" y2="18.9"/>
-          <line x1="18.9" y1="5.1" x2="16.9" y2="7.1"/>
-          <line x1="7.1" y1="16.9" x2="5.1" y2="18.9"/>
-        </svg>
+        <span class="icon-mask" data-icon="settings" style="width:16px;height:16px;color:var(--gold)"></span>
       </button>
     </div>
   </div>
@@ -50,6 +42,7 @@
   <!-- DASHBOARD -->
   <section id="tab-dashboard" class="tab active">
 
+    <p class="dash-kicker">خلاصه‌ی مالی</p>
     <div class="month-nav">
       <button type="button" id="prevMonthBtn" class="month-nav-btn" title="ماه قبل">
         <span class="icon-mask" data-icon="chevron-right" style="width:18px;height:18px;color:var(--green-deep)"></span>
@@ -96,11 +89,11 @@
   <section id="tab-entry" class="tab">
 
     <div class="entry-mode-toggle" id="entryModeToggle">
-      <button type="button" class="entry-mode-btn selected" data-mode="income">درآمد</button>
-      <button type="button" class="entry-mode-btn" data-mode="expense">مخارج</button>
+      <button type="button" class="entry-mode-btn selected" data-mode="expense">مخارج</button>
+      <button type="button" class="entry-mode-btn" data-mode="income">درآمد</button>
     </div>
 
-    <form id="incomeForm" class="entry-form" data-mode-panel="income">
+    <form id="incomeForm" class="entry-form" data-mode-panel="income" style="display:none">
       <h2>ثبت درآمد جدید</h2>
       <label>مبلغ (تومان)
         <input type="text" id="incomeAmount" inputmode="numeric" placeholder="مثلاً 5,000,000" required>
@@ -130,10 +123,10 @@
       </label>
       <button type="submit" class="btn btn-income">افزودن درآمد</button>
     </form>
-    <div class="section-heading" data-mode-panel="income"><h2>لیست درآمدها</h2></div>
-    <div id="incomeList" class="entry-list" data-mode-panel="income"></div>
+    <div class="section-heading" data-mode-panel="income" style="display:none"><h2>لیست درآمدها</h2></div>
+    <div id="incomeList" class="entry-list" data-mode-panel="income" style="display:none"></div>
 
-    <form id="expenseForm" class="entry-form" data-mode-panel="expense" style="display:none">
+    <form id="expenseForm" class="entry-form" data-mode-panel="expense">
       <h2>ثبت خرج جدید</h2>
       <label>مبلغ (تومان)
         <input type="text" id="expenseAmount" inputmode="numeric" placeholder="مثلاً 150,000" required>
@@ -156,12 +149,26 @@
       </label>
       <button type="submit" class="btn btn-expense">افزودن خرج</button>
     </form>
-    <div class="section-heading" data-mode-panel="expense" style="display:none"><h2>لیست مخارج</h2></div>
-    <div id="expenseList" class="entry-list" data-mode-panel="expense" style="display:none"></div>
+    <div class="section-heading" data-mode-panel="expense"><h2>لیست مخارج</h2></div>
+    <div id="expenseList" class="entry-list" data-mode-panel="expense"></div>
   </section>
 
   <!-- ANALYSIS -->
   <section id="tab-analysis" class="tab">
+    <div class="ai-card" id="aiAnalysisCard">
+      <div class="ai-card-head">
+        <span class="ai-card-icon">
+          <span class="icon-mask" data-icon="sparkles" style="width:16px;height:16px;color:#fff"></span>
+        </span>
+        <div>
+          <h2 style="margin:0">تحلیل هوشمند این ماه</h2>
+          <p class="ai-card-sub">مقایسه با ماه قبل، با یه نگاه بامزه 😄</p>
+        </div>
+      </div>
+      <button type="button" id="btnAiAnalyze" class="btn btn-neutral full">تحلیلم کن</button>
+      <div id="aiAnalysisResult" class="ai-result"></div>
+    </div>
+
     <div class="scale-card">
       <div class="scale-top-row">
         <div class="scale-stat">
@@ -194,21 +201,15 @@
     </div>
 
     <div class="settings-card">
-      <h2>فعالیت مالی این ماه</h2>
-      <div id="monthActivityRings"></div>
-      <button type="button" id="btnAiSummary" class="btn btn-ai full">
-        <span class="icon-mask" data-icon="sparkles" style="width:16px;height:16px;color:#fff"></span>
-        خلاصه‌ی هوشمند این ماه
-      </button>
-      <div id="aiSummaryBox" class="ai-summary-box" hidden></div>
-    </div>
-
-    <div class="settings-card">
-      <h2>تنوع مخارج</h2>
+      <h2>نسبت خرج به درآمد</h2>
       <div class="chart-period-toggle" id="analysisPeriodToggle">
         <button type="button" class="chart-period-btn selected" data-period="month">این ماه</button>
         <button type="button" class="chart-period-btn" data-period="all">کل بازه</button>
       </div>
+      <div id="incomeExpenseChart"></div>
+    </div>
+    <div class="settings-card">
+      <h2>تنوع مخارج</h2>
       <div id="expenseDiversityChart"></div>
     </div>
   </section>

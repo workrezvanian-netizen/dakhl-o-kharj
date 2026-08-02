@@ -1,5 +1,7 @@
 // Cloudflare Worker — بک‌اند همگام‌سازی «دخل و خرج»
 // نیازمند یک KV Namespace با نام DNK_KV که به این Worker باند شده باشه.
+// برای فعال شدن تحلیل هوش مصنوعی، یک Secret به اسم ANTHROPIC_API_KEY
+// از داشبورد Cloudflare (Settings → Variables and Secrets) اضافه کن.
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -7,49 +9,93 @@ const CORS_HEADERS = {
   "Access-Control-Allow-Headers": "Content-Type"
 };
 
+function jsonResponse(obj, status) {
+  return new Response(JSON.stringify(obj), {
+    status: status || 200,
+    headers: { ...CORS_HEADERS, "Content-Type": "application/json" }
+  });
+}
+
 function fmtToman(n) {
-  return Math.round(n || 0).toLocaleString("en-US");
+  return Math.round(Math.abs(n || 0)).toLocaleString("en-US") + " تومان";
 }
 
 function buildAnalysisPrompt(body) {
-  const cur = body.thisMonth || {};
-  const prev = body.lastMonth || {};
-  const monthName = body.monthName || "این ماه";
-  const prevMonthName = body.prevMonthName || "ماه قبل";
+  const tm = body.thisMonth || {};
+  const lm = body.lastMonth || {};
+  const topCats = (tm.categories || []).slice(0, 5)
+    .map((c) => `${c.name}: ${fmtToman(c.amount)}`)
+    .join("، ");
 
-  const catLines = Object.entries(cur.byCategory || {})
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 5)
-    .map(([name, amt]) => `- ${name}: ${fmtToman(amt)} تومان`)
-    .join("\n") || "- ثبت نشده";
+  return `تو یک دستیار مالی شخصی، بامزه و خودمونی هستی که فارسی محاوره‌ای صحبت می‌کنه (نه رسمی).
+بر اساس اطلاعات زیر، یک تحلیل کوتاه (حداکثر ۵-۶ جمله) از وضعیت مالی «این ماه» کاربر بنویس.
 
-  const sourceLines = Object.entries(cur.bySource || {})
-    .sort((a, b) => b[1] - a[1])
-    .map(([name, amt]) => `- ${name}: ${fmtToman(amt)} تومان`)
-    .join("\n") || "- ثبت نشده";
+قوانین:
+- لحن باحال، دوستانه و کمی طنز داشته باش؛ از ۲-۳ ایموجی مناسب استفاده کن.
+- توهین‌آمیز یا سرزنش‌گر نباش، فقط بامزه و همدلانه.
+- حتماً این ماه رو با ماه قبل مقایسه کن (بیشتر خرج کرده یا کمتر، درآمدش چطور بوده).
+- به دسته‌ای که بیشترین خرج توش بوده اشاره کن.
+- در پایان یک جمله‌ی کوتاه انگیزشی یا نکته‌ی طنزآمیز درباره‌ی ماه بعد بگو.
+- فقط متن تحلیل رو بنویس، بدون مقدمه یا عنوان اضافه.
 
-  return `
-دیتای ${monthName}:
-- درآمد کل: ${fmtToman(cur.income)} تومان
-- مخارج کل: ${fmtToman(cur.expense)} تومان
-- مانده: ${fmtToman(cur.balance)} تومان
-- بزرگ‌ترین دسته‌های خرج:
-${catLines}
-- منابع درآمد:
-${sourceLines}
+اطلاعات این ماه:
+- درآمد: ${fmtToman(tm.totalIncome)}
+- مخارج: ${fmtToman(tm.totalExpense)}
+- مانده: ${fmtToman((tm.totalIncome || 0) - (tm.totalExpense || 0))}
+- ریز مخارج بر اساس دسته: ${topCats || "ثبت نشده"}
 
-دیتای ${prevMonthName} (برای مقایسه):
-- درآمد کل: ${fmtToman(prev.income)} تومان
-- مخارج کل: ${fmtToman(prev.expense)} تومان
-- مانده: ${fmtToman(prev.balance)} تومان
+اطلاعات ماه قبل:
+- درآمد: ${fmtToman(lm.totalIncome)}
+- مخارج: ${fmtToman(lm.totalExpense)}`;
+}
 
-یه خلاصه‌ی کوتاه (حداکثر ۵-۶ جمله) بنویس که:
-۱. وضعیت کلیِ ${monthName} رو در یکی-دو جمله بگه
-۲. دخل و خرج رو با ${prevMonthName} مقایسه کنه (بیشتر شده یا کمتر؟ چقدر؟)
-۳. به بزرگ‌ترین دسته‌ی خرج اشاره کنه
-۴. اگه مانده مثبت بود تشویق کن، اگه منفی بود بدون سرزنش و محترمانه هشدار بده
-۵. یه لحن گرم، صمیمی و کمی بامزه داشته باش با یکی-دو ایموجیِ مناسب
-`.trim();
+async function handleAnalyze(request, env) {
+  if (!env.ANTHROPIC_API_KEY) {
+    return jsonResponse({ error: "no_api_key" }, 500);
+  }
+  let body;
+  try {
+    body = await request.json();
+  } catch (e) {
+    return jsonResponse({ error: "invalid json" }, 400);
+  }
+
+  const prompt = buildAnalysisPrompt(body);
+
+  let aiRes;
+  try {
+    aiRes = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": env.ANTHROPIC_API_KEY,
+        "anthropic-version": "2023-06-01"
+      },
+      body: JSON.stringify({
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 400,
+        messages: [{ role: "user", content: prompt }]
+      })
+    });
+  } catch (e) {
+    return jsonResponse({ error: "network_error" }, 502);
+  }
+
+  if (!aiRes.ok) {
+    return jsonResponse({ error: "ai_request_failed", status: aiRes.status }, 502);
+  }
+
+  const data = await aiRes.json();
+  const text = (data.content || [])
+    .map((block) => block.text || "")
+    .join("\n")
+    .trim();
+
+  if (!text) {
+    return jsonResponse({ error: "empty_response" }, 502);
+  }
+
+  return jsonResponse({ summary: text });
 }
 
 export default {
@@ -61,39 +107,7 @@ export default {
     }
 
     if (url.pathname === "/analyze" && request.method === "POST") {
-      let body;
-      try {
-        body = await request.json();
-      } catch (e) {
-        return new Response(JSON.stringify({ error: "invalid json" }), {
-          status: 400,
-          headers: { ...CORS_HEADERS, "Content-Type": "application/json" }
-        });
-      }
-
-      const prompt = buildAnalysisPrompt(body);
-      try {
-        const result = await env.AI.run("@cf/zai-org/glm-4.7-flash", {
-          messages: [
-            {
-              role: "system",
-              content:
-                "تو یه دستیار مالیِ فارسی‌زبان، صمیمی و کمی بامزه‌ای که خلاصه‌ی ماهانه‌ی دخل‌وخرج کاربر رو می‌نویسی. " +
-                "لحنت گرم و دوستانه‌ست، نه رسمی و خشک. از طنز ملایم و ایموجیِ مناسب استفاده کن، ولی سرزنش‌کننده نباش. " +
-                "فقط و فقط متنِ فارسیِ خلاصه رو بنویس؛ بدون مقدمه، بدون عنوان، بدون به‌کاربردن انگلیسی."
-            },
-            { role: "user", content: prompt }
-          ]
-        });
-        return new Response(JSON.stringify({ text: result.response || "" }), {
-          headers: { ...CORS_HEADERS, "Content-Type": "application/json" }
-        });
-      } catch (e) {
-        return new Response(JSON.stringify({ error: "AI request failed" }), {
-          status: 500,
-          headers: { ...CORS_HEADERS, "Content-Type": "application/json" }
-        });
-      }
+      return handleAnalyze(request, env);
     }
 
     if (url.pathname !== "/data") {
@@ -102,10 +116,7 @@ export default {
 
     const code = url.searchParams.get("code");
     if (!code || !/^\d{6}$/.test(code)) {
-      return new Response(JSON.stringify({ error: "invalid code" }), {
-        status: 400,
-        headers: { ...CORS_HEADERS, "Content-Type": "application/json" }
-      });
+      return jsonResponse({ error: "invalid code" }, 400);
     }
 
     const key = `data:${code}`;
@@ -113,10 +124,7 @@ export default {
     if (request.method === "GET") {
       const stored = await env.DNK_KV.get(key);
       if (!stored) {
-        return new Response(JSON.stringify({ error: "not found" }), {
-          status: 404,
-          headers: { ...CORS_HEADERS, "Content-Type": "application/json" }
-        });
+        return jsonResponse({ error: "not found" }, 404);
       }
       return new Response(stored, {
         headers: { ...CORS_HEADERS, "Content-Type": "application/json" }
@@ -128,18 +136,14 @@ export default {
       try {
         body = await request.json();
       } catch (e) {
-        return new Response(JSON.stringify({ error: "invalid json" }), {
-          status: 400,
-          headers: { ...CORS_HEADERS, "Content-Type": "application/json" }
-        });
+        return jsonResponse({ error: "invalid json" }, 400);
       }
       body.updatedAt = Date.now();
       await env.DNK_KV.put(key, JSON.stringify(body));
-      return new Response(JSON.stringify({ ok: true }), {
-        headers: { ...CORS_HEADERS, "Content-Type": "application/json" }
-      });
+      return jsonResponse({ ok: true });
     }
 
     return new Response("Method not allowed", { status: 405, headers: CORS_HEADERS });
   }
 };
+
