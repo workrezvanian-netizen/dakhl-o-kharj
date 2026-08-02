@@ -658,52 +658,69 @@ document.querySelectorAll("#analysisPeriodToggle .chart-period-btn").forEach((bt
   });
 });
 
-function renderDonutChart(containerId, segments, centerText) {
+function renderDonutChart(containerId, segments, centerLabel, centerAmount) {
   const wrap = document.getElementById(containerId);
   const total = segments.reduce((s, x) => s + x.value, 0);
   if (!total) {
     wrap.innerHTML = `<p class="empty-hint">داده‌ای برای این بازه نیست</p>`;
     return;
   }
-  const r = 60, cx = 84, cy = 84, sw = 20;
+  const r = 58, cx = 84, cy = 84, sw = 22;
   const circumference = 2 * Math.PI * r;
   const visible = segments.filter((s) => s.value > 0);
-  const gap = visible.length > 1 ? 6 : 0; // فاصله‌ی کوچیک بینِ قطعه‌ها (px روی محیط دایره)
+  const gap = visible.length > 1 ? 5 : 0;
   let acc = 0;
-  const circles = visible.map((seg) => {
+
+  const gradientDefs = visible.map((seg, i) => `
+    <linearGradient id="grad-${containerId}-${i}" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="${seg.color}" stop-opacity="0.82"/>
+      <stop offset="100%" stop-color="${seg.color}" stop-opacity="1"/>
+    </linearGradient>
+  `).join("");
+
+  const circles = visible.map((seg, i) => {
     const frac = seg.value / total;
     const rawDash = frac * circumference;
     const dash = Math.max(rawDash - gap, 2);
-    const el = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" style="stroke:${seg.color}" stroke-width="${sw}" stroke-linecap="round" stroke-dasharray="${dash} ${circumference - dash}" stroke-dashoffset="${-acc}" transform="rotate(-90 ${cx} ${cy})"></circle>`;
+    const el = `<circle class="donut-seg" cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="url(#grad-${containerId}-${i})" stroke-width="${sw}" stroke-linecap="round" stroke-dasharray="${dash} ${circumference - dash}" stroke-dashoffset="${-acc}" transform="rotate(-90 ${cx} ${cy})"></circle>`;
     acc += rawDash;
     return el;
   }).join("");
 
   const legend = visible.map((seg) => {
     const pct = Math.round((seg.value / total) * 100);
+    const iconHTML = seg.icon
+      ? `<span class="legend-icon" style="background:${seg.color}1f">${iconSpanHTML(seg.icon, `color:${seg.color}`)}</span>`
+      : `<span class="legend-dot" style="background:${seg.color}"></span>`;
     return `
       <div class="chart-legend-row">
-        <span class="legend-dot" style="background:${seg.color}"></span>
+        ${iconHTML}
         <span class="legend-label">${seg.label}</span>
-        <span class="legend-pct" style="background:${seg.color}22;color:${seg.color}">${toPersianDigits(pct)}٪</span>
+        <span class="legend-pct" style="background:${seg.color}1c;color:${seg.color}">${toPersianDigits(pct)}٪</span>
         <span class="legend-amt">${fmtAmount(seg.value)}</span>
       </div>`;
   }).join("");
 
   wrap.innerHTML = `
-    <div class="donut-wrap">
-      <svg viewBox="0 0 168 168" class="donut-svg">
-        <defs>
-          <filter id="donutShadow-${containerId}" x="-30%" y="-30%" width="160%" height="160%">
-            <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#10462B" flood-opacity="0.18"/>
-          </filter>
-        </defs>
-        <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" style="stroke:var(--cream)" stroke-width="${sw}"></circle>
-        <g style="filter:url(#donutShadow-${containerId})">${circles}</g>
-      </svg>
-      <div class="donut-center">${centerText ? `<span class="donut-center-amt">${centerText}</span>` : ""}</div>
+    <div class="donut-card">
+      <div class="donut-wrap">
+        <svg viewBox="0 0 168 168" class="donut-svg">
+          <defs>
+            ${gradientDefs}
+            <filter id="donutShadow-${containerId}" x="-30%" y="-30%" width="160%" height="160%">
+              <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#10462B" flood-opacity="0.15"/>
+            </filter>
+          </defs>
+          <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--cream)" stroke-width="${sw}"></circle>
+          <g style="filter:url(#donutShadow-${containerId})">${circles}</g>
+        </svg>
+        <div class="donut-center">
+          <span class="donut-center-label">${centerLabel}</span>
+          <span class="donut-center-amt">${centerAmount}</span>
+        </div>
+      </div>
+      <div class="chart-legend">${legend}</div>
     </div>
-    <div class="chart-legend">${legend}</div>
   `;
 }
 
@@ -721,16 +738,16 @@ function renderAnalysis() {
   const totalExpense = expenses.reduce((s, x) => s + x.amount, 0);
 
   renderDonutChart("incomeExpenseChart", [
-    { label: "درآمد", value: totalIncome, color: "var(--green)" },
-    { label: "مخارج", value: totalExpense, color: "var(--expense)" }
-  ], `${fmtAmount(totalIncome + totalExpense)}<br>تومان`);
+    { label: "درآمد", value: totalIncome, color: "#1B7A4D" },
+    { label: "مخارج", value: totalExpense, color: "#B3452C" }
+  ], "مجموع تراکنش‌ها", fmtAmount(totalIncome + totalExpense) + " تومان");
 
   const byCat = {};
   expenses.forEach((x) => { byCat[x.category] = (byCat[x.category] || 0) + x.amount; });
   const segments = Object.entries(byCat)
     .sort((a, b) => b[1] - a[1])
-    .map(([name, amt]) => ({ label: name, value: amt, color: catColor(name) }));
-  renderDonutChart("expenseDiversityChart", segments, `${fmtAmount(totalExpense)}<br>تومان`);
+    .map(([name, amt]) => ({ label: name, value: amt, color: catColor(name), icon: catIcon(name) }));
+  renderDonutChart("expenseDiversityChart", segments, "مجموع مخارج", fmtAmount(totalExpense) + " تومان");
 }
 
 // ---------- Sync ----------
