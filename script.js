@@ -845,6 +845,7 @@ document.getElementById("btnAiAnalyze").addEventListener("click", async () => {
         msg = "😅 هنوز Workers AI به این Worker وصل نشده. باید توی wrangler.toml بخش [ai] رو اضافه کنی و دوباره دیپلوی کنی.";
       } else if (code === "ai_request_failed") {
         msg = "سرور هوش مصنوعی جواب درستی نداد. یه‌بار دیگه امتحان کن.";
+        if (data && data.detail) msg += `<br><small style="opacity:.75">جزئیات: ${data.detail}</small>`;
       } else if (code === "empty_response" || code === "no summary") {
         msg = "جواب خالی برگشت، یه‌بار دیگه امتحان کن.";
       } else if (res.status === 404) {

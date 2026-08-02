@@ -69,7 +69,7 @@ async function handleAnalyze(request, env) {
       max_tokens: 500
     });
   } catch (e) {
-    return jsonResponse({ error: "ai_request_failed" }, 502);
+    return jsonResponse({ error: "ai_request_failed", detail: String((e && e.message) || e) }, 502);
   }
 
   const text = aiRes && aiRes.response ? String(aiRes.response).trim() : "";
