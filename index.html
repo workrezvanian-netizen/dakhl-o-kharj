@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>دخل و خرج</title>
+<meta name="theme-color" content="#10462B">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="دخل و خرج">
+<link rel="icon" href="icons/icon-192.png">
+<link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="app-header">
+  <div class="header-inner">
+    <span class="brand">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+        <rect x="2" y="6" width="20" height="13" rx="3" fill="var(--gold)"/>
+        <rect x="2" y="6" width="20" height="4" rx="2" fill="var(--green-deep)"/>
+        <circle cx="17" cy="13" r="2.4" fill="var(--cream)"/>
+      </svg>
+      دخل و خرج
+    </span>
+    <div class="header-side">
+      <img class="watermark" src="icons/watermark-nelin.png" alt="Nelin" />
+      <button id="dashSettingsBtn" class="header-settings-btn" aria-label="تنظیمات">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <circle cx="12" cy="12" r="3.2"/>
+          <line x1="12" y1="2.5" x2="12" y2="5.3"/>
+          <line x1="12" y1="18.7" x2="12" y2="21.5"/>
+          <line x1="2.5" y1="12" x2="5.3" y2="12"/>
+          <line x1="18.7" y1="12" x2="21.5" y2="12"/>
+          <line x1="5.1" y1="5.1" x2="7.1" y2="7.1"/>
+          <line x1="16.9" y1="16.9" x2="18.9" y2="18.9"/>
+          <line x1="18.9" y1="5.1" x2="16.9" y2="7.1"/>
+          <line x1="7.1" y1="16.9" x2="5.1" y2="18.9"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main id="app">
+
+  <!-- DASHBOARD -->
+  <section id="tab-dashboard" class="tab active">
+
+    <div class="month-nav">
+      <button type="button" id="prevMonthBtn" class="month-nav-btn" title="ماه قبل">
+        <span class="icon-mask" data-icon="chevron-right" style="width:18px;height:18px;color:var(--green-deep)"></span>
+      </button>
+      <span id="monthLabel" class="month-nav-label">مرداد</span>
+      <button type="button" id="nextMonthBtn" class="month-nav-btn" title="ماه بعد">
+        <span class="icon-mask" data-icon="chevron-left" style="width:18px;height:18px;color:var(--green-deep)"></span>
+      </button>
+      <button type="button" id="allTimeToggle" class="alltime-toggle">کل بازه</button>
+    </div>
+
+    <div class="section-heading">
+      <h2>مخارج بر اساس دسته</h2>
+      <div class="mini-stat reverse">
+        <span class="mini-stat-text align-left">
+          <span class="mini-stat-label">مخارج</span>
+          <strong id="dashExpenseChip" class="mini-stat-value">۰</strong>
+        </span>
+        <span class="mini-stat-badge expense-badge">
+          <span class="icon-mask" data-icon="trending-down" style="width:14px;height:14px;color:#fff"></span>
+        </span>
+      </div>
+    </div>
+    <p class="quick-hint">برای ثبت سریع خرج، روی هر گروه بزن</p>
+    <div id="categoryBreakdown" class="quick-cat-grid"></div>
+
+    <div class="section-heading">
+      <h2>درآمد بر اساس منبع</h2>
+      <div class="mini-stat reverse">
+        <span class="mini-stat-text align-left">
+          <span class="mini-stat-label">درآمد</span>
+          <strong id="dashIncomeChip" class="mini-stat-value">۰</strong>
+        </span>
+        <span class="mini-stat-badge income-badge">
+          <span class="icon-mask" data-icon="trending-up" style="width:14px;height:14px;color:#fff"></span>
+        </span>
+      </div>
+    </div>
+    <p class="quick-hint">برای ثبت سریع درآمد، روی هر منبع بزن</p>
+    <div id="incomeSourceGrid" class="quick-cat-grid"></div>
+  </section>
+
+  <!-- ENTRY (income + expense merged) -->
+  <section id="tab-entry" class="tab">
+
+    <div class="entry-mode-toggle" id="entryModeToggle">
+      <button type="button" class="entry-mode-btn selected" data-mode="income">درآمد</button>
+      <button type="button" class="entry-mode-btn" data-mode="expense">مخارج</button>
+    </div>
+
+    <form id="incomeForm" class="entry-form" data-mode-panel="income">
+      <h2>ثبت درآمد جدید</h2>
+      <label>مبلغ (تومان)
+        <input type="text" id="incomeAmount" inputmode="numeric" placeholder="مثلاً 5,000,000" required>
+      </label>
+      <label>منبع درآمد
+        <select id="incomeSource">
+          <option value="حقوق">حقوق</option>
+          <option value="پاداش">پاداش</option>
+          <option value="فروش">فروش</option>
+          <option value="هدیه">هدیه</option>
+          <option value="سایر">سایر</option>
+        </select>
+      </label>
+      <label>تاریخ</label>
+      <div class="date-quick-picker" id="incomeDateQuick">
+        <button type="button" class="date-quick-btn selected" data-value="today">امروز</button>
+        <button type="button" class="date-quick-btn" data-value="yesterday">دیروز</button>
+        <button type="button" class="date-quick-btn" data-value="custom">تاریخ دلخواه</button>
+      </div>
+      <div class="jalali-date-picker" id="incomeCustomDate" style="display:none;">
+        <select id="incomeDay"></select>
+        <select id="incomeMonth"></select>
+        <select id="incomeYear"></select>
+      </div>
+      <label>یادداشت (اختیاری)
+        <input type="text" id="incomeNote" placeholder="توضیح کوتاه">
+      </label>
+      <button type="submit" class="btn btn-income">افزودن درآمد</button>
+    </form>
+    <div class="section-heading" data-mode-panel="income"><h2>لیست درآمدها</h2></div>
+    <div id="incomeList" class="entry-list" data-mode-panel="income"></div>
+
+    <form id="expenseForm" class="entry-form" data-mode-panel="expense" style="display:none">
+      <h2>ثبت خرج جدید</h2>
+      <label>مبلغ (تومان)
+        <input type="text" id="expenseAmount" inputmode="numeric" placeholder="مثلاً 150,000" required>
+      </label>
+      <label>گروه (دسته‌بندی)</label>
+      <div class="category-picker" id="expenseCategoryPicker"></div>
+      <label>تاریخ</label>
+      <div class="date-quick-picker" id="expenseDateQuick">
+        <button type="button" class="date-quick-btn selected" data-value="today">امروز</button>
+        <button type="button" class="date-quick-btn" data-value="yesterday">دیروز</button>
+        <button type="button" class="date-quick-btn" data-value="custom">تاریخ دلخواه</button>
+      </div>
+      <div class="jalali-date-picker" id="expenseCustomDate" style="display:none;">
+        <select id="expenseDay"></select>
+        <select id="expenseMonth"></select>
+        <select id="expenseYear"></select>
+      </div>
+      <label>یادداشت (اختیاری)
+        <input type="text" id="expenseNote" placeholder="توضیح کوتاه">
+      </label>
+      <button type="submit" class="btn btn-expense">افزودن خرج</button>
+    </form>
+    <div class="section-heading" data-mode-panel="expense" style="display:none"><h2>لیست مخارج</h2></div>
+    <div id="expenseList" class="entry-list" data-mode-panel="expense" style="display:none"></div>
+  </section>
+
+  <!-- ANALYSIS -->
+  <section id="tab-analysis" class="tab">
+    <div class="scale-card">
+      <div class="scale-top-row">
+        <div class="scale-stat">
+          <span class="scale-stat-badge income-badge">
+            <span class="icon-mask" data-icon="trending-up" style="width:15px;height:15px;color:#fff"></span>
+          </span>
+          <div class="scale-stat-text">
+            <span class="scale-stat-label">درآمد</span>
+            <strong id="dashIncomeTotal" class="scale-stat-value">۰</strong>
+          </div>
+        </div>
+        <div class="scale-stat reverse">
+          <div class="scale-stat-text align-left">
+            <span class="scale-stat-label">مخارج</span>
+            <strong id="dashExpenseTotal" class="scale-stat-value">۰</strong>
+          </div>
+          <span class="scale-stat-badge expense-badge">
+            <span class="icon-mask" data-icon="trending-down" style="width:15px;height:15px;color:#fff"></span>
+          </span>
+        </div>
+      </div>
+      <div class="scale-track">
+        <div id="scaleIncomeBar" class="scale-fill income"></div>
+        <div id="scaleExpenseBar" class="scale-fill expense"></div>
+      </div>
+      <div class="balance-row">
+        <span>مانده</span>
+        <span id="dashBalance" class="balance-amount">۰ تومان</span>
+      </div>
+    </div>
+
+    <div class="settings-card">
+      <h2>نسبت درآمد و مخارج</h2>
+      <div class="chart-period-toggle" id="analysisPeriodToggle">
+        <button type="button" class="chart-period-btn selected" data-period="month">این ماه</button>
+        <button type="button" class="chart-period-btn" data-period="all">کل بازه</button>
+      </div>
+      <div id="incomeExpenseChart"></div>
+    </div>
+    <div class="settings-card">
+      <h2>تنوع مخارج</h2>
+      <div id="expenseDiversityChart"></div>
+    </div>
+  </section>
+
+  <!-- SETTINGS -->
+  <section id="tab-settings" class="tab">
+
+    <details class="settings-group">
+      <summary class="settings-group-title">داده‌ها</summary>
+      <div class="settings-card">
+        <h2>مدیریت دسته‌ها</h2>
+        <form id="categoryForm" class="inline-form">
+          <label>نام گروه جدید
+            <input type="text" id="categoryName" placeholder="مثلاً خوراک، حمل‌ونقل، قبض">
+          </label>
+          <label>آیکون گروه</label>
+          <div class="icon-picker" id="categoryIconPicker"></div>
+          <button type="submit" class="btn btn-neutral full">افزودن گروه</button>
+        </form>
+        <div id="categoryManageList" class="category-manage-list"></div>
+      </div>
+    </details>
+
+    <details class="settings-group">
+      <summary class="settings-group-title">حساب و همگام‌سازی</summary>
+      <div class="settings-card">
+        <h2>همگام‌سازی بین دستگاه‌ها</h2>
+        <button id="syncStatusBtn" class="sync-pill sync-pill-inline" title="وضعیت همگام‌سازی">
+          <span id="syncDot" class="sync-dot"></span>
+          <span id="syncLabel">محلی</span>
+        </button>
+        <p class="hint">
+          این اپ اطلاعات رو روی خود گوشی ذخیره می‌کنه. برای دیدن یک حساب روی چند دستگاه،
+          یک «کد همگام‌سازی» بساز و همون کد رو توی دستگاه دیگه وارد کن.
+        </p>
+        <div class="sync-code-box">
+          <span class="sync-code-label">کد همگام‌سازی شما</span>
+          <div class="sync-code-value" id="syncCodeDisplay">—</div>
+          <div class="sync-actions">
+            <button id="btnGenerateCode" class="btn btn-neutral">ساخت کد جدید</button>
+            <button id="btnCopyCode" class="btn btn-ghost">کپی کد</button>
+          </div>
+        </div>
+        <div class="sync-join">
+          <label>وارد کردن کد از دستگاه دیگر
+            <input type="text" id="joinCodeInput" placeholder="مثلاً 483920" maxlength="6" inputmode="numeric">
+          </label>
+          <button id="btnJoinCode" class="btn btn-income">اتصال با این کد</button>
+        </div>
+        <button id="btnSyncNow" class="btn btn-neutral full">همگام‌سازی الان</button>
+        <p id="syncMsg" class="sync-msg"></p>
+      </div>
+    </details>
+
+    <details class="settings-group">
+      <summary class="settings-group-title">برنامه</summary>
+      <div class="settings-card">
+        <h2>نصب روی صفحه اصلی</h2>
+        <p class="hint">
+          در آیفون: از مرورگر سافاری، دکمه اشتراک‌گذاری را بزنید و «Add to Home Screen» را انتخاب کنید.
+          در اندروید: از منوی مرورگر «Add to Home screen» یا «Install app» را بزنید.
+        </p>
+      </div>
+    </details>
+
+    <details class="settings-group">
+      <summary class="settings-group-title danger">منطقه‌ی خطر</summary>
+      <div class="settings-card danger-zone">
+        <h2>پاک کردن اطلاعات</h2>
+        <button id="btnResetData" class="btn btn-danger full">حذف همه اطلاعات این دستگاه</button>
+      </div>
+    </details>
+
+  </section>
+
+</main>
+
+<nav class="bottom-nav">
+  <button class="nav-btn active" data-tab="dashboard">
+    <svg viewBox="0 0 24 24"><path d="M3 13h4v8H3zM10 8h4v13h-4zM17 3h4v18h-4z"/></svg>
+    <span>داشبورد</span>
+  </button>
+  <button class="nav-btn" data-tab="entry">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>
+    <span>ثبت تراکنش</span>
+  </button>
+  <button class="nav-btn" data-tab="analysis">
+    <svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7"/><path d="M2 20h20"/></svg>
+    <span>آنالیز</span>
+  </button>
+</nav>
+
+<script src="script.js"></script>
+</body>
+</html>
