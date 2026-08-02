@@ -18,8 +18,7 @@ const ICON_CHOICES = [
   "utensils", "car", "receipt", "shopping-bag", "film", "stethoscope",
   "home", "book-open", "gift", "plane", "coffee", "zap",
   "smartphone", "dog", "shirt", "spray-can", "gamepad-2", "baby",
-  "wallet", "dumbbell", "brush", "graduation-cap", "heart-pulse", "package",
-  "credit-card"
+  "wallet", "dumbbell", "brush", "graduation-cap", "heart-pulse", "package"
 ];
 const DEFAULT_CATEGORIES = [
   { name: "خوراک", icon: "utensils" },
@@ -28,10 +27,9 @@ const DEFAULT_CATEGORIES = [
   { name: "خرید", icon: "shopping-bag" },
   { name: "تفریح", icon: "film" },
   { name: "درمان", icon: "stethoscope" },
-  { name: "اقساط", icon: "credit-card" },
   { name: "سایر", icon: "package" }
 ];
-const DEFAULT_ICON_MAP = { "خوراک": "utensils", "حمل‌ونقل": "car", "قبض‌ها": "receipt", "خرید": "shopping-bag", "تفریح": "film", "درمان": "stethoscope", "اقساط": "credit-card", "سایر": "package" };
+const DEFAULT_ICON_MAP = { "خوراک": "utensils", "حمل‌ونقل": "car", "قبض‌ها": "receipt", "خرید": "shopping-bag", "تفریح": "film", "درمان": "stethoscope", "سایر": "package" };
 const INCOME_SOURCE_ICON = { "حقوق": "briefcase", "پاداش": "award", "فروش": "tag", "هدیه": "gift", "سایر": "wallet" };
 const CATEGORY_COLORS = ["#1B7A4D", "#C9A227", "#B3452C", "#5B7CB0", "#8D6AB8", "#3C8C82", "#C97A3D", "#6B7A72"];
 const CARD_PALETTE = [
@@ -660,69 +658,180 @@ document.querySelectorAll("#analysisPeriodToggle .chart-period-btn").forEach((bt
   });
 });
 
-function renderDonutChart(containerId, segments, centerLabel, centerAmount) {
+// ---------- AI monthly summary ----------
+const AI_BTN_DEFAULT_HTML = `<span class="icon-mask" data-icon="sparkles" style="width:16px;height:16px;color:#fff"></span> خلاصه‌ی هوشمند این ماه`;
+
+document.getElementById("btnAiSummary").addEventListener("click", async () => {
+  const btn = document.getElementById("btnAiSummary");
+  const box = document.getElementById("aiSummaryBox");
+  btn.disabled = true;
+  btn.textContent = "در حال تحلیل... ✨";
+  box.hidden = true;
+
+  try {
+    const t = todayJalali();
+    const p = addMonthsJalali(t.jy, t.jm, -1);
+    const cur = computeMonthTotals(t.jy, t.jm);
+    const prevData = computeMonthTotals(p.jy, p.jm);
+    const res = await fetch(`${CONFIG.WORKER_URL}/analyze`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        monthName: JALALI_MONTHS[t.jm - 1],
+        prevMonthName: JALALI_MONTHS[p.jm - 1],
+        thisMonth: cur,
+        lastMonth: prevData
+      })
+    });
+    const data = await res.json();
+    box.innerHTML = data.text
+      ? data.text.replace(/\n/g, "<br>")
+      : "متأسفانه الان نشد تحلیل کنم، یه‌بار دیگه امتحان کن.";
+    box.hidden = false;
+  } catch (e) {
+    box.innerHTML = "خطا در اتصال به سرویس تحلیل. یه‌بار دیگه امتحان کن.";
+    box.hidden = false;
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = AI_BTN_DEFAULT_HTML;
+    applyStaticIcons();
+  }
+});
+
+function renderDonutChart(containerId, segments, centerText) {
   const wrap = document.getElementById(containerId);
   const total = segments.reduce((s, x) => s + x.value, 0);
   if (!total) {
     wrap.innerHTML = `<p class="empty-hint">داده‌ای برای این بازه نیست</p>`;
     return;
   }
-  const r = 58, cx = 84, cy = 84, sw = 22;
+  const r = 60, cx = 84, cy = 84, sw = 20;
   const circumference = 2 * Math.PI * r;
   const visible = segments.filter((s) => s.value > 0);
-  const gap = visible.length > 1 ? 5 : 0;
+  const gap = visible.length > 1 ? 6 : 0; // فاصله‌ی کوچیک بینِ قطعه‌ها (px روی محیط دایره)
   let acc = 0;
-
-  const gradientDefs = visible.map((seg, i) => `
-    <linearGradient id="grad-${containerId}-${i}" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="${seg.color}" stop-opacity="0.82"/>
-      <stop offset="100%" stop-color="${seg.color}" stop-opacity="1"/>
-    </linearGradient>
-  `).join("");
-
-  const circles = visible.map((seg, i) => {
+  const circles = visible.map((seg) => {
     const frac = seg.value / total;
     const rawDash = frac * circumference;
     const dash = Math.max(rawDash - gap, 2);
-    const el = `<circle class="donut-seg" cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="url(#grad-${containerId}-${i})" stroke-width="${sw}" stroke-linecap="round" stroke-dasharray="${dash} ${circumference - dash}" stroke-dashoffset="${-acc}" transform="rotate(-90 ${cx} ${cy})"></circle>`;
+    const el = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" style="stroke:${seg.color}" stroke-width="${sw}" stroke-linecap="round" stroke-dasharray="${dash} ${circumference - dash}" stroke-dashoffset="${-acc}" transform="rotate(-90 ${cx} ${cy})"></circle>`;
     acc += rawDash;
     return el;
   }).join("");
 
   const legend = visible.map((seg) => {
     const pct = Math.round((seg.value / total) * 100);
-    const iconHTML = seg.icon
-      ? `<span class="legend-icon" style="background:${seg.color}1f">${iconSpanHTML(seg.icon, `color:${seg.color}`)}</span>`
-      : `<span class="legend-dot" style="background:${seg.color}"></span>`;
     return `
       <div class="chart-legend-row">
-        ${iconHTML}
+        <span class="legend-dot" style="background:${seg.color}"></span>
         <span class="legend-label">${seg.label}</span>
-        <span class="legend-pct" style="background:${seg.color}1c;color:${seg.color}">${toPersianDigits(pct)}٪</span>
+        <span class="legend-pct" style="background:${seg.color}22;color:${seg.color}">${toPersianDigits(pct)}٪</span>
         <span class="legend-amt">${fmtAmount(seg.value)}</span>
       </div>`;
   }).join("");
 
   wrap.innerHTML = `
-    <div class="donut-card">
-      <div class="donut-wrap">
-        <svg viewBox="0 0 168 168" class="donut-svg">
-          <defs>
-            ${gradientDefs}
-            <filter id="donutShadow-${containerId}" x="-30%" y="-30%" width="160%" height="160%">
-              <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#10462B" flood-opacity="0.15"/>
-            </filter>
-          </defs>
-          <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--cream)" stroke-width="${sw}"></circle>
-          <g style="filter:url(#donutShadow-${containerId})">${circles}</g>
-        </svg>
-        <div class="donut-center">
-          <span class="donut-center-label">${centerLabel}</span>
-          <span class="donut-center-amt">${centerAmount}</span>
-        </div>
-      </div>
-      <div class="chart-legend">${legend}</div>
+    <div class="donut-wrap">
+      <svg viewBox="0 0 168 168" class="donut-svg">
+        <defs>
+          <filter id="donutShadow-${containerId}" x="-30%" y="-30%" width="160%" height="160%">
+            <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#10462B" flood-opacity="0.18"/>
+          </filter>
+        </defs>
+        <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" style="stroke:var(--cream)" stroke-width="${sw}"></circle>
+        <g style="filter:url(#donutShadow-${containerId})">${circles}</g>
+      </svg>
+      <div class="donut-center">${centerText ? `<span class="donut-center-amt">${centerText}</span>` : ""}</div>
     </div>
+    <div class="chart-legend">${legend}</div>
+  `;
+}
+
+function clamp01(x) { return Math.max(0, Math.min(1, x)); }
+
+function computeMonthTotals(jy, jm) {
+  const inMonth = (dateStr) => {
+    const [gy, gm, gd] = dateStr.split("-").map(Number);
+    const j = toJalaali(gy, gm, gd);
+    return j.jy === jy && j.jm === jm;
+  };
+  const incomes = state.incomes.filter((x) => inMonth(x.date));
+  const expenses = state.expenses.filter((x) => inMonth(x.date));
+  const income = incomes.reduce((s, x) => s + x.amount, 0);
+  const expense = expenses.reduce((s, x) => s + x.amount, 0);
+  const byCategory = {};
+  expenses.forEach((x) => { byCategory[x.category] = (byCategory[x.category] || 0) + x.amount; });
+  const bySource = {};
+  incomes.forEach((x) => { bySource[x.source] = (bySource[x.source] || 0) + x.amount; });
+  return { income, expense, balance: income - expense, byCategory, bySource };
+}
+
+function renderActivityRings(cur, prev) {
+  const wrap = document.getElementById("monthActivityRings");
+  if (!cur.income && !cur.expense) {
+    wrap.innerHTML = `<p class="empty-hint">این ماه هنوز چیزی ثبت نشده</p>`;
+    return;
+  }
+  const incomeGrowthRaw = prev.income > 0 ? ((cur.income - prev.income) / prev.income) * 100 : (cur.income > 0 ? 100 : 0);
+  const spendRatioRaw = cur.income > 0 ? (cur.expense / cur.income) * 100 : (cur.expense > 0 ? 100 : 0);
+  const savingsRaw = cur.income > 0 ? (cur.balance / cur.income) * 100 : 0;
+
+  const ringsData = [
+    {
+      r: 68, color: "#2FA97A", colorSoft: "#DCEEE4",
+      fill: clamp01(Math.max(incomeGrowthRaw, 0) / 100),
+      label: "رشد درآمد", value: fmtAmount(cur.income) + " ت",
+      note: prev.income > 0
+        ? (incomeGrowthRaw >= 0 ? `٪${toPersianDigits(Math.round(incomeGrowthRaw))} بیشتر از ماه قبل 📈` : `٪${toPersianDigits(Math.round(Math.abs(incomeGrowthRaw)))} کمتر از ماه قبل`)
+        : "ماه قبل درآمدی ثبت نشده"
+    },
+    {
+      r: 50, color: "#D9534F", colorSoft: "#F6E1DE",
+      fill: clamp01(spendRatioRaw / 100),
+      label: "نسبت خرج به درآمد", value: `٪${toPersianDigits(Math.round(spendRatioRaw))}`,
+      note: spendRatioRaw > 100 ? "بیشتر از درآمدت خرج کردی ⚠️" : "از درآمدِ این ماه خرج شده"
+    },
+    {
+      r: 32, color: "#C9A227", colorSoft: "#F2E7C9",
+      fill: clamp01(Math.max(savingsRaw, 0) / 100),
+      label: "نرخ پس‌انداز", value: cur.balance >= 0 ? `٪${toPersianDigits(Math.round(savingsRaw))}` : `${fmtAmount(Math.abs(cur.balance))}- ت`,
+      note: cur.balance >= 0 ? "از درآمدت پس‌انداز شد 🎉" : "بیشتر از درآمدت خرج کردی"
+    }
+  ];
+
+  const cx = 92, cy = 92, sw = 15, gap = 9;
+  const circles = ringsData.map((ring) => {
+    const circumference = 2 * Math.PI * ring.r;
+    const dash = ring.fill > 0 ? Math.max(ring.fill * circumference - gap, 3) : 0;
+    return `
+      <circle cx="${cx}" cy="${cy}" r="${ring.r}" fill="none" stroke="${ring.colorSoft}" stroke-width="${sw}"></circle>
+      <circle cx="${cx}" cy="${cy}" r="${ring.r}" fill="none" stroke="${ring.color}" stroke-width="${sw}"
+        stroke-linecap="round" stroke-dasharray="${dash} ${circumference - dash}"
+        transform="rotate(-90 ${cx} ${cy})" style="filter:url(#ringShadow)"></circle>`;
+  }).join("");
+
+  const legend = ringsData.map((ring) => `
+    <div class="ring-legend-row">
+      <span class="ring-legend-dot" style="background:${ring.color}"></span>
+      <div class="ring-legend-text">
+        <span class="ring-legend-label">${ring.label}</span>
+        <span class="ring-legend-note">${ring.note}</span>
+      </div>
+      <span class="ring-legend-value" style="color:${ring.color}">${ring.value}</span>
+    </div>`).join("");
+
+  wrap.innerHTML = `
+    <div class="rings-wrap">
+      <svg viewBox="0 0 184 184" class="rings-svg">
+        <defs>
+          <filter id="ringShadow" x="-30%" y="-30%" width="160%" height="160%">
+            <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.22"/>
+          </filter>
+        </defs>
+        ${circles}
+      </svg>
+    </div>
+    <div class="ring-legend">${legend}</div>
   `;
 }
 
@@ -734,22 +843,19 @@ function renderAnalysis() {
     const t = todayJalali();
     return j.jy === t.jy && j.jm === t.jm;
   };
-  const incomes = state.incomes.filter((x) => inPeriod(x.date));
   const expenses = state.expenses.filter((x) => inPeriod(x.date));
-  const totalIncome = incomes.reduce((s, x) => s + x.amount, 0);
   const totalExpense = expenses.reduce((s, x) => s + x.amount, 0);
 
-  renderDonutChart("incomeExpenseChart", [
-    { label: "درآمد", value: totalIncome, color: "#1B7A4D" },
-    { label: "مخارج", value: totalExpense, color: "#B3452C" }
-  ], "مجموع تراکنش‌ها", fmtAmount(totalIncome + totalExpense) + " تومان");
+  const t = todayJalali();
+  const p = addMonthsJalali(t.jy, t.jm, -1);
+  renderActivityRings(computeMonthTotals(t.jy, t.jm), computeMonthTotals(p.jy, p.jm));
 
   const byCat = {};
   expenses.forEach((x) => { byCat[x.category] = (byCat[x.category] || 0) + x.amount; });
   const segments = Object.entries(byCat)
     .sort((a, b) => b[1] - a[1])
-    .map(([name, amt]) => ({ label: name, value: amt, color: catColor(name), icon: catIcon(name) }));
-  renderDonutChart("expenseDiversityChart", segments, "مجموع مخارج", fmtAmount(totalExpense) + " تومان");
+    .map(([name, amt]) => ({ label: name, value: amt, color: catColor(name) }));
+  renderDonutChart("expenseDiversityChart", segments, `${fmtAmount(totalExpense)}<br>تومان`);
 }
 
 // ---------- Sync ----------

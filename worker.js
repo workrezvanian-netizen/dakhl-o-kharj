@@ -7,12 +7,93 @@ const CORS_HEADERS = {
   "Access-Control-Allow-Headers": "Content-Type"
 };
 
+function fmtToman(n) {
+  return Math.round(n || 0).toLocaleString("en-US");
+}
+
+function buildAnalysisPrompt(body) {
+  const cur = body.thisMonth || {};
+  const prev = body.lastMonth || {};
+  const monthName = body.monthName || "این ماه";
+  const prevMonthName = body.prevMonthName || "ماه قبل";
+
+  const catLines = Object.entries(cur.byCategory || {})
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([name, amt]) => `- ${name}: ${fmtToman(amt)} تومان`)
+    .join("\n") || "- ثبت نشده";
+
+  const sourceLines = Object.entries(cur.bySource || {})
+    .sort((a, b) => b[1] - a[1])
+    .map(([name, amt]) => `- ${name}: ${fmtToman(amt)} تومان`)
+    .join("\n") || "- ثبت نشده";
+
+  return `
+دیتای ${monthName}:
+- درآمد کل: ${fmtToman(cur.income)} تومان
+- مخارج کل: ${fmtToman(cur.expense)} تومان
+- مانده: ${fmtToman(cur.balance)} تومان
+- بزرگ‌ترین دسته‌های خرج:
+${catLines}
+- منابع درآمد:
+${sourceLines}
+
+دیتای ${prevMonthName} (برای مقایسه):
+- درآمد کل: ${fmtToman(prev.income)} تومان
+- مخارج کل: ${fmtToman(prev.expense)} تومان
+- مانده: ${fmtToman(prev.balance)} تومان
+
+یه خلاصه‌ی کوتاه (حداکثر ۵-۶ جمله) بنویس که:
+۱. وضعیت کلیِ ${monthName} رو در یکی-دو جمله بگه
+۲. دخل و خرج رو با ${prevMonthName} مقایسه کنه (بیشتر شده یا کمتر؟ چقدر؟)
+۳. به بزرگ‌ترین دسته‌ی خرج اشاره کنه
+۴. اگه مانده مثبت بود تشویق کن، اگه منفی بود بدون سرزنش و محترمانه هشدار بده
+۵. یه لحن گرم، صمیمی و کمی بامزه داشته باش با یکی-دو ایموجیِ مناسب
+`.trim();
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
     if (request.method === "OPTIONS") {
       return new Response(null, { headers: CORS_HEADERS });
+    }
+
+    if (url.pathname === "/analyze" && request.method === "POST") {
+      let body;
+      try {
+        body = await request.json();
+      } catch (e) {
+        return new Response(JSON.stringify({ error: "invalid json" }), {
+          status: 400,
+          headers: { ...CORS_HEADERS, "Content-Type": "application/json" }
+        });
+      }
+
+      const prompt = buildAnalysisPrompt(body);
+      try {
+        const result = await env.AI.run("@cf/zai-org/glm-4.7-flash", {
+          messages: [
+            {
+              role: "system",
+              content:
+                "تو یه دستیار مالیِ فارسی‌زبان، صمیمی و کمی بامزه‌ای که خلاصه‌ی ماهانه‌ی دخل‌وخرج کاربر رو می‌نویسی. " +
+                "لحنت گرم و دوستانه‌ست، نه رسمی و خشک. از طنز ملایم و ایموجیِ مناسب استفاده کن، ولی سرزنش‌کننده نباش. " +
+                "فقط و فقط متنِ فارسیِ خلاصه رو بنویس؛ بدون مقدمه، بدون عنوان، بدون به‌کاربردن انگلیسی."
+            },
+            { role: "user", content: prompt }
+          ]
+        });
+        return new Response(JSON.stringify({ text: result.response || "" }), {
+          headers: { ...CORS_HEADERS, "Content-Type": "application/json" }
+        });
+      } catch (e) {
+        return new Response(JSON.stringify({ error: "AI request failed" }), {
+          status: 500,
+          headers: { ...CORS_HEADERS, "Content-Type": "application/json" }
+        });
+      }
     }
 
     if (url.pathname !== "/data") {
