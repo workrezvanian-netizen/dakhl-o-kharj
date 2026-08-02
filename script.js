@@ -350,7 +350,26 @@ function switchTab(tab) {
   document.querySelectorAll(".tab").forEach((t) => t.classList.remove("active"));
   document.querySelectorAll(".nav-btn").forEach((b) => b.classList.remove("active"));
   document.getElementById("tab-" + tab).classList.add("active");
-  document.querySelector(`.nav-btn[data-tab="${tab}"]`).classList.add("active");
+  const navBtn = document.querySelector(`.nav-btn[data-tab="${tab}"]`);
+  if (navBtn) navBtn.classList.add("active");
+}
+
+document.getElementById("dashSettingsBtn").addEventListener("click", () => switchTab("settings"));
+
+// ---------- Entry mode toggle (income/expense merged tab) ----------
+document.querySelectorAll("#entryModeToggle .entry-mode-btn").forEach((btn) => {
+  btn.addEventListener("click", () => setEntryMode(btn.dataset.mode));
+});
+function setEntryMode(mode) {
+  document.querySelectorAll("#entryModeToggle .entry-mode-btn").forEach((b) => {
+    b.classList.toggle("selected", b.dataset.mode === mode);
+  });
+  document.querySelectorAll('[data-mode-panel="income"]').forEach((el) => {
+    el.style.display = mode === "income" ? "" : "none";
+  });
+  document.querySelectorAll('[data-mode-panel="expense"]').forEach((el) => {
+    el.style.display = mode === "expense" ? "" : "none";
+  });
 }
 
 // ---------- Income form ----------
@@ -565,6 +584,8 @@ function renderDashboard() {
 
   document.getElementById("dashIncomeTotal").textContent = fmtAmount(totalIncome);
   document.getElementById("dashExpenseTotal").textContent = fmtAmount(totalExpense);
+  document.getElementById("dashIncomeChip").textContent = fmtAmount(totalIncome);
+  document.getElementById("dashExpenseChip").textContent = fmtAmount(totalExpense);
   const balEl = document.getElementById("dashBalance");
   balEl.textContent = fmtAmount(balance) + " تومان";
   balEl.classList.toggle("negative", balance < 0);
@@ -613,14 +634,16 @@ function renderDashboard() {
 function quickAddExpense(categoryName) {
   selectedExpenseCategoryName = categoryName;
   renderExpenseCategoryPicker();
-  switchTab("expense");
+  switchTab("entry");
+  setEntryMode("expense");
   setTimeout(() => document.getElementById("expenseAmount").focus(), 150);
 }
 
 function quickAddIncome(source) {
   const sel = document.getElementById("incomeSource");
   if ([...sel.options].some((o) => o.value === source)) sel.value = source;
-  switchTab("income");
+  switchTab("entry");
+  setEntryMode("income");
   setTimeout(() => document.getElementById("incomeAmount").focus(), 150);
 }
 
@@ -642,15 +665,17 @@ function renderDonutChart(containerId, segments, centerText) {
     wrap.innerHTML = `<p class="empty-hint">داده‌ای برای این بازه نیست</p>`;
     return;
   }
-  const r = 62, cx = 80, cy = 80, sw = 24;
+  const r = 60, cx = 84, cy = 84, sw = 20;
   const circumference = 2 * Math.PI * r;
-  let acc = 0;
   const visible = segments.filter((s) => s.value > 0);
+  const gap = visible.length > 1 ? 6 : 0; // فاصله‌ی کوچیک بینِ قطعه‌ها (px روی محیط دایره)
+  let acc = 0;
   const circles = visible.map((seg) => {
     const frac = seg.value / total;
-    const dash = frac * circumference;
-    const el = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" style="stroke:${seg.color}" stroke-width="${sw}" stroke-dasharray="${dash} ${circumference - dash}" stroke-dashoffset="${-acc}" transform="rotate(-90 ${cx} ${cy})"></circle>`;
-    acc += dash;
+    const rawDash = frac * circumference;
+    const dash = Math.max(rawDash - gap, 2);
+    const el = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" style="stroke:${seg.color}" stroke-width="${sw}" stroke-linecap="round" stroke-dasharray="${dash} ${circumference - dash}" stroke-dashoffset="${-acc}" transform="rotate(-90 ${cx} ${cy})"></circle>`;
+    acc += rawDash;
     return el;
   }).join("");
 
@@ -660,16 +685,21 @@ function renderDonutChart(containerId, segments, centerText) {
       <div class="chart-legend-row">
         <span class="legend-dot" style="background:${seg.color}"></span>
         <span class="legend-label">${seg.label}</span>
-        <span class="legend-pct">${toPersianDigits(pct)}٪</span>
+        <span class="legend-pct" style="background:${seg.color}22;color:${seg.color}">${toPersianDigits(pct)}٪</span>
         <span class="legend-amt">${fmtAmount(seg.value)}</span>
       </div>`;
   }).join("");
 
   wrap.innerHTML = `
     <div class="donut-wrap">
-      <svg viewBox="0 0 160 160" class="donut-svg">
-        <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" style="stroke:var(--border)" stroke-width="${sw}"></circle>
-        ${circles}
+      <svg viewBox="0 0 168 168" class="donut-svg">
+        <defs>
+          <filter id="donutShadow-${containerId}" x="-30%" y="-30%" width="160%" height="160%">
+            <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#10462B" flood-opacity="0.18"/>
+          </filter>
+        </defs>
+        <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" style="stroke:var(--cream)" stroke-width="${sw}"></circle>
+        <g style="filter:url(#donutShadow-${containerId})">${circles}</g>
       </svg>
       <div class="donut-center">${centerText ? `<span class="donut-center-amt">${centerText}</span>` : ""}</div>
     </div>
