@@ -1,7 +1,7 @@
 :root {
-  --green-deep: #10462B;
-  --green: #1B7A4D;
-  --green-soft: #E4F0E7;
+  --green-deep: #14524E;
+  --green: #2C8C83;
+  --green-soft: #E2F1EE;
   --gold: #C9A227;
   --gold-soft: #F3E7BE;
   --expense: #B3452C;
@@ -45,7 +45,7 @@ h2 {
   position: fixed;
   inset: 0;
   z-index: 999;
-  background: linear-gradient(160deg, var(--green-deep) 0%, #0B3320 100%);
+  background: linear-gradient(160deg, var(--green-deep) 0%, #0A332F 100%);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -91,23 +91,23 @@ h2 {
   gap: 6px;
 }
 .splash-icon {
-  width: 108px;
-  height: 108px;
-  border-radius: 26px;
-  box-shadow: 0 14px 34px rgba(0,0,0,0.35);
-  margin-bottom: 18px;
+  width: 216px;
+  height: 216px;
+  border-radius: 46px;
+  box-shadow: 0 18px 40px rgba(0,0,0,0.35);
+  margin-bottom: 22px;
   animation: splash-pop .6s cubic-bezier(.34,1.56,.64,1) both;
 }
 .splash-title {
   margin: 0;
-  font-size: 22px;
+  font-size: 30px;
   font-weight: 800;
   color: #fff;
   animation: splash-fade-up .5s ease .15s both;
 }
 .splash-subtitle {
-  margin: 4px 0 0;
-  font-size: 13px;
+  margin: 6px 0 0;
+  font-size: 15px;
   color: var(--gold-soft);
   letter-spacing: 0.03em;
   animation: splash-fade-up .5s ease .28s both;
@@ -126,7 +126,7 @@ h2 {
   position: sticky;
   top: 0;
   z-index: 20;
-  background: var(--green-deep);
+  background: linear-gradient(135deg, var(--green-deep) 0%, #1A6862 100%);
   padding: env(safe-area-inset-top) 0 0 0;
 }
 .header-inner {

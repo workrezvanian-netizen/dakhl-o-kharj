@@ -12,7 +12,7 @@ const CONFIG = {
   setTimeout(() => {
     splash.classList.add("splash-hide");
     setTimeout(() => splash.remove(), 500);
-  }, 1100);
+  }, 2000);
 })();
 
 const STORAGE_KEY = "dnk_data_v1";
@@ -41,20 +41,20 @@ const DEFAULT_CATEGORIES = [
 ];
 const DEFAULT_ICON_MAP = { "خوراک": "utensils", "حمل‌ونقل": "car", "قبض‌ها": "receipt", "خرید": "shopping-bag", "تفریح": "film", "درمان": "stethoscope", "سایر": "package" };
 const INCOME_SOURCE_ICON = { "حقوق": "briefcase", "پاداش": "award", "فروش": "tag", "هدیه": "gift", "سایر": "wallet" };
-const CATEGORY_COLORS = ["#1B7A4D", "#C9A227", "#B3452C", "#5B7CB0", "#8D6AB8", "#3C8C82", "#C97A3D", "#6B7A72"];
+const CATEGORY_COLORS = ["#2C8C83", "#C9A227", "#B3452C", "#5B7CB0", "#8D6AB8", "#3C8C82", "#C97A3D", "#6B7A72"];
 const CARD_PALETTE = [
   { bg: "#FBEED9", icon: "#E8A83C" },
   { bg: "#DCEBFB", icon: "#3B82C4" },
   { bg: "#FBE4D8", icon: "#E0793A" },
   { bg: "#EDE1F7", icon: "#9B6FC9" },
   { bg: "#FBDCE0", icon: "#D9534F" },
-  { bg: "#DFF3EA", icon: "#2FA97A" },
+  { bg: "#DFF3F0", icon: "#2C8C83" },
   { bg: "#E4EFE0", icon: "#6B8E5A" },
   { bg: "#E7E7EF", icon: "#6B6FA0" }
 ];
 const INCOME_CARD_PALETTE = [
-  { bg: "#DDF3EA", icon: "#1B7A4D" },
-  { bg: "#E7F5EF", icon: "#3C8C82" },
+  { bg: "#DDF3F0", icon: "#14524E" },
+  { bg: "#E7F5F3", icon: "#3C8C82" },
   { bg: "#E3F1DE", icon: "#6B8E5A" },
   { bg: "#FBF2D8", icon: "#C9A227" },
   { bg: "#E4EEF6", icon: "#5B7CB0" }
@@ -745,7 +745,7 @@ function renderDonutChart(containerId, segments, centerText) {
       <svg viewBox="0 0 168 168" class="donut-svg">
         <defs>
           <filter id="donutShadow-${containerId}" x="-30%" y="-30%" width="160%" height="160%">
-            <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#10462B" flood-opacity="0.18"/>
+            <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#14524E" flood-opacity="0.18"/>
           </filter>
         </defs>
         <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" style="stroke:var(--cream)" stroke-width="${sw}"></circle>
@@ -788,7 +788,7 @@ function renderActivityRings(cur, prev) {
 
   const ringsData = [
     {
-      r: 68, color: "#2FA97A", colorSoft: "#DCEEE4",
+      r: 68, color: "#2C8C83", colorSoft: "#DCEEEC",
       fill: clamp01(Math.max(incomeGrowthRaw, 0) / 100),
       label: "رشد درآمد", value: fmtAmount(cur.income) + " ت",
       note: prev.income > 0
