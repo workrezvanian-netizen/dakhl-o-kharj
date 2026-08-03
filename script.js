@@ -5,6 +5,16 @@ const CONFIG = {
   WORKER_URL: "https://dakhl-o-kharj.work-rezvanian.workers.dev"
 };
 
+// ---------- Splash screen ----------
+(function () {
+  const splash = document.getElementById("splashScreen");
+  if (!splash) return;
+  setTimeout(() => {
+    splash.classList.add("splash-hide");
+    setTimeout(() => splash.remove(), 500);
+  }, 1100);
+})();
+
 const STORAGE_KEY = "dnk_data_v1";
 const ICON_CDN_VERSION = "0.400.0";
 function iconUrl(key) {
