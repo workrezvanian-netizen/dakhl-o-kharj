@@ -583,19 +583,12 @@ function entryRowHTML(x, type) {
 }
 
 // ---------- Dashboard month navigation ----------
-let dashboardMode = "month"; // "month" | "all"
+let dashboardMode = "month";
 let viewedMonth = todayJalali();
 
 function updateMonthLabel() {
   const label = document.getElementById("monthLabel");
-  const toggle = document.getElementById("allTimeToggle");
-  if (dashboardMode === "all") {
-    label.textContent = "همه تراکنش‌ها";
-    toggle.classList.add("active");
-  } else {
-    label.textContent = JALALI_MONTHS[viewedMonth.jm - 1];
-    toggle.classList.remove("active");
-  }
+  label.textContent = JALALI_MONTHS[viewedMonth.jm - 1];
 }
 
 document.getElementById("prevMonthBtn").addEventListener("click", () => {
@@ -606,11 +599,6 @@ document.getElementById("prevMonthBtn").addEventListener("click", () => {
 document.getElementById("nextMonthBtn").addEventListener("click", () => {
   dashboardMode = "month";
   viewedMonth = addMonthsJalali(viewedMonth.jy, viewedMonth.jm, 1);
-  renderDashboard();
-});
-document.getElementById("allTimeToggle").addEventListener("click", () => {
-  dashboardMode = dashboardMode === "all" ? "month" : "all";
-  if (dashboardMode === "month") viewedMonth = todayJalali();
   renderDashboard();
 });
 

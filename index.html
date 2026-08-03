@@ -48,7 +48,6 @@
   <!-- DASHBOARD -->
   <section id="tab-dashboard" class="tab active">
 
-    <p class="dash-kicker">خلاصه‌ی مالی</p>
     <div class="month-nav">
       <button type="button" id="prevMonthBtn" class="month-nav-btn" title="ماه قبل">
         <span class="icon-mask" data-icon="chevron-right" style="width:18px;height:18px;color:var(--green-deep)"></span>
@@ -57,11 +56,10 @@
       <button type="button" id="nextMonthBtn" class="month-nav-btn" title="ماه بعد">
         <span class="icon-mask" data-icon="chevron-left" style="width:18px;height:18px;color:var(--green-deep)"></span>
       </button>
-      <button type="button" id="allTimeToggle" class="alltime-toggle">کل بازه</button>
     </div>
 
     <div class="section-heading">
-      <h2>مخارج بر اساس دسته</h2>
+      <h2>مخارج</h2>
       <div class="mini-stat reverse">
         <span class="mini-stat-text align-left">
           <span class="mini-stat-label">مخارج</span>
@@ -75,7 +73,7 @@
     <div id="categoryBreakdown" class="quick-cat-grid"></div>
 
     <div class="section-heading">
-      <h2>درآمد بر اساس منبع</h2>
+      <h2>درآمد</h2>
       <div class="mini-stat reverse">
         <span class="mini-stat-text align-left">
           <span class="mini-stat-label">درآمد</span>
@@ -222,9 +220,8 @@
   <section id="tab-settings" class="tab">
 
     <details class="settings-group">
-      <summary class="settings-group-title">داده‌ها</summary>
+      <summary class="settings-group-title">مدیریت دسته‌ها</summary>
       <div class="settings-card">
-        <h2>مدیریت دسته‌ها</h2>
         <form id="categoryForm" class="inline-form">
           <label>نام گروه جدید
             <input type="text" id="categoryName" placeholder="مثلاً خوراک، حمل‌ونقل، قبض">
