@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>دخل و خرج</title>
-<meta name="theme-color" content="#163F3C">
+<meta name="theme-color" content="#408882">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -14,31 +14,25 @@
 <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css">
 <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="bg-3d Clay-Cream">
 
-<div id="welcomeScreen" class="welcome-screen">
-  <div id="welcomeBg" class="welcome-bg"></div>
-  <div class="welcome-content">
-    <img id="welcomeWatermark" class="welcome-watermark" src="icons/watermark-nelin.png" alt="Nelin" />
-    <img id="welcomeIconImg" class="welcome-icon-img" src="icons/icon-192.png" alt="" />
-    <div id="welcomeBrandText" class="welcome-brand-text">دخل و خرج</div>
-    <div id="welcomeGreeting" class="welcome-greeting">خوش آمدید</div>
-  </div>
-</div>
-
-<header class="app-header">
-  <div class="header-inner">
-    <span class="brand" id="headerBrand">
-      <span class="brand-badge" id="headerBrandBadge">
-        <img src="icons/icon-192.png" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit" />
-      </span>
-      <span class="brand-text">دخل و خرج</span>
-    </span>
-    <div class="header-side">
-      <img id="headerWatermark" class="watermark" src="icons/watermark-nelin.png" alt="Nelin" />
-      <button id="dashSettingsBtn" class="header-settings-btn" aria-label="تنظیمات">
-        <span class="icon-mask" data-icon="settings" style="width:16px;height:16px;color:var(--gold)"></span>
-      </button>
+<header class="app-header-3d Clay-Neumorphic Pill-Neumorphic">
+  <div class="header-outer Pill-shaped Neumorphic-soft Outward-shadow Clay-Teal-dark">
+    <div class="header-inner Neumorphic-hard Clay-Teal-light">
+      <div class="header-left Pill-Neumorphic">
+        <span class="Nelin-Watermark Hand-drawn Georgia-font Neumorphic-soft Outward-shadow">Nelin</span>
+        <button id="dashSettingsBtn" class="header-settings-btn Circle-shaped Neumorphic-soft Inward-shadow" aria-label="تنظیمات">
+          ⚙
+        </button>
+      </div>
+      <div class="header-center Pill-Neumorphic Neumorphic-hard Clay-Teal-light">
+        دخل و خرج
+      </div>
+      <div class="header-right Pill-Neumorphic Outward-shadow Neumorphic-hard Clay-Teal-light">
+        <span class="Icon-Pill Circle-shaped Neumorphic-soft Inward-shadow">
+          <img src="icons/icon-192.png" alt="" style="width: 100%; height: 100%; border-radius: 50%" />
+        </span>
+      </div>
     </div>
   </div>
 </header>
@@ -48,60 +42,64 @@
   <!-- DASHBOARD -->
   <section id="tab-dashboard" class="tab active">
 
-    <div class="month-nav">
-      <button type="button" id="prevMonthBtn" class="month-nav-btn" title="ماه قبل">
-        <span class="icon-mask" data-icon="chevron-right" style="width:18px;height:18px;color:var(--green-deep)"></span>
+    <div class="month-nav-pill-shaped Neumorphic-soft Clay-Cream Outward-shadow">
+      <button type="button" id="prevMonthBtn" class="month-nav-btn Circle-shaped Neumorphic-soft Inward-shadow" title="ماه قبل">
+        <span class="icon-mask Clay-Teal-dark" data-icon="chevron-right" style="width: 20px; height: 20px; color: var(--green-deep);"></span>
       </button>
-      <span id="monthLabel" class="month-nav-label">مرداد</span>
-      <button type="button" id="nextMonthBtn" class="month-nav-btn" title="ماه بعد">
-        <span class="icon-mask" data-icon="chevron-left" style="width:18px;height:18px;color:var(--green-deep)"></span>
+      <span id="monthLabel" class="month-nav-label Georgia-font Neumorphic-hard Clay-Teal-light">مرداد</span>
+      <button type="button" id="nextMonthBtn" class="month-nav-btn Circle-shaped Neumorphic-soft Inward-shadow" title="ماه بعد">
+        <span class="icon-mask Clay-Teal-dark" data-icon="chevron-left" style="width: 20px; height: 20px; color: var(--green-deep);"></span>
       </button>
     </div>
 
-    <div class="section-heading">
+    <div class="section-heading Pill-shaped Neumorphic-soft Outward-shadow Clay-Cream-soft">
       <h2>مخارج</h2>
-      <div class="mini-stat reverse">
-        <span class="mini-stat-text align-left">
+    </div>
+    <div class="Quick-Expense-Pill Pill-shaped Neumorphic-soft Outward-shadow Clay-Cream-soft">
+      <div class="mini-stat reverse Neumorphic-hard Clay-Cream-soft" style="border: none; box-shadow: none;">
+        <span class="mini-stat-text Georgia-font Neumorphic-hard Clay-Teal-light" style="padding: 0 12px; margin-top: 4px; border-radius: 999px;">
           <span class="mini-stat-label">مخارج</span>
-          <strong id="dashExpenseChip" class="mini-stat-value">۰</strong>
+          <strong id="dashExpenseChip" class="mini-stat-value Georgia-font" style="font-size: 20px">۶۳۶,۰۰۰</strong>
         </span>
-        <span class="mini-stat-badge expense-badge">
-          <span class="icon-mask" data-icon="trending-down" style="width:18px;height:18px;color:#fff"></span>
+        <span class="mini-stat-badge Pill-shaped Neumorphic-soft Inward-shadow Clay-Red-Coral" style="border: none;">
+          📉
         </span>
       </div>
     </div>
-    <div id="categoryBreakdown" class="quick-cat-grid"></div>
+    <div id="categoryBreakdown" class="quick-cat-grid-pill-shaped Neumorphic-soft Outward-shadow Clay-Cream-soft"></div>
 
-    <div class="section-heading">
+    <div class="section-heading Pill-shaped Neumorphic-soft Outward-shadow Clay-Cream-soft">
       <h2>درآمد</h2>
-      <div class="mini-stat reverse">
-        <span class="mini-stat-text align-left">
+    </div>
+    <div class="Quick-Income-Pill Pill-shaped Neumorphic-soft Outward-shadow Clay-Cream-soft">
+      <div class="mini-stat reverse Neumorphic-hard Clay-Cream-soft" style="border: none; box-shadow: none;">
+        <span class="mini-stat-text Georgia-font Neumorphic-hard Clay-Teal-light" style="padding: 0 12px; margin-top: 4px; border-radius: 999px;">
           <span class="mini-stat-label">درآمد</span>
-          <strong id="dashIncomeChip" class="mini-stat-value">۰</strong>
+          <strong id="dashIncomeChip" class="mini-stat-value Georgia-font" style="font-size: 20px">۰</strong>
         </span>
-        <span class="mini-stat-badge income-badge">
-          <span class="icon-mask" data-icon="trending-up" style="width:18px;height:18px;color:#fff"></span>
+        <span class="mini-stat-badge Pill-shaped Neumorphic-soft Inward-shadow Clay-Teal-light" style="border: none;">
+          📈
         </span>
       </div>
     </div>
-    <div id="incomeSourceGrid" class="quick-cat-grid"></div>
+    <div id="incomeSourceGrid" class="quick-cat-grid-pill-shaped Neumorphic-soft Outward-shadow Clay-Cream-soft"></div>
   </section>
 
   <!-- ENTRY (income + expense merged) -->
   <section id="tab-entry" class="tab">
 
-    <div class="entry-mode-toggle" id="entryModeToggle">
-      <button type="button" class="entry-mode-btn selected" data-mode="expense">مخارج</button>
-      <button type="button" class="entry-mode-btn" data-mode="income">درآمد</button>
+    <div class="entry-mode-toggle-pill-shaped Neumorphic-soft Outward-shadow Clay-Cream-soft" id="entryModeToggle">
+      <button type="button" class="entry-mode-btn-clay Selected-Teal Pill-shaped Neumorphic-hard Clay-Teal-light" data-mode="expense">مخارج</button>
+      <button type="button" class="entry-mode-btn-clay Pill-shaped Neumorphic-hard Clay-Teal-light" data-mode="income">درآمد</button>
     </div>
 
-    <form id="incomeForm" class="entry-form" data-mode-panel="income" style="display:none">
+    <form id="incomeForm" class="entry-form-pill-shaped Neumorphic-soft Outward-shadow Clay-Cream-soft" data-mode-panel="income" style="display:none">
       <h2>ثبت درآمد جدید</h2>
       <label>مبلغ (تومان)
-        <input type="text" id="incomeAmount" inputmode="numeric" placeholder="مثلاً 5,000,000" required>
+        <input type="text" id="incomeAmount" inputmode="numeric" placeholder="مثلاً 5,000,000" required class="Pill-shaped Neumorphic-soft Inward-shadow Clay-Cream">
       </label>
       <label>منبع درآمد
-        <select id="incomeSource">
+        <select id="incomeSource" class="Pill-shaped Neumorphic-soft Inward-shadow Clay-Cream">
           <option value="حقوق">حقوق</option>
           <option value="پاداش">پاداش</option>
           <option value="فروش">فروش</option>
@@ -110,107 +108,107 @@
         </select>
       </label>
       <label>تاریخ</label>
-      <div class="date-quick-picker" id="incomeDateQuick">
-        <button type="button" class="date-quick-btn selected" data-value="today">امروز</button>
-        <button type="button" class="date-quick-btn" data-value="yesterday">دیروز</button>
-        <button type="button" class="date-quick-btn" data-value="custom">تاریخ دلخواه</button>
+      <div class="date-quick-picker-clay-soft Pill-shaped Neumorphic-soft Outward-shadow Clay-Cream-soft" id="incomeDateQuick">
+        <button type="button" class="date-quick-btn-clay Selected-Teal Pill-shaped Neumorphic-soft Inward-shadow Clay-Teal-dark" data-value="today">امروز</button>
+        <button type="button" class="date-quick-btn-clay Pill-shaped Neumorphic-soft Inward-shadow Clay-Cream" data-value="yesterday">دیروز</button>
+        <button type="button" class="date-quick-btn-clay Pill-shaped Neumorphic-soft Inward-shadow Clay-Cream" data-value="custom">تاریخ دلخواه</button>
       </div>
       <div class="jalali-date-picker" id="incomeCustomDate" style="display:none;">
-        <select id="incomeDay"></select>
-        <select id="incomeMonth"></select>
-        <select id="incomeYear"></select>
+        <select id="incomeDay" class="Pill-shaped Neumorphic-soft Inward-shadow Clay-Cream"></select>
+        <select id="incomeMonth" class="Pill-shaped Neumorphic-soft Inward-shadow Clay-Cream"></select>
+        <select id="incomeYear" class="Pill-shaped Neumorphic-soft Inward-shadow Clay-Cream"></select>
       </div>
       <label>یادداشت (اختیاری)
-        <input type="text" id="incomeNote" placeholder="توضیح کوتاه">
+        <input type="text" id="incomeNote" placeholder="توضیح کوتاه" class="Pill-shaped Neumorphic-soft Inward-shadow Clay-Cream">
       </label>
-      <button type="submit" class="btn btn-income">افزودن درآمد</button>
+      <button type="submit" class="btn-clay Pill-shaped Neumorphic-soft Outward-shadow Clay-Teal-dark full">افزودن درآمد</button>
     </form>
-    <div class="section-heading" data-mode-panel="income" style="display:none"><h2>لیست درآمدها</h2></div>
-    <div id="incomeList" class="entry-list" data-mode-panel="income" style="display:none"></div>
+    <div class="section-heading Pill-shaped Neumorphic-soft Outward-shadow Clay-Cream-soft" data-mode-panel="income" style="display:none"><h2>لیست درآمدها</h2></div>
+    <div id="incomeList" class="entry-list-pill-shaped Neumorphic-soft Outward-shadow Clay-Cream-soft" data-mode-panel="income" style="display:none"></div>
 
-    <form id="expenseForm" class="entry-form" data-mode-panel="expense">
+    <form id="expenseForm" class="entry-form-pill-shaped Neumorphic-soft Outward-shadow Clay-Cream-soft" data-mode-panel="expense">
       <h2>ثبت خرج جدید</h2>
       <label>مبلغ (تومان)
-        <input type="text" id="expenseAmount" inputmode="numeric" placeholder="مثلاً 150,000" required>
+        <input type="text" id="expenseAmount" inputmode="numeric" placeholder="مثلاً 150,000" required class="Pill-shaped Neumorphic-soft Inward-shadow Clay-Cream">
       </label>
       <label>گروه (دسته‌بندی)</label>
-      <div class="category-picker" id="expenseCategoryPicker"></div>
+      <div class="category-picker-clay-soft Pill-shaped Neumorphic-soft Outward-shadow Clay-Cream-soft" id="expenseCategoryPicker"></div>
       <label>تاریخ</label>
-      <div class="date-quick-picker" id="expenseDateQuick">
-        <button type="button" class="date-quick-btn selected" data-value="today">امروز</button>
-        <button type="button" class="date-quick-btn" data-value="yesterday">دیروز</button>
-        <button type="button" class="date-quick-btn" data-value="custom">تاریخ دلخواه</button>
+      <div class="date-quick-picker-clay-soft Pill-shaped Neumorphic-soft Outward-shadow Clay-Cream-soft" id="expenseDateQuick">
+        <button type="button" class="date-quick-btn-clay Selected-Teal Pill-shaped Neumorphic-soft Inward-shadow Clay-Teal-dark" data-value="today">امروز</button>
+        <button type="button" class="date-quick-btn-clay Pill-shaped Neumorphic-soft Inward-shadow Clay-Cream" data-value="yesterday">دیروز</button>
+        <button type="button" class="date-quick-btn-clay Pill-shaped Neumorphic-soft Inward-shadow Clay-Cream" data-value="custom">تاریخ دلخواه</button>
       </div>
       <div class="jalali-date-picker" id="expenseCustomDate" style="display:none;">
-        <select id="expenseDay"></select>
-        <select id="expenseMonth"></select>
-        <select id="expenseYear"></select>
+        <select id="expenseDay" class="Pill-shaped Neumorphic-soft Inward-shadow Clay-Cream"></select>
+        <select id="expenseMonth" class="Pill-shaped Neumorphic-soft Inward-shadow Clay-Cream"></select>
+        <select id="expenseYear" class="Pill-shaped Neumorphic-soft Inward-shadow Clay-Cream"></select>
       </div>
       <label>یادداشت (اختیاری)
-        <input type="text" id="expenseNote" placeholder="توضیح کوتاه">
+        <input type="text" id="expenseNote" placeholder="توضیح کوتاه" class="Pill-shaped Neumorphic-soft Inward-shadow Clay-Cream">
       </label>
-      <button type="submit" class="btn btn-expense">افزودن خرج</button>
+      <button type="submit" class="btn-clay Pill-shaped Neumorphic-soft Outward-shadow Clay-Teal-dark full">افزودن خرج</button>
     </form>
-    <div class="section-heading" data-mode-panel="expense"><h2>لیست مخارج</h2></div>
-    <div id="expenseList" class="entry-list" data-mode-panel="expense"></div>
+    <div class="section-heading Pill-shaped Neumorphic-soft Outward-shadow Clay-Cream-soft" data-mode-panel="expense"><h2>لیست مخارج</h2></div>
+    <div id="expenseList" class="entry-list-pill-shaped Neumorphic-soft Outward-shadow Clay-Cream-soft" data-mode-panel="expense"></div>
   </section>
 
   <!-- ANALYSIS -->
   <section id="tab-analysis" class="tab">
-    <div class="ai-card" id="aiAnalysisCard">
-      <div class="ai-card-head">
-        <span class="ai-card-icon">
-          <span class="icon-mask" data-icon="sparkles" style="width:16px;height:16px;color:#fff"></span>
+    <div class="ai-card-clay Pill-shaped Neumorphic-soft Outward-shadow Clay-Teal-dark" id="aiAnalysisCard">
+      <div class="ai-card-head Neumorphic-hard Clay-Teal-light" style="border-radius: 20px; padding: 12px; border: none; box-shadow: none;">
+        <span class="ai-card-icon Pill-shaped Neumorphic-soft Inward-shadow Clay-Teal-dark" style="border: none;">
+          <span class="icon-mask" data-icon="sparkles" style="width:20px;height:20px;color:#fff"></span>
         </span>
-        <div>
-          <h2 style="margin:0">تحلیل هوشمند این ماه</h2>
-          <p class="ai-card-sub">مقایسه با ماه قبل، با یه نگاه بامزه 😄</p>
+        <div style="flex: 1">
+          <h2 style="margin:0; color: #fff; font-size: 16px">تحلیل هوشمند این ماه</h2>
+          <p class="ai-card-sub" style="color: rgba(255,255,255,0.85); font-size: 12.5px; margin-top: 2px">مقایسه با ماه قبل، با یه نگاه بامزه 😄</p>
         </div>
       </div>
-      <button type="button" id="btnAiAnalyze" class="btn btn-neutral full">تحلیلم کن</button>
-      <div id="aiAnalysisResult" class="ai-result"></div>
+      <button type="button" id="btnAiAnalyze" class="btn-clay-neutral Pill-shaped Neumorphic-soft Outward-shadow Clay-Teal-dark full" style="background: rgba(255,255,255,0.15); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.2), 0 2px 6px rgba(0,0,0,0.15);">تحلیلم کن</button>
+      <div id="aiAnalysisResult" class="ai-result Georgia-font Neumorphic-hard Clay-Teal-light" style="color: #fff; border-radius: 16px; font-size: 13.5px"></div>
     </div>
 
-    <div class="scale-card">
-      <div class="scale-top-row">
-        <div class="scale-stat">
-          <span class="scale-stat-badge income-badge">
-            <span class="icon-mask" data-icon="trending-up" style="width:15px;height:15px;color:#fff"></span>
+    <div class="scale-card-clay Pill-shaped Neumorphic-soft Outward-shadow Clay-Cream-soft">
+      <div class="scale-top-row Neumorphic-hard Clay-Cream-soft" style="border: none; box-shadow: none;">
+        <div class="scale-stat Georgia-font Neumorphic-hard Clay-Teal-light" style="background: none; border: none; box-shadow: none;">
+          <span class="scale-stat-badge Pill-shaped Neumorphic-soft Inward-shadow Clay-Teal-light" style="border: none;">
+            <span class="icon-mask" data-icon="trending-up" style="width:16px;height:16px;color:#fff"></span>
           </span>
-          <div class="scale-stat-text">
+          <div class="scale-stat-text Georgia-font">
             <span class="scale-stat-label">درآمد</span>
-            <strong id="dashIncomeTotal" class="scale-stat-value">۰</strong>
+            <strong id="dashIncomeTotal" class="scale-stat-value Georgia-font" style="font-size: 17px">۰</strong>
           </div>
         </div>
-        <div class="scale-stat reverse">
-          <div class="scale-stat-text align-left">
+        <div class="scale-stat reverse Georgia-font Neumorphic-hard Clay-Teal-light" style="background: none; border: none; box-shadow: none;">
+          <div class="scale-stat-text align-left Georgia-font">
             <span class="scale-stat-label">مخارج</span>
-            <strong id="dashExpenseTotal" class="scale-stat-value">۰</strong>
+            <strong id="dashExpenseTotal" class="scale-stat-value Georgia-font" style="font-size: 17px">۰</strong>
           </div>
-          <span class="scale-stat-badge expense-badge">
-            <span class="icon-mask" data-icon="trending-down" style="width:15px;height:15px;color:#fff"></span>
+          <span class="scale-stat-badge Pill-shaped Neumorphic-soft Inward-shadow Clay-Red-Coral" style="border: none;">
+            <span class="icon-mask" data-icon="trending-down" style="width:16px;height:16px;color:#fff"></span>
           </span>
         </div>
       </div>
-      <div class="scale-track">
-        <div id="scaleIncomeBar" class="scale-fill income"></div>
-        <div id="scaleExpenseBar" class="scale-fill expense"></div>
+      <div class="scale-track-clay Pill-shaped Neumorphic-soft Inward-shadow Clay-Cream">
+        <div id="scaleIncomeBar" class="scale-fill-clay-soft Pill-shaped Neumorphic-hard Clay-Teal-light"></div>
+        <div id="scaleExpenseBar" class="scale-fill-clay-soft Pill-shaped Neumorphic-hard Clay-Red-Coral"></div>
       </div>
-      <div class="balance-row">
+      <div class="balance-row-clay Georgia-font Neumorphic-hard Clay-Teal-light" style="border: none; border-top: 1px dashed rgba(27,122,77,0.25); border-radius: 0; padding-top: 14px; margin-top: 14px">
         <span>مانده</span>
-        <span id="dashBalance" class="balance-amount">۰ تومان</span>
+        <span id="dashBalance" class="balance-amount-clay Georgia-font Neumorphic-hard Clay-Teal-light" style="font-size: 26px">۰ تومان</span>
       </div>
     </div>
 
-    <div class="settings-card">
+    <div class="settings-card-pill-shaped Neumorphic-soft Outward-shadow Clay-Cream-soft">
       <h2>نسبت خرج به درآمد</h2>
-      <div class="chart-period-toggle" id="analysisPeriodToggle">
-        <button type="button" class="chart-period-btn selected" data-period="month">این ماه</button>
-        <button type="button" class="chart-period-btn" data-period="all">کل بازه</button>
+      <div class="chart-period-toggle-pill-shaped Neumorphic-soft Outward-shadow Clay-Cream-soft" id="analysisPeriodToggle">
+        <button type="button" class="chart-period-btn-clay-soft Selected-Teal Pill-shaped Neumorphic-soft Inward-shadow Clay-Teal-dark" data-period="month">این ماه</button>
+        <button type="button" class="chart-period-btn-clay-soft Pill-shaped Neumorphic-soft Inward-shadow Clay-Cream" data-period="all">کل بازه</button>
       </div>
       <div id="incomeExpenseChart"></div>
     </div>
-    <div class="settings-card">
+    <div class="settings-card-pill-shaped Neumorphic-soft Outward-shadow Clay-Cream-soft">
       <h2>تنوع مخارج</h2>
       <div id="expenseDiversityChart"></div>
     </div>
@@ -219,55 +217,55 @@
   <!-- SETTINGS -->
   <section id="tab-settings" class="tab">
 
-    <details class="settings-group">
-      <summary class="settings-group-title">مدیریت دسته‌ها</summary>
-      <div class="settings-card">
-        <form id="categoryForm" class="inline-form">
+    <details class="settings-group-pill-shaped Neumorphic-soft Outward-shadow Clay-Cream-soft">
+      <summary class="settings-group-title-clay Neumorphic-hard Clay-Cream-soft">مدیریت دسته‌ها</summary>
+      <div class="settings-card-pill-shaped Neumorphic-soft Outward-shadow Clay-Cream-soft">
+        <form id="categoryForm" class="inline-form-clay">
           <label>نام گروه جدید
-            <input type="text" id="categoryName" placeholder="مثلاً خوراک، حمل‌ونقل، قبض">
+            <input type="text" id="categoryName" placeholder="مثلاً خوراک، حمل‌ونقل، قبض" class="Pill-shaped Neumorphic-soft Inward-shadow Clay-Cream">
           </label>
           <label>آیکون گروه</label>
-          <div class="icon-picker" id="categoryIconPicker"></div>
-          <button type="submit" class="btn btn-neutral full">افزودن گروه</button>
+          <div class="icon-picker-clay Pill-shaped Neumorphic-soft Outward-shadow Clay-Cream-soft" id="categoryIconPicker"></div>
+          <button type="submit" class="btn-clay Pill-shaped Neumorphic-soft Outward-shadow Clay-Teal-dark full">افزودن گروه</button>
         </form>
-        <div id="categoryManageList" class="category-manage-list"></div>
+        <div id="categoryManageList" class="category-manage-list-clay"></div>
       </div>
     </details>
 
-    <details class="settings-group">
-      <summary class="settings-group-title">حساب و همگام‌سازی</summary>
-      <div class="settings-card">
+    <details class="settings-group-pill-shaped Neumorphic-soft Outward-shadow Clay-Cream-soft">
+      <summary class="settings-group-title-clay Neumorphic-hard Clay-Cream-soft">حساب و همگام‌سازی</summary>
+      <div class="settings-card-pill-shaped Neumorphic-soft Outward-shadow Clay-Cream-soft">
         <h2>همگام‌سازی بین دستگاه‌ها</h2>
-        <button id="syncStatusBtn" class="sync-pill sync-pill-inline" title="وضعیت همگام‌سازی">
-          <span id="syncDot" class="sync-dot"></span>
+        <button id="syncStatusBtn" class="sync-pill-clay Pill-shaped Neumorphic-soft Outward-shadow Clay-Teal-dark sync-pill-inline-clay Georgia-font Neumorphic-hard Clay-Teal-light" title="وضعیت همگام‌سازی">
+          <span id="syncDot" class="sync-dot-clay Circle-shaped Neumorphic-soft Inward-shadow Clay-Cream"></span>
           <span id="syncLabel">محلی</span>
         </button>
         <p class="hint">
           این اپ اطلاعات رو روی خود گوشی ذخیره می‌کنه. برای دیدن یک حساب روی چند دستگاه،
           یک «کد همگام‌سازی» بساز و همون کد رو توی دستگاه دیگه وارد کن.
         </p>
-        <div class="sync-code-box">
-          <span class="sync-code-label">کد همگام‌سازی شما</span>
-          <div class="sync-code-value" id="syncCodeDisplay">—</div>
-          <div class="sync-actions">
-            <button id="btnGenerateCode" class="btn btn-neutral">ساخت کد جدید</button>
-            <button id="btnCopyCode" class="btn btn-ghost">کپی کد</button>
+        <div class="sync-code-box-clay Pill-shaped Neumorphic-soft Outward-shadow Clay-Teal-dark">
+          <span class="sync-code-label Georgia-font Neumorphic-hard Clay-Teal-light">کد همگام‌سازی شما</span>
+          <div class="sync-code-value-clay Georgia-font Neumorphic-hard Clay-Teal-light" id="syncCodeDisplay" style="font-size: 32px">—</div>
+          <div class="sync-actions-clay Pill-shaped Neumorphic-hard Clay-Teal-light">
+            <button id="btnGenerateCode" class="btn-clay Pill-shaped Neumorphic-soft Outward-shadow Clay-Teal-dark">ساخت کد جدید</button>
+            <button id="btnCopyCode" class="btn-clay-ghost Pill-shaped Neumorphic-soft Outward-shadow Clay-Teal-dark">کپی کد</button>
           </div>
         </div>
-        <div class="sync-join">
+        <div class="sync-join-clay Pill-shaped Neumorphic-soft Outward-shadow Clay-Cream-soft">
           <label>وارد کردن کد از دستگاه دیگر
-            <input type="text" id="joinCodeInput" placeholder="مثلاً 483920" maxlength="6" inputmode="numeric">
+            <input type="text" id="joinCodeInput" placeholder="مثلاً 483920" maxlength="6" inputmode="numeric" class="Pill-shaped Neumorphic-soft Inward-shadow Clay-Cream" style="text-align: center; letter-spacing: 4px; font-size: 18px">
           </label>
-          <button id="btnJoinCode" class="btn btn-income">اتصال با این کد</button>
+          <button id="btnJoinCode" class="btn-clay-soft Pill-shaped Neumorphic-soft Outward-shadow Clay-Teal-light">اتصال با این کد</button>
         </div>
-        <button id="btnSyncNow" class="btn btn-neutral full">همگام‌سازی الان</button>
-        <p id="syncMsg" class="sync-msg"></p>
+        <button id="btnSyncNow" class="btn-clay Pill-shaped Neumorphic-soft Outward-shadow Clay-Teal-dark full">همگام‌سازی الان</button>
+        <p id="syncMsg" class="sync-msg-clay Georgia-font Neumorphic-hard Clay-Teal-light"></p>
       </div>
     </details>
 
-    <details class="settings-group">
-      <summary class="settings-group-title">برنامه</summary>
-      <div class="settings-card">
+    <details class="settings-group-pill-shaped Neumorphic-soft Outward-shadow Clay-Cream-soft">
+      <summary class="settings-group-title-clay Neumorphic-hard Clay-Cream-soft">برنامه</summary>
+      <div class="settings-card-pill-shaped Neumorphic-soft Outward-shadow Clay-Cream-soft">
         <h2>نصب روی صفحه اصلی</h2>
         <p class="hint">
           در آیفون: از مرورگر سافاری، دکمه اشتراک‌گذاری را بزنید و «Add to Home Screen» را انتخاب کنید.
@@ -276,11 +274,11 @@
       </div>
     </details>
 
-    <details class="settings-group">
-      <summary class="settings-group-title danger">منطقه‌ی خطر</summary>
-      <div class="settings-card danger-zone">
+    <details class="settings-group-pill-shaped Neumorphic-soft Outward-shadow Clay-Cream-soft">
+      <summary class="settings-group-title-clay danger Neumorphic-hard Clay-Cream-soft">منطقه‌ی خطر</summary>
+      <div class="settings-card-pill-shaped Neumorphic-soft Outward-shadow Clay-Cream-soft danger-zone-clay Pill-shaped Neumorphic-hard Clay-Red-Coral">
         <h2>پاک کردن اطلاعات</h2>
-        <button id="btnResetData" class="btn btn-danger full">حذف همه اطلاعات این دستگاه</button>
+        <button id="btnResetData" class="btn-clay-danger Pill-shaped Neumorphic-soft Outward-shadow Clay-Red-Coral full" style="border: none; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1), 0 2px 6px rgba(0,0,0,0.15);">حذف همه اطلاعات این دستگاه</button>
       </div>
     </details>
 
@@ -288,16 +286,16 @@
 
 </main>
 
-<nav class="bottom-nav">
-  <button class="nav-btn active" data-tab="dashboard">
+<nav class="bottom-nav-clay-pill-shaped Neumorphic-soft Outward-shadow Clay-Cream-soft">
+  <button class="nav-btn-clay Pill-shaped Neumorphic-hard Clay-Teal-light Selected-Teal active" data-tab="dashboard">
     <svg viewBox="0 0 24 24"><path d="M3 13h4v8H3zM10 8h4v13h-4zM17 3h4v18h-4z"/></svg>
     <span>داشبورد</span>
   </button>
-  <button class="nav-btn" data-tab="entry">
+  <button class="nav-btn-clay Pill-shaped Neumorphic-hard Clay-Teal-light" data-tab="entry">
     <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>
     <span>ثبت تراکنش</span>
   </button>
-  <button class="nav-btn" data-tab="analysis">
+  <button class="nav-btn-clay Pill-shaped Neumorphic-hard Clay-Teal-light" data-tab="analysis">
     <svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7"/><path d="M2 20h20"/></svg>
     <span>آنالیز</span>
   </button>
