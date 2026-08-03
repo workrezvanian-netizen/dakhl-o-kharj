@@ -362,14 +362,20 @@ function flipMove(fromEl, toEl, durationMs) {
 function initWelcomeScreen() {
   const overlay = document.getElementById("welcomeScreen");
   if (!overlay) return;
-  if (localStorage.getItem("dnk_welcome_seen_v2")) {
-    overlay.style.display = "none";
-    return;
-  }
+  overlay.style.display = "";
+  overlay.style.opacity = "";
+  document.getElementById("welcomeBg").style.opacity = "";
+  ["welcomeWatermark", "welcomeIconImg", "welcomeBrandText"].forEach((id) => {
+    const el = document.getElementById(id);
+    el.style.transition = "none";
+    el.style.transform = "";
+  });
+  document.getElementById("welcomeGreeting").style.opacity = "";
 
   setTimeout(() => {
     const DURATION = 650;
     const greeting = document.getElementById("welcomeGreeting");
+    greeting.style.transition = "opacity .3s ease";
     greeting.style.opacity = "0";
 
     flipMove(document.getElementById("welcomeWatermark"), document.getElementById("headerWatermark"), DURATION);
@@ -378,7 +384,6 @@ function initWelcomeScreen() {
     document.getElementById("welcomeBg").style.opacity = "0";
 
     setTimeout(() => {
-      localStorage.setItem("dnk_welcome_seen_v2", "1");
       overlay.style.display = "none";
     }, DURATION + 50);
   }, 2000);
@@ -737,11 +742,11 @@ function renderIncomeExpenseRings(containerId, income, expense) {
           </linearGradient>
         </defs>
         <circle class="ring-track" cx="${cx}" cy="${cy}" r="${r1}" fill="none" stroke="var(--cream)" stroke-width="${sw}"/>
-        <circle class="ring-seg" cx="${cx}" cy="${cy}" r="${r1}" fill="none" stroke="url(#ringIncome-${containerId})" stroke-width="${sw}" stroke-linecap="round"
-          stroke-dasharray="${c1} ${c1}" transform="rotate(-90 ${cx} ${cy})"/>
+        <circle class="ring-seg" id="ringSeg1-${containerId}" cx="${cx}" cy="${cy}" r="${r1}" fill="none" stroke="url(#ringIncome-${containerId})" stroke-width="${sw}" stroke-linecap="round"
+          stroke-dasharray="0 ${c1}" transform="rotate(-90 ${cx} ${cy})"/>
         <circle class="ring-track" cx="${cx}" cy="${cy}" r="${r2}" fill="none" stroke="var(--cream)" stroke-width="${sw}"/>
-        <circle class="ring-seg" cx="${cx}" cy="${cy}" r="${r2}" fill="none" stroke="url(#ringExpense-${containerId})" stroke-width="${sw}" stroke-linecap="round"
-          stroke-dasharray="${dash2} ${c2 - dash2}" transform="rotate(-90 ${cx} ${cy})"/>
+        <circle class="ring-seg" id="ringSeg2-${containerId}" cx="${cx}" cy="${cy}" r="${r2}" fill="none" stroke="url(#ringExpense-${containerId})" stroke-width="${sw}" stroke-linecap="round"
+          stroke-dasharray="0 ${c2}" transform="rotate(-90 ${cx} ${cy})"/>
       </svg>
       <div class="rings-center">
         <span class="rings-emoji">${emoji}</span>
@@ -755,6 +760,15 @@ function renderIncomeExpenseRings(containerId, income, expense) {
     </div>
     ${isOver ? `<p class="rings-warning">😅 این ماه خرجت از درآمدت بیشتر شده!</p>` : ""}
   `;
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      const seg1 = document.getElementById(`ringSeg1-${containerId}`);
+      const seg2 = document.getElementById(`ringSeg2-${containerId}`);
+      if (seg1) seg1.setAttribute("stroke-dasharray", `${c1} ${c1}`);
+      if (seg2) seg2.setAttribute("stroke-dasharray", `${dash2} ${c2 - dash2}`);
+    });
+  });
 }
 
 function polarPoint(cx, cy, r, angleDeg) {
