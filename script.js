@@ -344,16 +344,46 @@ function applyStaticIcons() {
 }
 applyStaticIcons();
 
-// ---------- Welcome screen ----------
-const btnWelcomeStart = document.getElementById("btnWelcomeStart");
-if (btnWelcomeStart) {
-  btnWelcomeStart.addEventListener("click", () => {
-    localStorage.setItem("dnk_welcome_seen", "1");
-    const el = document.getElementById("welcomeScreen");
-    el.classList.add("fade-out");
-    setTimeout(() => { el.style.display = "none"; }, 300);
+// ---------- Welcome screen (FLIP intro animation) ----------
+function flipMove(fromEl, toEl, durationMs) {
+  const fromRect = fromEl.getBoundingClientRect();
+  const toRect = toEl.getBoundingClientRect();
+  const scaleX = toRect.width / fromRect.width;
+  const scaleY = toRect.height / fromRect.height;
+  const dx = (toRect.left + toRect.width / 2) - (fromRect.left + fromRect.width / 2);
+  const dy = (toRect.top + toRect.height / 2) - (fromRect.top + fromRect.height / 2);
+  fromEl.style.transformOrigin = "center center";
+  fromEl.style.transition = `transform ${durationMs}ms cubic-bezier(.4,0,.2,1)`;
+  requestAnimationFrame(() => {
+    fromEl.style.transform = `translate(${dx}px, ${dy}px) scale(${scaleX}, ${scaleY})`;
   });
 }
+
+function initWelcomeScreen() {
+  const overlay = document.getElementById("welcomeScreen");
+  if (!overlay) return;
+  if (localStorage.getItem("dnk_welcome_seen")) {
+    overlay.style.display = "none";
+    return;
+  }
+
+  setTimeout(() => {
+    const DURATION = 650;
+    const greeting = document.getElementById("welcomeGreeting");
+    greeting.style.opacity = "0";
+
+    flipMove(document.getElementById("welcomeWatermark"), document.getElementById("headerWatermark"), DURATION);
+    flipMove(document.getElementById("welcomeIconImg"), document.getElementById("headerBrandBadge"), DURATION);
+    flipMove(document.getElementById("welcomeBrandText"), document.querySelector("#headerBrand .brand-text"), DURATION);
+    document.getElementById("welcomeBg").style.opacity = "0";
+
+    setTimeout(() => {
+      localStorage.setItem("dnk_welcome_seen", "1");
+      overlay.style.display = "none";
+    }, DURATION + 50);
+  }, 2000);
+}
+initWelcomeScreen();
 
 // ---------- Tabs ----------
 document.querySelectorAll(".nav-btn").forEach((btn) => {
