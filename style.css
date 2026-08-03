@@ -1,75 +1,36 @@
 :root {
-  --green-deep: #2F817A;
-  --green: #53A79F;
-  --green-soft: #EEF7F5;
-
-  --gold: #D8B45A;
-  --gold-soft: #FFF4D9;
-
-  --expense: #DD7A67;
-  --expense-soft: #FFE8E2;
-
-  --cream: #EEE7DB;
-  --surface: #F4EEE5;
-
-  --text: #35504C;
-  --text-mute: #8A948F;
-
-  --border: transparent;
-
-  --radius-lg: 34px;
-  --radius-md: 24px;
-  --radius-sm: 18px;
-
-  --shadow-light:
-      -10px -10px 22px rgba(255,255,255,.95);
-
-  --shadow-dark:
-      10px 10px 22px rgba(182,171,154,.40);
-
-  --shadow-pressed:
-      inset 8px 8px 16px rgba(182,171,154,.35),
-      inset -8px -8px 16px rgba(255,255,255,.95);
-
-  --shadow-raised:
-      var(--shadow-light),
-      var(--shadow-dark);
-
-  font-family: "Vazirmatn",Tahoma,sans-serif;
+  --green-deep: #163F3C;
+  --green: #2F7A72;
+  --green-soft: #E3F1EF;
+  --gold: #C9A227;
+  --gold-soft: #F3E7BE;
+  --expense: #C24A2E;
+  --expense-soft: #F7E3DC;
+  --cream: #FBF7F0;
+  --surface: #FFFFFF;
+  --text: #26302E;
+  --text-mute: #7A8582;
+  --border: #E8E1D3;
+  --radius-lg: 22px;
+  --radius-md: 14px;
+  --radius-sm: 9px;
+  font-family: "Vazirmatn", Tahoma, sans-serif;
 }
 
 * { box-sizing: border-box; }
 
-html,
-body{
-    margin:0;
-    padding:0;
-
-    background:#EEE7DB;
-
-    background-image:
-        radial-gradient(circle at top left,
-        rgba(255,255,255,.9),transparent 45%),
-
-        radial-gradient(circle at bottom right,
-        rgba(210,198,182,.35),transparent 55%);
-
-    color:var(--text);
-
-    font-family:"Vazirmatn",Tahoma,sans-serif;
-
-    -webkit-tap-highlight-color:transparent;
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--cream);
+  color: var(--text);
+  font-family: "Vazirmatn", Tahoma, sans-serif;
+  -webkit-tap-highlight-color: transparent;
 }
 
-body{
-    min-height:100vh;
-    padding-bottom:110px;
-
-    background:#EEE7DB;
-
-    transition:.35s;
-
-    overflow-x:hidden;
+body {
+  padding-bottom: 100px;
+  min-height: 100vh;
 }
 
 h2 {
