@@ -362,7 +362,7 @@ function flipMove(fromEl, toEl, durationMs) {
 function initWelcomeScreen() {
   const overlay = document.getElementById("welcomeScreen");
   if (!overlay) return;
-  if (localStorage.getItem("dnk_welcome_seen")) {
+  if (localStorage.getItem("dnk_welcome_seen_v2")) {
     overlay.style.display = "none";
     return;
   }
@@ -378,7 +378,7 @@ function initWelcomeScreen() {
     document.getElementById("welcomeBg").style.opacity = "0";
 
     setTimeout(() => {
-      localStorage.setItem("dnk_welcome_seen", "1");
+      localStorage.setItem("dnk_welcome_seen_v2", "1");
       overlay.style.display = "none";
     }, DURATION + 50);
   }, 2000);
