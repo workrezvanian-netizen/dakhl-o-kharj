@@ -16,6 +16,36 @@
 </head>
 <body>
 
+<div id="welcomeScreen" class="welcome-screen">
+  <div class="welcome-inner">
+    <div class="welcome-icon">
+      <img src="icons/icon-192.png" alt="" style="width:64px;height:64px;border-radius:18px" />
+    </div>
+    <h1 class="welcome-title">دخل و خرج</h1>
+    <p class="welcome-tagline">مدیریت ساده‌ی درآمد و مخارجت، همه‌جا همراهت</p>
+    <div class="welcome-features">
+      <div class="welcome-feature">
+        <span class="welcome-feature-icon"><span class="icon-mask" data-icon="zap" style="width:16px;height:16px;color:#fff"></span></span>
+        <span>ثبت سریع خرج و درآمد با چند لمس</span>
+      </div>
+      <div class="welcome-feature">
+        <span class="welcome-feature-icon"><span class="icon-mask" data-icon="sparkles" style="width:16px;height:16px;color:#fff"></span></span>
+        <span>تحلیل هوشمند و بامزه‌ی هر ماه</span>
+      </div>
+      <div class="welcome-feature">
+        <span class="welcome-feature-icon"><span class="icon-mask" data-icon="refresh-cw" style="width:16px;height:16px;color:#fff"></span></span>
+        <span>همگام‌سازی بین گوشی‌هات</span>
+      </div>
+    </div>
+    <button type="button" id="btnWelcomeStart" class="btn welcome-btn full">بزنیم بریم</button>
+  </div>
+</div>
+<script>
+  if (localStorage.getItem("dnk_welcome_seen")) {
+    document.getElementById("welcomeScreen").style.display = "none";
+  }
+</script>
+
 <header class="app-header">
   <div class="header-inner">
     <span class="brand">

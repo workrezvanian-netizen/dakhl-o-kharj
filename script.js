@@ -344,6 +344,17 @@ function applyStaticIcons() {
 }
 applyStaticIcons();
 
+// ---------- Welcome screen ----------
+const btnWelcomeStart = document.getElementById("btnWelcomeStart");
+if (btnWelcomeStart) {
+  btnWelcomeStart.addEventListener("click", () => {
+    localStorage.setItem("dnk_welcome_seen", "1");
+    const el = document.getElementById("welcomeScreen");
+    el.classList.add("fade-out");
+    setTimeout(() => { el.style.display = "none"; }, 300);
+  });
+}
+
 // ---------- Tabs ----------
 document.querySelectorAll(".nav-btn").forEach((btn) => {
   btn.addEventListener("click", () => switchTab(btn.dataset.tab));
