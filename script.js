@@ -1113,6 +1113,28 @@ if ("serviceWorker" in navigator) {
   });
 }
 
+// ---------- Header scroll collapse ----------
+const appScroll = document.getElementById("appScroll");
+const appHeader = document.querySelector(".app-header");
+let lastScrollTop = 0;
+let headerCollapseTimer = null;
+
+if (appScroll) {
+  appScroll.addEventListener("scroll", () => {
+    const scrollTop = appScroll.scrollTop;
+    clearTimeout(headerCollapseTimer);
+    
+    if (scrollTop > 12) {
+      if (!appHeader.classList.contains("is-compact")) {
+        appHeader.classList.add("is-compact");
+      }
+    } else {
+      appHeader.classList.remove("is-compact");
+    }
+    lastScrollTop = scrollTop;
+  }, { passive: true });
+}
+
 // ---------- Init ----------
 renderAll();
 refreshSyncUI();
