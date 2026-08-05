@@ -60,6 +60,7 @@ const INCOME_SOURCES = ["حقوق", "پاداش", "فروش", "هدیه", "سا�
 let state = loadState();
 let selectedExpenseCategoryName = null;
 let selectedNewCategoryIcon = ICON_CHOICES[0];
+let expenseListFilter = null;
 
 function loadState() {
   try {
@@ -412,12 +413,16 @@ document.getElementById("btnDismissInstallGuide").addEventListener("click", () =
 document.querySelectorAll(".nav-btn").forEach((btn) => {
   btn.addEventListener("click", () => switchTab(btn.dataset.tab));
 });
-function switchTab(tab) {
+function switchTab(tab, opts = {}) {
   document.querySelectorAll(".tab").forEach((t) => t.classList.remove("active"));
   document.querySelectorAll(".nav-btn").forEach((b) => b.classList.remove("active"));
   document.getElementById("tab-" + tab).classList.add("active");
   const navBtn = document.querySelector(`.nav-btn[data-tab="${tab}"]`);
   if (navBtn) navBtn.classList.add("active");
+  if (tab === "entry" && !opts.keepExpenseFilter && expenseListFilter) {
+    expenseListFilter = null;
+    renderExpenseList();
+  }
   if (tab === "analysis") renderAnalysis();
 }
 
@@ -449,7 +454,8 @@ document.getElementById("incomeForm").addEventListener("submit", (e) => {
     amount,
     source: document.getElementById("incomeSource").value,
     note: document.getElementById("incomeNote").value.trim(),
-    date: getSelectedISO("income")
+    date: getSelectedISO("income"),
+    createdAt: Date.now()
   });
   e.target.reset();
   setDatePickerToToday("income");
@@ -468,7 +474,8 @@ document.getElementById("expenseForm").addEventListener("submit", (e) => {
     amount,
     category,
     note: document.getElementById("expenseNote").value.trim(),
-    date: getSelectedISO("expense")
+    date: getSelectedISO("expense"),
+    createdAt: Date.now()
   });
   e.target.reset();
   setDatePickerToToday("expense");
@@ -566,17 +573,35 @@ function renderCategoryManageList() {
   `).join("");
 }
 
+function sortEntriesDesc(items) {
+  return items.sort((a, b) => b.date.localeCompare(a.date) || (b.createdAt || 0) - (a.createdAt || 0));
+}
+
 function renderIncomeList() {
   const wrap = document.getElementById("incomeList");
-  const items = [...state.incomes].sort((a, b) => b.date.localeCompare(a.date));
+  const items = sortEntriesDesc([...state.incomes]);
   if (!items.length) { wrap.innerHTML = `<p class="empty-hint">هنوز درآمدی ثبت نشده</p>`; return; }
   wrap.innerHTML = items.map((x) => entryRowHTML(x, "income")).join("");
 }
 
 function renderExpenseList() {
   const wrap = document.getElementById("expenseList");
-  const items = [...state.expenses].sort((a, b) => b.date.localeCompare(a.date));
-  if (!items.length) { wrap.innerHTML = `<p class="empty-hint">هنوز خرجی ثبت نشده</p>`; return; }
+  const clearBtn = document.getElementById("expenseListFilterClear");
+  const titleEl = document.getElementById("expenseListTitle");
+  let items = [...state.expenses];
+  if (expenseListFilter) {
+    items = items.filter((x) => x.category === expenseListFilter);
+    clearBtn.style.display = "";
+    titleEl.textContent = `لیست مخارج «${expenseListFilter}»`;
+  } else {
+    clearBtn.style.display = "none";
+    titleEl.textContent = "لیست مخارج";
+  }
+  items = sortEntriesDesc(items);
+  if (!items.length) {
+    wrap.innerHTML = `<p class="empty-hint">${expenseListFilter ? "خرجی در این گروه ثبت نشده" : "هنوز خرجی ثبت نشده"}</p>`;
+    return;
+  }
   wrap.innerHTML = items.map((x) => entryRowHTML(x, "expense")).join("");
 }
 
@@ -584,7 +609,8 @@ function entryRowHTML(x, type) {
   const isIncome = type === "income";
   const title = isIncome ? x.source : x.category;
   const iconKey = isIncome ? (INCOME_SOURCE_ICON[x.source] || "wallet") : catIcon(x.category);
-  const sub = [formatDateFa(x.date), x.note].filter(Boolean).join(" · ");
+  const noteHTML = x.note ? `<strong class="entry-note-bold">${x.note}</strong>` : "";
+  const sub = [formatDateFa(x.date), noteHTML].filter(Boolean).join(" · ");
   return `
     <div class="entry-row">
       <div class="entry-row-main">
@@ -689,10 +715,17 @@ function renderDashboard() {
 function quickAddExpense(categoryName) {
   selectedExpenseCategoryName = categoryName;
   renderExpenseCategoryPicker();
-  switchTab("entry");
+  expenseListFilter = categoryName;
+  switchTab("entry", { keepExpenseFilter: true });
   setEntryMode("expense");
+  renderExpenseList();
   setTimeout(() => document.getElementById("expenseAmount").focus(), 150);
 }
+
+document.getElementById("expenseListFilterClear").addEventListener("click", () => {
+  expenseListFilter = null;
+  renderExpenseList();
+});
 
 function quickAddIncome(source) {
   const sel = document.getElementById("incomeSource");
@@ -730,9 +763,9 @@ function renderMonthCompareCard(containerId) {
     { key: "income", label: "درآمد", curV: cur.totalIncome, prevV: prev.totalIncome, goodWhenDown: false }
   ];
 
+  const PREV_COLOR = "#C9A227";
+
   const gauges = defs.map((g) => {
-    const ratio = g.prevV > 0 ? g.curV / g.prevV : (g.curV > 0 ? 1.5 : 0);
-    const pctClamped = Math.min(ratio, 1) * 100;
     const increased = g.curV > g.prevV;
     const changePct = g.prevV > 0 ? Math.round(((g.curV - g.prevV) / g.prevV) * 100) : (g.curV > 0 ? 100 : 0);
     const isGood = g.prevV === 0 && g.curV === 0 ? null : (g.goodWhenDown ? !increased : increased);
@@ -741,15 +774,22 @@ function renderMonthCompareCard(containerId) {
     let emoji = "😴";
     if (isGood === true) emoji = changePct === 0 ? "🙂" : "🎉";
     else if (isGood === false) emoji = "😬";
-    return { ...g, pctClamped, changePct, colorA, colorB, emoji };
+    const maxV = Math.max(g.curV, g.prevV) || 1;
+    const outerPct = (g.curV / maxV) * 100;
+    const innerPct = (g.prevV / maxV) * 100;
+    return { ...g, outerPct, innerPct, changePct, colorA, colorB, emoji };
   });
 
-  const r = 58, cx = 70, cy = 70, sw = 13;
-  const circumference = 2 * Math.PI * r;
+  const cx = 70, cy = 70;
+  const rOuter = 58, swOuter = 13;
+  const rInner = 39, swInner = 10;
+  const circOuter = 2 * Math.PI * rOuter;
+  const circInner = 2 * Math.PI * rInner;
   const uid = Date.now();
 
   const gaugeHTML = gauges.map((g, i) => {
-    const dash = (g.pctClamped / 100) * circumference;
+    const dashOuter = (g.outerPct / 100) * circOuter;
+    const dashInner = (g.innerPct / 100) * circInner;
     return `
       <div class="compare-gauge">
         <svg viewBox="0 0 140 140" class="compare-gauge-svg">
@@ -759,18 +799,26 @@ function renderMonthCompareCard(containerId) {
               <stop offset="100%" stop-color="${g.colorB}"/>
             </linearGradient>
           </defs>
-          <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--cream)" stroke-width="${sw}"/>
-          <circle class="compare-gauge-seg" id="gaugeSeg-${uid}-${i}" cx="${cx}" cy="${cy}" r="${r}" fill="none"
-            stroke="url(#gaugeGrad-${uid}-${i})" stroke-width="${sw}" stroke-linecap="round"
-            stroke-dasharray="0 ${circumference}" transform="rotate(-90 ${cx} ${cy})"
-            data-dash="${dash}" data-circ="${circumference}"/>
+          <circle cx="${cx}" cy="${cy}" r="${rOuter}" fill="none" stroke="var(--cream)" stroke-width="${swOuter}"/>
+          <circle class="compare-gauge-seg" id="gaugeOuter-${uid}-${i}" cx="${cx}" cy="${cy}" r="${rOuter}" fill="none"
+            stroke="url(#gaugeGrad-${uid}-${i})" stroke-width="${swOuter}" stroke-linecap="round"
+            stroke-dasharray="0 ${circOuter}" transform="rotate(-90 ${cx} ${cy})"
+            data-dash="${dashOuter}" data-circ="${circOuter}"/>
+          <circle cx="${cx}" cy="${cy}" r="${rInner}" fill="none" stroke="var(--cream)" stroke-width="${swInner}"/>
+          <circle class="compare-gauge-seg" id="gaugeInner-${uid}-${i}" cx="${cx}" cy="${cy}" r="${rInner}" fill="none"
+            stroke="${PREV_COLOR}" stroke-width="${swInner}" stroke-linecap="round"
+            stroke-dasharray="0 ${circInner}" transform="rotate(-90 ${cx} ${cy})"
+            data-dash="${dashInner}" data-circ="${circInner}"/>
         </svg>
         <div class="compare-gauge-center">
           <span class="compare-gauge-emoji">${g.emoji}</span>
           <span class="compare-gauge-pct" style="color:${g.colorB}">${g.changePct > 0 ? "+" : ""}${toPersianDigits(g.changePct)}٪</span>
         </div>
         <div class="compare-gauge-label">${g.label}</div>
-        <div class="compare-gauge-sub">${fmtAmount(g.curV)}<br><span class="compare-gauge-vs">ماه قبل: ${fmtAmount(g.prevV)}</span></div>
+        <div class="compare-gauge-legend">
+          <span><i style="background:${g.colorB}"></i>این ماه: ${fmtAmount(g.curV)}</span>
+          <span><i style="background:${PREV_COLOR}"></i>ماه قبل: ${fmtAmount(g.prevV)}</span>
+        </div>
       </div>`;
   }).join("");
 
@@ -779,19 +827,16 @@ function renderMonthCompareCard(containerId) {
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
       gauges.forEach((g, i) => {
-        const seg = document.getElementById(`gaugeSeg-${uid}-${i}`);
-        if (!seg) return;
-        const dash = parseFloat(seg.dataset.dash);
-        const circ = parseFloat(seg.dataset.circ);
-        seg.setAttribute("stroke-dasharray", `${dash} ${circ - dash}`);
+        ["Outer", "Inner"].forEach((part) => {
+          const seg = document.getElementById(`gauge${part}-${uid}-${i}`);
+          if (!seg) return;
+          const dash = parseFloat(seg.dataset.dash);
+          const circ = parseFloat(seg.dataset.circ);
+          seg.setAttribute("stroke-dasharray", `${dash} ${circ - dash}`);
+        });
       });
     });
   });
-}
-
-function polarPoint(cx, cy, r, angleDeg) {
-  const rad = (angleDeg * Math.PI) / 180;
-  return { x: cx + r * Math.sin(rad), y: cy - r * Math.cos(rad) };
 }
 
 function renderPieChart(containerId, segments) {
@@ -802,23 +847,20 @@ function renderPieChart(containerId, segments) {
     return;
   }
   const visible = segments.filter((s) => s.value > 0);
-  const cx = 95, cy = 95, r = 85;
-  let cumulative = 0;
+  const cx = 91, cy = 91, r = 72, sw = 30;
+  const circumference = 2 * Math.PI * r;
+  const uid = Date.now();
 
-  let slices;
-  if (visible.length === 1) {
-    slices = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${visible[0].color}"/>`;
-  } else {
-    slices = visible.map((seg) => {
-      const startAngle = (cumulative / total) * 360;
-      cumulative += seg.value;
-      const endAngle = (cumulative / total) * 360;
-      const p1 = polarPoint(cx, cy, r, startAngle);
-      const p2 = polarPoint(cx, cy, r, endAngle);
-      const largeArc = endAngle - startAngle > 180 ? 1 : 0;
-      return `<path d="M ${cx} ${cy} L ${p1.x} ${p1.y} A ${r} ${r} 0 ${largeArc} 1 ${p2.x} ${p2.y} Z" fill="${seg.color}" stroke="var(--surface)" stroke-width="2.5"/>`;
-    }).join("");
-  }
+  let cumulative = 0;
+  const segsHTML = visible.map((seg, i) => {
+    const dash = (seg.value / total) * circumference;
+    const offset = (cumulative / total) * circumference;
+    cumulative += seg.value;
+    return `<circle class="donut-seg" id="donutSeg-${uid}-${i}" cx="${cx}" cy="${cy}" r="${r}" fill="none"
+      stroke="${seg.color}" stroke-width="${sw}"
+      stroke-dasharray="0 ${circumference}" stroke-dashoffset="${-offset}"
+      transform="rotate(-90 ${cx} ${cy})" data-dash="${dash}" data-circ="${circumference}"/>`;
+  }).join("");
 
   const legend = visible.map((seg) => {
     const pct = Math.round((seg.value / total) * 100);
@@ -835,18 +877,35 @@ function renderPieChart(containerId, segments) {
   }).join("");
 
   wrap.innerHTML = `
-    <div class="pie-wrap">
-      <svg viewBox="0 0 190 190" class="pie-svg">
+    <div class="donut-wrap">
+      <svg viewBox="0 0 182 182" class="donut-svg">
         <defs>
           <filter id="pieShadow-${containerId}" x="-30%" y="-30%" width="160%" height="160%">
             <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#163F3C" flood-opacity="0.18"/>
           </filter>
         </defs>
-        <g class="pie-slices-anim" style="filter:url(#pieShadow-${containerId})">${slices}</g>
+        <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--cream)" stroke-width="${sw}"/>
+        <g style="filter:url(#pieShadow-${containerId})">${segsHTML}</g>
       </svg>
+      <div class="donut-center">
+        <span class="donut-center-label">مجموع مخارج</span>
+        <span class="donut-center-amt">${fmtAmount(total)}</span>
+      </div>
     </div>
     <div class="chart-legend">${legend}</div>
   `;
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      visible.forEach((seg, i) => {
+        const el = document.getElementById(`donutSeg-${uid}-${i}`);
+        if (!el) return;
+        const dash = parseFloat(el.dataset.dash);
+        const circ = parseFloat(el.dataset.circ);
+        el.setAttribute("stroke-dasharray", `${dash} ${circ - dash}`);
+      });
+    });
+  });
 }
 
 function computeMonthTotals(jy, jm) {
@@ -864,19 +923,6 @@ function computeMonthTotals(jy, jm) {
   const categories = Object.entries(byCat).sort((a, b) => b[1] - a[1]).map(([name, amount]) => ({ name, amount }));
   return { totalIncome, totalExpense, categories };
 }
-
-const pieChartObserver = new IntersectionObserver((entries) => {
-  entries.forEach((entry) => {
-    if (!entry.isIntersecting) return;
-    const anim = entry.target.querySelector(".pie-slices-anim");
-    if (!anim) return;
-    anim.style.animation = "none";
-    void anim.offsetHeight; // فورس رفلو برای ری‌استارت انیمیشن
-    anim.style.animation = "";
-  });
-}, { threshold: 0.4 });
-const expenseDiversityChartEl = document.getElementById("expenseDiversityChart");
-if (expenseDiversityChartEl) pieChartObserver.observe(expenseDiversityChartEl);
 
 function renderAnalysis() {
   const inPeriod = (dateStr) => {

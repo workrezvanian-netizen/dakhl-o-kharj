@@ -170,7 +170,10 @@
       </label>
       <button type="submit" class="btn btn-expense">افزودن خرج</button>
     </form>
-    <div class="section-heading" data-mode-panel="expense"><h2>لیست مخارج</h2></div>
+    <div class="section-heading" data-mode-panel="expense">
+      <h2 id="expenseListTitle">لیست مخارج</h2>
+      <button type="button" id="expenseListFilterClear" class="filter-clear-btn" style="display:none">نمایش همه ✕</button>
+    </div>
     <div id="expenseList" class="entry-list" data-mode-panel="expense"></div>
   </section>
 

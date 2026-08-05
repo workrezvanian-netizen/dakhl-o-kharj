@@ -288,6 +288,17 @@ h2 {
   justify-content: space-between;
   margin: 22px 0 10px;
 }
+.filter-clear-btn {
+  border: none;
+  background: var(--cream);
+  color: var(--text-mute);
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.filter-clear-btn:active { opacity: 0.75; }
 .mini-stat {
   display: flex;
   align-items: center;
@@ -513,6 +524,7 @@ h2 {
 .entry-icon.expense-icon { background: var(--expense); }
 .entry-title { font-size: 13.5px; font-weight: 600; }
 .entry-sub { font-size: 11.5px; color: var(--text-mute); margin-top: 2px; }
+.entry-note-bold { font-weight: 700; color: var(--text); }
 .entry-amount { font-weight: 700; font-variant-numeric: tabular-nums; font-size: 13.5px; }
 .entry-amount.income-amt { color: var(--green-deep); }
 .entry-amount.expense-amt { color: var(--expense); }
@@ -769,6 +781,16 @@ input:focus, select:focus {
   line-height: 1.6;
 }
 .compare-gauge-vs { color: var(--text-mute); opacity: 0.8; }
+.compare-gauge-legend {
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 10.5px;
+  color: var(--text-mute);
+}
+.compare-gauge-legend span { display: flex; align-items: center; justify-content: center; gap: 5px; }
+.compare-gauge-legend i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex: none; }
 
 .pie-wrap {
   width: 190px;
@@ -776,15 +798,6 @@ input:focus, select:focus {
   margin: 4px auto 20px;
 }
 .pie-svg { width: 100%; height: 100%; }
-.pie-slices-anim {
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: pie-pop .55s cubic-bezier(.34,1.56,.64,1) both;
-}
-@keyframes pie-pop {
-  from { opacity: 0; transform: scale(0.55) rotate(-8deg); }
-  to { opacity: 1; transform: scale(1) rotate(0deg); }
-}
 
 .donut-card {
   background: linear-gradient(160deg, var(--surface) 0%, var(--cream) 140%);
