@@ -33,7 +33,11 @@ const DEFAULT_CATEGORIES = [
 ];
 const DEFAULT_ICON_MAP = { "خوراک": "utensils", "حمل‌ونقل": "car", "قبض‌ها": "receipt", "خرید": "shopping-bag", "تفریح": "film", "درمان": "stethoscope", "اقساط": "credit-card", "سایر": "package" };
 const INCOME_SOURCE_ICON = { "حقوق": "briefcase", "پاداش": "award", "فروش": "tag", "هدیه": "gift", "سایر": "wallet" };
-const CATEGORY_COLORS = ["#2F7A72", "#C9A227", "#C24A2E", "#5B7CB0", "#8D6AB8", "#3C8C82", "#C97A3D", "#6B7A72"];
+const CATEGORY_COLORS = [
+  "#2F7A72", "#E0793A", "#8D6AB8", "#3B82C4", "#C24A2E",
+  "#C9A227", "#4FA89E", "#D9578F", "#6B9E4A", "#B0708C",
+  "#5B7CB0", "#C97A3D"
+];
 const CARD_PALETTE = [
   { bg: "#FBEED9", icon: "#E8A83C" },
   { bg: "#DCEBFB", icon: "#3B82C4" },
@@ -359,6 +363,13 @@ function flipMove(fromEl, toEl, durationMs) {
   });
 }
 
+function isStandalone() {
+  return (
+    window.matchMedia("(display-mode: standalone)").matches ||
+    window.navigator.standalone === true
+  );
+}
+
 function initWelcomeScreen() {
   const overlay = document.getElementById("welcomeScreen");
   if (!overlay) return;
@@ -385,10 +396,17 @@ function initWelcomeScreen() {
 
     setTimeout(() => {
       overlay.style.display = "none";
+      if (!isStandalone()) {
+        document.getElementById("installGuide").hidden = false;
+      }
     }, DURATION + 50);
   }, 2000);
 }
 initWelcomeScreen();
+
+document.getElementById("btnDismissInstallGuide").addEventListener("click", () => {
+  document.getElementById("installGuide").hidden = true;
+});
 
 // ---------- Tabs ----------
 document.querySelectorAll(".nav-btn").forEach((btn) => {
@@ -400,6 +418,7 @@ function switchTab(tab) {
   document.getElementById("tab-" + tab).classList.add("active");
   const navBtn = document.querySelector(`.nav-btn[data-tab="${tab}"]`);
   if (navBtn) navBtn.classList.add("active");
+  if (tab === "analysis") renderAnalysis();
 }
 
 document.getElementById("dashSettingsBtn").addEventListener("click", () => switchTab("settings"));
@@ -694,67 +713,78 @@ document.querySelectorAll("#analysisPeriodToggle .chart-period-btn").forEach((bt
   });
 });
 
-function renderIncomeExpenseRings(containerId, income, expense) {
+function renderMonthCompareCard(containerId) {
   const wrap = document.getElementById(containerId);
-  if (!income && !expense) {
-    wrap.innerHTML = `<p class="empty-hint">داده‌ای برای این بازه نیست</p>`;
+  const t = todayJalali();
+  const p = addMonthsJalali(t.jy, t.jm, -1);
+  const cur = computeMonthTotals(t.jy, t.jm);
+  const prev = computeMonthTotals(p.jy, p.jm);
+
+  if (!cur.totalIncome && !cur.totalExpense && !prev.totalIncome && !prev.totalExpense) {
+    wrap.innerHTML = `<p class="empty-hint">داده‌ای برای مقایسه نیست</p>`;
     return;
   }
-  const ratio = income > 0 ? expense / income : (expense > 0 ? 1.5 : 0);
-  const pctClamped = Math.min(ratio, 1) * 100;
-  const isOver = ratio > 1;
-  const r1 = 76, r2 = 58, cx = 95, cy = 95, sw = 15;
-  const c1 = 2 * Math.PI * r1;
-  const c2 = 2 * Math.PI * r2;
-  const dash2 = (pctClamped / 100) * c2;
 
-  let emoji = "😌";
-  if (isOver) emoji = "😅";
-  else if (pctClamped >= 80) emoji = "😬";
-  else if (pctClamped <= 30) emoji = "🎉";
+  const defs = [
+    { key: "expense", label: "مخارج", curV: cur.totalExpense, prevV: prev.totalExpense, goodWhenDown: true },
+    { key: "income", label: "درآمد", curV: cur.totalIncome, prevV: prev.totalIncome, goodWhenDown: false }
+  ];
 
-  const expenseColorA = isOver ? "#D9432C" : "#E0793A";
-  const expenseColorB = isOver ? "#C24A2E" : "#DA7A52";
+  const gauges = defs.map((g) => {
+    const ratio = g.prevV > 0 ? g.curV / g.prevV : (g.curV > 0 ? 1.5 : 0);
+    const pctClamped = Math.min(ratio, 1) * 100;
+    const increased = g.curV > g.prevV;
+    const changePct = g.prevV > 0 ? Math.round(((g.curV - g.prevV) / g.prevV) * 100) : (g.curV > 0 ? 100 : 0);
+    const isGood = g.prevV === 0 && g.curV === 0 ? null : (g.goodWhenDown ? !increased : increased);
+    const colorA = isGood === false ? "#D9432C" : "#4FA89E";
+    const colorB = isGood === false ? "#C24A2E" : "#2F7A72";
+    let emoji = "😴";
+    if (isGood === true) emoji = changePct === 0 ? "🙂" : "🎉";
+    else if (isGood === false) emoji = "😬";
+    return { ...g, pctClamped, changePct, colorA, colorB, emoji };
+  });
 
-  wrap.innerHTML = `
-    <div class="rings-wrap">
-      <svg viewBox="0 0 190 190" class="rings-svg">
-        <defs>
-          <linearGradient id="ringIncome-${containerId}" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="#4FA89E"/>
-            <stop offset="100%" stop-color="#2F7A72"/>
-          </linearGradient>
-          <linearGradient id="ringExpense-${containerId}" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="${expenseColorA}"/>
-            <stop offset="100%" stop-color="${expenseColorB}"/>
-          </linearGradient>
-        </defs>
-        <circle class="ring-track" cx="${cx}" cy="${cy}" r="${r1}" fill="none" stroke="var(--cream)" stroke-width="${sw}"/>
-        <circle class="ring-seg" id="ringSeg1-${containerId}" cx="${cx}" cy="${cy}" r="${r1}" fill="none" stroke="url(#ringIncome-${containerId})" stroke-width="${sw}" stroke-linecap="round"
-          stroke-dasharray="0 ${c1}" transform="rotate(-90 ${cx} ${cy})"/>
-        <circle class="ring-track" cx="${cx}" cy="${cy}" r="${r2}" fill="none" stroke="var(--cream)" stroke-width="${sw}"/>
-        <circle class="ring-seg" id="ringSeg2-${containerId}" cx="${cx}" cy="${cy}" r="${r2}" fill="none" stroke="url(#ringExpense-${containerId})" stroke-width="${sw}" stroke-linecap="round"
-          stroke-dasharray="0 ${c2}" transform="rotate(-90 ${cx} ${cy})"/>
-      </svg>
-      <div class="rings-center">
-        <span class="rings-emoji">${emoji}</span>
-        <span class="rings-pct">${toPersianDigits(Math.round(ratio * 100))}٪</span>
-        <span class="rings-sub">خرج از درآمد</span>
-      </div>
-    </div>
-    <div class="rings-legend">
-      <div class="rings-legend-row"><span class="legend-dot" style="background:#2F7A72"></span><span class="legend-label">درآمد</span><span class="legend-amt">${fmtAmount(income)}</span></div>
-      <div class="rings-legend-row"><span class="legend-dot" style="background:#C24A2E"></span><span class="legend-label">مخارج</span><span class="legend-amt">${fmtAmount(expense)}</span></div>
-    </div>
-    ${isOver ? `<p class="rings-warning">😅 این ماه خرجت از درآمدت بیشتر شده!</p>` : ""}
-  `;
+  const r = 58, cx = 70, cy = 70, sw = 13;
+  const circumference = 2 * Math.PI * r;
+  const uid = Date.now();
+
+  const gaugeHTML = gauges.map((g, i) => {
+    const dash = (g.pctClamped / 100) * circumference;
+    return `
+      <div class="compare-gauge">
+        <svg viewBox="0 0 140 140" class="compare-gauge-svg">
+          <defs>
+            <linearGradient id="gaugeGrad-${uid}-${i}" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="${g.colorA}"/>
+              <stop offset="100%" stop-color="${g.colorB}"/>
+            </linearGradient>
+          </defs>
+          <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--cream)" stroke-width="${sw}"/>
+          <circle class="compare-gauge-seg" id="gaugeSeg-${uid}-${i}" cx="${cx}" cy="${cy}" r="${r}" fill="none"
+            stroke="url(#gaugeGrad-${uid}-${i})" stroke-width="${sw}" stroke-linecap="round"
+            stroke-dasharray="0 ${circumference}" transform="rotate(-90 ${cx} ${cy})"
+            data-dash="${dash}" data-circ="${circumference}"/>
+        </svg>
+        <div class="compare-gauge-center">
+          <span class="compare-gauge-emoji">${g.emoji}</span>
+          <span class="compare-gauge-pct" style="color:${g.colorB}">${g.changePct > 0 ? "+" : ""}${toPersianDigits(g.changePct)}٪</span>
+        </div>
+        <div class="compare-gauge-label">${g.label}</div>
+        <div class="compare-gauge-sub">${fmtAmount(g.curV)}<br><span class="compare-gauge-vs">ماه قبل: ${fmtAmount(g.prevV)}</span></div>
+      </div>`;
+  }).join("");
+
+  wrap.innerHTML = `<div class="compare-gauges-row">${gaugeHTML}</div>`;
 
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
-      const seg1 = document.getElementById(`ringSeg1-${containerId}`);
-      const seg2 = document.getElementById(`ringSeg2-${containerId}`);
-      if (seg1) seg1.setAttribute("stroke-dasharray", `${c1} ${c1}`);
-      if (seg2) seg2.setAttribute("stroke-dasharray", `${dash2} ${c2 - dash2}`);
+      gauges.forEach((g, i) => {
+        const seg = document.getElementById(`gaugeSeg-${uid}-${i}`);
+        if (!seg) return;
+        const dash = parseFloat(seg.dataset.dash);
+        const circ = parseFloat(seg.dataset.circ);
+        seg.setAttribute("stroke-dasharray", `${dash} ${circ - dash}`);
+      });
     });
   });
 }
@@ -812,7 +842,7 @@ function renderPieChart(containerId, segments) {
             <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#163F3C" flood-opacity="0.18"/>
           </filter>
         </defs>
-        <g style="filter:url(#pieShadow-${containerId})">${slices}</g>
+        <g class="pie-slices-anim" style="filter:url(#pieShadow-${containerId})">${slices}</g>
       </svg>
     </div>
     <div class="chart-legend">${legend}</div>
@@ -835,6 +865,19 @@ function computeMonthTotals(jy, jm) {
   return { totalIncome, totalExpense, categories };
 }
 
+const pieChartObserver = new IntersectionObserver((entries) => {
+  entries.forEach((entry) => {
+    if (!entry.isIntersecting) return;
+    const anim = entry.target.querySelector(".pie-slices-anim");
+    if (!anim) return;
+    anim.style.animation = "none";
+    void anim.offsetHeight; // فورس رفلو برای ری‌استارت انیمیشن
+    anim.style.animation = "";
+  });
+}, { threshold: 0.4 });
+const expenseDiversityChartEl = document.getElementById("expenseDiversityChart");
+if (expenseDiversityChartEl) pieChartObserver.observe(expenseDiversityChartEl);
+
 function renderAnalysis() {
   const inPeriod = (dateStr) => {
     if (analysisPeriod === "all") return true;
@@ -843,12 +886,9 @@ function renderAnalysis() {
     const t = todayJalali();
     return j.jy === t.jy && j.jm === t.jm;
   };
-  const incomes = state.incomes.filter((x) => inPeriod(x.date));
   const expenses = state.expenses.filter((x) => inPeriod(x.date));
-  const totalIncome = incomes.reduce((s, x) => s + x.amount, 0);
-  const totalExpense = expenses.reduce((s, x) => s + x.amount, 0);
 
-  renderIncomeExpenseRings("incomeExpenseChart", totalIncome, totalExpense);
+  renderMonthCompareCard("incomeExpenseChart");
 
   const byCat = {};
   expenses.forEach((x) => { byCat[x.category] = (byCat[x.category] || 0) + x.amount; });

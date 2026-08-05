@@ -26,6 +26,25 @@
   </div>
 </div>
 
+<div id="installGuide" class="install-guide" hidden>
+  <div class="install-guide-card">
+    <img class="install-guide-icon" src="icons/icon-192.png" alt="" />
+    <h2>نصب «دخل و خرج» روی صفحه‌ی اصلی</h2>
+    <p class="hint">برای استفاده‌ی کامل (و همگام‌سازی بین دستگاه‌ها)، بهتره این اپ رو نصب کنی:</p>
+    <div class="install-steps">
+      <div class="install-step">
+        <span class="install-step-num">۱</span>
+        <span>در آیفون: از سافاری، دکمه‌ی اشتراک‌گذاری ⬆️ رو بزن و «Add to Home Screen» رو انتخاب کن</span>
+      </div>
+      <div class="install-step">
+        <span class="install-step-num">۲</span>
+        <span>در اندروید: از منوی مرورگر، «Add to Home screen» یا «Install app» رو بزن</span>
+      </div>
+    </div>
+    <button type="button" id="btnDismissInstallGuide" class="btn btn-neutral full">فهمیدم، برو به برنامه</button>
+  </div>
+</div>
+
 <header class="app-header">
   <div class="header-inner">
     <span class="brand" id="headerBrand">
@@ -203,15 +222,15 @@
     </div>
 
     <div class="settings-card">
-      <h2>نسبت خرج به درآمد</h2>
-      <div class="chart-period-toggle" id="analysisPeriodToggle">
-        <button type="button" class="chart-period-btn selected" data-period="month">این ماه</button>
-        <button type="button" class="chart-period-btn" data-period="all">کل بازه</button>
-      </div>
+      <h2>مقایسه با ماه قبل</h2>
       <div id="incomeExpenseChart"></div>
     </div>
     <div class="settings-card">
       <h2>تنوع مخارج</h2>
+      <div class="chart-period-toggle" id="analysisPeriodToggle">
+        <button type="button" class="chart-period-btn selected" data-period="month">این ماه</button>
+        <button type="button" class="chart-period-btn" data-period="all">کل بازه</button>
+      </div>
       <div id="expenseDiversityChart"></div>
     </div>
   </section>
@@ -262,17 +281,6 @@
         </div>
         <button id="btnSyncNow" class="btn btn-neutral full">همگام‌سازی الان</button>
         <p id="syncMsg" class="sync-msg"></p>
-      </div>
-    </details>
-
-    <details class="settings-group">
-      <summary class="settings-group-title">برنامه</summary>
-      <div class="settings-card">
-        <h2>نصب روی صفحه اصلی</h2>
-        <p class="hint">
-          در آیفون: از مرورگر سافاری، دکمه اشتراک‌گذاری را بزنید و «Add to Home Screen» را انتخاب کنید.
-          در اندروید: از منوی مرورگر «Add to Home screen» یا «Install app» را بزنید.
-        </p>
       </div>
     </details>
 
