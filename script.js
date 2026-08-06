@@ -997,28 +997,13 @@ function renderAnalysis() {
     insightMsg = "⚠️ هفته پیش‌رو بیش‌تر از حد نرمال خرج شده";
   } else if (totalExpense < avgDaily * (analysisPeriodSmartInsights === "week" ? 3 : 15)) {
     insightMsg = "✨ خرج این دوره کم‌تر از معمول است";
-  } else if (totalIncome > totalExpense) {
-    insightMsg = "💰 درآمد بیش‌تر از مخارج است - خوب جلو رفتی!";
   } else {
     insightMsg = "📈 روند خرج نرمال و متوازن است";
   }
   
   const insightEl = document.getElementById("smartInsights");
   if (insightEl) {
-    const periodLabel = analysisPeriodSmartInsights === "week" ? "این هفته" : analysisPeriodSmartInsights === "month" ? "این ماه" : "کل بازه";
-    insightEl.innerHTML = `
-      <div style="background:rgba(79,168,158,0.1);padding:12px 14px;border-radius:12px;border-left:3px solid #4FA89E;font-size:13px;color:var(--text);">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-          <span>${insightMsg}</span>
-          <div class="chart-period-toggle" id="smartInsightsPeriodToggle" style="gap:4px;font-size:11px;">
-            <button type="button" class="chart-period-btn ${analysisPeriodSmartInsights === "week" ? "selected" : ""}" data-period="week" style="padding:4px 8px;">هفته</button>
-            <button type="button" class="chart-period-btn ${analysisPeriodSmartInsights === "month" ? "selected" : ""}" data-period="month" style="padding:4px 8px;">ماه</button>
-            <button type="button" class="chart-period-btn ${analysisPeriodSmartInsights === "all" ? "selected" : ""}" data-period="all" style="padding:4px 8px;">همه</button>
-          </div>
-        </div>
-        <div style="font-size:11px;color:rgba(0,0,0,0.6);">درآمد: ${fmtAmount(totalIncome)} • مخارج: ${fmtAmount(totalExpense)} • مانده: ${fmtAmount(totalIncome - totalExpense)}</div>
-      </div>`;
-    setupPeriodToggle("smartInsightsPeriodToggle", "smart");
+    insightEl.innerHTML = `<div style="background:rgba(79,168,158,0.1);padding:12px 14px;border-radius:12px;border-left:3px solid #4FA89E;font-size:13px;color:var(--text);">${insightMsg}</div>`;
   }
 
   renderMonthCompareCard("incomeExpenseChart");
