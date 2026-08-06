@@ -752,7 +752,6 @@ const setupPeriodToggle = (toggleId, variable) => {
   });
 };
 setupPeriodToggle("analysisPeriodToggle", "expense");
-setupPeriodToggle("mainAnalysisPeriodToggle", "main");
 setupPeriodToggle("smartInsightsPeriodToggle", "smart");
 
 function renderMonthCompareCard(containerId) {
@@ -778,8 +777,19 @@ function renderMonthCompareCard(containerId) {
     const increased = g.curV > g.prevV;
     const changePct = g.prevV > 0 ? Math.round(((g.curV - g.prevV) / g.prevV) * 100) : (g.curV > 0 ? 100 : 0);
     const isGood = g.prevV === 0 && g.curV === 0 ? null : (g.goodWhenDown ? !increased : increased);
-    const colorA = isGood === false ? "#D9432C" : "#4FA89E";
-    const colorB = isGood === false ? "#C24A2E" : "#2F7A72";
+    
+    // Different colors for income (green) vs expense (blue)
+    let colorA, colorB;
+    if (g.key === "income") {
+      // Green palette for income
+      colorA = isGood === false ? "#F87171" : "#10B981";
+      colorB = isGood === false ? "#DC2626" : "#059669";
+    } else {
+      // Blue palette for expense
+      colorA = isGood === false ? "#F87171" : "#3B82F6";
+      colorB = isGood === false ? "#DC2626" : "#1D4ED8";
+    }
+    
     let emoji = "😴";
     if (isGood === true) emoji = changePct === 0 ? "🙂" : "🎉";
     else if (isGood === false) emoji = "😬";

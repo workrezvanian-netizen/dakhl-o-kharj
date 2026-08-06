@@ -181,27 +181,26 @@
   <!-- ANALYSIS -->
   <section id="tab-analysis" class="tab">
     <div class="ai-card" id="aiAnalysisCard">
-      <div class="ai-card-head">
-        <span class="ai-card-icon">
-          <span class="icon-mask" data-icon="sparkles" style="width:16px;height:16px;color:#fff"></span>
-        </span>
-        <div>
-          <h2 style="margin:0">تحلیل هوشمند این ماه</h2>
-          <p class="ai-card-sub">مقایسه با ماه قبل، با یه نگاه بامزه 😄</p>
+      <div class="ai-card-head" style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+        <div style="display:flex;align-items:center;gap:12px;flex:1;">
+          <span class="ai-card-icon">
+            <span class="icon-mask" data-icon="sparkles" style="width:16px;height:16px;color:#fff"></span>
+          </span>
+          <div>
+            <h2 style="margin:0">تحلیل هوشمند این ماه</h2>
+            <p class="ai-card-sub">مقایسه با ماه قبل، با یه نگاه بامزه 😄</p>
+          </div>
+        </div>
+        <div class="chart-period-toggle" id="smartInsightsPeriodToggle" style="gap:4px;margin:0;">
+          <button type="button" class="chart-period-btn selected" data-period="month" style="padding:6px 10px;flex:none;width:auto;">ماهانه</button>
+          <button type="button" class="chart-period-btn" data-period="week" style="padding:6px 10px;flex:none;width:auto;">هفتگی</button>
+          <button type="button" class="chart-period-btn" data-period="all" style="padding:6px 10px;flex:none;width:auto;">کل بازه</button>
         </div>
       </div>
       <button type="button" id="btnAiAnalyze" class="btn btn-neutral full">تحلیلم کن</button>
       <div id="aiAnalysisResult" class="ai-result"></div>
     </div>
 
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:12px;">
-      <h3 style="margin:0;flex:1;font-size:14px;font-weight:700;color:var(--text);">تحلیل هوشمند</h3>
-      <div class="chart-period-toggle" id="smartInsightsPeriodToggle" style="gap:4px;margin:0;">
-        <button type="button" class="chart-period-btn selected" data-period="month" style="padding:6px 10px;flex:none;width:auto;">ماهانه</button>
-        <button type="button" class="chart-period-btn" data-period="week" style="padding:6px 10px;flex:none;width:auto;">هفتگی</button>
-        <button type="button" class="chart-period-btn" data-period="all" style="padding:6px 10px;flex:none;width:auto;">کل بازه</button>
-      </div>
-    </div>
     <div id="smartInsights"></div>
 
     <div class="scale-card">
@@ -236,14 +235,7 @@
     </div>
 
     <div class="settings-card">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-        <h2 style="margin:0;">مقایسه درآمد و مخارج</h2>
-        <div class="chart-period-toggle" id="mainAnalysisPeriodToggle" style="gap:6px;">
-          <button type="button" class="chart-period-btn selected" data-period="month">این ماه</button>
-          <button type="button" class="chart-period-btn" data-period="week">این هفته</button>
-          <button type="button" class="chart-period-btn" data-period="all">کل بازه</button>
-        </div>
-      </div>
+      <h2>مقایسه درآمد و مخارج</h2>
       <div id="incomeExpenseChart"></div>
     </div>
     <div class="settings-card">
