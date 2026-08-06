@@ -739,7 +739,6 @@ function quickAddIncome(source) {
 let analysisPeriod = "month";
 let analysisPeriodSmartInsights = "month";
 let analysisPeriodIncomeExpense = "month";
-let analysisPeriodExpenseDiversity = "month";
 const setupPeriodToggle = (toggleId, variable) => {
   const toggle = document.getElementById(toggleId);
   if (!toggle) return;
@@ -748,7 +747,6 @@ const setupPeriodToggle = (toggleId, variable) => {
       if (variable === "main") analysisPeriod = btn.dataset.period;
       else if (variable === "smart") analysisPeriodSmartInsights = btn.dataset.period;
       else if (variable === "incomeExpense") analysisPeriodIncomeExpense = btn.dataset.period;
-      else if (variable === "expenseDiversity") analysisPeriodExpenseDiversity = btn.dataset.period;
       toggle.querySelectorAll(".chart-period-btn").forEach((b) => b.classList.remove("selected"));
       btn.classList.add("selected");
       renderAnalysis();
@@ -757,7 +755,6 @@ const setupPeriodToggle = (toggleId, variable) => {
 };
 setupPeriodToggle("analysisPeriodToggle", "expense");
 setupPeriodToggle("incomeExpensePeriodToggle", "incomeExpense");
-setupPeriodToggle("expenseDiversityPeriodToggle", "expenseDiversity");
 
 function renderMonthCompareCard(containerId, period = "month") {
   const wrap = document.getElementById(containerId);
@@ -1092,16 +1089,16 @@ function renderAnalysis() {
 
   renderMonthCompareCard("incomeExpenseChart", analysisPeriodIncomeExpense);
 
-  // Filter expenses based on expenseDiversity period
+  // Filter expenses based on incomeExpense period (linked)
   const inDiversityPeriod = (dateStr) => {
-    if (analysisPeriodExpenseDiversity === "all") return true;
+    if (analysisPeriodIncomeExpense === "all") return true;
     const [gy, gm, gd] = dateStr.split("-").map(Number);
     const d = new Date(gy, gm - 1, gd);
     const today = new Date();
     const daysDiff = Math.floor((today - d) / (1000 * 60 * 60 * 24));
     
-    if (analysisPeriodExpenseDiversity === "week") return daysDiff >= 0 && daysDiff < 7;
-    if (analysisPeriodExpenseDiversity === "month") {
+    if (analysisPeriodIncomeExpense === "week") return daysDiff >= 0 && daysDiff < 7;
+    if (analysisPeriodIncomeExpense === "month") {
       const j = toJalaali(gy, gm, gd);
       const t = todayJalali();
       return j.jy === t.jy && j.jm === t.jm;
@@ -1117,15 +1114,15 @@ function renderAnalysis() {
     .map(([name, amt]) => ({ label: name, value: amt, color: catColor(name), icon: catIcon(name) }));
   renderPieChart("expenseDiversityChart", expenseSegments, "expense");
   
-  // Add description for expense diversity
+  // Add description for expense diversity (synced with income-expense period)
   const descEl = document.getElementById("expenseDiversityDescription");
   if (descEl) {
     let desc = "";
-    if (analysisPeriodExpenseDiversity === "month") {
+    if (analysisPeriodIncomeExpense === "month") {
       desc = `توزیع مخارج این ماه بر اساس دسته‌بندی`;
-    } else if (analysisPeriodExpenseDiversity === "week") {
+    } else if (analysisPeriodIncomeExpense === "week") {
       desc = `توزیع مخارج این هفته بر اساس دسته‌بندی`;
-    } else if (analysisPeriodExpenseDiversity === "all") {
+    } else if (analysisPeriodIncomeExpense === "all") {
       desc = `توزیع کل مخارج بر اساس دسته‌بندی`;
     }
     descEl.textContent = desc;

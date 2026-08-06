@@ -50,7 +50,29 @@
   <div class="header-inner">
     <span class="brand" id="headerBrand">
       <span class="brand-badge" id="headerBrandBadge">
-        <img src="icons/icon-192.png" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit" />
+        <svg viewBox="0 0 100 100" style="width:100%;height:100%;">
+          <defs>
+            <linearGradient id="iconGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:#2a9a8e;stop-opacity:1" />
+              <stop offset="50%" style="stop-color:#1f6f6a;stop-opacity:1" />
+              <stop offset="100%" style="stop-color:#16504a;stop-opacity:1" />
+            </linearGradient>
+            <radialGradient id="dotGrad">
+              <stop offset="0%" style="stop-color:#FCD34D;stop-opacity:1" />
+              <stop offset="100%" style="stop-color:#D97706;stop-opacity:1" />
+            </radialGradient>
+          </defs>
+          <!-- Background -->
+          <rect x="8" y="8" width="84" height="84" rx="18" fill="url(#iconGrad)" />
+          <!-- Inner shadow for depth -->
+          <rect x="8" y="8" width="84" height="84" rx="18" fill="none" stroke="rgba(0,0,0,0.3)" stroke-width="2" opacity="0.5" />
+          <!-- Golden dot -->
+          <circle cx="65" cy="35" r="16" fill="url(#dotGrad)" />
+          <!-- Dot shine -->
+          <circle cx="62" cy="32" r="5" fill="rgba(255,255,255,0.4)" />
+          <!-- Top shine -->
+          <ellipse cx="30" cy="25" rx="20" ry="15" fill="rgba(255,255,255,0.15)" />
+        </svg>
       </span>
       <span class="brand-text">دخل و خرج</span>
     </span>
@@ -240,14 +262,7 @@
       <div id="incomeExpenseDescription" style="text-align:center;margin-top:12px;font-size:13px;color:var(--text-mute);"></div>
     </div>
     <div class="settings-card">
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;">
-        <h2 style="margin:0;flex:1;">تنوع مخارج</h2>
-        <div class="chart-period-toggle" id="expenseDiversityPeriodToggle" style="gap:4px;margin:0;">
-          <button type="button" class="chart-period-btn selected" data-period="month" style="padding:6px 10px;flex:none;width:auto;font-size:12px;">این ماه</button>
-          <button type="button" class="chart-period-btn" data-period="week" style="padding:6px 10px;flex:none;width:auto;font-size:12px;">هفتگی</button>
-          <button type="button" class="chart-period-btn" data-period="all" style="padding:6px 10px;flex:none;width:auto;font-size:12px;">کل بازه</button>
-        </div>
-      </div>
+      <h2>تنوع مخارج</h2>
       <div id="expenseDiversityChart"></div>
       <div id="expenseDiversityDescription" style="text-align:center;margin-top:12px;font-size:13px;color:var(--text-mute);"></div>
     </div>
