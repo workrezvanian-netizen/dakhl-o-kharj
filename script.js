@@ -737,14 +737,20 @@ function quickAddIncome(source) {
 
 // ---------- Analysis charts ----------
 let analysisPeriod = "month";
-document.querySelectorAll("#analysisPeriodToggle .chart-period-btn").forEach((btn) => {
-  btn.addEventListener("click", () => {
-    analysisPeriod = btn.dataset.period;
-    document.querySelectorAll("#analysisPeriodToggle .chart-period-btn").forEach((b) => b.classList.remove("selected"));
-    btn.classList.add("selected");
-    renderAnalysis();
+const setupPeriodToggle = (toggleId) => {
+  const toggle = document.getElementById(toggleId);
+  if (!toggle) return;
+  toggle.querySelectorAll(".chart-period-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      analysisPeriod = btn.dataset.period;
+      toggle.querySelectorAll(".chart-period-btn").forEach((b) => b.classList.remove("selected"));
+      btn.classList.add("selected");
+      renderAnalysis();
+    });
   });
-});
+};
+setupPeriodToggle("analysisPeriodToggle");
+setupPeriodToggle("mainAnalysisPeriodToggle");
 
 function renderMonthCompareCard(containerId) {
   const wrap = document.getElementById(containerId);
@@ -839,7 +845,7 @@ function renderMonthCompareCard(containerId) {
   });
 }
 
-function renderPieChart(containerId, segments) {
+function renderPieChart(containerId, segments, chartType = "expense") {
   const wrap = document.getElementById(containerId);
   const total = segments.reduce((s, x) => s + x.value, 0);
   if (!total) {
@@ -847,6 +853,12 @@ function renderPieChart(containerId, segments) {
     return;
   }
   const visible = segments.filter((s) => s.value > 0);
+  
+  // Override colors based on chart type
+  if (chartType === "income") {
+    const incomeColors = ["#10B981", "#059669", "#047857", "#065F46"];
+    visible.forEach((seg, i) => { seg.color = incomeColors[i % incomeColors.length]; });
+  }
   const cx = 91, cy = 91, r = 72, sw = 30;
   const circumference = 2 * Math.PI * r;
   const uid = Date.now();
@@ -928,20 +940,59 @@ function renderAnalysis() {
   const inPeriod = (dateStr) => {
     if (analysisPeriod === "all") return true;
     const [gy, gm, gd] = dateStr.split("-").map(Number);
-    const j = toJalaali(gy, gm, gd);
-    const t = todayJalali();
-    return j.jy === t.jy && j.jm === t.jm;
+    const d = new Date(gy, gm - 1, gd);
+    const today = new Date();
+    const daysDiff = Math.floor((today - d) / (1000 * 60 * 60 * 24));
+    
+    if (analysisPeriod === "week") return daysDiff >= 0 && daysDiff < 7;
+    if (analysisPeriod === "month") {
+      const j = toJalaali(gy, gm, gd);
+      const t = todayJalali();
+      return j.jy === t.jy && j.jm === t.jm;
+    }
+    return true;
   };
   const expenses = state.expenses.filter((x) => inPeriod(x.date));
+  const incomes = state.incomes.filter((x) => inPeriod(x.date));
+  
+  // Smart insights
+  const totalExpense = expenses.reduce((s, x) => s + x.amount, 0);
+  const totalIncome = incomes.reduce((s, x) => s + x.amount, 0);
+  const lastWeekExpense = state.expenses
+    .filter((x) => {
+      const [gy, gm, gd] = x.date.split("-").map(Number);
+      const d = new Date(gy, gm - 1, gd);
+      const today = new Date();
+      const daysDiff = Math.floor((today - d) / (1000 * 60 * 60 * 24));
+      return daysDiff >= 7 && daysDiff < 14;
+    })
+    .reduce((s, x) => s + x.amount, 0);
+  const avgDaily = totalExpense > 0 ? Math.round(totalExpense / 30) : 0;
+  
+  let insightMsg = "";
+  if (totalExpense === 0) {
+    insightMsg = "📊 فعلاً خرجی ثبت نشده";
+  } else if (lastWeekExpense > totalExpense * 0.4) {
+    insightMsg = "⚠️ هفته پیش‌رو بیش‌تر از حد نرمال خرج شده";
+  } else if (totalExpense < avgDaily * 15) {
+    insightMsg = "✨ خرج این ماه کم‌تر از معمول است";
+  } else {
+    insightMsg = "📈 روند خرج نرمال و متوازن است";
+  }
+  
+  const insightEl = document.getElementById("smartInsights");
+  if (insightEl) {
+    insightEl.innerHTML = `<div style="background:rgba(79,168,158,0.1);padding:10px 14px;border-radius:12px;border-left:3px solid #4FA89E;font-size:13px;color:var(--text);">${insightMsg}</div>`;
+  }
 
   renderMonthCompareCard("incomeExpenseChart");
 
   const byCat = {};
   expenses.forEach((x) => { byCat[x.category] = (byCat[x.category] || 0) + x.amount; });
-  const segments = Object.entries(byCat)
+  const expenseSegments = Object.entries(byCat)
     .sort((a, b) => b[1] - a[1])
     .map(([name, amt]) => ({ label: name, value: amt, color: catColor(name), icon: catIcon(name) }));
-  renderPieChart("expenseDiversityChart", segments);
+  renderPieChart("expenseDiversityChart", expenseSegments, "expense");
 }
 
 // ---------- AI analysis ----------

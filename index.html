@@ -194,6 +194,8 @@
       <div id="aiAnalysisResult" class="ai-result"></div>
     </div>
 
+    <div id="smartInsights"></div>
+
     <div class="scale-card">
       <div class="scale-top-row">
         <div class="scale-stat">
@@ -226,7 +228,14 @@
     </div>
 
     <div class="settings-card">
-      <h2>مقایسه با ماه قبل</h2>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <h2 style="margin:0;">مقایسه درآمد و مخارج</h2>
+        <div class="chart-period-toggle" id="mainAnalysisPeriodToggle" style="gap:6px;">
+          <button type="button" class="chart-period-btn selected" data-period="month">این ماه</button>
+          <button type="button" class="chart-period-btn" data-period="week">این هفته</button>
+          <button type="button" class="chart-period-btn" data-period="all">کل بازه</button>
+        </div>
+      </div>
       <div id="incomeExpenseChart"></div>
     </div>
     <div class="settings-card">
