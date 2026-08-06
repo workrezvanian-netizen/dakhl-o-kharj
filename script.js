@@ -737,20 +737,23 @@ function quickAddIncome(source) {
 
 // ---------- Analysis charts ----------
 let analysisPeriod = "month";
-const setupPeriodToggle = (toggleId) => {
+let analysisPeriodSmartInsights = "month";
+const setupPeriodToggle = (toggleId, variable) => {
   const toggle = document.getElementById(toggleId);
   if (!toggle) return;
   toggle.querySelectorAll(".chart-period-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
-      analysisPeriod = btn.dataset.period;
+      if (variable === "main") analysisPeriod = btn.dataset.period;
+      else analysisPeriodSmartInsights = btn.dataset.period;
       toggle.querySelectorAll(".chart-period-btn").forEach((b) => b.classList.remove("selected"));
       btn.classList.add("selected");
       renderAnalysis();
     });
   });
 };
-setupPeriodToggle("analysisPeriodToggle");
-setupPeriodToggle("mainAnalysisPeriodToggle");
+setupPeriodToggle("analysisPeriodToggle", "expense");
+setupPeriodToggle("mainAnalysisPeriodToggle", "main");
+setupPeriodToggle("smartInsightsPeriodToggle", "smart");
 
 function renderMonthCompareCard(containerId) {
   const wrap = document.getElementById(containerId);
@@ -955,9 +958,27 @@ function renderAnalysis() {
   const expenses = state.expenses.filter((x) => inPeriod(x.date));
   const incomes = state.incomes.filter((x) => inPeriod(x.date));
   
-  // Smart insights
-  const totalExpense = expenses.reduce((s, x) => s + x.amount, 0);
-  const totalIncome = incomes.reduce((s, x) => s + x.amount, 0);
+  // Smart insights based on selected period
+  const smartInPeriod = (dateStr) => {
+    if (analysisPeriodSmartInsights === "all") return true;
+    const [gy, gm, gd] = dateStr.split("-").map(Number);
+    const d = new Date(gy, gm - 1, gd);
+    const today = new Date();
+    const daysDiff = Math.floor((today - d) / (1000 * 60 * 60 * 24));
+    
+    if (analysisPeriodSmartInsights === "week") return daysDiff >= 0 && daysDiff < 7;
+    if (analysisPeriodSmartInsights === "month") {
+      const j = toJalaali(gy, gm, gd);
+      const t = todayJalali();
+      return j.jy === t.jy && j.jm === t.jm;
+    }
+    return true;
+  };
+  
+  const smartExpenses = state.expenses.filter((x) => smartInPeriod(x.date));
+  const smartIncomes = state.incomes.filter((x) => smartInPeriod(x.date));
+  const totalExpense = smartExpenses.reduce((s, x) => s + x.amount, 0);
+  const totalIncome = smartIncomes.reduce((s, x) => s + x.amount, 0);
   const lastWeekExpense = state.expenses
     .filter((x) => {
       const [gy, gm, gd] = x.date.split("-").map(Number);
@@ -967,22 +988,37 @@ function renderAnalysis() {
       return daysDiff >= 7 && daysDiff < 14;
     })
     .reduce((s, x) => s + x.amount, 0);
-  const avgDaily = totalExpense > 0 ? Math.round(totalExpense / 30) : 0;
+  const avgDaily = totalExpense > 0 ? Math.round(totalExpense / (analysisPeriodSmartInsights === "week" ? 7 : 30)) : 0;
   
   let insightMsg = "";
   if (totalExpense === 0) {
     insightMsg = "📊 فعلاً خرجی ثبت نشده";
   } else if (lastWeekExpense > totalExpense * 0.4) {
     insightMsg = "⚠️ هفته پیش‌رو بیش‌تر از حد نرمال خرج شده";
-  } else if (totalExpense < avgDaily * 15) {
-    insightMsg = "✨ خرج این ماه کم‌تر از معمول است";
+  } else if (totalExpense < avgDaily * (analysisPeriodSmartInsights === "week" ? 3 : 15)) {
+    insightMsg = "✨ خرج این دوره کم‌تر از معمول است";
+  } else if (totalIncome > totalExpense) {
+    insightMsg = "💰 درآمد بیش‌تر از مخارج است - خوب جلو رفتی!";
   } else {
     insightMsg = "📈 روند خرج نرمال و متوازن است";
   }
   
   const insightEl = document.getElementById("smartInsights");
   if (insightEl) {
-    insightEl.innerHTML = `<div style="background:rgba(79,168,158,0.1);padding:10px 14px;border-radius:12px;border-left:3px solid #4FA89E;font-size:13px;color:var(--text);">${insightMsg}</div>`;
+    const periodLabel = analysisPeriodSmartInsights === "week" ? "این هفته" : analysisPeriodSmartInsights === "month" ? "این ماه" : "کل بازه";
+    insightEl.innerHTML = `
+      <div style="background:rgba(79,168,158,0.1);padding:12px 14px;border-radius:12px;border-left:3px solid #4FA89E;font-size:13px;color:var(--text);">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <span>${insightMsg}</span>
+          <div class="chart-period-toggle" id="smartInsightsPeriodToggle" style="gap:4px;font-size:11px;">
+            <button type="button" class="chart-period-btn ${analysisPeriodSmartInsights === "week" ? "selected" : ""}" data-period="week" style="padding:4px 8px;">هفته</button>
+            <button type="button" class="chart-period-btn ${analysisPeriodSmartInsights === "month" ? "selected" : ""}" data-period="month" style="padding:4px 8px;">ماه</button>
+            <button type="button" class="chart-period-btn ${analysisPeriodSmartInsights === "all" ? "selected" : ""}" data-period="all" style="padding:4px 8px;">همه</button>
+          </div>
+        </div>
+        <div style="font-size:11px;color:rgba(0,0,0,0.6);">درآمد: ${fmtAmount(totalIncome)} • مخارج: ${fmtAmount(totalExpense)} • مانده: ${fmtAmount(totalIncome - totalExpense)}</div>
+      </div>`;
+    setupPeriodToggle("smartInsightsPeriodToggle", "smart");
   }
 
   renderMonthCompareCard("incomeExpenseChart");
