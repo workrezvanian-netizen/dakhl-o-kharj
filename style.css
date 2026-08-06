@@ -224,7 +224,7 @@ h2 {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  overflow: visible;
+  overflow: hidden;
   transition: width .4s cubic-bezier(.4,0,.2,1), height .4s cubic-bezier(.4,0,.2,1);
   filter: drop-shadow(0 8px 16px rgba(22,63,60,0.35)) drop-shadow(0 2px 4px rgba(0,0,0,0.15));
 }
