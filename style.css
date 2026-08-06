@@ -407,7 +407,7 @@ h2 {
 .scale-card {
   background: linear-gradient(165deg, var(--surface) 0%, var(--green-soft) 130%);
   border-radius: 26px;
-  padding: 22px 20px 20px;
+  padding: 16px 18px 14px;
   box-shadow: 0 2px 6px rgba(16,70,43,0.07), 0 14px 32px rgba(16,70,43,0.09);
   border: 1px solid rgba(27,122,77,0.12);
 }
@@ -466,7 +466,7 @@ h2 {
 }
 .balance-row span:first-child { color: var(--text-mute); font-size: 13px; }
 .balance-amount {
-  font-size: 26px;
+  font-size: 20px;
   font-weight: 800;
   letter-spacing: -0.3px;
   color: var(--green-deep);

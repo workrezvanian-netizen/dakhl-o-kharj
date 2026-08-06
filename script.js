@@ -738,13 +738,15 @@ function quickAddIncome(source) {
 // ---------- Analysis charts ----------
 let analysisPeriod = "month";
 let analysisPeriodSmartInsights = "month";
+let analysisPeriodIncomeExpense = "month";
 const setupPeriodToggle = (toggleId, variable) => {
   const toggle = document.getElementById(toggleId);
   if (!toggle) return;
   toggle.querySelectorAll(".chart-period-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
       if (variable === "main") analysisPeriod = btn.dataset.period;
-      else analysisPeriodSmartInsights = btn.dataset.period;
+      else if (variable === "smart") analysisPeriodSmartInsights = btn.dataset.period;
+      else if (variable === "incomeExpense") analysisPeriodIncomeExpense = btn.dataset.period;
       toggle.querySelectorAll(".chart-period-btn").forEach((b) => b.classList.remove("selected"));
       btn.classList.add("selected");
       renderAnalysis();
@@ -752,6 +754,7 @@ const setupPeriodToggle = (toggleId, variable) => {
   });
 };
 setupPeriodToggle("analysisPeriodToggle", "expense");
+setupPeriodToggle("incomeExpensePeriodToggle", "incomeExpense");
 
 function renderMonthCompareCard(containerId, period = "month") {
   const wrap = document.getElementById(containerId);
@@ -804,6 +807,14 @@ function renderMonthCompareCard(containerId, period = "month") {
   ];
 
   const PREV_COLOR = "#C9A227";
+  
+  // Set legend labels based on period
+  const periodLabels = {
+    "month": { cur: "این ماه", prev: "ماه قبل" },
+    "week": { cur: "این هفته", prev: "هفته قبل" },
+    "all": { cur: "کل", prev: "-" }
+  };
+  const periodLabel = periodLabels[period] || periodLabels["month"];
 
   const gauges = defs.map((g) => {
     const increased = g.curV > g.prevV;
@@ -831,9 +842,9 @@ function renderMonthCompareCard(containerId, period = "month") {
     return { ...g, outerPct, innerPct, changePct, colorA, colorB, emoji };
   });
 
-  const cx = 70, cy = 70;
-  const rOuter = 58, swOuter = 13;
-  const rInner = 39, swInner = 10;
+  const cx = 60, cy = 60;
+  const rOuter = 40, swOuter = 9;
+  const rInner = 27, swInner = 7;
   const circOuter = 2 * Math.PI * rOuter;
   const circInner = 2 * Math.PI * rInner;
   const uid = Date.now();
@@ -843,7 +854,7 @@ function renderMonthCompareCard(containerId, period = "month") {
     const dashInner = (g.innerPct / 100) * circInner;
     return `
       <div class="compare-gauge">
-        <svg viewBox="0 0 140 140" class="compare-gauge-svg">
+        <svg viewBox="0 0 120 120" class="compare-gauge-svg">
           <defs>
             <linearGradient id="gaugeGrad-${uid}-${i}" x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stop-color="${g.colorA}"/>
@@ -867,13 +878,28 @@ function renderMonthCompareCard(containerId, period = "month") {
         </div>
         <div class="compare-gauge-label">${g.label}</div>
         <div class="compare-gauge-legend">
-          <span><i style="background:${g.colorB}"></i>این ماه: ${fmtAmount(g.curV)}</span>
-          <span><i style="background:${PREV_COLOR}"></i>ماه قبل: ${fmtAmount(g.prevV)}</span>
+          <span><i style="background:${g.colorB}"></i>${periodLabel.cur}: ${fmtAmount(g.curV)}</span>
+          <span><i style="background:${PREV_COLOR}"></i>${periodLabel.prev}: ${fmtAmount(g.prevV)}</span>
         </div>
       </div>`;
   }).join("");
 
   wrap.innerHTML = `<div class="compare-gauges-row">${gaugeHTML}</div>`;
+  
+  // Add description
+  const descEl = document.getElementById("incomeExpenseDescription");
+  if (descEl) {
+    let desc = "";
+    if (period === "month") {
+      const increase = curData.totalExpense > prevData.totalExpense;
+      desc = `مقایسه هزینه‌های این ماه با ماه قبل`;
+    } else if (period === "week") {
+      desc = `مقایسه هزینه‌های این هفته با هفته قبل`;
+    } else if (period === "all") {
+      desc = `کل درآمد و هزینه‌های تاکنونی`;
+    }
+    descEl.textContent = desc;
+  }
 
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
@@ -903,6 +929,10 @@ function renderPieChart(containerId, segments, chartType = "expense") {
   if (chartType === "income") {
     const incomeColors = ["#10B981", "#059669", "#047857", "#065F46"];
     visible.forEach((seg, i) => { seg.color = incomeColors[i % incomeColors.length]; });
+  } else if (chartType === "expense") {
+    // Vibrant expense colors
+    const expenseColors = ["#EF4444", "#F97316", "#EAB308", "#22C55E", "#0EA5E9", "#8B5CF6", "#EC4899", "#14B8A6"];
+    visible.forEach((seg, i) => { seg.color = expenseColors[i % expenseColors.length]; });
   }
   const cx = 91, cy = 91, r = 72, sw = 30;
   const circumference = 2 * Math.PI * r;
@@ -1057,7 +1087,7 @@ function renderAnalysis() {
     }
   }
 
-  renderMonthCompareCard("incomeExpenseChart", analysisPeriodSmartInsights);
+  renderMonthCompareCard("incomeExpenseChart", analysisPeriodIncomeExpense);
 
   const byCat = {};
   expenses.forEach((x) => { byCat[x.category] = (byCat[x.category] || 0) + x.amount; });
