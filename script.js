@@ -39,21 +39,21 @@ const CATEGORY_COLORS = [
   "#5B7CB0", "#C97A3D"
 ];
 const CARD_PALETTE = [
-  { bg: "#FBEED9", icon: "#E8A83C" },
-  { bg: "#DCEBFB", icon: "#3B82C4" },
-  { bg: "#FBE4D8", icon: "#E0793A" },
-  { bg: "#EDE1F7", icon: "#9B6FC9" },
-  { bg: "#FBDCE0", icon: "#D9534F" },
-  { bg: "#E3F1EF", icon: "#4FA89E" },
-  { bg: "#E4EFE0", icon: "#6B8E5A" },
-  { bg: "#E7E7EF", icon: "#6B6FA0" }
+  { bg: "#FEE2E2", icon: "#EF4444" }, // Red
+  { bg: "#FFEDD5", icon: "#F97316" }, // Orange
+  { bg: "#FEF08A", icon: "#EAB308" }, // Yellow
+  { bg: "#DCFCE7", icon: "#22C55E" }, // Green
+  { bg: "#CFFAFE", icon: "#0EA5E9" }, // Blue
+  { bg: "#E9D5FF", icon: "#8B5CF6" }, // Purple
+  { bg: "#FCE7F3", icon: "#EC4899" }, // Pink
+  { bg: "#CCFBF1", icon: "#14B8A6" }  // Teal
 ];
 const INCOME_CARD_PALETTE = [
-  { bg: "#E3F1EF", icon: "#2F7A72" },
-  { bg: "#E7F5EF", icon: "#3C8C82" },
-  { bg: "#E3F1DE", icon: "#6B8E5A" },
-  { bg: "#FBF2D8", icon: "#C9A227" },
-  { bg: "#E4EEF6", icon: "#5B7CB0" }
+  { bg: "#DCFCE7", icon: "#22C55E" }, // Bright Green
+  { bg: "#CCFBF1", icon: "#14B8A6" }, // Teal
+  { bg: "#CFFAFE", icon: "#0EA5E9" }, // Blue
+  { bg: "#E9D5FF", icon: "#8B5CF6" }, // Purple
+  { bg: "#FEF08A", icon: "#EAB308" }  // Yellow
 ];
 const INCOME_SOURCES = ["حقوق", "پاداش", "فروش", "هدیه", "سایر"];
 
@@ -739,6 +739,7 @@ function quickAddIncome(source) {
 let analysisPeriod = "month";
 let analysisPeriodSmartInsights = "month";
 let analysisPeriodIncomeExpense = "month";
+let analysisPeriodExpenseDiversity = "month";
 const setupPeriodToggle = (toggleId, variable) => {
   const toggle = document.getElementById(toggleId);
   if (!toggle) return;
@@ -747,6 +748,7 @@ const setupPeriodToggle = (toggleId, variable) => {
       if (variable === "main") analysisPeriod = btn.dataset.period;
       else if (variable === "smart") analysisPeriodSmartInsights = btn.dataset.period;
       else if (variable === "incomeExpense") analysisPeriodIncomeExpense = btn.dataset.period;
+      else if (variable === "expenseDiversity") analysisPeriodExpenseDiversity = btn.dataset.period;
       toggle.querySelectorAll(".chart-period-btn").forEach((b) => b.classList.remove("selected"));
       btn.classList.add("selected");
       renderAnalysis();
@@ -755,6 +757,7 @@ const setupPeriodToggle = (toggleId, variable) => {
 };
 setupPeriodToggle("analysisPeriodToggle", "expense");
 setupPeriodToggle("incomeExpensePeriodToggle", "incomeExpense");
+setupPeriodToggle("expenseDiversityPeriodToggle", "expenseDiversity");
 
 function renderMonthCompareCard(containerId, period = "month") {
   const wrap = document.getElementById(containerId);
@@ -1089,12 +1092,44 @@ function renderAnalysis() {
 
   renderMonthCompareCard("incomeExpenseChart", analysisPeriodIncomeExpense);
 
+  // Filter expenses based on expenseDiversity period
+  const inDiversityPeriod = (dateStr) => {
+    if (analysisPeriodExpenseDiversity === "all") return true;
+    const [gy, gm, gd] = dateStr.split("-").map(Number);
+    const d = new Date(gy, gm - 1, gd);
+    const today = new Date();
+    const daysDiff = Math.floor((today - d) / (1000 * 60 * 60 * 24));
+    
+    if (analysisPeriodExpenseDiversity === "week") return daysDiff >= 0 && daysDiff < 7;
+    if (analysisPeriodExpenseDiversity === "month") {
+      const j = toJalaali(gy, gm, gd);
+      const t = todayJalali();
+      return j.jy === t.jy && j.jm === t.jm;
+    }
+    return true;
+  };
+  
+  const diversityExpenses = state.expenses.filter((x) => inDiversityPeriod(x.date));
   const byCat = {};
-  expenses.forEach((x) => { byCat[x.category] = (byCat[x.category] || 0) + x.amount; });
+  diversityExpenses.forEach((x) => { byCat[x.category] = (byCat[x.category] || 0) + x.amount; });
   const expenseSegments = Object.entries(byCat)
     .sort((a, b) => b[1] - a[1])
     .map(([name, amt]) => ({ label: name, value: amt, color: catColor(name), icon: catIcon(name) }));
   renderPieChart("expenseDiversityChart", expenseSegments, "expense");
+  
+  // Add description for expense diversity
+  const descEl = document.getElementById("expenseDiversityDescription");
+  if (descEl) {
+    let desc = "";
+    if (analysisPeriodExpenseDiversity === "month") {
+      desc = `توزیع مخارج این ماه بر اساس دسته‌بندی`;
+    } else if (analysisPeriodExpenseDiversity === "week") {
+      desc = `توزیع مخارج این هفته بر اساس دسته‌بندی`;
+    } else if (analysisPeriodExpenseDiversity === "all") {
+      desc = `توزیع کل مخارج بر اساس دسته‌بندی`;
+    }
+    descEl.textContent = desc;
+  }
 }
 
 // ---------- AI analysis ----------

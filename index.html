@@ -240,12 +240,16 @@
       <div id="incomeExpenseDescription" style="text-align:center;margin-top:12px;font-size:13px;color:var(--text-mute);"></div>
     </div>
     <div class="settings-card">
-      <h2>تنوع مخارج</h2>
-      <div class="chart-period-toggle" id="analysisPeriodToggle">
-        <button type="button" class="chart-period-btn selected" data-period="month">این ماه</button>
-        <button type="button" class="chart-period-btn" data-period="all">کل بازه</button>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;">
+        <h2 style="margin:0;flex:1;">تنوع مخارج</h2>
+        <div class="chart-period-toggle" id="expenseDiversityPeriodToggle" style="gap:4px;margin:0;">
+          <button type="button" class="chart-period-btn selected" data-period="month" style="padding:6px 10px;flex:none;width:auto;font-size:12px;">این ماه</button>
+          <button type="button" class="chart-period-btn" data-period="week" style="padding:6px 10px;flex:none;width:auto;font-size:12px;">هفتگی</button>
+          <button type="button" class="chart-period-btn" data-period="all" style="padding:6px 10px;flex:none;width:auto;font-size:12px;">کل بازه</button>
+        </div>
       </div>
       <div id="expenseDiversityChart"></div>
+      <div id="expenseDiversityDescription" style="text-align:center;margin-top:12px;font-size:13px;color:var(--text-mute);"></div>
     </div>
   </section>
 
