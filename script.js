@@ -754,21 +754,54 @@ const setupPeriodToggle = (toggleId, variable) => {
 setupPeriodToggle("analysisPeriodToggle", "expense");
 setupPeriodToggle("smartInsightsPeriodToggle", "smart");
 
-function renderMonthCompareCard(containerId) {
+function renderMonthCompareCard(containerId, period = "month") {
   const wrap = document.getElementById(containerId);
-  const t = todayJalali();
-  const p = addMonthsJalali(t.jy, t.jm, -1);
-  const cur = computeMonthTotals(t.jy, t.jm);
-  const prev = computeMonthTotals(p.jy, p.jm);
+  
+  // Get data based on period
+  let curData, prevData;
+  if (period === "month") {
+    const t = todayJalali();
+    const p = addMonthsJalali(t.jy, t.jm, -1);
+    curData = computeMonthTotals(t.jy, t.jm);
+    prevData = computeMonthTotals(p.jy, p.jm);
+  } else if (period === "week") {
+    const today = new Date();
+    const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const twoWeeksAgo = new Date(today.getTime() - 14 * 24 * 60 * 60 * 1000);
+    
+    const getWeekData = (startDate, endDate) => {
+      const inRange = (dateStr) => {
+        const [gy, gm, gd] = dateStr.split("-").map(Number);
+        const d = new Date(gy, gm - 1, gd);
+        return d >= startDate && d < endDate;
+      };
+      const incomes = state.incomes.filter((x) => inRange(x.date));
+      const expenses = state.expenses.filter((x) => inRange(x.date));
+      const totalIncome = incomes.reduce((s, x) => s + x.amount, 0);
+      const totalExpense = expenses.reduce((s, x) => s + x.amount, 0);
+      return { totalIncome, totalExpense, categories: [] };
+    };
+    
+    curData = getWeekData(weekAgo, today);
+    prevData = getWeekData(twoWeeksAgo, weekAgo);
+  } else {
+    // all time - just show all data vs empty
+    curData = {
+      totalIncome: state.incomes.reduce((s, x) => s + x.amount, 0),
+      totalExpense: state.expenses.reduce((s, x) => s + x.amount, 0),
+      categories: []
+    };
+    prevData = { totalIncome: 0, totalExpense: 0, categories: [] };
+  }
 
-  if (!cur.totalIncome && !cur.totalExpense && !prev.totalIncome && !prev.totalExpense) {
+  if (!curData.totalIncome && !curData.totalExpense && !prevData.totalIncome && !prevData.totalExpense) {
     wrap.innerHTML = `<p class="empty-hint">داده‌ای برای مقایسه نیست</p>`;
     return;
   }
 
   const defs = [
-    { key: "expense", label: "مخارج", curV: cur.totalExpense, prevV: prev.totalExpense, goodWhenDown: true },
-    { key: "income", label: "درآمد", curV: cur.totalIncome, prevV: prev.totalIncome, goodWhenDown: false }
+    { key: "expense", label: "مخارج", curV: curData.totalExpense, prevV: prevData.totalExpense, goodWhenDown: true },
+    { key: "income", label: "درآمد", curV: curData.totalIncome, prevV: prevData.totalIncome, goodWhenDown: false }
   ];
 
   const PREV_COLOR = "#C9A227";
@@ -778,16 +811,16 @@ function renderMonthCompareCard(containerId) {
     const changePct = g.prevV > 0 ? Math.round(((g.curV - g.prevV) / g.prevV) * 100) : (g.curV > 0 ? 100 : 0);
     const isGood = g.prevV === 0 && g.curV === 0 ? null : (g.goodWhenDown ? !increased : increased);
     
-    // Different colors for income (green) vs expense (blue)
+    // 4 modern, vibrant, distinct colors
     let colorA, colorB;
     if (g.key === "income") {
-      // Green palette for income
-      colorA = isGood === false ? "#F87171" : "#10B981";
-      colorB = isGood === false ? "#DC2626" : "#059669";
+      // Teal/Cyan for income
+      colorA = isGood === false ? "#ef4444" : "#14b8a6";
+      colorB = isGood === false ? "#dc2626" : "#0d9488";
     } else {
-      // Blue palette for expense
-      colorA = isGood === false ? "#F87171" : "#3B82F6";
-      colorB = isGood === false ? "#DC2626" : "#1D4ED8";
+      // Violet/Purple for expense
+      colorA = isGood === false ? "#ef4444" : "#8b5cf6";
+      colorB = isGood === false ? "#dc2626" : "#7c3aed";
     }
     
     let emoji = "😴";
@@ -1007,16 +1040,25 @@ function renderAnalysis() {
     insightMsg = "⚠️ هفته پیش‌رو بیش‌تر از حد نرمال خرج شده";
   } else if (totalExpense < avgDaily * (analysisPeriodSmartInsights === "week" ? 3 : 15)) {
     insightMsg = "✨ خرج این دوره کم‌تر از معمول است";
-  } else {
-    insightMsg = "📈 روند خرج نرمال و متوازن است";
+  }
+  
+  // Update title based on period
+  const periodLabels = { "week": "این هفته", "month": "این ماه", "all": "کل بازه" };
+  const analysisTitle = document.querySelector(".ai-card-head h2");
+  if (analysisTitle) {
+    analysisTitle.textContent = `تحلیل هوشمند ${periodLabels[analysisPeriodSmartInsights]}`;
   }
   
   const insightEl = document.getElementById("smartInsights");
   if (insightEl) {
-    insightEl.innerHTML = `<div style="background:rgba(79,168,158,0.1);padding:12px 14px;border-radius:12px;border-left:3px solid #4FA89E;font-size:13px;color:var(--text);">${insightMsg}</div>`;
+    if (insightMsg) {
+      insightEl.innerHTML = `<div style="background:rgba(79,168,158,0.1);padding:12px 14px;border-radius:12px;border-left:3px solid #4FA89E;font-size:13px;color:var(--text);">${insightMsg}</div>`;
+    } else {
+      insightEl.innerHTML = "";
+    }
   }
 
-  renderMonthCompareCard("incomeExpenseChart");
+  renderMonthCompareCard("incomeExpenseChart", analysisPeriodSmartInsights);
 
   const byCat = {};
   expenses.forEach((x) => { byCat[x.category] = (byCat[x.category] || 0) + x.amount; });
