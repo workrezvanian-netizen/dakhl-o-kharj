@@ -752,7 +752,6 @@ const setupPeriodToggle = (toggleId, variable) => {
   });
 };
 setupPeriodToggle("analysisPeriodToggle", "expense");
-setupPeriodToggle("smartInsightsPeriodToggle", "smart");
 
 function renderMonthCompareCard(containerId, period = "month") {
   const wrap = document.getElementById(containerId);
