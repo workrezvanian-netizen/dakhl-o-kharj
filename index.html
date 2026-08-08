@@ -129,9 +129,12 @@
 
     <form id="incomeForm" class="entry-form" data-mode-panel="income" style="display:none">
       <h2>ثبت درآمد جدید</h2>
-      <label>
-        <input type="text" id="incomeAmount" inputmode="numeric" placeholder="مثلاً 15,000" required>
-      </label>
+      <div class="amount-row">
+        <label class="amount-field">
+          <input type="text" id="incomeAmount" inputmode="numeric" placeholder="مبلغ (تومان)" required>
+        </label>
+        <button type="submit" class="btn btn-income amount-submit-btn">افزودن درآمد</button>
+      </div>
       <label>منبع درآمد
         <select id="incomeSource">
           <option value="حقوق">حقوق</option>
@@ -155,16 +158,18 @@
       <label>یادداشت (اختیاری)
         <input type="text" id="incomeNote" placeholder="توضیح کوتاه">
       </label>
-      <button type="submit" class="btn btn-income">افزودن درآمد</button>
     </form>
     <div class="section-heading" data-mode-panel="income" style="display:none"><h2>لیست درآمدها</h2></div>
     <div id="incomeList" class="entry-list" data-mode-panel="income" style="display:none"></div>
 
     <form id="expenseForm" class="entry-form" data-mode-panel="expense">
       <h2>ثبت خرج جدید</h2>
-      <label>
-        <input type="text" id="expenseAmount" inputmode="numeric" placeholder="مبلغ (تومان)" required>
-      </label>
+      <div class="amount-row">
+        <label class="amount-field">
+          <input type="text" id="expenseAmount" inputmode="numeric" placeholder="مبلغ (تومان)" required>
+        </label>
+        <button type="submit" class="btn btn-expense amount-submit-btn">افزودن خرج</button>
+      </div>
       <label>گروه (دسته‌بندی)</label>
       <div class="category-picker" id="expenseCategoryPicker"></div>
       <label>تاریخ</label>
@@ -181,7 +186,6 @@
       <label>یادداشت (اختیاری)
         <input type="text" id="expenseNote" placeholder="توضیح کوتاه">
       </label>
-      <button type="submit" class="btn btn-expense">افزودن خرج</button>
     </form>
     <div class="section-heading" data-mode-panel="expense">
       <h2 id="expenseListTitle">لیست مخارج</h2>

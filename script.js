@@ -1419,18 +1419,3 @@ appLockFaceIdBtn.addEventListener("click", () => {
 renderAll();
 refreshSyncUI();
 initSync();
-
-// Fallback: on some mobile browsers, focusing an input opens the keyboard
-// without resizing the layout viewport, so a `position: fixed` bottom-nav
-// can appear to float above its real spot. Track the keyboard height via
-// visualViewport and nudge the nav up by exactly that amount.
-if (window.visualViewport) {
-  const bottomNavEl = document.querySelector(".bottom-nav");
-  const adjustForKeyboard = () => {
-    if (!bottomNavEl) return;
-    const kbHeight = Math.max(0, window.innerHeight - window.visualViewport.height - window.visualViewport.offsetTop);
-    bottomNavEl.style.transform = kbHeight > 60 ? `translateY(-${kbHeight}px)` : "";
-  };
-  window.visualViewport.addEventListener("resize", adjustForKeyboard);
-  window.visualViewport.addEventListener("scroll", adjustForKeyboard);
-}

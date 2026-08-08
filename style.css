@@ -731,6 +731,20 @@ h2 {
   color: var(--text);
 }
 #incomeAmount, #expenseAmount { margin-top: 0; }
+.amount-row {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.amount-row .amount-field { flex: 1; margin-bottom: 0; }
+.amount-row .amount-field input { margin-top: 0; height: 100%; }
+.amount-submit-btn {
+  flex-shrink: 0;
+  white-space: nowrap;
+  padding: 0 14px;
+  font-size: 12.5px;
+}
 .entry-form input:focus, .entry-form select:focus,
 input:focus, select:focus {
   outline: 2px solid var(--gold);
@@ -1196,9 +1210,9 @@ input:focus, select:focus {
   display: flex;
   isolation: isolate;
   overflow: hidden;
-  background: linear-gradient(180deg, rgba(255,255,255,0.58) 0%, rgba(255,255,255,0.24) 60%, rgba(255,255,255,0.34) 100%);
-  backdrop-filter: blur(28px) saturate(200%) brightness(1.08);
-  -webkit-backdrop-filter: blur(28px) saturate(200%) brightness(1.08);
+  background: linear-gradient(180deg, rgba(255,255,255,0.34) 0%, rgba(255,255,255,0.12) 60%, rgba(255,255,255,0.18) 100%);
+  backdrop-filter: blur(16px) saturate(180%) brightness(1.05);
+  -webkit-backdrop-filter: blur(16px) saturate(180%) brightness(1.05);
   border: 1px solid rgba(255,255,255,0.55);
   border-radius: 28px;
   box-shadow:
