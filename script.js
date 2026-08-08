@@ -34,9 +34,8 @@ const DEFAULT_CATEGORIES = [
 const DEFAULT_ICON_MAP = { "خوراک": "utensils", "حمل‌ونقل": "car", "قبض‌ها": "receipt", "خرید": "shopping-bag", "تفریح": "film", "درمان": "stethoscope", "اقساط": "credit-card", "سایر": "package" };
 const INCOME_SOURCE_ICON = { "حقوق": "briefcase", "پاداش": "award", "فروش": "tag", "هدیه": "gift", "سایر": "wallet" };
 const CATEGORY_COLORS = [
-  "#2F7A72", "#E0793A", "#8D6AB8", "#3B82C4", "#C24A2E",
-  "#C9A227", "#4FA89E", "#D9578F", "#6B9E4A", "#B0708C",
-  "#5B7CB0", "#C97A3D"
+  "#FF6B6B", "#4ECDC4", "#45B7D1", "#FFA07A",
+  "#98D8C8", "#F7DC6F", "#BB8FCE", "#85C1E2"
 ];
 const CARD_PALETTE = [
   { bg: "#FBEED9", icon: "#E8A83C" },
@@ -557,11 +556,16 @@ function renderExpenseCategoryPicker() {
     wrap.innerHTML = `<p class="empty-hint">اول یک گروه بساز (تب دسته‌ها)</p>`;
     return;
   }
-  wrap.innerHTML = state.categories.map((c) => `
-    <button type="button" class="category-chip ${c.name === selectedExpenseCategoryName ? "selected" : ""}" data-name="${c.name}">
-      ${iconSpanHTML(c.icon)}<span class="chip-name">${c.name}</span>
+  wrap.innerHTML = state.categories.map((c) => {
+    const color = catColor(c.name);
+    const selected = c.name === selectedExpenseCategoryName;
+    return `
+    <button type="button" class="category-chip ${selected ? "selected" : ""}" data-name="${c.name}"
+      style="${selected ? `background:${color}20;border-color:${color};color:${color}` : ""}">
+      ${iconSpanHTML(c.icon, `color:${color}`)}<span class="chip-name">${c.name}</span>
     </button>
-  `).join("");
+  `;
+  }).join("");
   wrap.querySelectorAll(".category-chip").forEach((btn) => {
     btn.addEventListener("click", () => {
       selectedExpenseCategoryName = btn.dataset.name;
@@ -710,12 +714,12 @@ function renderDashboard() {
   if (!state.categories.length) {
     catWrap.innerHTML = `<p class="empty-hint">اول یک گروه بساز (تب دسته‌ها)</p>`;
   } else {
-    catWrap.innerHTML = state.categories.map((c, i) => {
-      const palette = CARD_PALETTE[i % CARD_PALETTE.length];
+    catWrap.innerHTML = state.categories.map((c) => {
+      const color = catColor(c.name);
       const amt = byCat[c.name] || 0;
       return `
-        <button type="button" class="quick-cat-card" style="background:${palette.bg}" onclick="quickAddExpense('${c.name.replace(/'/g, "\\'")}')">
-          <span class="quick-cat-bubble" style="background:${palette.icon}22">${iconSpanHTML(c.icon, `color:${palette.icon}`)}</span>
+        <button type="button" class="quick-cat-card" style="background:${color}17" onclick="quickAddExpense('${c.name.replace(/'/g, "\\'")}')">
+          <span class="quick-cat-bubble" style="background:${color}30">${iconSpanHTML(c.icon, `color:${color}`)}</span>
           <span class="quick-cat-name">${c.name}</span>
           <span class="quick-cat-amount">${fmtAmount(amt)}</span>
         </button>`;
@@ -828,23 +832,21 @@ function renderMonthCompareCard(containerId, period = "month") {
     { key: "income", label: "درآمد", curV: curData.totalIncome, prevV: prevData.totalIncome, goodWhenDown: false }
   ];
 
-  const PREV_COLOR = "#C9A227";
+  const PREV_COLOR = "#00D4CB";
 
   const gauges = defs.map((g) => {
     const increased = g.curV > g.prevV;
     const changePct = g.prevV > 0 ? Math.round(((g.curV - g.prevV) / g.prevV) * 100) : (g.curV > 0 ? 100 : 0);
     const isGood = g.prevV === 0 && g.curV === 0 ? null : (g.goodWhenDown ? !increased : increased);
     
-    // 4 modern, vibrant, distinct colors
+    // رینگ‌های هماهنگ به سبک اپل‌واچ: سبز = وضعیت خوب، قرمز = وضعیت بد، آبی‌فیروزه‌ای = ماه قبل
     let colorA, colorB;
-    if (g.key === "income") {
-      // Teal/Cyan for income
-      colorA = isGood === false ? "#ef4444" : "#14b8a6";
-      colorB = isGood === false ? "#dc2626" : "#0d9488";
+    if (isGood === false) {
+      colorA = "#FF375F";
+      colorB = "#E01346";
     } else {
-      // Violet/Purple for expense
-      colorA = isGood === false ? "#ef4444" : "#8b5cf6";
-      colorB = isGood === false ? "#dc2626" : "#7c3aed";
+      colorA = "#8FE03D";
+      colorB = "#57B928";
     }
     
     let emoji = "😴";
@@ -924,15 +926,7 @@ function renderPieChart(containerId, segments, chartType = "expense") {
   }
   const visible = segments.filter((s) => s.value > 0);
   
-  // Override colors based on chart type
-  if (chartType === "income") {
-    const incomeColors = ["#10B981", "#059669", "#047857", "#065F46"];
-    visible.forEach((seg, i) => { seg.color = incomeColors[i % incomeColors.length]; });
-  } else {
-    // Vibrant expense colors
-    const expenseColors = ["#FF6B6B", "#4ECDC4", "#45B7D1", "#FFA07A", "#98D8C8", "#F7DC6F", "#BB8FCE", "#85C1E2"];
-    visible.forEach((seg, i) => { seg.color = expenseColors[i % expenseColors.length]; });
-  }
+  // رنگ هر بخش از قبل با catColor() تعیین شده تا با داشبورد/تب ثبت/لیست مخارج یکسان بماند
   const cx = 91, cy = 91, r = 72, sw = 30;
   const circumference = 2 * Math.PI * r;
   const uid = Date.now();
