@@ -371,6 +371,41 @@ function isStandalone() {
   );
 }
 
+function completeWelcomeIntro() {
+  const overlay = document.getElementById("welcomeScreen");
+  const DURATION = 650;
+  const greeting = document.getElementById("welcomeGreeting");
+  greeting.style.transition = "opacity .3s ease";
+  greeting.style.opacity = "0";
+  const lockArea = document.getElementById("welcomeLockArea");
+  if (lockArea && lockArea.style.display !== "none") {
+    lockArea.style.transition = "opacity .3s ease";
+    lockArea.style.opacity = "0";
+  }
+
+  flipMove(document.getElementById("welcomeWatermark"), document.getElementById("headerWatermark"), DURATION);
+  flipMove(document.getElementById("welcomeIconImg"), document.getElementById("headerBrandBadge"), DURATION);
+  flipMove(document.getElementById("welcomeBrandText"), document.querySelector("#headerBrand .brand-text"), DURATION);
+  document.getElementById("welcomeBg").style.opacity = "0";
+
+  setTimeout(() => {
+    overlay.style.display = "none";
+    if (!isStandalone()) {
+      document.getElementById("installGuide").hidden = false;
+    }
+  }, DURATION + 50);
+}
+
+function showWelcomeLockForm() {
+  const greeting = document.getElementById("welcomeGreeting");
+  greeting.textContent = "برنامه قفل‌شده است";
+  const lockArea = document.getElementById("welcomeLockArea");
+  lockArea.style.display = "";
+  document.getElementById("welcomeLockForm").style.display = "";
+  document.getElementById("welcomeLockFaceId").style.display = "";
+  document.getElementById("welcomeLockPin").focus();
+}
+
 function initWelcomeScreen() {
   const overlay = document.getElementById("welcomeScreen");
   if (!overlay) return;
@@ -383,24 +418,16 @@ function initWelcomeScreen() {
     el.style.transform = "";
   });
   document.getElementById("welcomeGreeting").style.opacity = "";
+  document.getElementById("welcomeGreeting").textContent = "خوش آمدید";
+  document.getElementById("welcomeLockArea").style.display = "none";
+  document.getElementById("welcomeLockArea").style.opacity = "";
 
   setTimeout(() => {
-    const DURATION = 650;
-    const greeting = document.getElementById("welcomeGreeting");
-    greeting.style.transition = "opacity .3s ease";
-    greeting.style.opacity = "0";
-
-    flipMove(document.getElementById("welcomeWatermark"), document.getElementById("headerWatermark"), DURATION);
-    flipMove(document.getElementById("welcomeIconImg"), document.getElementById("headerBrandBadge"), DURATION);
-    flipMove(document.getElementById("welcomeBrandText"), document.querySelector("#headerBrand .brand-text"), DURATION);
-    document.getElementById("welcomeBg").style.opacity = "0";
-
-    setTimeout(() => {
-      overlay.style.display = "none";
-      if (!isStandalone()) {
-        document.getElementById("installGuide").hidden = false;
-      }
-    }, DURATION + 50);
+    if (appLockStorage.isEnabled() && !appLockStorage.isUnlocked()) {
+      showWelcomeLockForm();
+    } else {
+      completeWelcomeIntro();
+    }
   }, 2000);
 }
 initWelcomeScreen();
@@ -1280,13 +1307,12 @@ if (appScroll) {
 }
 
 // ---------- App Lock ----------
-const appLockScreenEl = document.getElementById("appLockScreen");
 const appLockToggle = document.getElementById("appLockToggle");
-const appLockPinInput = document.getElementById("appLockPin");
-const appLockSubmit = document.getElementById("appLockSubmit");
-const appLockFaceIdBtn = document.getElementById("appLockFaceId");
-const appLockMessage = document.getElementById("appLockMessage");
-const appLockForm = document.getElementById("appLockForm");
+const appLockPinInput = document.getElementById("welcomeLockPin");
+const appLockSubmit = document.getElementById("welcomeLockSubmit");
+const appLockFaceIdBtn = document.getElementById("welcomeLockFaceId");
+const appLockMessage = document.getElementById("welcomeLockMessage");
+const appLockForm = document.getElementById("welcomeLockForm");
 
 const appLockStorage = {
   isEnabled: () => localStorage.getItem("appLockEnabled") === "true",
@@ -1297,24 +1323,16 @@ const appLockStorage = {
   setUnlocked: (val) => sessionStorage.setItem("appUnlocked", val ? "true" : "false")
 };
 
-const showLockScreen = () => {
-  appLockScreenEl.style.display = "";
-  document.getElementById("appScroll").style.display = "none";
-  document.querySelector(".bottom-nav").style.display = "none";
-};
-
-const hideLockScreen = () => {
-  appLockScreenEl.style.display = "none";
-  document.getElementById("appScroll").style.display = "";
-  document.querySelector(".bottom-nav").style.display = "";
+const unlockAndProceed = () => {
   appLockStorage.setUnlocked(true);
   appLockPinInput.value = "";
   appLockMessage.textContent = "";
+  completeWelcomeIntro();
 };
 
 const verifyPin = (pin) => {
   if (pin === appLockStorage.getPin()) {
-    hideLockScreen();
+    unlockAndProceed();
     return true;
   } else {
     appLockMessage.textContent = "رمز نادرست است";
@@ -1380,7 +1398,7 @@ appLockFaceIdBtn.addEventListener("click", () => {
     PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable().then((available) => {
       if (available) {
         // Simulate Face ID auth
-        hideLockScreen();
+        unlockAndProceed();
       } else {
         appLockMessage.textContent = "فیس‌آی‌دی در این دستگاه موجود نیست";
       }
@@ -1392,13 +1410,6 @@ appLockFaceIdBtn.addEventListener("click", () => {
     appLockPinInput.focus();
   }
 });
-
-// Check lock on load
-if (appLockStorage.isEnabled() && !appLockStorage.isUnlocked()) {
-  showLockScreen();
-  appLockForm.style.display = "";
-  appLockFaceIdBtn.style.display = "";
-}
 
 // ---------- Init ----------
 renderAll();

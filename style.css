@@ -177,6 +177,66 @@ h2 {
   transition: opacity .3s ease;
 }
 
+.welcome-lock-area {
+  width: 100%;
+  max-width: 280px;
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.welcome-lock-input {
+  width: 100%;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.3);
+  background: rgba(255,255,255,0.12);
+  color: #fff;
+  font-size: 16px;
+  text-align: center;
+  margin-bottom: 12px;
+  font-family: inherit;
+}
+.welcome-lock-input::placeholder { color: rgba(255,255,255,0.6); }
+.welcome-lock-submit {
+  width: 100%;
+  padding: 12px;
+  border-radius: 12px;
+  border: none;
+  background: rgba(255,255,255,0.16);
+  color: #fff;
+  font-weight: 700;
+  font-size: 14px;
+  font-family: inherit;
+  cursor: pointer;
+}
+.welcome-lock-faceid-btn {
+  width: 100%;
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.16);
+  border: 1px solid rgba(255,255,255,0.3);
+  color: #fff;
+  font-weight: 600;
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 10px;
+  transition: transform .2s ease;
+}
+.welcome-lock-faceid-btn:active { transform: scale(0.96); }
+.welcome-lock-message {
+  text-align: center;
+  font-size: 12px;
+  color: #ffb4b4;
+  margin-top: 10px;
+  min-height: 14px;
+}
+
 .app-header {
   transition: padding .4s cubic-bezier(.4,0,.2,1);
 }
@@ -447,7 +507,7 @@ h2 {
 .scale-track {
   display: flex;
   width: 100%;
-  height: 12px;
+  height: 7px;
   border-radius: 999px;
   overflow: hidden;
   background: rgba(179,69,44,0.14);
@@ -460,13 +520,13 @@ h2 {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  margin-top: 18px;
-  padding-top: 16px;
+  margin-top: 12px;
+  padding-top: 12px;
   border-top: 1px dashed rgba(27,122,77,0.2);
 }
-.balance-row span:first-child { color: var(--text-mute); font-size: 13px; }
+.balance-row span:first-child { color: var(--text-mute); font-size: 12px; }
 .balance-amount {
-  font-size: 26px;
+  font-size: 18px;
   font-weight: 800;
   letter-spacing: -0.3px;
   color: var(--green-deep);
@@ -1249,76 +1309,6 @@ input:checked + .toggle-slider {
 }
 input:checked + .toggle-slider:before {
   transform: translateX(22px);
-}
-
-/* ---------- App Lock Screen ---------- */
-.app-lock-screen {
-  position: fixed;
-  inset: 0;
-  z-index: 999;
-  background: linear-gradient(135deg, #4FA89E 0%, #163F3C 50%, #2F7A72 100%);
-}
-.app-lock-overlay {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
-  padding: 20px;
-}
-.app-lock-card {
-  background: var(--cream);
-  border-radius: 24px;
-  padding: 40px 24px;
-  max-width: 300px;
-  text-align: center;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-}
-.app-lock-icon {
-  width: 80px;
-  height: 80px;
-  border-radius: 20px;
-  background: linear-gradient(135deg, var(--green) 0%, var(--green-deep) 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 20px;
-  box-shadow: 0 8px 16px rgba(79,168,158,0.3);
-}
-.app-lock-title {
-  font-size: 22px;
-  font-weight: 700;
-  margin: 0 0 4px;
-  color: var(--text);
-}
-.app-lock-subtitle {
-  font-size: 13px;
-  color: var(--text-mute);
-  margin: 0 0 24px;
-}
-.app-lock-faceid-btn {
-  width: 100%;
-  padding: 12px;
-  border-radius: 12px;
-  background: linear-gradient(-45deg, #4FA89E, #163F3C, #2F7A72, #4FA89E);
-  background-size: 300% 300%;
-  animation: headerGradient 8s ease infinite;
-  border: none;
-  color: #fff;
-  font-weight: 600;
-  font-size: 13px;
-  font-family: inherit;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  margin-top: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-  transition: transform .2s ease;
-}
-.app-lock-faceid-btn:active {
-  transform: scale(0.95);
 }
 
 /* AI Card Button Style */

@@ -23,6 +23,18 @@
     <img id="welcomeIconImg" class="welcome-icon-img" src="icons/icon-192.png" alt="" />
     <div id="welcomeBrandText" class="welcome-brand-text">دخل و خرج</div>
     <div id="welcomeGreeting" class="welcome-greeting">خوش آمدید</div>
+
+    <div id="welcomeLockArea" class="welcome-lock-area" style="display:none;">
+      <div id="welcomeLockForm" style="display:none;">
+        <input type="password" id="welcomeLockPin" class="welcome-lock-input" placeholder="رمز عبور" maxlength="6">
+        <button type="button" id="welcomeLockSubmit" class="welcome-lock-submit">ورود</button>
+      </div>
+      <button type="button" id="welcomeLockFaceId" class="welcome-lock-faceid-btn" style="display:none;">
+        <span class="icon-mask" data-icon="face-id" style="width:22px;height:22px;color:#fff"></span>
+        <span>ورود با فیس آی‌دی</span>
+      </button>
+      <div id="welcomeLockMessage" class="welcome-lock-message"></div>
+    </div>
   </div>
 </div>
 
@@ -42,31 +54,6 @@
       </div>
     </div>
     <button type="button" id="btnDismissInstallGuide" class="btn btn-neutral full">فهمیدم، برو به برنامه</button>
-  </div>
-</div>
-
-<!-- App Lock Screen -->
-<div id="appLockScreen" class="app-lock-screen" style="display:none;">
-  <div class="app-lock-overlay">
-    <div class="app-lock-card">
-      <div class="app-lock-icon">
-        <span class="icon-mask" data-icon="sparkles" style="width:48px;height:48px;color:var(--green-deep)"></span>
-      </div>
-      <h1 class="app-lock-title">دخل و خرج</h1>
-      <p class="app-lock-subtitle">برنامه قفل‌شده است</p>
-      
-      <div id="appLockForm" style="display:none;">
-        <input type="password" id="appLockPin" placeholder="رمز عبور" style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--border);font-size:16px;text-align:center;margin-bottom:12px;" maxlength="6">
-        <button type="button" id="appLockSubmit" class="btn btn-neutral full">ورود</button>
-      </div>
-      
-      <button type="button" id="appLockFaceId" class="app-lock-faceid-btn">
-        <span class="icon-mask" data-icon="face-id" style="width:28px;height:28px;color:#fff"></span>
-        <span>ورود با فیس آی‌دی</span>
-      </button>
-      
-      <div id="appLockMessage" style="text-align:center;font-size:12px;color:#ef4444;margin-top:10px;"></div>
-    </div>
   </div>
 </div>
 
