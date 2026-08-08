@@ -2,7 +2,7 @@
 <html lang="fa" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 <title>دخل و خرج</title>
 <meta name="theme-color" content="#163F3C">
 <link rel="manifest" href="manifest.json">
@@ -129,8 +129,8 @@
 
     <form id="incomeForm" class="entry-form" data-mode-panel="income" style="display:none">
       <h2>ثبت درآمد جدید</h2>
-      <label>مبلغ (تومان)
-        <input type="text" id="incomeAmount" inputmode="numeric" placeholder="مثلاً 5,000,000" required>
+      <label>
+        <input type="text" id="incomeAmount" inputmode="numeric" placeholder="مثلاً 15,000" required>
       </label>
       <label>منبع درآمد
         <select id="incomeSource">
@@ -162,8 +162,8 @@
 
     <form id="expenseForm" class="entry-form" data-mode-panel="expense">
       <h2>ثبت خرج جدید</h2>
-      <label>مبلغ (تومان)
-        <input type="text" id="expenseAmount" inputmode="numeric" placeholder="مثلاً 150,000" required>
+      <label>
+        <input type="text" id="expenseAmount" inputmode="numeric" placeholder="مثلاً 15,000" required>
       </label>
       <label>گروه (دسته‌بندی)</label>
       <div class="category-picker" id="expenseCategoryPicker"></div>

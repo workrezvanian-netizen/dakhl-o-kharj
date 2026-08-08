@@ -833,6 +833,14 @@ function renderMonthCompareCard(containerId, period = "month") {
     { key: "income", label: "درآمد", curV: curData.totalIncome, prevV: prevData.totalIncome, goodWhenDown: false }
   ];
 
+  const periodLegend = {
+    month: { cur: "این ماه", prev: "ماه قبل" },
+    week: { cur: "این هفته", prev: "هفته قبل" },
+    all: { cur: "کل بازه", prev: "بدون مقایسه" }
+  }[period] || { cur: "دوره فعلی", prev: "دوره قبل" };
+
+  const overallMax = Math.max(...defs.map((d) => Math.max(d.curV, d.prevV))) || 1;
+
   const gauges = defs.map((g) => {
     const increased = g.curV > g.prevV;
     const changePct = g.prevV > 0 ? Math.round(((g.curV - g.prevV) / g.prevV) * 100) : (g.curV > 0 ? 100 : 0);
@@ -847,14 +855,10 @@ function renderMonthCompareCard(containerId, period = "month") {
       colorA = "#2E9BFF"; colorB = "#0A6FDB";
       prevColor = "#FFD426";
     }
-    
-    let emoji = "😴";
-    if (isGood === true) emoji = changePct === 0 ? "🙂" : "🎉";
-    else if (isGood === false) emoji = "😬";
-    const maxV = Math.max(g.curV, g.prevV) || 1;
-    const outerPct = (g.curV / maxV) * 100;
-    const innerPct = (g.prevV / maxV) * 100;
-    return { ...g, outerPct, innerPct, changePct, colorA, colorB, prevColor, emoji };
+
+    const outerPct = (g.curV / overallMax) * 100;
+    const innerPct = (g.prevV / overallMax) * 100;
+    return { ...g, outerPct, innerPct, changePct, colorA, colorB, prevColor };
   });
 
   const cx = 70, cy = 70;
@@ -888,13 +892,12 @@ function renderMonthCompareCard(containerId, period = "month") {
             data-dash="${dashInner}" data-circ="${circInner}"/>
         </svg>
         <div class="compare-gauge-center">
-          <span class="compare-gauge-emoji">${g.emoji}</span>
           <span class="compare-gauge-pct" style="color:${g.colorB}">${g.changePct > 0 ? "+" : ""}${toPersianDigits(g.changePct)}٪</span>
         </div>
         <div class="compare-gauge-label">${g.label}</div>
         <div class="compare-gauge-legend">
-          <span><i style="background:${g.colorB}"></i>این ماه: ${fmtAmount(g.curV)}</span>
-          <span><i style="background:${g.prevColor}"></i>ماه قبل: ${fmtAmount(g.prevV)}</span>
+          <span><i style="background:${g.colorB}"></i>${periodLegend.cur}: ${fmtAmount(g.curV)}</span>
+          <span><i style="background:${g.prevColor}"></i>${periodLegend.prev}: ${fmtAmount(g.prevV)}</span>
         </div>
       </div>`;
   }).join("");
@@ -1408,3 +1411,18 @@ appLockFaceIdBtn.addEventListener("click", () => {
 renderAll();
 refreshSyncUI();
 initSync();
+
+// Fallback: on some mobile browsers, focusing an input opens the keyboard
+// without resizing the layout viewport, so a `position: fixed` bottom-nav
+// can appear to float above its real spot. Track the keyboard height via
+// visualViewport and nudge the nav up by exactly that amount.
+if (window.visualViewport) {
+  const bottomNavEl = document.querySelector(".bottom-nav");
+  const adjustForKeyboard = () => {
+    if (!bottomNavEl) return;
+    const kbHeight = Math.max(0, window.innerHeight - window.visualViewport.height - window.visualViewport.offsetTop);
+    bottomNavEl.style.transform = kbHeight > 60 ? `translateY(-${kbHeight}px)` : "";
+  };
+  window.visualViewport.addEventListener("resize", adjustForKeyboard);
+  window.visualViewport.addEventListener("scroll", adjustForKeyboard);
+}

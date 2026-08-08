@@ -730,6 +730,7 @@ h2 {
   background: var(--cream);
   color: var(--text);
 }
+#incomeAmount, #expenseAmount { margin-top: 0; }
 .entry-form input:focus, .entry-form select:focus,
 input:focus, select:focus {
   outline: 2px solid var(--gold);
