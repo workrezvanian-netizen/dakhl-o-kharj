@@ -1320,3 +1320,20 @@ input:checked + .toggle-slider:before {
 .app-lock-faceid-btn:active {
   transform: scale(0.95);
 }
+
+/* AI Card Button Style */
+.ai-card-button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  width: 100%;
+  text-align: right;
+  transition: opacity .2s ease;
+}
+.ai-card-button:active {
+  opacity: 0.8;
+}

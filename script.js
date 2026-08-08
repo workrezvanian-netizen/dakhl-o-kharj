@@ -736,23 +736,20 @@ function quickAddIncome(source) {
 }
 
 // ---------- Analysis charts ----------
-let analysisPeriod = "month";
-let analysisPeriodSmartInsights = "month";
-const setupPeriodToggle = (toggleId, variable) => {
+let analysisPeriod = "month"; // Used for main period selection
+const setupPeriodToggle = (toggleId, callback) => {
   const toggle = document.getElementById(toggleId);
   if (!toggle) return;
   toggle.querySelectorAll(".chart-period-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
-      if (variable === "main") analysisPeriod = btn.dataset.period;
-      else analysisPeriodSmartInsights = btn.dataset.period;
+      analysisPeriod = btn.dataset.period;
       toggle.querySelectorAll(".chart-period-btn").forEach((b) => b.classList.remove("selected"));
       btn.classList.add("selected");
-      renderAnalysis();
+      if (callback) callback();
     });
   });
 };
-setupPeriodToggle("analysisPeriodToggle", "expense");
-setupPeriodToggle("smartInsightsPeriodToggle", "smart");
+setupPeriodToggle("mainPeriodToggle", renderAll);
 
 function renderMonthCompareCard(containerId, period = "month") {
   const wrap = document.getElementById(containerId);
@@ -904,6 +901,10 @@ function renderPieChart(containerId, segments, chartType = "expense") {
   if (chartType === "income") {
     const incomeColors = ["#10B981", "#059669", "#047857", "#065F46"];
     visible.forEach((seg, i) => { seg.color = incomeColors[i % incomeColors.length]; });
+  } else {
+    // Vibrant expense colors
+    const expenseColors = ["#FF6B6B", "#4ECDC4", "#45B7D1", "#FFA07A", "#98D8C8", "#F7DC6F", "#BB8FCE", "#85C1E2"];
+    visible.forEach((seg, i) => { seg.color = expenseColors[i % expenseColors.length]; });
   }
   const cx = 91, cy = 91, r = 72, sw = 30;
   const circumference = 2 * Math.PI * r;
@@ -1003,14 +1004,14 @@ function renderAnalysis() {
   
   // Smart insights based on selected period
   const smartInPeriod = (dateStr) => {
-    if (analysisPeriodSmartInsights === "all") return true;
+    if (analysisPeriod === "all") return true;
     const [gy, gm, gd] = dateStr.split("-").map(Number);
     const d = new Date(gy, gm - 1, gd);
     const today = new Date();
     const daysDiff = Math.floor((today - d) / (1000 * 60 * 60 * 24));
     
-    if (analysisPeriodSmartInsights === "week") return daysDiff >= 0 && daysDiff < 7;
-    if (analysisPeriodSmartInsights === "month") {
+    if (analysisPeriod === "week") return daysDiff >= 0 && daysDiff < 7;
+    if (analysisPeriod === "month") {
       const j = toJalaali(gy, gm, gd);
       const t = todayJalali();
       return j.jy === t.jy && j.jm === t.jm;
@@ -1031,14 +1032,14 @@ function renderAnalysis() {
       return daysDiff >= 7 && daysDiff < 14;
     })
     .reduce((s, x) => s + x.amount, 0);
-  const avgDaily = totalExpense > 0 ? Math.round(totalExpense / (analysisPeriodSmartInsights === "week" ? 7 : 30)) : 0;
+  const avgDaily = totalExpense > 0 ? Math.round(totalExpense / (analysisPeriod === "week" ? 7 : 30)) : 0;
   
   let insightMsg = "";
   if (totalExpense === 0) {
     insightMsg = "📊 فعلاً خرجی ثبت نشده";
   } else if (lastWeekExpense > totalExpense * 0.4) {
     insightMsg = "⚠️ هفته پیش‌رو بیش‌تر از حد نرمال خرج شده";
-  } else if (totalExpense < avgDaily * (analysisPeriodSmartInsights === "week" ? 3 : 15)) {
+  } else if (totalExpense < avgDaily * (analysisPeriod === "week" ? 3 : 15)) {
     insightMsg = "✨ خرج این دوره کم‌تر از معمول است";
   }
   
@@ -1046,7 +1047,7 @@ function renderAnalysis() {
   const periodLabels = { "week": "این هفته", "month": "این ماه", "all": "کل بازه" };
   const analysisTitle = document.querySelector(".ai-card-head h2");
   if (analysisTitle) {
-    analysisTitle.textContent = `تحلیل هوشمند ${periodLabels[analysisPeriodSmartInsights]}`;
+    analysisTitle.textContent = `تحلیل هوشمند ${periodLabels[analysisPeriod]}`;
   }
   
   const insightEl = document.getElementById("smartInsights");
@@ -1058,7 +1059,7 @@ function renderAnalysis() {
     }
   }
 
-  renderMonthCompareCard("incomeExpenseChart", analysisPeriodSmartInsights);
+  renderMonthCompareCard("incomeExpenseChart", analysisPeriod);
 
   const byCat = {};
   expenses.forEach((x) => { byCat[x.category] = (byCat[x.category] || 0) + x.amount; });
@@ -1237,6 +1238,25 @@ if ("serviceWorker" in navigator) {
   });
 }
 
+// ---------- AI Analysis Button ----------
+const btnAiAnalyze = document.getElementById("btnAiAnalyze");
+const aiAnalysisResult = document.getElementById("aiAnalysisResult");
+const aiAnalysisCard = document.getElementById("aiAnalysisCard");
+
+btnAiAnalyze.addEventListener("click", () => {
+  if (aiAnalysisResult.style.display === "none") {
+    // Show analysis
+    renderAnalysis();
+    btnAiAnalyze.style.display = "none";
+    aiAnalysisResult.style.display = "";
+  } else {
+    // Hide analysis
+    btnAiAnalyze.style.display = "";
+    aiAnalysisResult.style.display = "none";
+    document.getElementById("smartInsights").innerHTML = "";
+  }
+});
+
 // ---------- Header scroll collapse ----------
 const appScroll = document.getElementById("appScroll");
 const appHeader = document.querySelector(".app-header");
@@ -1306,10 +1326,45 @@ const verifyPin = (pin) => {
 // App lock toggle
 appLockToggle.addEventListener("change", () => {
   appLockStorage.setEnabled(appLockToggle.checked);
+  const pwdOptions = document.getElementById("appLockPasswordOptions");
+  if (appLockToggle.checked) {
+    pwdOptions.style.display = "";
+  } else {
+    pwdOptions.style.display = "none";
+  }
 });
 
 // Load app lock state
 appLockToggle.checked = appLockStorage.isEnabled();
+if (appLockToggle.checked) {
+  document.getElementById("appLockPasswordOptions").style.display = "";
+}
+
+// Password change
+const appLockChangePin = document.getElementById("appLockChangePin");
+const appLockCurrentPin = document.getElementById("appLockCurrentPin");
+const appLockNewPin = document.getElementById("appLockNewPin");
+const appLockPinMessage = document.getElementById("appLockPinMessage");
+
+appLockChangePin.addEventListener("click", () => {
+  if (appLockCurrentPin.value !== appLockStorage.getPin()) {
+    appLockPinMessage.textContent = "رمز فعلی نادرست است";
+    return;
+  }
+  if (!appLockNewPin.value || appLockNewPin.value.length < 4) {
+    appLockPinMessage.textContent = "رمز جدید باید حداقل 4 رقم باشد";
+    return;
+  }
+  appLockStorage.setPin(appLockNewPin.value);
+  appLockCurrentPin.value = "";
+  appLockNewPin.value = "";
+  appLockPinMessage.style.color = "#10B981";
+  appLockPinMessage.textContent = "✓ رمز با موفقیت تغییر کرد";
+  setTimeout(() => {
+    appLockPinMessage.textContent = "";
+    appLockPinMessage.style.color = "#ef4444";
+  }, 2000);
+});
 
 // Lock screen listeners
 appLockSubmit.addEventListener("click", () => {

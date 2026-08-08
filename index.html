@@ -206,24 +206,18 @@
   <!-- ANALYSIS -->
   <section id="tab-analysis" class="tab">
     <div class="ai-card" id="aiAnalysisCard">
-      <div class="ai-card-head" style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
-        <div style="display:flex;align-items:center;gap:12px;">
-          <button type="button" id="btnAiAnalyze" class="btn-ai-analyze">تحلیلم کن</button>
-          <div>
-            <h2 style="margin:0">تحلیل هوشمند این ماه</h2>
-            <p class="ai-card-sub">مقایسه با ماه قبل، با یه نگاه بامزه 😄</p>
-          </div>
+      <button type="button" id="btnAiAnalyze" class="ai-card-button">
+        <span class="ai-card-icon">
+          <span class="icon-mask" data-icon="sparkles" style="width:24px;height:24px;color:#fff"></span>
+        </span>
+        <div style="text-align:right;">
+          <h2 style="margin:0">تحلیل هوشمند این ماه</h2>
+          <p class="ai-card-sub">مقایسه با ماه قبل، با یه نگاه بامزه 😄</p>
         </div>
-        <div class="chart-period-toggle" id="smartInsightsPeriodToggle" style="gap:4px;margin:0;">
-          <button type="button" class="chart-period-btn selected" data-period="month" style="padding:6px 10px;flex:none;width:auto;">ماهانه</button>
-          <button type="button" class="chart-period-btn" data-period="week" style="padding:6px 10px;flex:none;width:auto;">هفتگی</button>
-          <button type="button" class="chart-period-btn" data-period="all" style="padding:6px 10px;flex:none;width:auto;">کل بازه</button>
-        </div>
-      </div>
-      <div id="aiAnalysisResult" class="ai-result"></div>
+      </button>
+      <div id="aiAnalysisResult" class="ai-result" style="display:none;"></div>
+      <div id="smartInsights"></div>
     </div>
-
-    <div id="smartInsights"></div>
 
     <div class="scale-card">
       <div class="scale-top-row">
@@ -257,15 +251,18 @@
     </div>
 
     <div class="settings-card">
-      <h2>مقایسه درآمد و مخارج</h2>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <h2 style="margin:0;">مقایسه درآمد و مخارج</h2>
+        <div class="chart-period-toggle" id="mainPeriodToggle" style="gap:4px;margin:0;">
+          <button type="button" class="chart-period-btn selected" data-period="month" style="padding:6px 10px;flex:none;width:auto;">ماهانه</button>
+          <button type="button" class="chart-period-btn" data-period="week" style="padding:6px 10px;flex:none;width:auto;">هفتگی</button>
+          <button type="button" class="chart-period-btn" data-period="all" style="padding:6px 10px;flex:none;width:auto;">کل بازه</button>
+        </div>
+      </div>
       <div id="incomeExpenseChart"></div>
     </div>
     <div class="settings-card">
       <h2>تنوع مخارج</h2>
-      <div class="chart-period-toggle" id="analysisPeriodToggle">
-        <button type="button" class="chart-period-btn selected" data-period="month">این ماه</button>
-        <button type="button" class="chart-period-btn" data-period="all">کل بازه</button>
-      </div>
       <div id="expenseDiversityChart"></div>
     </div>
   </section>
@@ -276,7 +273,7 @@
     <details class="settings-group">
       <summary class="settings-group-title">امنیت</summary>
       <div class="settings-card">
-        <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
           <div>
             <h3 style="margin:0 0 4px;">قفل برنامه</h3>
             <p class="hint" style="margin:0;">از رمز یا فیس‌آی‌دی برای حفاظت از برنامه استفاده کن</p>
@@ -285,6 +282,13 @@
             <input type="checkbox" id="appLockToggle">
             <span class="toggle-slider"></span>
           </label>
+        </div>
+        <div id="appLockPasswordOptions" style="display:none;border-top:1px solid var(--border);padding-top:14px;">
+          <h3 style="font-size:13px;margin:0 0 12px;color:var(--text);">تغییر رمز عبور</h3>
+          <input type="password" id="appLockCurrentPin" placeholder="رمز فعلی" style="width:100%;padding:8px;border-radius:8px;border:1px solid var(--border);font-size:13px;margin-bottom:8px;font-family:inherit;">
+          <input type="password" id="appLockNewPin" placeholder="رمز جدید" style="width:100%;padding:8px;border-radius:8px;border:1px solid var(--border);font-size:13px;margin-bottom:8px;font-family:inherit;" maxlength="6">
+          <button type="button" id="appLockChangePin" class="btn btn-neutral full" style="font-size:12px;padding:8px;">تغییر رمز</button>
+          <div id="appLockPinMessage" style="font-size:11px;color:#ef4444;margin-top:6px;text-align:center;"></div>
         </div>
       </div>
     </details>
