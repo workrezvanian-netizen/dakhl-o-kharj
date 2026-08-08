@@ -450,6 +450,12 @@ function switchTab(tab, opts = {}) {
     renderExpenseList();
   }
   if (tab === "analysis") renderAnalysis();
+
+  const headerEl = document.querySelector(".app-header");
+  if (headerEl) {
+    if (tab === "dashboard") headerEl.classList.remove("is-compact");
+    else headerEl.classList.add("is-compact");
+  }
 }
 
 document.getElementById("dashSettingsBtn").addEventListener("click", () => switchTab("settings"));
@@ -1288,6 +1294,8 @@ let headerCollapseTimer = null;
 
 if (appScroll) {
   appScroll.addEventListener("scroll", () => {
+    const activeTab = document.querySelector(".nav-btn.active")?.dataset.tab || "dashboard";
+    if (activeTab !== "dashboard") return;
     const scrollTop = appScroll.scrollTop;
     clearTimeout(headerCollapseTimer);
     
