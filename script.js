@@ -718,8 +718,8 @@ function renderDashboard() {
       const color = catColor(c.name);
       const amt = byCat[c.name] || 0;
       return `
-        <button type="button" class="quick-cat-card" style="background:${color}17" onclick="quickAddExpense('${c.name.replace(/'/g, "\\'")}')">
-          <span class="quick-cat-bubble" style="background:${color}30">${iconSpanHTML(c.icon, `color:${color}`)}</span>
+        <button type="button" class="quick-cat-card" style="background:${color}3D" onclick="quickAddExpense('${c.name.replace(/'/g, "\\'")}')">
+          <span class="quick-cat-bubble" style="background:${color}">${iconSpanHTML(c.icon, "color:#fff")}</span>
           <span class="quick-cat-name">${c.name}</span>
           <span class="quick-cat-amount">${fmtAmount(amt)}</span>
         </button>`;
@@ -832,21 +832,21 @@ function renderMonthCompareCard(containerId, period = "month") {
     { key: "income", label: "درآمد", curV: curData.totalIncome, prevV: prevData.totalIncome, goodWhenDown: false }
   ];
 
-  const PREV_COLOR = "#00D4CB";
+  const PREV_COLOR = "#AEB8C4";
 
   const gauges = defs.map((g) => {
     const increased = g.curV > g.prevV;
     const changePct = g.prevV > 0 ? Math.round(((g.curV - g.prevV) / g.prevV) * 100) : (g.curV > 0 ? 100 : 0);
     const isGood = g.prevV === 0 && g.curV === 0 ? null : (g.goodWhenDown ? !increased : increased);
     
-    // رینگ‌های هماهنگ به سبک اپل‌واچ: سبز = وضعیت خوب، قرمز = وضعیت بد، آبی‌فیروزه‌ای = ماه قبل
+    // رینگ‌های هماهنگ با ۴ رنگ عکس: مخارج = قرمز/سبز، درآمد = آبی/زرد
     let colorA, colorB;
-    if (isGood === false) {
-      colorA = "#FF375F";
-      colorB = "#E01346";
+    if (g.key === "expense") {
+      if (isGood === false) { colorA = "#FF375F"; colorB = "#E01346"; }
+      else { colorA = "#8FE03D"; colorB = "#57B928"; }
     } else {
-      colorA = "#8FE03D";
-      colorB = "#57B928";
+      if (isGood === false) { colorA = "#FFD426"; colorB = "#E0AC00"; }
+      else { colorA = "#2E9BFF"; colorB = "#0A6FDB"; }
     }
     
     let emoji = "😴";
