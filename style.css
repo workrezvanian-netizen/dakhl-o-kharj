@@ -1203,24 +1203,25 @@ input:focus, select:focus {
 /* ---------- Bottom nav (iOS "liquid glass") ---------- */
 .bottom-nav {
   position: fixed;
-  bottom: max(4px, env(safe-area-inset-bottom));
-  right: 14px;
-  left: 14px;
+  bottom: 0;
+  right: 0;
+  left: 0;
   z-index: 20;
   display: flex;
   isolation: isolate;
   overflow: hidden;
-  background: linear-gradient(180deg, rgba(255,255,255,0.20) 0%, rgba(255,255,255,0.06) 60%, rgba(255,255,255,0.10) 100%);
-  backdrop-filter: blur(9px) saturate(150%) brightness(1.02);
-  -webkit-backdrop-filter: blur(9px) saturate(150%) brightness(1.02);
-  border: 1px solid rgba(255,255,255,0.55);
-  border-radius: 28px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.03) 60%, rgba(255,255,255,0.06) 100%);
+  backdrop-filter: blur(6px) saturate(140%) brightness(1.01);
+  -webkit-backdrop-filter: blur(6px) saturate(140%) brightness(1.01);
+  border: 1px solid rgba(255,255,255,0.35);
+  border-bottom: none;
+  border-radius: 22px 22px 0 0;
   box-shadow:
-    0 14px 34px rgba(22,63,60,0.22),
-    0 1px 0 rgba(255,255,255,0.9) inset,
-    0 -1.5px 8px rgba(255,255,255,0.4) inset,
-    0 0 18px rgba(255,255,255,0.25) inset;
-  padding: 7px 6px;
+    0 8px 24px rgba(22,63,60,0.14),
+    0 1px 0 rgba(255,255,255,0.6) inset,
+    0 -1px 6px rgba(255,255,255,0.25) inset,
+    0 0 14px rgba(255,255,255,0.15) inset;
+  padding: 7px 6px calc(7px + env(safe-area-inset-bottom));
 }
 .bottom-nav::before {
   content: "";
@@ -1279,7 +1280,7 @@ input:focus, select:focus {
 .nav-btn.active span { font-weight: 700; }
 
 @media (min-width: 560px) {
-  .bottom-nav { max-width: 560px; margin: 0 auto; border-radius: 26px; left: 50%; transform: translateX(-50%); right: auto; width: calc(100% - 28px); }
+  .bottom-nav { max-width: 560px; margin: 0 auto; border-radius: 22px 22px 0 0; left: 50%; transform: translateX(-50%); right: auto; width: 100%; }
 }
 
 /* ---------- Toggle switch ---------- */
