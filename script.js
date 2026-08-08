@@ -868,8 +868,8 @@ function renderMonthCompareCard(containerId, period = "month") {
   });
 
   const cx = 70, cy = 70;
-  const rOuter = 58, swOuter = 13;
-  const rInner = 39, swInner = 10;
+  const rOuter = 56, swOuter = 17;
+  const rInner = 36, swInner = 14;
   const circOuter = 2 * Math.PI * rOuter;
   const circInner = 2 * Math.PI * rInner;
   const uid = Date.now();
@@ -898,7 +898,7 @@ function renderMonthCompareCard(containerId, period = "month") {
             data-dash="${dashInner}" data-circ="${circInner}"/>
         </svg>
         <div class="compare-gauge-center">
-          <span class="compare-gauge-pct" style="color:${g.colorB}">${g.changePct > 0 ? "+" : ""}${toPersianDigits(g.changePct)}٪</span>
+          <span class="compare-gauge-pct">${g.changePct > 0 ? "+" : ""}${toPersianDigits(g.changePct)}٪</span>
         </div>
         <div class="compare-gauge-label">${g.label}</div>
         <div class="compare-gauge-legend">
