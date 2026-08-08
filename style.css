@@ -466,8 +466,8 @@ h2 {
 /* ---------- Dashboard scale (hero) ---------- */
 .scale-card {
   background: linear-gradient(165deg, var(--surface) 0%, var(--green-soft) 130%);
-  border-radius: 26px;
-  padding: 22px 20px 20px;
+  border-radius: 20px;
+  padding: 14px 14px 12px;
   box-shadow: 0 2px 6px rgba(16,70,43,0.07), 0 14px 32px rgba(16,70,43,0.09);
   border: 1px solid rgba(27,122,77,0.12);
 }
@@ -475,18 +475,18 @@ h2 {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 10px;
 }
 .scale-stat {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 7px;
 }
 .scale-stat.reverse { flex-direction: row-reverse; }
 .scale-stat-badge {
-  width: 30px;
-  height: 30px;
-  border-radius: 10px;
+  width: 22px;
+  height: 22px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -496,9 +496,9 @@ h2 {
 .expense-badge { background: linear-gradient(135deg, #DA7A52, var(--expense)); }
 .scale-stat-text { display: flex; flex-direction: column; }
 .scale-stat-text.align-left { align-items: flex-end; }
-.scale-stat-label { font-size: 11.5px; color: var(--text-mute); }
+.scale-stat-label { font-size: 10px; color: var(--text-mute); }
 .scale-stat-value {
-  font-size: 15.5px;
+  font-size: 13px;
   font-weight: 800;
   color: var(--text);
   font-variant-numeric: tabular-nums;
@@ -507,7 +507,7 @@ h2 {
 .scale-track {
   display: flex;
   width: 100%;
-  height: 7px;
+  height: 6px;
   border-radius: 999px;
   overflow: hidden;
   background: rgba(179,69,44,0.14);
@@ -520,13 +520,13 @@ h2 {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  margin-top: 12px;
-  padding-top: 12px;
+  margin-top: 9px;
+  padding-top: 9px;
   border-top: 1px dashed rgba(27,122,77,0.2);
 }
-.balance-row span:first-child { color: var(--text-mute); font-size: 12px; }
+.balance-row span:first-child { color: var(--text-mute); font-size: 11px; }
 .balance-amount {
-  font-size: 18px;
+  font-size: 15px;
   font-weight: 800;
   letter-spacing: -0.3px;
   color: var(--green-deep);

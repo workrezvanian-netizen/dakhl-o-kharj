@@ -34,8 +34,8 @@ const DEFAULT_CATEGORIES = [
 const DEFAULT_ICON_MAP = { "خوراک": "utensils", "حمل‌ونقل": "car", "قبض‌ها": "receipt", "خرید": "shopping-bag", "تفریح": "film", "درمان": "stethoscope", "اقساط": "credit-card", "سایر": "package" };
 const INCOME_SOURCE_ICON = { "حقوق": "briefcase", "پاداش": "award", "فروش": "tag", "هدیه": "gift", "سایر": "wallet" };
 const CATEGORY_COLORS = [
-  "#FF6B6B", "#4ECDC4", "#45B7D1", "#FFA07A",
-  "#98D8C8", "#F7DC6F", "#BB8FCE", "#85C1E2"
+  "#FF6B6B", "#FFA94D", "#FFD43B", "#69DB7C",
+  "#22B8CF", "#4C6EF5", "#9775FA", "#F783AC"
 ];
 const CARD_PALETTE = [
   { bg: "#FBEED9", icon: "#E8A83C" },
@@ -642,10 +642,11 @@ function entryRowHTML(x, type) {
   const iconKey = isIncome ? (INCOME_SOURCE_ICON[x.source] || "wallet") : catIcon(x.category);
   const noteHTML = x.note ? `<strong class="entry-note-bold">${x.note}</strong>` : "";
   const sub = [formatDateFa(x.date), noteHTML].filter(Boolean).join(" · ");
+  const rowColor = isIncome ? null : catColor(x.category);
   return `
-    <div class="entry-row">
+    <div class="entry-row" style="${rowColor ? `background:${rowColor}17` : ""}">
       <div class="entry-row-main">
-        <span class="entry-icon ${isIncome ? "income-icon" : "expense-icon"}" style="${isIncome ? "" : `background:${catColor(x.category)}`}">${iconSpanHTML(iconKey)}</span>
+        <span class="entry-icon ${isIncome ? "income-icon" : "expense-icon"}" style="${isIncome ? "" : `background:${rowColor}`}">${iconSpanHTML(iconKey)}</span>
         <div>
           <div class="entry-title">${title}</div>
           <div class="entry-sub">${sub}</div>
@@ -832,21 +833,19 @@ function renderMonthCompareCard(containerId, period = "month") {
     { key: "income", label: "درآمد", curV: curData.totalIncome, prevV: prevData.totalIncome, goodWhenDown: false }
   ];
 
-  const PREV_COLOR = "#AEB8C4";
-
   const gauges = defs.map((g) => {
     const increased = g.curV > g.prevV;
     const changePct = g.prevV > 0 ? Math.round(((g.curV - g.prevV) / g.prevV) * 100) : (g.curV > 0 ? 100 : 0);
     const isGood = g.prevV === 0 && g.curV === 0 ? null : (g.goodWhenDown ? !increased : increased);
-    
-    // رینگ‌های هماهنگ با ۴ رنگ عکس: مخارج = قرمز/سبز، درآمد = آبی/زرد
-    let colorA, colorB;
+
+    // رنگ ثابت هر متریک (بدون توجه به وضعیت خوب/بد): مخارج = قرمز/سبز، درآمد = آبی/زرد
+    let colorA, colorB, prevColor;
     if (g.key === "expense") {
-      if (isGood === false) { colorA = "#FF375F"; colorB = "#E01346"; }
-      else { colorA = "#8FE03D"; colorB = "#57B928"; }
+      colorA = "#FF375F"; colorB = "#E01346";
+      prevColor = "#57B928";
     } else {
-      if (isGood === false) { colorA = "#FFD426"; colorB = "#E0AC00"; }
-      else { colorA = "#2E9BFF"; colorB = "#0A6FDB"; }
+      colorA = "#2E9BFF"; colorB = "#0A6FDB";
+      prevColor = "#FFD426";
     }
     
     let emoji = "😴";
@@ -855,7 +854,7 @@ function renderMonthCompareCard(containerId, period = "month") {
     const maxV = Math.max(g.curV, g.prevV) || 1;
     const outerPct = (g.curV / maxV) * 100;
     const innerPct = (g.prevV / maxV) * 100;
-    return { ...g, outerPct, innerPct, changePct, colorA, colorB, emoji };
+    return { ...g, outerPct, innerPct, changePct, colorA, colorB, prevColor, emoji };
   });
 
   const cx = 70, cy = 70;
@@ -884,7 +883,7 @@ function renderMonthCompareCard(containerId, period = "month") {
             data-dash="${dashOuter}" data-circ="${circOuter}"/>
           <circle cx="${cx}" cy="${cy}" r="${rInner}" fill="none" stroke="var(--cream)" stroke-width="${swInner}"/>
           <circle class="compare-gauge-seg" id="gaugeInner-${uid}-${i}" cx="${cx}" cy="${cy}" r="${rInner}" fill="none"
-            stroke="${PREV_COLOR}" stroke-width="${swInner}" stroke-linecap="round"
+            stroke="${g.prevColor}" stroke-width="${swInner}" stroke-linecap="round"
             stroke-dasharray="0 ${circInner}" transform="rotate(-90 ${cx} ${cy})"
             data-dash="${dashInner}" data-circ="${circInner}"/>
         </svg>
@@ -895,7 +894,7 @@ function renderMonthCompareCard(containerId, period = "month") {
         <div class="compare-gauge-label">${g.label}</div>
         <div class="compare-gauge-legend">
           <span><i style="background:${g.colorB}"></i>این ماه: ${fmtAmount(g.curV)}</span>
-          <span><i style="background:${PREV_COLOR}"></i>ماه قبل: ${fmtAmount(g.prevV)}</span>
+          <span><i style="background:${g.prevColor}"></i>ماه قبل: ${fmtAmount(g.prevV)}</span>
         </div>
       </div>`;
   }).join("");
