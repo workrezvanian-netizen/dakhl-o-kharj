@@ -45,12 +45,37 @@
   </div>
 </div>
 
+<!-- App Lock Screen -->
+<div id="appLockScreen" class="app-lock-screen" style="display:none;">
+  <div class="app-lock-overlay">
+    <div class="app-lock-card">
+      <div class="app-lock-icon">
+        <span class="icon-mask" data-icon="sparkles" style="width:48px;height:48px;color:var(--green-deep)"></span>
+      </div>
+      <h1 class="app-lock-title">دخل و خرج</h1>
+      <p class="app-lock-subtitle">برنامه قفل‌شده است</p>
+      
+      <div id="appLockForm" style="display:none;">
+        <input type="password" id="appLockPin" placeholder="رمز عبور" style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--border);font-size:16px;text-align:center;margin-bottom:12px;" maxlength="6">
+        <button type="button" id="appLockSubmit" class="btn btn-neutral full">ورود</button>
+      </div>
+      
+      <button type="button" id="appLockFaceId" class="app-lock-faceid-btn">
+        <span class="icon-mask" data-icon="face-id" style="width:28px;height:28px;color:#fff"></span>
+        <span>ورود با فیس آی‌دی</span>
+      </button>
+      
+      <div id="appLockMessage" style="text-align:center;font-size:12px;color:#ef4444;margin-top:10px;"></div>
+    </div>
+  </div>
+</div>
+
 <div id="appScroll" class="app-scroll">
 <header class="app-header">
   <div class="header-inner">
     <span class="brand" id="headerBrand">
       <span class="brand-badge" id="headerBrandBadge">
-        <img src="icons/icon-192.png" alt="" style="width:100%;height:100%;object-fit:contain;" />
+        <img src="icons/icon-192.png" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit" />
       </span>
       <span class="brand-text">دخل و خرج</span>
     </span>
@@ -181,16 +206,20 @@
   <!-- ANALYSIS -->
   <section id="tab-analysis" class="tab">
     <div class="ai-card" id="aiAnalysisCard">
-      <div class="ai-card-head" style="display:flex;align-items:center;gap:12px;">
-        <span class="ai-card-icon">
-          <span class="icon-mask" data-icon="sparkles" style="width:24px;height:24px;color:#fff"></span>
-        </span>
-        <div style="flex:1;">
-          <h2 style="margin:0">تحلیل هوشمند این ماه</h2>
-          <p class="ai-card-sub">مقایسه با ماه قبل، با یه نگاه بامزه 😄</p>
+      <div class="ai-card-head" style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <button type="button" id="btnAiAnalyze" class="btn-ai-analyze">تحلیلم کن</button>
+          <div>
+            <h2 style="margin:0">تحلیل هوشمند این ماه</h2>
+            <p class="ai-card-sub">مقایسه با ماه قبل، با یه نگاه بامزه 😄</p>
+          </div>
+        </div>
+        <div class="chart-period-toggle" id="smartInsightsPeriodToggle" style="gap:4px;margin:0;">
+          <button type="button" class="chart-period-btn selected" data-period="month" style="padding:6px 10px;flex:none;width:auto;">ماهانه</button>
+          <button type="button" class="chart-period-btn" data-period="week" style="padding:6px 10px;flex:none;width:auto;">هفتگی</button>
+          <button type="button" class="chart-period-btn" data-period="all" style="padding:6px 10px;flex:none;width:auto;">کل بازه</button>
         </div>
       </div>
-      <button type="button" id="btnAiAnalyze" class="btn btn-neutral full">تحلیلم کن</button>
       <div id="aiAnalysisResult" class="ai-result"></div>
     </div>
 
@@ -228,26 +257,37 @@
     </div>
 
     <div class="settings-card">
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;">
-        <h2 style="margin:0;flex:1;">مقایسه درآمد و مخارج</h2>
-        <div class="chart-period-toggle" id="incomeExpensePeriodToggle" style="gap:4px;margin:0;">
-          <button type="button" class="chart-period-btn selected" data-period="month" style="padding:6px 10px;flex:none;width:auto;font-size:12px;">این ماه</button>
-          <button type="button" class="chart-period-btn" data-period="week" style="padding:6px 10px;flex:none;width:auto;font-size:12px;">هفتگی</button>
-          <button type="button" class="chart-period-btn" data-period="all" style="padding:6px 10px;flex:none;width:auto;font-size:12px;">کل بازه</button>
-        </div>
-      </div>
-      <div id="incomeExpenseChart" style="height:240px;"></div>
-      <div id="incomeExpenseDescription" style="text-align:center;margin-top:12px;font-size:13px;color:var(--text-mute);"></div>
+      <h2>مقایسه درآمد و مخارج</h2>
+      <div id="incomeExpenseChart"></div>
     </div>
     <div class="settings-card">
       <h2>تنوع مخارج</h2>
+      <div class="chart-period-toggle" id="analysisPeriodToggle">
+        <button type="button" class="chart-period-btn selected" data-period="month">این ماه</button>
+        <button type="button" class="chart-period-btn" data-period="all">کل بازه</button>
+      </div>
       <div id="expenseDiversityChart"></div>
-      <div id="expenseDiversityDescription" style="text-align:center;margin-top:12px;font-size:13px;color:var(--text-mute);"></div>
     </div>
   </section>
 
   <!-- SETTINGS -->
   <section id="tab-settings" class="tab">
+
+    <details class="settings-group">
+      <summary class="settings-group-title">امنیت</summary>
+      <div class="settings-card">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div>
+            <h3 style="margin:0 0 4px;">قفل برنامه</h3>
+            <p class="hint" style="margin:0;">از رمز یا فیس‌آی‌دی برای حفاظت از برنامه استفاده کن</p>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="appLockToggle">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+    </details>
 
     <details class="settings-group">
       <summary class="settings-group-title">مدیریت دسته‌ها</summary>

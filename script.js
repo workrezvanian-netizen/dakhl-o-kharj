@@ -39,21 +39,21 @@ const CATEGORY_COLORS = [
   "#5B7CB0", "#C97A3D"
 ];
 const CARD_PALETTE = [
-  { bg: "#FEE2E2", icon: "#EF4444" }, // Red
-  { bg: "#FFEDD5", icon: "#F97316" }, // Orange
-  { bg: "#FEF08A", icon: "#EAB308" }, // Yellow
-  { bg: "#DCFCE7", icon: "#22C55E" }, // Green
-  { bg: "#CFFAFE", icon: "#0EA5E9" }, // Blue
-  { bg: "#E9D5FF", icon: "#8B5CF6" }, // Purple
-  { bg: "#FCE7F3", icon: "#EC4899" }, // Pink
-  { bg: "#CCFBF1", icon: "#14B8A6" }  // Teal
+  { bg: "#FBEED9", icon: "#E8A83C" },
+  { bg: "#DCEBFB", icon: "#3B82C4" },
+  { bg: "#FBE4D8", icon: "#E0793A" },
+  { bg: "#EDE1F7", icon: "#9B6FC9" },
+  { bg: "#FBDCE0", icon: "#D9534F" },
+  { bg: "#E3F1EF", icon: "#4FA89E" },
+  { bg: "#E4EFE0", icon: "#6B8E5A" },
+  { bg: "#E7E7EF", icon: "#6B6FA0" }
 ];
 const INCOME_CARD_PALETTE = [
-  { bg: "#DCFCE7", icon: "#22C55E" }, // Bright Green
-  { bg: "#CCFBF1", icon: "#14B8A6" }, // Teal
-  { bg: "#CFFAFE", icon: "#0EA5E9" }, // Blue
-  { bg: "#E9D5FF", icon: "#8B5CF6" }, // Purple
-  { bg: "#FEF08A", icon: "#EAB308" }  // Yellow
+  { bg: "#E3F1EF", icon: "#2F7A72" },
+  { bg: "#E7F5EF", icon: "#3C8C82" },
+  { bg: "#E3F1DE", icon: "#6B8E5A" },
+  { bg: "#FBF2D8", icon: "#C9A227" },
+  { bg: "#E4EEF6", icon: "#5B7CB0" }
 ];
 const INCOME_SOURCES = ["حقوق", "پاداش", "فروش", "هدیه", "سایر"];
 
@@ -738,15 +738,13 @@ function quickAddIncome(source) {
 // ---------- Analysis charts ----------
 let analysisPeriod = "month";
 let analysisPeriodSmartInsights = "month";
-let analysisPeriodIncomeExpense = "month";
 const setupPeriodToggle = (toggleId, variable) => {
   const toggle = document.getElementById(toggleId);
   if (!toggle) return;
   toggle.querySelectorAll(".chart-period-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
       if (variable === "main") analysisPeriod = btn.dataset.period;
-      else if (variable === "smart") analysisPeriodSmartInsights = btn.dataset.period;
-      else if (variable === "incomeExpense") analysisPeriodIncomeExpense = btn.dataset.period;
+      else analysisPeriodSmartInsights = btn.dataset.period;
       toggle.querySelectorAll(".chart-period-btn").forEach((b) => b.classList.remove("selected"));
       btn.classList.add("selected");
       renderAnalysis();
@@ -754,7 +752,7 @@ const setupPeriodToggle = (toggleId, variable) => {
   });
 };
 setupPeriodToggle("analysisPeriodToggle", "expense");
-setupPeriodToggle("incomeExpensePeriodToggle", "incomeExpense");
+setupPeriodToggle("smartInsightsPeriodToggle", "smart");
 
 function renderMonthCompareCard(containerId, period = "month") {
   const wrap = document.getElementById(containerId);
@@ -807,14 +805,6 @@ function renderMonthCompareCard(containerId, period = "month") {
   ];
 
   const PREV_COLOR = "#C9A227";
-  
-  // Set legend labels based on period
-  const periodLabels = {
-    "month": { cur: "این ماه", prev: "ماه قبل" },
-    "week": { cur: "این هفته", prev: "هفته قبل" },
-    "all": { cur: "کل", prev: "-" }
-  };
-  const periodLabel = periodLabels[period] || periodLabels["month"];
 
   const gauges = defs.map((g) => {
     const increased = g.curV > g.prevV;
@@ -842,9 +832,9 @@ function renderMonthCompareCard(containerId, period = "month") {
     return { ...g, outerPct, innerPct, changePct, colorA, colorB, emoji };
   });
 
-  const cx = 60, cy = 60;
-  const rOuter = 40, swOuter = 9;
-  const rInner = 27, swInner = 7;
+  const cx = 70, cy = 70;
+  const rOuter = 58, swOuter = 13;
+  const rInner = 39, swInner = 10;
   const circOuter = 2 * Math.PI * rOuter;
   const circInner = 2 * Math.PI * rInner;
   const uid = Date.now();
@@ -854,7 +844,7 @@ function renderMonthCompareCard(containerId, period = "month") {
     const dashInner = (g.innerPct / 100) * circInner;
     return `
       <div class="compare-gauge">
-        <svg viewBox="0 0 120 120" class="compare-gauge-svg">
+        <svg viewBox="0 0 140 140" class="compare-gauge-svg">
           <defs>
             <linearGradient id="gaugeGrad-${uid}-${i}" x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stop-color="${g.colorA}"/>
@@ -878,28 +868,13 @@ function renderMonthCompareCard(containerId, period = "month") {
         </div>
         <div class="compare-gauge-label">${g.label}</div>
         <div class="compare-gauge-legend">
-          <span><i style="background:${g.colorB}"></i>${periodLabel.cur}: ${fmtAmount(g.curV)}</span>
-          <span><i style="background:${PREV_COLOR}"></i>${periodLabel.prev}: ${fmtAmount(g.prevV)}</span>
+          <span><i style="background:${g.colorB}"></i>این ماه: ${fmtAmount(g.curV)}</span>
+          <span><i style="background:${PREV_COLOR}"></i>ماه قبل: ${fmtAmount(g.prevV)}</span>
         </div>
       </div>`;
   }).join("");
 
   wrap.innerHTML = `<div class="compare-gauges-row">${gaugeHTML}</div>`;
-  
-  // Add description
-  const descEl = document.getElementById("incomeExpenseDescription");
-  if (descEl) {
-    let desc = "";
-    if (period === "month") {
-      const increase = curData.totalExpense > prevData.totalExpense;
-      desc = `مقایسه هزینه‌های این ماه با ماه قبل`;
-    } else if (period === "week") {
-      desc = `مقایسه هزینه‌های این هفته با هفته قبل`;
-    } else if (period === "all") {
-      desc = `کل درآمد و هزینه‌های تاکنونی`;
-    }
-    descEl.textContent = desc;
-  }
 
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
@@ -929,10 +904,6 @@ function renderPieChart(containerId, segments, chartType = "expense") {
   if (chartType === "income") {
     const incomeColors = ["#10B981", "#059669", "#047857", "#065F46"];
     visible.forEach((seg, i) => { seg.color = incomeColors[i % incomeColors.length]; });
-  } else if (chartType === "expense") {
-    // Vibrant expense colors
-    const expenseColors = ["#EF4444", "#F97316", "#EAB308", "#22C55E", "#0EA5E9", "#8B5CF6", "#EC4899", "#14B8A6"];
-    visible.forEach((seg, i) => { seg.color = expenseColors[i % expenseColors.length]; });
   }
   const cx = 91, cy = 91, r = 72, sw = 30;
   const circumference = 2 * Math.PI * r;
@@ -1087,46 +1058,14 @@ function renderAnalysis() {
     }
   }
 
-  renderMonthCompareCard("incomeExpenseChart", analysisPeriodIncomeExpense);
+  renderMonthCompareCard("incomeExpenseChart", analysisPeriodSmartInsights);
 
-  // Filter expenses based on incomeExpense period (linked)
-  const inDiversityPeriod = (dateStr) => {
-    if (analysisPeriodIncomeExpense === "all") return true;
-    const [gy, gm, gd] = dateStr.split("-").map(Number);
-    const d = new Date(gy, gm - 1, gd);
-    const today = new Date();
-    const daysDiff = Math.floor((today - d) / (1000 * 60 * 60 * 24));
-    
-    if (analysisPeriodIncomeExpense === "week") return daysDiff >= 0 && daysDiff < 7;
-    if (analysisPeriodIncomeExpense === "month") {
-      const j = toJalaali(gy, gm, gd);
-      const t = todayJalali();
-      return j.jy === t.jy && j.jm === t.jm;
-    }
-    return true;
-  };
-  
-  const diversityExpenses = state.expenses.filter((x) => inDiversityPeriod(x.date));
   const byCat = {};
-  diversityExpenses.forEach((x) => { byCat[x.category] = (byCat[x.category] || 0) + x.amount; });
+  expenses.forEach((x) => { byCat[x.category] = (byCat[x.category] || 0) + x.amount; });
   const expenseSegments = Object.entries(byCat)
     .sort((a, b) => b[1] - a[1])
     .map(([name, amt]) => ({ label: name, value: amt, color: catColor(name), icon: catIcon(name) }));
   renderPieChart("expenseDiversityChart", expenseSegments, "expense");
-  
-  // Add description for expense diversity (synced with income-expense period)
-  const descEl = document.getElementById("expenseDiversityDescription");
-  if (descEl) {
-    let desc = "";
-    if (analysisPeriodIncomeExpense === "month") {
-      desc = `توزیع مخارج این ماه بر اساس دسته‌بندی`;
-    } else if (analysisPeriodIncomeExpense === "week") {
-      desc = `توزیع مخارج این هفته بر اساس دسته‌بندی`;
-    } else if (analysisPeriodIncomeExpense === "all") {
-      desc = `توزیع کل مخارج بر اساس دسته‌بندی`;
-    }
-    descEl.textContent = desc;
-  }
 }
 
 // ---------- AI analysis ----------
@@ -1318,6 +1257,92 @@ if (appScroll) {
     }
     lastScrollTop = scrollTop;
   }, { passive: true });
+}
+
+// ---------- App Lock ----------
+const appLockScreenEl = document.getElementById("appLockScreen");
+const appLockToggle = document.getElementById("appLockToggle");
+const appLockPinInput = document.getElementById("appLockPin");
+const appLockSubmit = document.getElementById("appLockSubmit");
+const appLockFaceIdBtn = document.getElementById("appLockFaceId");
+const appLockMessage = document.getElementById("appLockMessage");
+const appLockForm = document.getElementById("appLockForm");
+
+const appLockStorage = {
+  isEnabled: () => localStorage.getItem("appLockEnabled") === "true",
+  setEnabled: (val) => localStorage.setItem("appLockEnabled", val ? "true" : "false"),
+  getPin: () => localStorage.getItem("appLockPin") || "1234",
+  setPin: (pin) => localStorage.setItem("appLockPin", pin),
+  isUnlocked: () => sessionStorage.getItem("appUnlocked") === "true",
+  setUnlocked: (val) => sessionStorage.setItem("appUnlocked", val ? "true" : "false")
+};
+
+const showLockScreen = () => {
+  appLockScreenEl.style.display = "";
+  document.getElementById("appScroll").style.display = "none";
+  document.querySelector(".bottom-nav").style.display = "none";
+};
+
+const hideLockScreen = () => {
+  appLockScreenEl.style.display = "none";
+  document.getElementById("appScroll").style.display = "";
+  document.querySelector(".bottom-nav").style.display = "";
+  appLockStorage.setUnlocked(true);
+  appLockPinInput.value = "";
+  appLockMessage.textContent = "";
+};
+
+const verifyPin = (pin) => {
+  if (pin === appLockStorage.getPin()) {
+    hideLockScreen();
+    return true;
+  } else {
+    appLockMessage.textContent = "رمز نادرست است";
+    appLockPinInput.value = "";
+    return false;
+  }
+};
+
+// App lock toggle
+appLockToggle.addEventListener("change", () => {
+  appLockStorage.setEnabled(appLockToggle.checked);
+});
+
+// Load app lock state
+appLockToggle.checked = appLockStorage.isEnabled();
+
+// Lock screen listeners
+appLockSubmit.addEventListener("click", () => {
+  verifyPin(appLockPinInput.value);
+});
+
+appLockPinInput.addEventListener("keypress", (e) => {
+  if (e.key === "Enter") verifyPin(appLockPinInput.value);
+});
+
+appLockFaceIdBtn.addEventListener("click", () => {
+  if (typeof PublicKeyCredential !== "undefined" && PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable) {
+    PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable().then((available) => {
+      if (available) {
+        // Simulate Face ID auth
+        hideLockScreen();
+      } else {
+        appLockMessage.textContent = "فیس‌آی‌دی در این دستگاه موجود نیست";
+      }
+    });
+  } else {
+    // Fallback: just show PIN form
+    appLockForm.style.display = "";
+    appLockFaceIdBtn.style.display = "none";
+    appLockPinInput.focus();
+  }
+});
+
+// Check lock on load
+if (appLockStorage.isEnabled() && !appLockStorage.isUnlocked()) {
+  showLockScreen();
+  appLockForm.style.display = "";
+  appLockFaceIdBtn.style.display = "";
 }
 
 // ---------- Init ----------

@@ -216,20 +216,21 @@ h2 {
   z-index: 1;
 }
 .brand-badge {
-  width: 48px;
-  height: 48px;
-  border-radius: 14px;
-  background: transparent;
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
+  background: rgba(255,255,255,0.14);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.2), 0 2px 6px rgba(0,0,0,0.15);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  overflow: visible;
+  overflow: hidden;
   transition: width .4s cubic-bezier(.4,0,.2,1), height .4s cubic-bezier(.4,0,.2,1);
 }
 .brand-text {
   font-weight: 800;
-  font-size: 26px;
+  font-size: 21px;
   letter-spacing: -0.3px;
   transition: font-size .4s cubic-bezier(.4,0,.2,1);
 }
@@ -292,8 +293,8 @@ h2 {
   border-radius: 22px;
   box-shadow: 0 8px 18px rgba(22,63,60,0.26), inset 0 1px 0 rgba(255,255,255,0.22);
 }
-.app-header.is-compact .brand-badge { width: 32px; height: 32px; border-radius: 10px; }
-.app-header.is-compact .brand-text { font-size: 18px; }
+.app-header.is-compact .brand-badge { width: 24px; height: 24px; border-radius: 8px; }
+.app-header.is-compact .brand-text { font-size: 15.5px; }
 .app-header.is-compact .watermark { height: 16px; opacity: 0.75; }
 .app-header.is-compact .header-side { gap: 0; }
 .app-header.is-compact .header-settings-btn {
@@ -406,7 +407,7 @@ h2 {
 .scale-card {
   background: linear-gradient(165deg, var(--surface) 0%, var(--green-soft) 130%);
   border-radius: 26px;
-  padding: 16px 18px 14px;
+  padding: 22px 20px 20px;
   box-shadow: 0 2px 6px rgba(16,70,43,0.07), 0 14px 32px rgba(16,70,43,0.09);
   border: 1px solid rgba(27,122,77,0.12);
 }
@@ -465,7 +466,7 @@ h2 {
 }
 .balance-row span:first-child { color: var(--text-mute); font-size: 13px; }
 .balance-amount {
-  font-size: 20px;
+  font-size: 26px;
   font-weight: 800;
   letter-spacing: -0.3px;
   color: var(--green-deep);
@@ -766,6 +767,26 @@ input:focus, select:focus {
   box-shadow: inset 0 0 0 1px rgba(255,255,255,0.3);
 }
 .ai-card .btn-neutral:active { background: rgba(255,255,255,0.26); }
+.btn-ai-analyze {
+  background: linear-gradient(-45deg, rgba(79,168,158,0.5), rgba(47,122,114,0.4), rgba(79,168,158,0.45), rgba(79,168,158,0.5));
+  background-size: 300% 300%;
+  animation: headerGradient 8s ease infinite;
+  padding: 8px 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.2);
+  color: #fff;
+  font-weight: 600;
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all .2s ease;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.25);
+  flex-shrink: 0;
+}
+.btn-ai-analyze:active {
+  transform: scale(0.95);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.25);
+}
 .ai-result {
   margin-top: 12px;
 }
@@ -952,16 +973,16 @@ input:focus, select:focus {
 .quick-cat-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
+  gap: 6px;
 }
 .quick-cat-card {
   border: none;
-  border-radius: 18px;
-  padding: 14px 8px 12px;
+  border-radius: 16px;
+  padding: 10px 6px 8px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 5px;
   cursor: pointer;
   font-family: inherit;
   text-align: center;
@@ -970,16 +991,16 @@ input:focus, select:focus {
 }
 .quick-cat-card:active { transform: scale(0.96); }
 .quick-cat-bubble {
-  width: 42px;
-  height: 42px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
 }
-.quick-cat-bubble .icon-mask { width: 20px; height: 20px; }
+.quick-cat-bubble .icon-mask { width: 16px; height: 16px; }
 .quick-cat-name {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   color: var(--text);
 }
@@ -1184,4 +1205,118 @@ input:focus, select:focus {
 
 @media (min-width: 560px) {
   .bottom-nav { max-width: 560px; margin: 0 auto; border-radius: 26px; left: 50%; transform: translateX(-50%); right: auto; width: calc(100% - 28px); }
+}
+
+/* ---------- Toggle switch ---------- */
+.toggle-switch {
+  position: relative;
+  display: inline-flex;
+  width: 52px;
+  height: 30px;
+  cursor: pointer;
+}
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--cream);
+  border-radius: 20px;
+  transition: .3s;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+}
+.toggle-slider:before {
+  content: "";
+  position: absolute;
+  height: 24px;
+  width: 24px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  border-radius: 50%;
+  transition: .3s;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+}
+input:checked + .toggle-slider {
+  background-color: var(--green-deep);
+}
+input:checked + .toggle-slider:before {
+  transform: translateX(22px);
+}
+
+/* ---------- App Lock Screen ---------- */
+.app-lock-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  background: linear-gradient(135deg, #4FA89E 0%, #163F3C 50%, #2F7A72 100%);
+}
+.app-lock-overlay {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  padding: 20px;
+}
+.app-lock-card {
+  background: var(--cream);
+  border-radius: 24px;
+  padding: 40px 24px;
+  max-width: 300px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+.app-lock-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, var(--green) 0%, var(--green-deep) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+  box-shadow: 0 8px 16px rgba(79,168,158,0.3);
+}
+.app-lock-title {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0 0 4px;
+  color: var(--text);
+}
+.app-lock-subtitle {
+  font-size: 13px;
+  color: var(--text-mute);
+  margin: 0 0 24px;
+}
+.app-lock-faceid-btn {
+  width: 100%;
+  padding: 12px;
+  border-radius: 12px;
+  background: linear-gradient(-45deg, #4FA89E, #163F3C, #2F7A72, #4FA89E);
+  background-size: 300% 300%;
+  animation: headerGradient 8s ease infinite;
+  border: none;
+  color: #fff;
+  font-weight: 600;
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  transition: transform .2s ease;
+}
+.app-lock-faceid-btn:active {
+  transform: scale(0.95);
 }
