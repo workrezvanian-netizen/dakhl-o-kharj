@@ -401,8 +401,14 @@ function showWelcomeLockForm() {
   const lockArea = document.getElementById("welcomeLockArea");
   lockArea.style.display = "";
   document.getElementById("welcomeLockForm").style.display = "";
-  document.getElementById("welcomeLockFaceId").style.display = "";
+  const faceIdBtn = document.getElementById("welcomeLockFaceId");
+  const canUseFaceId = appLockStorage.isFaceIdEnabled() && !!appLockStorage.getFaceIdCredId();
+  faceIdBtn.style.display = canUseFaceId ? "" : "none";
   document.getElementById("welcomeLockPin").focus();
+  if (canUseFaceId) {
+    // Offer Face ID immediately so the user isn't forced to type the PIN
+    appLockFaceIdBtn.click();
+  }
 }
 
 function initWelcomeScreen() {
@@ -1323,9 +1329,93 @@ const appLockStorage = {
   setEnabled: (val) => localStorage.setItem("appLockEnabled", val ? "true" : "false"),
   getPin: () => localStorage.getItem("appLockPin") || "1234",
   setPin: (pin) => localStorage.setItem("appLockPin", pin),
+  isPinSet: () => localStorage.getItem("appLockPinSet") === "true",
+  setPinSet: (val) => localStorage.setItem("appLockPinSet", val ? "true" : "false"),
   isUnlocked: () => sessionStorage.getItem("appUnlocked") === "true",
-  setUnlocked: (val) => sessionStorage.setItem("appUnlocked", val ? "true" : "false")
+  setUnlocked: (val) => sessionStorage.setItem("appUnlocked", val ? "true" : "false"),
+  isFaceIdEnabled: () => localStorage.getItem("appLockFaceIdEnabled") === "true",
+  setFaceIdEnabled: (val) => localStorage.setItem("appLockFaceIdEnabled", val ? "true" : "false"),
+  getFaceIdCredId: () => localStorage.getItem("appLockFaceIdCredId"),
+  setFaceIdCredId: (id) => {
+    if (id) localStorage.setItem("appLockFaceIdCredId", id);
+    else localStorage.removeItem("appLockFaceIdCredId");
+  }
 };
+
+// ---------- WebAuthn helpers (local device Face ID / Touch ID gate) ----------
+// Note: there's no backend verifying these assertions — the credential is only
+// used to ask the OS to perform a real biometric check before unlocking the app.
+function abToB64(buf) {
+  let binary = "";
+  const bytes = new Uint8Array(buf);
+  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+  return btoa(binary);
+}
+function b64ToAb(b64) {
+  const binary = atob(b64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes.buffer;
+}
+
+async function isPlatformAuthenticatorAvailable() {
+  if (typeof PublicKeyCredential === "undefined" || !PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable) {
+    return false;
+  }
+  try {
+    return await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+  } catch {
+    return false;
+  }
+}
+
+// Registers a platform credential (triggers the real Face ID / Touch ID prompt).
+async function registerFaceId() {
+  try {
+    const challenge = crypto.getRandomValues(new Uint8Array(32));
+    const userId = crypto.getRandomValues(new Uint8Array(16));
+    const cred = await navigator.credentials.create({
+      publicKey: {
+        challenge,
+        rp: { name: "دخل و خرج" },
+        user: { id: userId, name: "user", displayName: "کاربر" },
+        pubKeyCredParams: [
+          { type: "public-key", alg: -7 },
+          { type: "public-key", alg: -257 }
+        ],
+        authenticatorSelection: { authenticatorAttachment: "platform", userVerification: "required" },
+        timeout: 60000
+      }
+    });
+    if (!cred) return false;
+    appLockStorage.setFaceIdCredId(abToB64(cred.rawId));
+    appLockStorage.setFaceIdEnabled(true);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// Asks the OS to verify the user against the stored credential (real Face ID / Touch ID prompt).
+// Resolves true only if the biometric check actually succeeds.
+async function verifyFaceId() {
+  const credIdB64 = appLockStorage.getFaceIdCredId();
+  if (!credIdB64) return false;
+  try {
+    const challenge = crypto.getRandomValues(new Uint8Array(32));
+    const assertion = await navigator.credentials.get({
+      publicKey: {
+        challenge,
+        allowCredentials: [{ id: b64ToAb(credIdB64), type: "public-key" }],
+        userVerification: "required",
+        timeout: 60000
+      }
+    });
+    return !!assertion;
+  } catch {
+    return false; // cancelled, failed, or no matching biometric
+  }
+}
 
 const unlockAndProceed = () => {
   appLockStorage.setUnlocked(true);
@@ -1345,12 +1435,39 @@ const verifyPin = (pin) => {
   }
 };
 
+// Shows the right sub-section: first-time setup (no old PIN) vs change (needs old PIN)
+function refreshAppLockPasswordAreas() {
+  const setupArea = document.getElementById("appLockSetupArea");
+  const changeArea = document.getElementById("appLockChangeArea");
+  if (appLockStorage.isPinSet()) {
+    setupArea.style.display = "none";
+    changeArea.style.display = "";
+  } else {
+    setupArea.style.display = "";
+    changeArea.style.display = "none";
+  }
+}
+
+async function refreshAppLockFaceIdArea() {
+  const faceIdArea = document.getElementById("appLockFaceIdSetupArea");
+  const faceIdToggle = document.getElementById("appLockFaceIdToggle");
+  const available = await isPlatformAuthenticatorAvailable();
+  if (available && appLockStorage.isEnabled()) {
+    faceIdArea.style.display = "";
+    faceIdToggle.checked = appLockStorage.isFaceIdEnabled() && !!appLockStorage.getFaceIdCredId();
+  } else {
+    faceIdArea.style.display = "none";
+  }
+}
+
 // App lock toggle
 appLockToggle.addEventListener("change", () => {
   appLockStorage.setEnabled(appLockToggle.checked);
   const pwdOptions = document.getElementById("appLockPasswordOptions");
   if (appLockToggle.checked) {
     pwdOptions.style.display = "";
+    refreshAppLockPasswordAreas();
+    refreshAppLockFaceIdArea();
   } else {
     pwdOptions.style.display = "none";
   }
@@ -1360,9 +1477,33 @@ appLockToggle.addEventListener("change", () => {
 appLockToggle.checked = appLockStorage.isEnabled();
 if (appLockToggle.checked) {
   document.getElementById("appLockPasswordOptions").style.display = "";
+  refreshAppLockPasswordAreas();
+  refreshAppLockFaceIdArea();
 }
 
-// Password change
+// First-time PIN setup — only asks for the new PIN, no old PIN required
+const appLockSetupPin = document.getElementById("appLockSetupPin");
+const appLockSetupSubmit = document.getElementById("appLockSetupSubmit");
+const appLockSetupMessage = document.getElementById("appLockSetupMessage");
+
+appLockSetupSubmit.addEventListener("click", () => {
+  if (!appLockSetupPin.value || appLockSetupPin.value.length < 4) {
+    appLockSetupMessage.textContent = "رمز باید حداقل 4 رقم باشد";
+    return;
+  }
+  appLockStorage.setPin(appLockSetupPin.value);
+  appLockStorage.setPinSet(true);
+  appLockSetupPin.value = "";
+  appLockSetupMessage.style.color = "#10B981";
+  appLockSetupMessage.textContent = "✓ رمز با موفقیت تنظیم شد";
+  setTimeout(() => {
+    appLockSetupMessage.textContent = "";
+    appLockSetupMessage.style.color = "#ef4444";
+    refreshAppLockPasswordAreas();
+  }, 1200);
+});
+
+// Password change — requires the old PIN
 const appLockChangePin = document.getElementById("appLockChangePin");
 const appLockCurrentPin = document.getElementById("appLockCurrentPin");
 const appLockNewPin = document.getElementById("appLockNewPin");
@@ -1388,6 +1529,33 @@ appLockChangePin.addEventListener("click", () => {
   }, 2000);
 });
 
+// Face ID enrollment toggle
+const appLockFaceIdToggle = document.getElementById("appLockFaceIdToggle");
+const appLockFaceIdMessage = document.getElementById("appLockFaceIdMessage");
+
+appLockFaceIdToggle.addEventListener("change", async () => {
+  if (appLockFaceIdToggle.checked) {
+    appLockFaceIdMessage.style.color = "var(--text-mute)";
+    appLockFaceIdMessage.textContent = "در حال تایید هویت...";
+    const ok = await registerFaceId();
+    if (ok) {
+      appLockFaceIdMessage.style.color = "#10B981";
+      appLockFaceIdMessage.textContent = "✓ فیس‌آی‌دی فعال شد";
+    } else {
+      appLockFaceIdToggle.checked = false;
+      appLockStorage.setFaceIdEnabled(false);
+      appLockStorage.setFaceIdCredId(null);
+      appLockFaceIdMessage.style.color = "#ef4444";
+      appLockFaceIdMessage.textContent = "فعال‌سازی ناموفق بود";
+    }
+    setTimeout(() => { appLockFaceIdMessage.textContent = ""; }, 2000);
+  } else {
+    appLockStorage.setFaceIdEnabled(false);
+    appLockStorage.setFaceIdCredId(null);
+    appLockFaceIdMessage.textContent = "";
+  }
+});
+
 // Lock screen listeners
 appLockSubmit.addEventListener("click", () => {
   verifyPin(appLockPinInput.value);
@@ -1397,20 +1565,17 @@ appLockPinInput.addEventListener("keypress", (e) => {
   if (e.key === "Enter") verifyPin(appLockPinInput.value);
 });
 
-appLockFaceIdBtn.addEventListener("click", () => {
-  if (typeof PublicKeyCredential !== "undefined" && PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable) {
-    PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable().then((available) => {
-      if (available) {
-        // Simulate Face ID auth
-        unlockAndProceed();
-      } else {
-        appLockMessage.textContent = "فیس‌آی‌دی در این دستگاه موجود نیست";
-      }
-    });
+appLockFaceIdBtn.addEventListener("click", async () => {
+  if (!appLockStorage.isFaceIdEnabled() || !appLockStorage.getFaceIdCredId()) {
+    appLockMessage.textContent = "فیس‌آی‌دی فعال نیست";
+    return;
+  }
+  appLockMessage.textContent = "";
+  const verified = await verifyFaceId();
+  if (verified) {
+    unlockAndProceed();
   } else {
-    // Fallback: just show PIN form
-    appLockForm.style.display = "";
-    appLockFaceIdBtn.style.display = "none";
+    appLockMessage.textContent = "تایید فیس‌آی‌دی ناموفق بود، رمز را وارد کنید";
     appLockPinInput.focus();
   }
 });

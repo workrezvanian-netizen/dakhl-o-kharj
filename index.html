@@ -275,11 +275,35 @@
           </label>
         </div>
         <div id="appLockPasswordOptions" style="display:none;border-top:1px solid var(--border);padding-top:14px;">
-          <h3 style="font-size:13px;margin:0 0 12px;color:var(--text);">تغییر رمز عبور</h3>
-          <input type="password" id="appLockCurrentPin" placeholder="رمز فعلی" style="width:100%;padding:8px;border-radius:8px;border:1px solid var(--border);font-size:13px;margin-bottom:8px;font-family:inherit;">
-          <input type="password" id="appLockNewPin" placeholder="رمز جدید" style="width:100%;padding:8px;border-radius:8px;border:1px solid var(--border);font-size:13px;margin-bottom:8px;font-family:inherit;" maxlength="6">
-          <button type="button" id="appLockChangePin" class="btn btn-neutral full" style="font-size:12px;padding:8px;">تغییر رمز</button>
-          <div id="appLockPinMessage" style="font-size:11px;color:#ef4444;margin-top:6px;text-align:center;"></div>
+          <!-- First-time PIN setup: only asks for the new PIN, no old PIN needed -->
+          <div id="appLockSetupArea">
+            <h3 style="font-size:13px;margin:0 0 12px;color:var(--text);">تنظیم رمز عبور</h3>
+            <input type="password" id="appLockSetupPin" placeholder="رمز جدید (حداقل ۴ رقم)" style="width:100%;padding:8px;border-radius:8px;border:1px solid var(--border);font-size:13px;margin-bottom:8px;font-family:inherit;" maxlength="6">
+            <button type="button" id="appLockSetupSubmit" class="btn btn-neutral full" style="font-size:12px;padding:8px;">تنظیم رمز</button>
+            <div id="appLockSetupMessage" style="font-size:11px;color:#ef4444;margin-top:6px;text-align:center;"></div>
+          </div>
+          <!-- Change existing PIN: requires old + new -->
+          <div id="appLockChangeArea" style="display:none;">
+            <h3 style="font-size:13px;margin:0 0 12px;color:var(--text);">تغییر رمز عبور</h3>
+            <input type="password" id="appLockCurrentPin" placeholder="رمز فعلی" style="width:100%;padding:8px;border-radius:8px;border:1px solid var(--border);font-size:13px;margin-bottom:8px;font-family:inherit;">
+            <input type="password" id="appLockNewPin" placeholder="رمز جدید" style="width:100%;padding:8px;border-radius:8px;border:1px solid var(--border);font-size:13px;margin-bottom:8px;font-family:inherit;" maxlength="6">
+            <button type="button" id="appLockChangePin" class="btn btn-neutral full" style="font-size:12px;padding:8px;">تغییر رمز</button>
+            <div id="appLockPinMessage" style="font-size:11px;color:#ef4444;margin-top:6px;text-align:center;"></div>
+          </div>
+          <!-- Face ID enrollment -->
+          <div id="appLockFaceIdSetupArea" style="display:none;margin-top:14px;border-top:1px solid var(--border);padding-top:14px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+              <div>
+                <h3 style="margin:0 0 4px;font-size:13px;">ورود با فیس آی‌دی</h3>
+                <p class="hint" style="margin:0;">برای ورود سریع‌تر به‌جای رمز عبور</p>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="appLockFaceIdToggle">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div id="appLockFaceIdMessage" style="font-size:11px;margin-top:6px;text-align:center;"></div>
+          </div>
         </div>
       </div>
     </details>

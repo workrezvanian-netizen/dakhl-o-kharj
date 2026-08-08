@@ -33,11 +33,27 @@ html, body {
    happens inside .app-scroll instead. */
 html, body {
   height: 100%;
+  height: 100dvh;
   overflow: hidden;
   position: fixed;
   inset: 0;
   width: 100%;
   overscroll-behavior: none;
+}
+
+/* Safety net: guarantees the safe-area / home-indicator strip at the very
+   bottom always matches the app background, even if a browser miscalculates
+   the visual viewport height during toolbar show/hide animations. */
+body::after {
+  content: "";
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: -40px;
+  height: calc(40px + env(safe-area-inset-bottom));
+  background: var(--cream);
+  z-index: 5;
+  pointer-events: none;
 }
 
 .app-scroll {
