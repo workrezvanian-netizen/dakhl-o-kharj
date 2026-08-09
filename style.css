@@ -885,9 +885,9 @@ input:focus, select:focus {
 .ai-result-text {
   background: rgba(255,255,255,0.12);
   border-radius: 16px;
-  padding: 14px 16px;
+  padding: 16px 18px;
   color: #fff;
-  font-size: 13px;
+  font-size: 15px;
   line-height: 2;
   font-family: "Kamran", "Vazirmatn", Tahoma, sans-serif;
 }
@@ -896,8 +896,9 @@ input:focus, select:focus {
   align-items: center;
   gap: 8px;
   color: rgba(255,255,255,0.85);
-  font-size: 12.5px;
+  font-size: 14px;
   padding: 6px 2px;
+  font-family: "Kamran", "Vazirmatn", Tahoma, sans-serif;
 }
 .ai-spin {
   width: 14px; height: 14px;
@@ -912,7 +913,8 @@ input:focus, select:focus {
   border-radius: 16px;
   padding: 12px 14px;
   color: #fff;
-  font-size: 12.5px;
+  font-size: 14px;
+  font-family: "Kamran", "Vazirmatn", Tahoma, sans-serif;
 }
 
 /* ---------- Month-over-month comparison gauges ---------- */

@@ -1290,11 +1290,11 @@ function renderAnalysis() {
   
   let insightMsg = "";
   if (totalExpense === 0) {
-    insightMsg = "📊 فعلاً خرجی ثبت نشده";
+    insightMsg = "💰 فعلاً خرجی ثبت نشده";
   } else if (lastWeekExpense > totalExpense * 0.4) {
-    insightMsg = "⚠️ هفته پیش‌رو بیش‌تر از حد نرمال خرج شده";
+    insightMsg = "📈 خرج این دوره بیش‌تر از حد نرمال است";
   } else if (totalExpense < avgDaily * (analysisPeriod === "week" ? 3 : 15)) {
-    insightMsg = "✨ خرج این دوره کم‌تر از معمول است";
+    insightMsg = "📉 خرج این دوره کم‌تر از معمول است";
   }
   
   // Update title based on period
@@ -1307,7 +1307,7 @@ function renderAnalysis() {
   const insightEl = document.getElementById("smartInsights");
   if (insightEl) {
     if (insightMsg) {
-      insightEl.innerHTML = `<div style="background:rgba(79,168,158,0.1);padding:12px 14px;border-radius:12px;border-left:3px solid #4FA89E;font-size:13px;color:var(--text);">${insightMsg}</div>`;
+      insightEl.innerHTML = `<div style="background:rgba(79,168,158,0.1);padding:14px 16px;border-radius:12px;border-left:3px solid #4FA89E;font-size:15px;font-family:'Kamran','Vazirmatn',Tahoma,sans-serif;color:var(--text);">${insightMsg}</div>`;
     } else {
       insightEl.innerHTML = "";
     }
