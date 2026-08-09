@@ -494,29 +494,82 @@ function getAudioCtx() {
   if (sharedAudioCtx.state === "suspended") sharedAudioCtx.resume();
   return sharedAudioCtx;
 }
+
+// Simulates a coin hitting a hard surface and bouncing to a stop:
+// a sharp metallic "clink" transient followed by several fading,
+// slightly-detuned metallic bounces of decreasing amplitude and spacing.
 function playCoinSound() {
   const ctx = getAudioCtx();
   if (!ctx) return;
   const now = ctx.currentTime;
-  // Two quick bright blips synthesized on the fly — classic "coin drop" feel, no audio file needed
-  [{ freq: 1568, start: 0, dur: 0.09 }, { freq: 2093, start: 0.07, dur: 0.15 }].forEach(({ freq, start, dur }) => {
-    const osc = ctx.createOscillator();
+
+  // Bright metallic "ring" — two closely-detuned sine waves beating together
+  function metallicTing(startOffset, freq, peakGain, duration) {
+    const osc1 = ctx.createOscillator();
+    const osc2 = ctx.createOscillator();
     const gain = ctx.createGain();
-    osc.type = "square";
-    osc.frequency.setValueAtTime(freq, now + start);
-    gain.gain.setValueAtTime(0.0001, now + start);
-    gain.gain.exponentialRampToValueAtTime(0.18, now + start + 0.01);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + start + dur);
-    osc.connect(gain);
+    osc1.type = "sine";
+    osc2.type = "sine";
+    osc1.frequency.setValueAtTime(freq, now + startOffset);
+    osc2.frequency.setValueAtTime(freq * 1.015, now + startOffset);
+    gain.gain.setValueAtTime(0.0001, now + startOffset);
+    gain.gain.exponentialRampToValueAtTime(peakGain, now + startOffset + 0.004);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + startOffset + duration);
+    osc1.connect(gain);
+    osc2.connect(gain);
     gain.connect(ctx.destination);
-    osc.start(now + start);
-    osc.stop(now + start + dur + 0.02);
-  });
-}
-function playTransactionFeedback() {
-  if (navigator.vibrate) {
-    try { navigator.vibrate(35); } catch (e) {}
+    osc1.start(now + startOffset);
+    osc2.start(now + startOffset);
+    osc1.stop(now + startOffset + duration + 0.02);
+    osc2.stop(now + startOffset + duration + 0.02);
   }
+
+  // Sharp noise "click" for the very first impact (adds the metallic edge)
+  const bufferSize = Math.floor(ctx.sampleRate * 0.025);
+  const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < bufferSize; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / bufferSize);
+  const noise = ctx.createBufferSource();
+  noise.buffer = buffer;
+  const noiseFilter = ctx.createBiquadFilter();
+  noiseFilter.type = "highpass";
+  noiseFilter.frequency.value = 3500;
+  const noiseGain = ctx.createGain();
+  noiseGain.gain.setValueAtTime(0.15, now);
+  noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.025);
+  noise.connect(noiseFilter);
+  noiseFilter.connect(noiseGain);
+  noiseGain.connect(ctx.destination);
+  noise.start(now);
+
+  // Coin bouncing and settling: quick fading metallic taps
+  [
+    { t: 0.00, freq: 2600, gain: 0.24, dur: 0.10 },
+    { t: 0.07, freq: 2300, gain: 0.17, dur: 0.09 },
+    { t: 0.13, freq: 2750, gain: 0.12, dur: 0.08 },
+    { t: 0.19, freq: 2400, gain: 0.08, dur: 0.07 },
+    { t: 0.25, freq: 2650, gain: 0.05, dur: 0.09 }
+  ].forEach((b) => metallicTing(b.t, b.freq, b.gain, b.dur));
+}
+
+// iOS Safari/WebKit has never implemented the public Vibration API (navigator.vibrate
+// silently does nothing there — this is an Apple platform restriction, not something
+// fixable purely in JS). As a best-effort workaround we toggle a hidden native checkbox,
+// which on some iOS versions produces a light system haptic tick since it's a real native
+// control changing state within the same trusted click/submit gesture. It's unofficial and
+// not guaranteed on every iOS version, but it's harmless if it does nothing.
+function triggerHaptic() {
+  if (navigator.vibrate) {
+    try { navigator.vibrate(35); return; } catch (e) {}
+  }
+  const proxy = document.getElementById("hapticProxy");
+  if (proxy) {
+    try { proxy.click(); } catch (e) {}
+  }
+}
+
+function playTransactionFeedback() {
+  triggerHaptic();
   try { playCoinSound(); } catch (e) {}
 }
 
