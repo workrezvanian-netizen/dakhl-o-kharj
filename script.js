@@ -457,6 +457,9 @@ function switchTab(tab, opts = {}) {
   }
   if (tab === "analysis") renderAnalysis();
 
+  // Settings accordions always start closed, whether we're leaving or entering the tab
+  document.querySelectorAll("#tab-settings .settings-group").forEach((d) => { d.open = false; });
+
   const headerEl = document.querySelector(".app-header");
   if (headerEl) {
     if (tab === "dashboard") headerEl.classList.remove("is-compact");
@@ -1154,6 +1157,35 @@ document.getElementById("btnAiAnalyze").addEventListener("click", async () => {
 // ---------- Sync ----------
 function genCode() { return String(Math.floor(100000 + Math.random() * 900000)); }
 
+// Returns true if the code already has data stored on the server (i.e. it's taken).
+// If the server can't be reached, we can't be sure — treat as "unknown" (null) so
+// the caller can decide not to block the user over a network hiccup.
+async function isCodeTaken(code) {
+  if (CONFIG.WORKER_URL.includes("YOUR-SUBDOMAIN")) return false;
+  try {
+    const res = await fetch(`${CONFIG.WORKER_URL}/data?code=${code}`);
+    if (res.status === 404) return false;
+    if (res.ok) return true;
+    return null;
+  } catch (e) {
+    return null;
+  }
+}
+
+// Generates a random 6-digit code that isn't already in use on the server.
+async function genUniqueCode() {
+  const MAX_ATTEMPTS = 8;
+  for (let i = 0; i < MAX_ATTEMPTS; i++) {
+    const candidate = genCode();
+    const taken = await isCodeTaken(candidate);
+    if (taken === false) return candidate; // confirmed free
+    if (taken === null) return candidate; // couldn't reach server — don't block the user
+    // taken === true → loop and try another code
+  }
+  // extremely unlikely fallback after MAX_ATTEMPTS collisions
+  return genCode();
+}
+
 function refreshSyncUI() {
   const dot = document.getElementById("syncDot");
   const label = document.getElementById("syncLabel");
@@ -1172,10 +1204,15 @@ function refreshSyncUI() {
 document.getElementById("syncStatusBtn").addEventListener("click", () => switchTab("settings"));
 
 document.getElementById("btnGenerateCode").addEventListener("click", async () => {
-  state.syncCode = genCode();
+  const btn = document.getElementById("btnGenerateCode");
+  btn.disabled = true;
+  setSyncMsg("در حال ساخت کد...", false);
+  state.syncCode = await genUniqueCode();
   saveState({ sync: false });
   refreshSyncUI();
   await pushToServer();
+  setSyncMsg("", false);
+  btn.disabled = false;
 });
 
 document.getElementById("btnCopyCode").addEventListener("click", async () => {
