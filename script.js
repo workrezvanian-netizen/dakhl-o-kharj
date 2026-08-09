@@ -485,6 +485,41 @@ function setEntryMode(mode) {
   });
 }
 
+// ---------- Haptic + sound feedback when a transaction is added ----------
+let sharedAudioCtx = null;
+function getAudioCtx() {
+  const Ctx = window.AudioContext || window.webkitAudioContext;
+  if (!Ctx) return null;
+  if (!sharedAudioCtx) sharedAudioCtx = new Ctx();
+  if (sharedAudioCtx.state === "suspended") sharedAudioCtx.resume();
+  return sharedAudioCtx;
+}
+function playCoinSound() {
+  const ctx = getAudioCtx();
+  if (!ctx) return;
+  const now = ctx.currentTime;
+  // Two quick bright blips synthesized on the fly — classic "coin drop" feel, no audio file needed
+  [{ freq: 1568, start: 0, dur: 0.09 }, { freq: 2093, start: 0.07, dur: 0.15 }].forEach(({ freq, start, dur }) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "square";
+    osc.frequency.setValueAtTime(freq, now + start);
+    gain.gain.setValueAtTime(0.0001, now + start);
+    gain.gain.exponentialRampToValueAtTime(0.18, now + start + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + start + dur);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(now + start);
+    osc.stop(now + start + dur + 0.02);
+  });
+}
+function playTransactionFeedback() {
+  if (navigator.vibrate) {
+    try { navigator.vibrate(35); } catch (e) {}
+  }
+  try { playCoinSound(); } catch (e) {}
+}
+
 // ---------- Income form ----------
 document.getElementById("incomeForm").addEventListener("submit", (e) => {
   e.preventDefault();
@@ -498,6 +533,7 @@ document.getElementById("incomeForm").addEventListener("submit", (e) => {
     date: getSelectedISO("income"),
     createdAt: Date.now()
   });
+  playTransactionFeedback();
   e.target.reset();
   setDatePickerToToday("income");
   resetDateQuickPicker("income");
@@ -518,6 +554,7 @@ document.getElementById("expenseForm").addEventListener("submit", (e) => {
     date: getSelectedISO("expense"),
     createdAt: Date.now()
   });
+  playTransactionFeedback();
   e.target.reset();
   setDatePickerToToday("expense");
   resetDateQuickPicker("expense");
