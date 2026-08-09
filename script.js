@@ -1301,7 +1301,7 @@ function renderAnalysis() {
   const periodLabels = { "week": "این هفته", "month": "این ماه", "all": "کل بازه" };
   const analysisTitle = document.querySelector(".ai-card-head h2");
   if (analysisTitle) {
-    analysisTitle.textContent = `تحلیل هوشمند ${periodLabels[analysisPeriod]}`;
+    analysisTitle.textContent = `دخل‌بین ${periodLabels[analysisPeriod]}`;
   }
   
   const insightEl = document.getElementById("smartInsights");
