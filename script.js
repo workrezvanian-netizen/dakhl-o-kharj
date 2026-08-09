@@ -1290,11 +1290,11 @@ function renderAnalysis() {
   
   let insightMsg = "";
   if (totalExpense === 0) {
-    insightMsg = "💰 فعلاً خرجی ثبت نشده";
+    insightMsg = "فعلاً خرجی ثبت نشده";
   } else if (lastWeekExpense > totalExpense * 0.4) {
-    insightMsg = "📈 خرج این دوره بیش‌تر از حد نرمال است";
+    insightMsg = "خرج این دوره بیش‌تر از حد نرمال است";
   } else if (totalExpense < avgDaily * (analysisPeriod === "week" ? 3 : 15)) {
-    insightMsg = "📉 خرج این دوره کم‌تر از معمول است";
+    insightMsg = "خرج این دوره کم‌تر از معمول است";
   }
   
   // Update title based on period
