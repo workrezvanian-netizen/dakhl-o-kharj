@@ -495,9 +495,11 @@ function getAudioCtx() {
   return sharedAudioCtx;
 }
 
-// Simulates a coin hitting a hard surface and bouncing to a stop:
-// a sharp metallic "clink" transient followed by several fading,
-// slightly-detuned metallic bounces of decreasing amplitude and spacing.
+const coinAudio = new Audio("sounds/coin.mp3");
+coinAudio.preload = "auto";
+
+// Simulates a coin hitting a hard surface and bouncing to a stop — used only
+// as a fallback if the real coin sound file can't be played for some reason.
 function playCoinSound() {
   const ctx = getAudioCtx();
   if (!ctx) return;
@@ -570,7 +572,13 @@ function triggerHaptic() {
 
 function playTransactionFeedback() {
   triggerHaptic();
-  try { playCoinSound(); } catch (e) {}
+  try {
+    const sound = coinAudio.cloneNode();
+    const p = sound.play();
+    if (p && p.catch) p.catch(() => { try { playCoinSound(); } catch (e) {} });
+  } catch (e) {
+    try { playCoinSound(); } catch (e2) {}
+  }
 }
 
 // ---------- Income form ----------

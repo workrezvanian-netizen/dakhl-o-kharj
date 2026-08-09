@@ -1,4 +1,4 @@
-const CACHE_NAME = "dakhl-o-kharj-v12";
+const CACHE_NAME = "dakhl-o-kharj-v13";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -7,7 +7,8 @@ const APP_SHELL = [
   "./manifest.json",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
-  "./icons/watermark-nelin.png"
+  "./icons/watermark-nelin.png",
+  "./sounds/coin.mp3"
 ];
 
 self.addEventListener("install", (event) => {
