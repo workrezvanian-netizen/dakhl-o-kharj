@@ -37,6 +37,11 @@ const CATEGORY_COLORS = [
   "#FF6B6B", "#FFA94D", "#FFD43B", "#69DB7C",
   "#22B8CF", "#4C6EF5", "#9775FA", "#F783AC"
 ];
+const CATEGORY_COLOR_CHOICES = [
+  "#FF6B6B", "#FF922B", "#FFA94D", "#FFD43B", "#94D82D", "#69DB7C", "#20C997",
+  "#22B8CF", "#4DABF7", "#4C6EF5", "#7950F2", "#9775FA", "#DA77F2", "#F783AC",
+  "#495057", "#868E96"
+];
 const CARD_PALETTE = [
   { bg: "#FBEED9", icon: "#E8A83C" },
   { bg: "#DCEBFB", icon: "#3B82C4" },
@@ -59,6 +64,7 @@ const INCOME_SOURCES = ["حقوق", "پاداش", "فروش", "هدیه", "سا�
 let state = loadState();
 let selectedExpenseCategoryName = null;
 let selectedNewCategoryIcon = ICON_CHOICES[0];
+let selectedNewCategoryColor = CATEGORY_COLOR_CHOICES[0];
 let expenseListFilter = null;
 
 function loadState() {
@@ -333,6 +339,8 @@ setupDateQuickPicker("expense");
 // ---------- Helpers ----------
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
 function catColor(name) {
+  const cat = state.categories.find((c) => c.name === name);
+  if (cat && cat.color) return cat.color;
   const idx = state.categories.findIndex((c) => c.name === name);
   return CATEGORY_COLORS[(idx >= 0 ? idx : 0) % CATEGORY_COLORS.length];
 }
@@ -498,6 +506,55 @@ function getAudioCtx() {
 const coinAudio = new Audio("sounds/coin.mp3");
 coinAudio.preload = "auto";
 
+// Decode the sound effect into an AudioBuffer once up front so playback via
+// Web Audio has near-zero latency. HTMLAudioElement + cloneNode() has to
+// re-decode on every play in several browsers (a noticeable delay), and most
+// sound-effect mp3s also carry a short silent header from the encoder — we
+// trim that here too so the "kaching" hits right on the tap.
+let coinAudioBuffer = null;
+let coinAudioBufferPromise = null;
+function loadCoinAudioBuffer() {
+  const ctx = getAudioCtx();
+  if (!ctx) return Promise.resolve(null);
+  if (coinAudioBuffer) return Promise.resolve(coinAudioBuffer);
+  if (coinAudioBufferPromise) return coinAudioBufferPromise;
+  coinAudioBufferPromise = fetch("sounds/coin.mp3")
+    .then((res) => res.arrayBuffer())
+    .then((data) => ctx.decodeAudioData(data))
+    .then((buf) => {
+      coinAudioBuffer = trimLeadingSilence(buf, ctx);
+      return coinAudioBuffer;
+    })
+    .catch(() => null);
+  return coinAudioBufferPromise;
+}
+// Some encoders (LAME especially) pad the start of an mp3 with a few tens of
+// milliseconds of near-silence. Skim past it so playback starts right on the hit.
+function trimLeadingSilence(buffer, ctx, thresholdDb = -45) {
+  try {
+    const threshold = Math.pow(10, thresholdDb / 20);
+    const data = buffer.getChannelData(0);
+    let startSample = 0;
+    const maxScanSamples = Math.min(data.length, buffer.sampleRate * 0.5); // scan at most 500ms
+    for (let i = 0; i < maxScanSamples; i++) {
+      if (Math.abs(data[i]) > threshold) { startSample = i; break; }
+    }
+    if (startSample < buffer.sampleRate * 0.005) return buffer; // negligible, skip re-copy
+    const trimmedLength = buffer.length - startSample;
+    const trimmed = ctx.createBuffer(buffer.numberOfChannels, trimmedLength, buffer.sampleRate);
+    for (let ch = 0; ch < buffer.numberOfChannels; ch++) {
+      trimmed.copyToChannel(buffer.getChannelData(ch).subarray(startSample), ch);
+    }
+    return trimmed;
+  } catch (e) {
+    return buffer;
+  }
+}
+// Kick off loading/decoding immediately so the buffer is ready before the
+// user's first tap (a click/tap elsewhere will also resume the AudioContext).
+loadCoinAudioBuffer();
+document.addEventListener("pointerdown", () => loadCoinAudioBuffer(), { once: true, passive: true });
+
 // Simulates a coin hitting a hard surface and bouncing to a stop — used only
 // as a fallback if the real coin sound file can't be played for some reason.
 function playCoinSound() {
@@ -572,8 +629,19 @@ function triggerHaptic() {
 
 function playTransactionFeedback() {
   triggerHaptic();
+  const ctx = getAudioCtx();
+  if (ctx && coinAudioBuffer) {
+    try {
+      const src = ctx.createBufferSource();
+      src.buffer = coinAudioBuffer;
+      src.connect(ctx.destination);
+      src.start(0);
+      return;
+    } catch (e) { /* fall through to HTMLAudioElement path */ }
+  }
   try {
     const sound = coinAudio.cloneNode();
+    sound.currentTime = 0;
     const p = sound.play();
     if (p && p.catch) p.catch(() => { try { playCoinSound(); } catch (e) {} });
   } catch (e) {
@@ -628,8 +696,10 @@ document.getElementById("categoryForm").addEventListener("submit", (e) => {
   const input = document.getElementById("categoryName");
   const name = input.value.trim();
   if (!name || state.categories.some((c) => c.name === name)) { input.value = ""; return; }
-  state.categories.push({ name, icon: selectedNewCategoryIcon });
+  state.categories.push({ name, icon: selectedNewCategoryIcon, color: selectedNewCategoryColor });
   input.value = "";
+  selectedNewCategoryColor = nextSuggestedCategoryColor();
+  renderCategoryColorPicker();
   saveState();
 });
 
@@ -703,6 +773,31 @@ function renderCategoryIconPicker() {
 }
 renderCategoryIconPicker();
 
+function nextSuggestedCategoryColor() {
+  const used = new Set(state.categories.map((c) => c.color).filter(Boolean));
+  const free = CATEGORY_COLOR_CHOICES.find((c) => !used.has(c));
+  return free || CATEGORY_COLOR_CHOICES[state.categories.length % CATEGORY_COLOR_CHOICES.length];
+}
+
+function colorSwatchesHTML(selectedColor, extraClass) {
+  return CATEGORY_COLOR_CHOICES.map((c) => `
+    <button type="button" class="color-chip ${extraClass || ""} ${c === selectedColor ? "selected" : ""}" data-color="${c}" style="background:${c}"></button>
+  `).join("");
+}
+
+function renderCategoryColorPicker() {
+  const wrap = document.getElementById("categoryColorPicker");
+  if (!selectedNewCategoryColor) selectedNewCategoryColor = nextSuggestedCategoryColor();
+  wrap.innerHTML = colorSwatchesHTML(selectedNewCategoryColor);
+  wrap.querySelectorAll(".color-chip").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      selectedNewCategoryColor = btn.dataset.color;
+      renderCategoryColorPicker();
+    });
+  });
+}
+renderCategoryColorPicker();
+
 function renderCategoryManageList() {
   const wrap = document.getElementById("categoryManageList");
   if (!state.categories.length) {
@@ -711,10 +806,33 @@ function renderCategoryManageList() {
   }
   wrap.innerHTML = state.categories.map((c) => `
     <div class="category-manage-row">
-      <span class="cat-name">${iconSpanHTML(c.icon)}${c.name}</span>
+      <span class="cat-name">
+        <span class="cat-color-dot" data-name="${c.name}" style="background:${catColor(c.name)}"></span>
+        ${iconSpanHTML(c.icon)}${c.name}
+      </span>
       <button class="entry-delete" onclick="deleteCategory('${c.name.replace(/'/g, "\\'")}')">حذف</button>
     </div>
+    <div class="cat-color-swatches" data-swatches-for="${c.name}">
+      ${colorSwatchesHTML(catColor(c.name))}
+    </div>
   `).join("");
+  wrap.querySelectorAll(".cat-color-dot").forEach((dot) => {
+    dot.addEventListener("click", () => {
+      const panel = wrap.querySelector(`.cat-color-swatches[data-swatches-for="${CSS.escape(dot.dataset.name)}"]`);
+      const wasOpen = panel.classList.contains("open");
+      wrap.querySelectorAll(".cat-color-swatches.open").forEach((p) => p.classList.remove("open"));
+      if (!wasOpen) panel.classList.add("open");
+    });
+  });
+  wrap.querySelectorAll(".cat-color-swatches").forEach((panel) => {
+    panel.querySelectorAll(".color-chip").forEach((chip) => {
+      chip.addEventListener("click", () => {
+        const cat = state.categories.find((c) => c.name === panel.dataset.swatchesFor);
+        if (cat) cat.color = chip.dataset.color;
+        saveState();
+      });
+    });
+  });
 }
 
 function sortEntriesDesc(items) {

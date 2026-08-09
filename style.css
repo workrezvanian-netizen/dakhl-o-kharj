@@ -1155,6 +1155,51 @@ input:focus, select:focus {
 .icon-chip.selected .icon-mask { color: #8A6B14; }
 .category-manage-row .icon-mask { width: 16px; height: 16px; color: var(--green-deep); margin-left: 2px; }
 
+.color-picker {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 8px;
+  margin: 6px 0 14px;
+}
+.color-chip {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  padding: 0;
+}
+.color-chip.selected {
+  border-color: var(--text);
+  box-shadow: 0 0 0 2px var(--cream);
+}
+.color-chip.selected::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.9) inset;
+}
+.cat-color-dot {
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  margin-left: 7px;
+  flex: none;
+  cursor: pointer;
+  border: 1px solid rgba(0,0,0,0.08);
+}
+.cat-color-swatches {
+  display: none;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 6px;
+  margin: 8px 0 2px;
+}
+.cat-color-swatches.open { display: grid; }
+.cat-color-swatches .color-chip { width: 22px; height: 22px; }
+
 .btn {
   border: none;
   border-radius: var(--radius-sm);
