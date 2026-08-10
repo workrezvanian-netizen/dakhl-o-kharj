@@ -175,9 +175,9 @@ h2 {
   opacity: 0.95;
 }
 .welcome-icon-img {
-  width: 108px;
-  height: 108px;
-  border-radius: 30px;
+  width: 140px;
+  height: 140px;
+  border-radius: 36px;
   box-shadow: 0 14px 34px rgba(0,0,0,0.28);
 }
 .welcome-brand-text {
@@ -820,8 +820,10 @@ input:focus, select:focus {
 .ai-card {
   background: linear-gradient(150deg, var(--green-deep) 0%, #2F7A72 70%, #4FA89E 130%);
   border-radius: 22px;
-  padding: 18px 18px 16px;
+  padding: 24px 18px 20px;
   box-shadow: 0 10px 26px rgba(16,70,43,0.18);
+  position: relative;
+  overflow: hidden;
 }
 .ai-card-head {
   display: flex;
@@ -1391,8 +1393,6 @@ input:checked + .toggle-slider:before {
   width: 100%;
   text-align: right;
   position: relative;
-  overflow: hidden;
-  border-radius: 14px;
   transition: opacity .2s ease;
 }
 .ai-card-watermark {
