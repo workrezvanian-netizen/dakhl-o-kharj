@@ -1837,3 +1837,14 @@ appLockFaceIdBtn.addEventListener("click", async () => {
 renderAll();
 refreshSyncUI();
 initSync();
+
+// Handle app-shortcut deep links (long-press app icon → "ثبت خرج جدید" / "ثبت درآمد جدید")
+(() => {
+  const params = new URLSearchParams(window.location.search);
+  const action = params.get("action");
+  if (action === "expense" || action === "income") {
+    switchTab("entry");
+    setEntryMode(action);
+    history.replaceState(null, "", window.location.pathname);
+  }
+})();
