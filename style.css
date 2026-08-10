@@ -1389,9 +1389,23 @@ input:checked + .toggle-slider:before {
   cursor: pointer;
   width: 100%;
   text-align: right;
-  direction: ltr;
+  position: relative;
+  overflow: hidden;
+  border-radius: 14px;
   transition: opacity .2s ease;
 }
+.ai-card-watermark {
+  position: absolute;
+  left: -14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 82px;
+  height: 82px;
+  opacity: 0.16;
+  z-index: 0;
+  pointer-events: none;
+}
+.ai-card-icon, .ai-card-head { position: relative; z-index: 1; }
 .ai-card-button:active {
   opacity: 0.8;
 }
