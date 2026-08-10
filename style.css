@@ -831,24 +831,10 @@ input:focus, select:focus {
   margin-bottom: 14px;
 }
 .ai-card-icon {
-  width: 52px;
-  height: 52px;
-  border-radius: 16px;
-  background: linear-gradient(135deg, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0.12) 100%);
-  box-shadow: 
-    0 20px 40px rgba(22,63,60,0.3),
-    0 8px 16px rgba(0,0,0,0.15),
-    inset 0 1px 2px rgba(255,255,255,0.4),
-    inset 0 -2px 6px rgba(0,0,0,0.1);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  transform: perspective(1200px) rotateY(-8deg) rotateX(4deg);
-  transition: transform .3s ease;
-}
-.ai-card-icon:hover {
-  transform: perspective(1200px) rotateY(-4deg) rotateX(2deg);
 }
 .ai-card h2 { color: #fff; font-size: 19px; font-weight: 800; letter-spacing: -0.2px; font-family: "Kamran", "Vazirmatn", Tahoma, sans-serif; }
 .ai-card-sub { margin: 0; font-size: 14.5px; font-weight: 500; color: rgba(255,255,255,0.75); font-family: "Kamran", "Vazirmatn", Tahoma, sans-serif; }
@@ -1403,6 +1389,7 @@ input:checked + .toggle-slider:before {
   cursor: pointer;
   width: 100%;
   text-align: right;
+  direction: ltr;
   transition: opacity .2s ease;
 }
 .ai-card-button:active {
