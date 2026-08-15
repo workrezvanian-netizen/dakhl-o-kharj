@@ -722,6 +722,7 @@ function deleteCategory(name) {
 
 // ---------- Rendering ----------
 function renderAll() {
+  document.body.classList.toggle("viewing-past-month", !isViewingCurrentMonth());
   renderExpenseCategoryPicker();
   renderCategoryManageList();
   renderDashboard();
@@ -841,8 +842,8 @@ function sortEntriesDesc(items) {
 
 function renderIncomeList() {
   const wrap = document.getElementById("incomeList");
-  const items = sortEntriesDesc([...state.incomes]);
-  if (!items.length) { wrap.innerHTML = `<p class="empty-hint">هنوز درآمدی ثبت نشده</p>`; return; }
+  const items = sortEntriesDesc(state.incomes.filter((x) => inViewedMonth(x.date)));
+  if (!items.length) { wrap.innerHTML = `<p class="empty-hint">${isViewingCurrentMonth() ? "هنوز درآمدی ثبت نشده" : "درآمدی در این ماه ثبت نشده"}</p>`; return; }
   wrap.innerHTML = items.map((x) => entryRowHTML(x, "income")).join("");
 }
 
@@ -850,7 +851,7 @@ function renderExpenseList() {
   const wrap = document.getElementById("expenseList");
   const clearBtn = document.getElementById("expenseListFilterClear");
   const titleEl = document.getElementById("expenseListTitle");
-  let items = [...state.expenses];
+  let items = state.expenses.filter((x) => inViewedMonth(x.date));
   if (expenseListFilter) {
     items = items.filter((x) => x.category === expenseListFilter);
     clearBtn.style.display = "";
@@ -861,7 +862,7 @@ function renderExpenseList() {
   }
   items = sortEntriesDesc(items);
   if (!items.length) {
-    wrap.innerHTML = `<p class="empty-hint">${expenseListFilter ? "خرجی در این گروه ثبت نشده" : "هنوز خرجی ثبت نشده"}</p>`;
+    wrap.innerHTML = `<p class="empty-hint">${expenseListFilter ? "خرجی در این گروه ثبت نشده" : (isViewingCurrentMonth() ? "هنوز خرجی ثبت نشده" : "خرجی در این ماه ثبت نشده")}</p>`;
     return;
   }
   wrap.innerHTML = items.map((x) => entryRowHTML(x, "expense")).join("");
@@ -894,29 +895,67 @@ function entryRowHTML(x, type) {
 let dashboardMode = "month";
 let viewedMonth = todayJalali();
 
+function inViewedMonth(dateStr) {
+  const [gy, gm, gd] = dateStr.split("-").map(Number);
+  const j = toJalaali(gy, gm, gd);
+  return j.jy === viewedMonth.jy && j.jm === viewedMonth.jm;
+}
+function isViewingCurrentMonth() {
+  const t = todayJalali();
+  return viewedMonth.jy === t.jy && viewedMonth.jm === t.jm;
+}
+
 function updateMonthLabel() {
   const label = document.getElementById("monthLabel");
   label.textContent = JALALI_MONTHS[viewedMonth.jm - 1];
 }
 
+// Every tab (dashboard, entry list, analysis) follows the same viewed month,
+// and the whole app gets a distinct background tint while browsing history
+// so it's obvious you're not looking at the current month.
+function applyViewedMonthState() {
+  document.body.classList.toggle("viewing-past-month", !isViewingCurrentMonth());
+  renderDashboard();
+  renderIncomeList();
+  renderExpenseList();
+  renderAnalysis();
+}
+
 document.getElementById("prevMonthBtn").addEventListener("click", () => {
   dashboardMode = "month";
   viewedMonth = addMonthsJalali(viewedMonth.jy, viewedMonth.jm, -1);
-  renderDashboard();
+  applyViewedMonthState();
 });
 document.getElementById("nextMonthBtn").addEventListener("click", () => {
   dashboardMode = "month";
   viewedMonth = addMonthsJalali(viewedMonth.jy, viewedMonth.jm, 1);
-  renderDashboard();
+  applyViewedMonthState();
+});
+
+// If the app was only backgrounded (not actually closed), some mobile
+// browsers keep the page alive rather than reloading it. If it's been
+// hidden a while, treat coming back as a fresh open and snap back to
+// the current month.
+let hiddenSinceTs = null;
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) {
+    hiddenSinceTs = Date.now();
+  } else if (hiddenSinceTs && Date.now() - hiddenSinceTs > 5 * 60 * 1000) {
+    hiddenSinceTs = null;
+    if (!isViewingCurrentMonth()) {
+      viewedMonth = todayJalali();
+      applyViewedMonthState();
+    }
+  } else {
+    hiddenSinceTs = null;
+  }
 });
 
 function renderDashboard() {
   updateMonthLabel();
   const inPeriod = (dateStr) => {
     if (dashboardMode === "all") return true;
-    const [gy, gm, gd] = dateStr.split("-").map(Number);
-    const j = toJalaali(gy, gm, gd);
-    return j.jy === viewedMonth.jy && j.jm === viewedMonth.jm;
+    return inViewedMonth(dateStr);
   };
 
   const incomes = state.incomes.filter((x) => inPeriod(x.date));
@@ -1020,7 +1059,7 @@ function renderMonthCompareCard(containerId, period = "month") {
   // Get data based on period
   let curData, prevData;
   if (period === "month") {
-    const t = todayJalali();
+    const t = viewedMonth;
     const p = addMonthsJalali(t.jy, t.jm, -1);
     curData = computeMonthTotals(t.jy, t.jm);
     prevData = computeMonthTotals(p.jy, p.jm);
@@ -1064,8 +1103,12 @@ function renderMonthCompareCard(containerId, period = "month") {
     { key: "income", label: "درآمد", curV: curData.totalIncome, prevV: prevData.totalIncome, goodWhenDown: false }
   ];
 
+  const monthPrevJ = addMonthsJalali(viewedMonth.jy, viewedMonth.jm, -1);
   const periodLegend = {
-    month: { cur: "این ماه", prev: "ماه قبل" },
+    month: {
+      cur: isViewingCurrentMonth() ? "این ماه" : JALALI_MONTHS[viewedMonth.jm - 1],
+      prev: JALALI_MONTHS[monthPrevJ.jm - 1]
+    },
     week: { cur: "این هفته", prev: "هفته قبل" },
     all: { cur: "کل بازه", prev: "بدون مقایسه" }
   }[period] || { cur: "دوره فعلی", prev: "دوره قبل" };
@@ -1246,11 +1289,7 @@ function renderAnalysis() {
     const daysDiff = Math.floor((today - d) / (1000 * 60 * 60 * 24));
     
     if (analysisPeriod === "week") return daysDiff >= 0 && daysDiff < 7;
-    if (analysisPeriod === "month") {
-      const j = toJalaali(gy, gm, gd);
-      const t = todayJalali();
-      return j.jy === t.jy && j.jm === t.jm;
-    }
+    if (analysisPeriod === "month") return inViewedMonth(dateStr);
     return true;
   };
   const expenses = state.expenses.filter((x) => inPeriod(x.date));
@@ -1265,11 +1304,7 @@ function renderAnalysis() {
     const daysDiff = Math.floor((today - d) / (1000 * 60 * 60 * 24));
     
     if (analysisPeriod === "week") return daysDiff >= 0 && daysDiff < 7;
-    if (analysisPeriod === "month") {
-      const j = toJalaali(gy, gm, gd);
-      const t = todayJalali();
-      return j.jy === t.jy && j.jm === t.jm;
-    }
+    if (analysisPeriod === "month") return inViewedMonth(dateStr);
     return true;
   };
   
@@ -1298,7 +1333,7 @@ function renderAnalysis() {
   }
   
   // Update title based on period
-  const periodLabels = { "week": "این هفته", "month": "این ماه", "all": "کل بازه" };
+  const periodLabels = { "week": "این هفته", "month": isViewingCurrentMonth() ? "این ماه" : JALALI_MONTHS[viewedMonth.jm - 1], "all": "کل بازه" };
   const analysisTitle = document.querySelector(".ai-card-head h2");
   if (analysisTitle) {
     analysisTitle.textContent = `تحلیل هوشمند ${periodLabels[analysisPeriod]}`;

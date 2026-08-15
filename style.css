@@ -26,6 +26,11 @@ html, body {
   color: var(--text);
   font-family: "Vazirmatn", Tahoma, sans-serif;
   -webkit-tap-highlight-color: transparent;
+  transition: background .3s ease;
+}
+body.viewing-past-month,
+body.viewing-past-month::after {
+  background: #F2E7D3;
 }
 
 /* Body is locked to the viewport (not scrollable) so the fixed bottom nav
