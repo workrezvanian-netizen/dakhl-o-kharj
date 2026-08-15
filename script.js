@@ -84,13 +84,14 @@ function loadState() {
       return {
         incomes: parsed.incomes || [],
         expenses: parsed.expenses || [],
+        installments: parsed.installments || [],
         categories,
         syncCode: parsed.syncCode || null,
         updatedAt: parsed.updatedAt || Date.now()
       };
     }
   } catch (e) { /* ignore corrupt state */ }
-  return { incomes: [], expenses: [], categories: DEFAULT_CATEGORIES.slice(), syncCode: null, updatedAt: Date.now() };
+  return { incomes: [], expenses: [], installments: [], categories: DEFAULT_CATEGORIES.slice(), syncCode: null, updatedAt: Date.now() };
 }
 
 function saveState({ sync = true } = {}) {
@@ -464,6 +465,7 @@ function switchTab(tab, opts = {}) {
     renderExpenseList();
   }
   if (tab === "analysis") renderAnalysis();
+  if (tab === "installments") renderInstallments();
 
   // Settings accordions always start closed, whether we're leaving or entering the tab
   document.querySelectorAll("#tab-settings .settings-group").forEach((d) => { d.open = false; });
@@ -729,6 +731,7 @@ function renderAll() {
   renderIncomeList();
   renderExpenseList();
   renderAnalysis();
+  renderInstallments();
 }
 
 function renderExpenseCategoryPicker() {
@@ -1865,6 +1868,206 @@ appLockFaceIdBtn.addEventListener("click", async () => {
   } else {
     appLockMessage.textContent = "تایید فیس‌آی‌دی ناموفق بود، رمز را وارد کنید";
     appLockPinInput.focus();
+  }
+});
+
+// ---------- Installments (یادآور اقساط) ----------
+attachAmountFormatting(document.getElementById("installmentAmount"));
+
+let editingInstallmentId = null;
+
+function jalaliMonthKey(jy, jm) { return `${jy}-${jm}`; }
+
+function computeInstallmentStatus(item, t) {
+  const monthKey = jalaliMonthKey(t.jy, t.jm);
+  if (item.type === "monthly") {
+    const isPaidNow = item.lastPaidMonth === monthKey;
+    const len = jalaaliMonthLength(t.jy, t.jm);
+    const day = Math.min(item.dueDay || 1, len);
+    const g = toGregorian(t.jy, t.jm, day);
+    const dueDateISO = `${g.gy}-${String(g.gm).padStart(2, "0")}-${String(g.gd).padStart(2, "0")}`;
+    return { isPaidNow, dueDateISO, overdue: false, countsThisMonth: true };
+  }
+  const isPaidNow = !!item.paid;
+  const [gy, gm, gd] = item.dueDate.split("-").map(Number);
+  const j = toJalaali(gy, gm, gd);
+  const dueRank = j.jy * 12 + j.jm;
+  const curRank = t.jy * 12 + t.jm;
+  const countsThisMonth = !isPaidNow && dueRank <= curRank;
+  return { isPaidNow, dueDateISO: item.dueDate, overdue: !isPaidNow && dueRank < curRank, countsThisMonth };
+}
+
+function installmentRowHTML(item, status) {
+  const paidCount = item.paidCount || 0;
+  const totalSuffix = item.totalCount ? ` از ${toPersianDigits(item.totalCount)}` : "";
+  const countText = paidCount > 0 ? `قسط شماره ${toPersianDigits(paidCount)}${totalSuffix} پرداخت‌شده` : (item.totalCount ? `۰${totalSuffix} قسط پرداخت‌شده` : "");
+  const typeLabel = item.type === "monthly" ? "ماهانه" : "یک‌باره";
+  const dueLabel = status.isPaidNow
+    ? (item.type === "monthly" ? "پرداخت‌شده این ماه" : "پرداخت‌شده")
+    : (status.overdue ? `سررسید گذشته: ${formatDateFa(status.dueDateISO)}` : `سررسید: ${formatDateFa(status.dueDateISO)}`);
+  const subParts = [typeLabel, dueLabel];
+  if (countText) subParts.push(countText);
+  return `
+    <div class="entry-row installment-row ${status.isPaidNow ? "installment-paid" : ""} ${status.overdue ? "installment-overdue" : ""}">
+      <div class="entry-row-main">
+        <span class="entry-icon ${status.isPaidNow ? "income-icon" : "expense-icon"}">${iconSpanHTML(status.isPaidNow ? "check" : "credit-card")}</span>
+        <div>
+          <div class="entry-title">${item.title}</div>
+          <div class="entry-sub">${subParts.join(" · ")}</div>
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; gap:6px;">
+        <span class="entry-amount expense-amt">${fmtAmount(item.amount)}</span>
+        ${status.isPaidNow
+          ? `<button type="button" class="installment-undo-btn" data-id="${item.id}" title="لغو پرداخت">${iconSpanHTML("rotate-ccw", "width:15px;height:15px")}</button>`
+          : `<button type="button" class="installment-pay-btn" data-id="${item.id}">پرداخت شد</button>`}
+        <button type="button" class="installment-icon-btn installment-edit-btn" data-id="${item.id}">${iconSpanHTML("pencil", "width:14px;height:14px")}</button>
+        <button type="button" class="installment-icon-btn installment-delete-btn" data-id="${item.id}">${iconSpanHTML("trash-2", "width:14px;height:14px")}</button>
+      </div>
+    </div>`;
+}
+
+function renderInstallments() {
+  const wrap = document.getElementById("installmentList");
+  if (!wrap) return;
+  const t = todayJalali();
+  let paidTotal = 0, remainingTotal = 0;
+  const enriched = state.installments.map((item) => {
+    const status = computeInstallmentStatus(item, t);
+    if (status.isPaidNow) paidTotal += item.amount;
+    else if (status.countsThisMonth) remainingTotal += item.amount;
+    return { item, status };
+  });
+  document.getElementById("installmentsPaidTotal").textContent = fmtAmount(paidTotal) + " تومان";
+  document.getElementById("installmentsRemainingTotal").textContent = fmtAmount(remainingTotal) + " تومان";
+  if (!enriched.length) {
+    wrap.innerHTML = `<p class="empty-hint">هنوز قسطی ثبت نشده</p>`;
+    return;
+  }
+  enriched.sort((a, b) => {
+    if (a.status.isPaidNow !== b.status.isPaidNow) return a.status.isPaidNow ? 1 : -1;
+    return (a.status.dueDateISO || "").localeCompare(b.status.dueDateISO || "");
+  });
+  wrap.innerHTML = enriched.map(({ item, status }) => installmentRowHTML(item, status)).join("");
+}
+
+function setInstallmentType(type) {
+  document.getElementById("installmentTypeToggle").querySelectorAll(".date-quick-btn").forEach((b) => b.classList.toggle("selected", b.dataset.value === type));
+  document.getElementById("installmentMonthlyField").style.display = type === "monthly" ? "" : "none";
+  document.getElementById("installmentOnceField").style.display = type === "once" ? "" : "none";
+}
+
+function openInstallmentForm(editId = null) {
+  editingInstallmentId = editId;
+  const form = document.getElementById("installmentForm");
+  const titleEl = document.getElementById("installmentFormTitle");
+  form.style.display = "";
+  document.getElementById("btnAddInstallment").style.display = "none";
+  if (editId) {
+    const item = state.installments.find((i) => i.id === editId);
+    if (!item) return;
+    titleEl.textContent = "ویرایش قسط";
+    document.getElementById("installmentTitle").value = item.title;
+    document.getElementById("installmentAmount").value = item.amount.toLocaleString("en-US");
+    setInstallmentType(item.type);
+    if (item.type === "monthly") {
+      document.getElementById("installmentDueDay").value = item.dueDay;
+      populateDateSelects("installmentDate", todayJalali().jy, todayJalali().jm, todayJalali().jd);
+    } else {
+      const [gy, gm, gd] = item.dueDate.split("-").map(Number);
+      const j = toJalaali(gy, gm, gd);
+      populateDateSelects("installmentDate", j.jy, j.jm, j.jd);
+    }
+    document.getElementById("installmentTotalCount").value = item.totalCount || "";
+    document.getElementById("installmentPaidCount").value = item.paidCount || 0;
+  } else {
+    titleEl.textContent = "قسط جدید";
+    form.reset();
+    setInstallmentType("monthly");
+    populateDateSelects("installmentDate", todayJalali().jy, todayJalali().jm, todayJalali().jd);
+    document.getElementById("installmentPaidCount").value = 0;
+  }
+  form.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function closeInstallmentForm() {
+  editingInstallmentId = null;
+  document.getElementById("installmentForm").style.display = "none";
+  document.getElementById("btnAddInstallment").style.display = "";
+}
+
+function markInstallmentPaid(id) {
+  const item = state.installments.find((i) => i.id === id);
+  if (!item) return;
+  const t = todayJalali();
+  if (item.type === "monthly") {
+    const key = jalaliMonthKey(t.jy, t.jm);
+    if (item.lastPaidMonth === key) return;
+    item.lastPaidMonth = key;
+  } else {
+    if (item.paid) return;
+    item.paid = true;
+  }
+  item.paidCount = (item.paidCount || 0) + 1;
+  playTransactionFeedback();
+  saveState();
+}
+
+function unmarkInstallmentPaid(id) {
+  const item = state.installments.find((i) => i.id === id);
+  if (!item) return;
+  if (item.type === "monthly") item.lastPaidMonth = null;
+  else item.paid = false;
+  item.paidCount = Math.max(0, (item.paidCount || 0) - 1);
+  saveState();
+}
+
+document.getElementById("btnAddInstallment").addEventListener("click", () => openInstallmentForm());
+document.getElementById("installmentCancelBtn").addEventListener("click", closeInstallmentForm);
+document.getElementById("installmentTypeToggle").querySelectorAll(".date-quick-btn").forEach((btn) => {
+  btn.addEventListener("click", () => setInstallmentType(btn.dataset.value));
+});
+
+document.getElementById("installmentForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const title = document.getElementById("installmentTitle").value.trim();
+  const amount = getAmountValue(document.getElementById("installmentAmount"));
+  const type = document.getElementById("installmentTypeToggle").querySelector(".selected").dataset.value;
+  if (!title || !amount) return;
+  const data = { title, amount, type };
+  if (type === "monthly") {
+    data.dueDay = Math.min(31, Math.max(1, Number(document.getElementById("installmentDueDay").value) || 1));
+  } else {
+    data.dueDate = getISOFromDatePicker("installmentDate");
+  }
+  const totalCountVal = document.getElementById("installmentTotalCount").value;
+  data.totalCount = totalCountVal ? Number(totalCountVal) : null;
+  const paidCountVal = document.getElementById("installmentPaidCount").value;
+  data.paidCount = paidCountVal ? Number(paidCountVal) : 0;
+
+  if (editingInstallmentId) {
+    const item = state.installments.find((i) => i.id === editingInstallmentId);
+    if (item) Object.assign(item, data);
+  } else {
+    state.installments.push({ id: uid(), createdAt: Date.now(), lastPaidMonth: null, paid: false, ...data });
+  }
+  closeInstallmentForm();
+  saveState();
+});
+
+document.getElementById("installmentList").addEventListener("click", (e) => {
+  const payBtn = e.target.closest(".installment-pay-btn");
+  const undoBtn = e.target.closest(".installment-undo-btn");
+  const editBtn = e.target.closest(".installment-edit-btn");
+  const delBtn = e.target.closest(".installment-delete-btn");
+  if (payBtn) markInstallmentPaid(payBtn.dataset.id);
+  else if (undoBtn) unmarkInstallmentPaid(undoBtn.dataset.id);
+  else if (editBtn) openInstallmentForm(editBtn.dataset.id);
+  else if (delBtn) {
+    if (confirm("این قسط حذف بشه؟")) {
+      state.installments = state.installments.filter((i) => i.id !== delBtn.dataset.id);
+      saveState();
+    }
   }
 });
 

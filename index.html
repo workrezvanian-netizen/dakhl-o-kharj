@@ -267,6 +267,76 @@
     </div>
   </section>
 
+  <!-- INSTALLMENTS -->
+  <section id="tab-installments" class="tab">
+    <div class="settings-card" style="margin-bottom:14px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <h2 style="margin:0;">یادآور اقساط</h2>
+        <button type="button" id="btnAddInstallment" class="btn btn-neutral" style="padding:8px 14px;font-size:12.5px;">افزودن قسط</button>
+      </div>
+      <div class="scale-top-row" style="margin-bottom:0;">
+        <div class="scale-stat">
+          <span class="scale-stat-badge income-badge">
+            <span class="icon-mask" data-icon="check" style="width:15px;height:15px;color:#fff"></span>
+          </span>
+          <div class="scale-stat-text">
+            <span class="scale-stat-label">پرداخت‌شده این ماه</span>
+            <strong id="installmentsPaidTotal" class="scale-stat-value">۰</strong>
+          </div>
+        </div>
+        <div class="scale-stat reverse">
+          <div class="scale-stat-text align-left">
+            <span class="scale-stat-label">باقی‌مانده این ماه</span>
+            <strong id="installmentsRemainingTotal" class="scale-stat-value">۰</strong>
+          </div>
+          <span class="scale-stat-badge expense-badge">
+            <span class="icon-mask" data-icon="clock" style="width:15px;height:15px;color:#fff"></span>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <form id="installmentForm" class="entry-form" style="display:none; margin-bottom:14px;">
+      <h2 id="installmentFormTitle">قسط جدید</h2>
+      <label>عنوان
+        <input type="text" id="installmentTitle" placeholder="مثلاً وام بانک، قسط گوشی" required>
+      </label>
+      <label>مبلغ هر قسط (تومان)
+        <input type="text" id="installmentAmount" inputmode="numeric" placeholder="مثلاً 1,500,000" required>
+      </label>
+      <label>نوع قسط</label>
+      <div class="date-quick-picker" id="installmentTypeToggle">
+        <button type="button" class="date-quick-btn selected" data-value="monthly">ماهانه (تکرارشونده)</button>
+        <button type="button" class="date-quick-btn" data-value="once">یک‌باره</button>
+      </div>
+      <div id="installmentMonthlyField">
+        <label>روز سررسید در هر ماه
+          <input type="number" id="installmentDueDay" min="1" max="31" placeholder="مثلاً 15">
+        </label>
+      </div>
+      <div id="installmentOnceField" style="display:none;">
+        <label>تاریخ سررسید</label>
+        <div class="jalali-date-picker">
+          <select id="installmentDateDay"></select>
+          <select id="installmentDateMonth"></select>
+          <select id="installmentDateYear"></select>
+        </div>
+      </div>
+      <label>تعداد کل اقساط (اختیاری)
+        <input type="number" id="installmentTotalCount" min="1" placeholder="مثلاً 12">
+      </label>
+      <label>شماره‌ی آخرین قسط پرداخت‌شده (اختیاری)
+        <input type="number" id="installmentPaidCount" min="0" placeholder="۰">
+      </label>
+      <div style="display:flex; gap:8px;">
+        <button type="submit" class="btn btn-neutral" style="flex:1;">ذخیره</button>
+        <button type="button" id="installmentCancelBtn" class="btn btn-ghost" style="flex:1;">انصراف</button>
+      </div>
+    </form>
+
+    <div id="installmentList" class="entry-list"></div>
+  </section>
+
   <!-- SETTINGS -->
   <section id="tab-settings" class="tab">
 
@@ -373,7 +443,7 @@
       </div>
     </details>
 
-    <p class="app-version">نسخه‌ی ۱.۱۹</p>
+    <p class="app-version">نسخه‌ی ۱.۲۰</p>
 
   </section>
 
@@ -382,19 +452,27 @@
 </div>
 
 <nav class="bottom-nav">
-  <button class="nav-btn active" data-tab="dashboard">
-    <svg viewBox="0 0 24 24"><path d="M3 13h4v8H3zM10 8h4v13h-4zM17 3h4v18h-4z"/></svg>
-    <span>داشبورد</span>
+  <button class="nav-btn" data-tab="settings">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.2 4.2l2.9 2.9M16.9 16.9l2.9 2.9M1 12h4M19 12h4M4.2 19.8l2.9-2.9M16.9 7.1l2.9-2.9"/></svg>
+    <span>تنظیمات</span>
   </button>
   <button class="nav-btn" data-tab="entry">
     <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>
     <span>ثبت تراکنش</span>
   </button>
+  <div class="nav-btn-spacer" aria-hidden="true"></div>
   <button class="nav-btn" data-tab="analysis">
     <svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7"/><path d="M2 20h20"/></svg>
     <span>آنالیز</span>
   </button>
+  <button class="nav-btn" data-tab="installments">
+    <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/><path d="M9 14l2 2 4-4"/></svg>
+    <span>یادآور اقساط</span>
+  </button>
 </nav>
+<button type="button" class="nav-btn nav-btn-center-float active" data-tab="dashboard" aria-label="داشبورد">
+  <svg viewBox="0 0 24 24"><path d="M3 13h4v8H3zM10 8h4v13h-4zM17 3h4v18h-4z"/></svg>
+</button>
 
 <input type="checkbox" id="hapticProxy" tabindex="-1" aria-hidden="true" style="position:fixed;top:-100px;left:-100px;width:1px;height:1px;opacity:0;pointer-events:none;">
 <script src="script.js"></script>
