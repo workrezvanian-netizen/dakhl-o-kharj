@@ -1511,3 +1511,315 @@ input:checked + .toggle-slider:before {
 .ai-card-button:active {
   opacity: 0.8;
 }
+
+/* =========================================================================
+   تب «اقساط» — پورت‌شده از اپِ «یادآور اقساط»
+   همه‌ی سلکتورها زیر #tab-installments اسکوپ شدن و متغیرهای رنگی با پیشوند
+   --inst- تعریف شدن تا هیچ تداخلی با پالت/کلاس‌های اصلیِ «دخل و خرج» نداشته باشه.
+   ========================================================================= */
+#tab-installments {
+  --inst-cream: #F5EFE3;
+  --inst-cream-2: #ECE2CC;
+  --inst-paper-line: #DDD0AE;
+  --inst-navy: #1B2A4A;
+  --inst-navy-2: #24365C;
+  --inst-navy-ink: #14213A;
+  --inst-brass: #B08D57;
+  --inst-brass-light: #D9C39B;
+  --inst-red: #B5453D;
+  --inst-red-bg: #F5E2DF;
+  --inst-green: #3F7A5A;
+  --inst-ink-soft: #6B6552;
+  --inst-shadow: 0 10px 30px rgba(20, 33, 58, 0.16);
+  --inst-radius-lg: 22px;
+  --inst-radius-md: 14px;
+}
+
+#tab-installments .inst-tab-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px 4px;
+}
+#tab-installments .inst-tab-head h2 {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 800;
+  color: var(--inst-navy);
+}
+#tab-installments .settings-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 9px;
+  background: var(--inst-cream-2);
+  font-size: 15px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+#tab-installments .settings-btn:active { background: var(--inst-paper-line); }
+
+/* ---------------------------- خلاصه ماه ---------------------------- */
+
+#tab-installments .summary-card {
+  background: var(--inst-cream);
+  border: 1px solid var(--inst-paper-line);
+  border-radius: var(--inst-radius-lg);
+  box-shadow: var(--inst-shadow);
+  margin: 10px 20px 8px;
+  padding: 18px 22px;
+}
+#tab-installments .summary-label { font-size: 13px; color: var(--inst-ink-soft); margin-bottom: 6px; font-weight: 500; }
+#tab-installments #summaryMonth { font-size: 17px; font-weight: 800; color: var(--inst-navy); }
+#tab-installments .summary-amount { font-size: 28px; font-weight: 800; color: var(--inst-navy); }
+#tab-installments .summary-amount .unit { font-size: 14px; font-weight: 500; color: var(--inst-ink-soft); }
+#tab-installments .summary-split { display: flex; align-items: center; margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--inst-paper-line); }
+#tab-installments .summary-split-item { flex: 1; display: flex; flex-direction: column; gap: 3px; }
+#tab-installments .summary-split-divider { width: 1px; align-self: stretch; background: var(--inst-paper-line); margin: 0 14px; }
+#tab-installments .summary-split-item .split-label { font-size: 12px; color: var(--inst-ink-soft); font-weight: 500; }
+#tab-installments .summary-split-item .split-value { font-size: 15px; font-weight: 700; }
+#tab-installments .summary-split-item.is-paid .split-value { color: var(--inst-green); }
+#tab-installments .summary-split-item.is-remaining .split-value { color: var(--inst-red); }
+
+#tab-installments .test-push-link {
+  display: block;
+  width: 100%;
+  margin: 6px 0 0;
+  background: var(--inst-cream-2);
+  border: 1px solid var(--inst-paper-line);
+  border-radius: 12px;
+  color: var(--inst-navy-ink);
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 11px;
+  text-align: center;
+}
+#tab-installments .test-push-link:active { background: var(--inst-paper-line); }
+
+/* ---------------------------- لیست/دفتر ---------------------------- */
+
+#tab-installments .ledger { padding: 6px 20px 4px; display: flex; flex-direction: column; gap: 12px; }
+
+#tab-installments .row {
+  background: var(--inst-cream);
+  border: 1px solid var(--inst-paper-line);
+  border-radius: var(--inst-radius-md);
+  padding: 14px 16px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+#tab-installments .row::before {
+  content: "";
+  position: absolute;
+  top: 10px;
+  bottom: 10px;
+  right: 0;
+  width: 3px;
+  border-radius: 3px;
+  background: var(--inst-brass-light);
+}
+#tab-installments .row.is-overdue::before { background: var(--inst-red); }
+#tab-installments .row.is-paid::before { background: var(--inst-green); }
+#tab-installments .row.is-paid { opacity: 0.55; }
+
+#tab-installments .row-main { flex: 1; min-width: 0; }
+#tab-installments .row-title {
+  font-weight: 700;
+  font-size: 15.5px;
+  color: var(--inst-navy-ink);
+  margin-bottom: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#tab-installments .row-meta { font-size: 12.5px; color: var(--inst-ink-soft); display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+#tab-installments .row-day { font-size: 15px; font-weight: 700; color: var(--inst-navy); }
+#tab-installments .row-amount { font-weight: 700; font-size: 14px; color: var(--inst-navy); white-space: nowrap; }
+#tab-installments .row-paid-count { font-size: 12px; font-weight: 600; color: var(--inst-green); margin: 2px 0 4px; }
+
+#tab-installments .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+#tab-installments .badge-due { background: var(--inst-cream-2); color: var(--inst-ink-soft); }
+#tab-installments .badge-overdue { background: var(--inst-red-bg); color: var(--inst-red); }
+#tab-installments .badge-today { background: #FBEBD8; color: #A3641C; }
+
+#tab-installments .row-actions { display: flex; flex-direction: column; gap: 6px; align-items: stretch; }
+#tab-installments .icon-btn {
+  border: none;
+  background: var(--inst-cream-2);
+  color: var(--inst-navy);
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+#tab-installments .icon-btn.pay { color: var(--inst-green); }
+#tab-installments .icon-btn.edit { color: var(--inst-brass); font-size: 13px; }
+#tab-installments .icon-btn.del { color: var(--inst-red); }
+#tab-installments .icon-btn:active { transform: scale(0.94); }
+
+#tab-installments .stamp {
+  position: absolute;
+  top: -10px;
+  left: 10px;
+  transform: rotate(-9deg);
+  border: 2px solid var(--inst-green);
+  color: var(--inst-green);
+  border-radius: 999px;
+  padding: 3px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  background: rgba(63, 122, 90, 0.06);
+  letter-spacing: 0.03em;
+}
+
+/* ---------------------------- حالت خالی ---------------------------- */
+
+#tab-installments .empty-state { text-align: center; padding: 40px 20px; color: var(--inst-ink-soft); }
+#tab-installments .empty-icon { font-size: 40px; margin-bottom: 10px; }
+#tab-installments .empty-sub { font-size: 13px; opacity: 0.8; }
+
+/* ---------------------------- دکمه‌ی شناور ---------------------------- */
+/* از مرکزِ پایین (که دکمه‌ی شناورِ داشبورد اونجاست) فاصله می‌گیره تا روش قرار نگیره */
+
+#tab-installments .fab {
+  position: fixed;
+  bottom: calc(86px + env(safe-area-inset-bottom));
+  right: 18px;
+  left: auto;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--inst-navy);
+  color: var(--inst-brass-light);
+  font-size: 26px;
+  border: none;
+  box-shadow: 0 12px 24px rgba(27, 42, 74, 0.35);
+  cursor: pointer;
+  z-index: 21;
+  line-height: 1;
+}
+#tab-installments .fab:active { transform: scale(0.95); }
+
+/* ---------------------------- شیت افزودن/تنظیمات ---------------------------- */
+
+#tab-installments .sheet-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 33, 58, 0.45);
+  display: flex;
+  align-items: flex-end;
+  z-index: 50;
+}
+#tab-installments .sheet-overlay[hidden] { display: none; }
+
+#tab-installments .sheet {
+  background: var(--inst-cream);
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  border-radius: 24px 24px 0 0;
+  padding: 10px 22px calc(24px + env(safe-area-inset-bottom));
+  max-height: 88vh;
+  overflow-y: auto;
+  animation: inst-sheet-up 0.22s ease-out;
+}
+@keyframes inst-sheet-up {
+  from { transform: translateY(30px); opacity: 0.4; }
+  to { transform: translateY(0); opacity: 1; }
+}
+#tab-installments .sheet-handle { width: 40px; height: 4px; background: var(--inst-paper-line); border-radius: 2px; margin: 8px auto 14px; }
+#tab-installments .sheet h2 { font-size: 19px; font-weight: 800; color: var(--inst-navy); margin: 0 0 16px; }
+
+#tab-installments .settings-section {
+  border: 1px solid var(--inst-paper-line);
+  border-radius: var(--inst-radius-md);
+  padding: 14px;
+  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+#tab-installments .settings-subtitle { font-size: 13px; font-weight: 700; color: var(--inst-navy); margin-bottom: 4px; }
+
+#tab-installments .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; font-size: 13px; color: var(--inst-ink-soft); font-weight: 500; }
+#tab-installments .field input {
+  font-family: inherit;
+  font-size: 15px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--inst-paper-line);
+  background: #fff;
+  color: var(--inst-navy-ink);
+  direction: ltr;
+  text-align: right;
+}
+#tab-installments .field input:focus { outline: 2px solid var(--inst-brass); outline-offset: 1px; }
+#tab-installments .field-checkbox { flex-direction: row-reverse; align-items: center; justify-content: flex-end; gap: 10px; }
+#tab-installments .field-checkbox input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--inst-navy); flex-shrink: 0; }
+#tab-installments .field-checkbox span { font-size: 13.5px; }
+
+#tab-installments .segmented { display: flex; border: 1px solid var(--inst-paper-line); border-radius: 12px; overflow: hidden; }
+#tab-installments .seg-btn {
+  flex: 1;
+  border: none;
+  background: #fff;
+  color: var(--inst-ink-soft);
+  padding: 10px 8px;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+#tab-installments .seg-btn.active { background: var(--inst-navy); color: var(--inst-cream); }
+
+#tab-installments .field-error { color: var(--inst-red); font-size: 12.5px; margin: -6px 0 12px; }
+#tab-installments .sheet-actions { display: flex; gap: 10px; margin-top: 6px; }
+
+#tab-installments .inst-btn {
+  flex: 1;
+  padding: 13px;
+  border-radius: 12px;
+  border: none;
+  font-family: inherit;
+  font-size: 14.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+#tab-installments .inst-btn-primary { background: var(--inst-navy); color: var(--inst-cream); }
+#tab-installments .inst-btn-primary:active { background: var(--inst-navy-2); }
+#tab-installments .inst-btn-ghost { background: var(--inst-cream-2); color: var(--inst-ink-soft); }
+
+/* ---------------------------- توست ---------------------------- */
+
+#tab-installments .toast {
+  position: fixed;
+  bottom: calc(96px + env(safe-area-inset-bottom));
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--inst-navy-ink);
+  color: var(--inst-cream);
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-size: 13px;
+  z-index: 60;
+  box-shadow: var(--inst-shadow);
+  animation: inst-toast-in 0.18s ease-out;
+}
+@keyframes inst-toast-in {
+  from { opacity: 0; transform: translate(-50%, 8px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #tab-installments .sheet, #tab-installments .toast { animation: none; }
+}

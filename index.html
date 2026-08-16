@@ -267,74 +267,125 @@
     </div>
   </section>
 
-  <!-- INSTALLMENTS -->
+  <!-- INSTALLMENTS (پورت‌شده از یادآور اقساط) -->
   <section id="tab-installments" class="tab">
-    <div class="settings-card" style="margin-bottom:14px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-        <h2 style="margin:0;">اقساط</h2>
-        <button type="button" id="btnAddInstallment" class="btn btn-neutral" style="padding:8px 14px;font-size:12.5px;">افزودن قسط</button>
+    <div class="inst-app">
+      <div class="inst-tab-head">
+        <h2>اقساط</h2>
+        <button type="button" id="settingsBtn" class="settings-btn" aria-label="تنظیمات">⚙️</button>
       </div>
-      <div class="scale-top-row" style="margin-bottom:0;">
-        <div class="scale-stat">
-          <span class="scale-stat-badge income-badge">
-            <span class="icon-mask" data-icon="check" style="width:15px;height:15px;color:#fff"></span>
-          </span>
-          <div class="scale-stat-text">
-            <span class="scale-stat-label">پرداخت‌شده این ماه</span>
-            <strong id="installmentsPaidTotal" class="scale-stat-value">۰</strong>
+
+      <section class="summary-card" id="summaryCard">
+        <div class="summary-label">مجموع این ماه — <span id="summaryMonth">—</span></div>
+        <div class="summary-amount"><span id="summaryTotal">۰</span> <span class="unit">تومان</span></div>
+        <div class="summary-split">
+          <div class="summary-split-item is-paid">
+            <span class="split-label">پرداخت‌شده</span>
+            <span class="split-value"><span id="summaryPaid">۰</span> تومان</span>
+          </div>
+          <div class="summary-split-divider"></div>
+          <div class="summary-split-item is-remaining">
+            <span class="split-label">باقی‌مانده</span>
+            <span class="split-value"><span id="summaryRemaining">۰</span> تومان</span>
           </div>
         </div>
-        <div class="scale-stat reverse">
-          <div class="scale-stat-text align-left">
-            <span class="scale-stat-label">باقی‌مانده این ماه</span>
-            <strong id="installmentsRemainingTotal" class="scale-stat-value">۰</strong>
+      </section>
+
+      <main class="ledger" id="ledger"></main>
+
+      <div class="empty-state" id="emptyState" hidden>
+        <div class="empty-icon">📖</div>
+        <p>هنوز قسطی توی دفترچه ثبت نشده.</p>
+        <p class="empty-sub">با دکمه‌ی + یه قسط جدید اضافه کن.</p>
+      </div>
+    </div>
+
+    <button id="fab" class="fab" aria-label="افزودن قسط">+</button>
+
+    <!-- شیت افزودن/ویرایش قسط -->
+    <div id="sheetOverlay" class="sheet-overlay" hidden>
+      <div class="sheet" role="dialog" aria-labelledby="sheetTitle">
+        <div class="sheet-handle"></div>
+        <h2 id="sheetTitle">قسط جدید</h2>
+
+        <form id="addForm">
+          <label class="field">
+            <span>عنوان</span>
+            <input type="text" id="fTitle" placeholder="مثلا: قسط وام بانک" required maxlength="60">
+          </label>
+
+          <label class="field">
+            <span>مبلغ (تومان)</span>
+            <input type="text" id="fAmount" placeholder="2,500,000" inputmode="numeric" required>
+          </label>
+
+          <div class="field">
+            <span>نوع قسط</span>
+            <div class="segmented" id="typeSegment">
+              <button type="button" class="seg-btn active" data-type="monthly">🔁 ماهانه</button>
+              <button type="button" class="seg-btn" data-type="once">📆 یک‌باره</button>
+            </div>
           </div>
-          <span class="scale-stat-badge expense-badge">
-            <span class="icon-mask" data-icon="clock" style="width:15px;height:15px;color:#fff"></span>
-          </span>
+
+          <label class="field" id="monthlyField">
+            <span>چندم هر ماه شمسی سررسیده؟ (۱ تا ۲۹)</span>
+            <input type="number" id="fDueDay" min="1" max="29" placeholder="15" required>
+          </label>
+
+          <label class="field" id="onceField" hidden>
+            <span>تاریخ سررسید (شمسی — YYYY-MM-DD)</span>
+            <input type="text" id="fDueDate" placeholder="1405-05-24" pattern="[0-9]{4}-[0-9]{1,2}-[0-9]{1,2}">
+          </label>
+
+          <label class="field field-checkbox">
+            <input type="checkbox" id="fCustomCount">
+            <span>شماره‌ی قسط رو دستی تنظیم کنم (پیش‌فرض: از قسط اول شروع می‌شه)</span>
+          </label>
+
+          <label class="field" id="paidCountField" hidden>
+            <span>این قسط از کجا شروع بشه؟ (مثلاً اگه می‌خوای بعدی «قسط پنجم» باشه، بنویس 4)</span>
+            <input type="number" id="fPaidCount" placeholder="0" inputmode="numeric" min="0">
+          </label>
+
+          <label class="field field-checkbox">
+            <input type="checkbox" id="fCustomHour">
+            <span>ساعت یادآوری رو دستی تنظیم کنم (پیش‌فرض: ۹ صبح)</span>
+          </label>
+
+          <label class="field" id="reminderHourField" hidden>
+            <span>یادآوری ساعت چند ارسال بشه؟ (۰ تا ۲۳، به‌وقت ایران)</span>
+            <input type="number" id="fReminderHour" placeholder="9" inputmode="numeric" min="0" max="23">
+          </label>
+
+          <p class="field-error" id="formError" hidden></p>
+
+          <div class="sheet-actions">
+            <button type="button" class="inst-btn inst-btn-ghost" id="cancelBtn">انصراف</button>
+            <button type="submit" class="inst-btn inst-btn-primary" id="submitBtn">ثبت قسط</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- شیت تنظیمات -->
+    <div id="settingsOverlay" class="sheet-overlay" hidden>
+      <div class="sheet" role="dialog" aria-labelledby="settingsTitle">
+        <div class="sheet-handle"></div>
+        <h2 id="settingsTitle">تنظیمات یادآوری اقساط</h2>
+
+        <div class="settings-section">
+          <span class="settings-subtitle">نوتیفیکیشن</span>
+          <button id="testPushBtn" type="button" class="test-push-link">🔔 تست یادآوری</button>
+          <button id="reactivatePushBtn" type="button" class="test-push-link">🔄 فعال‌سازی مجدد نوتیفیکیشن</button>
+        </div>
+
+        <div class="sheet-actions">
+          <button type="button" class="inst-btn inst-btn-ghost" id="settingsCloseBtn">بستن</button>
         </div>
       </div>
     </div>
 
-    <form id="installmentForm" class="entry-form" style="display:none; margin-bottom:14px;">
-      <h2 id="installmentFormTitle">قسط جدید</h2>
-      <label>عنوان
-        <input type="text" id="installmentTitle" placeholder="مثلاً وام بانک، قسط گوشی" required>
-      </label>
-      <label>مبلغ هر قسط (تومان)
-        <input type="text" id="installmentAmount" inputmode="numeric" placeholder="مثلاً 1,500,000" required>
-      </label>
-      <label>نوع قسط</label>
-      <div class="date-quick-picker" id="installmentTypeToggle">
-        <button type="button" class="date-quick-btn selected" data-value="monthly">ماهانه (تکرارشونده)</button>
-        <button type="button" class="date-quick-btn" data-value="once">یک‌باره</button>
-      </div>
-      <div id="installmentMonthlyField">
-        <label>روز سررسید در هر ماه
-          <input type="number" id="installmentDueDay" min="1" max="31" placeholder="مثلاً 15">
-        </label>
-      </div>
-      <div id="installmentOnceField" style="display:none;">
-        <label>تاریخ سررسید</label>
-        <div class="jalali-date-picker">
-          <select id="installmentDateDay"></select>
-          <select id="installmentDateMonth"></select>
-          <select id="installmentDateYear"></select>
-        </div>
-      </div>
-      <label>تعداد کل اقساط (اختیاری)
-        <input type="number" id="installmentTotalCount" min="1" placeholder="مثلاً 12">
-      </label>
-      <label>شماره‌ی آخرین قسط پرداخت‌شده (اختیاری)
-        <input type="number" id="installmentPaidCount" min="0" placeholder="۰">
-      </label>
-      <div style="display:flex; gap:8px;">
-        <button type="submit" class="btn btn-neutral" style="flex:1;">ذخیره</button>
-        <button type="button" id="installmentCancelBtn" class="btn btn-ghost" style="flex:1;">انصراف</button>
-      </div>
-    </form>
-
-    <div id="installmentList" class="entry-list"></div>
+    <div id="toast" class="toast" hidden></div>
   </section>
 
   <!-- SETTINGS -->
@@ -443,7 +494,7 @@
       </div>
     </details>
 
-    <p class="app-version">نسخه‌ی ۱.۲۱</p>
+    <p class="app-version">نسخه‌ی ۱.۲۲</p>
 
   </section>
 
@@ -491,5 +542,6 @@
 
 <input type="checkbox" id="hapticProxy" tabindex="-1" aria-hidden="true" style="position:fixed;top:-100px;left:-100px;width:1px;height:1px;opacity:0;pointer-events:none;">
 <script src="script.js"></script>
+<script src="installments.js"></script>
 </body>
 </html>
