@@ -271,7 +271,7 @@
   <section id="tab-installments" class="tab">
     <div class="settings-card" style="margin-bottom:14px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-        <h2 style="margin:0;">یادآور</h2>
+        <h2 style="margin:0;">اقساط</h2>
         <button type="button" id="btnAddInstallment" class="btn btn-neutral" style="padding:8px 14px;font-size:12.5px;">افزودن قسط</button>
       </div>
       <div class="scale-top-row" style="margin-bottom:0;">
@@ -443,7 +443,7 @@
       </div>
     </details>
 
-    <p class="app-version">نسخه‌ی ۱.۲۰</p>
+    <p class="app-version">نسخه‌ی ۱.۲۱</p>
 
   </section>
 
@@ -452,6 +452,21 @@
 </div>
 
 <nav class="bottom-nav">
+  <svg class="bottom-nav-wave" viewBox="0 0 380 70" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <defs>
+      <linearGradient id="navWaveGrad" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" style="stop-color:var(--green);stop-opacity:0"/>
+        <stop offset="20%" style="stop-color:var(--green);stop-opacity:0.55"/>
+        <stop offset="50%" style="stop-color:var(--gold);stop-opacity:0.6"/>
+        <stop offset="80%" style="stop-color:var(--green);stop-opacity:0.55"/>
+        <stop offset="100%" style="stop-color:var(--green);stop-opacity:0"/>
+      </linearGradient>
+    </defs>
+    <path d="M0,20 C55,20 65,44 120,40 C165,37 175,10 190,8 C205,10 215,37 260,40 C315,44 325,20 380,20"
+      fill="none" stroke="url(#navWaveGrad)" stroke-width="2" stroke-linecap="round"/>
+    <path d="M0,30 C55,30 65,52 120,48 C165,45 175,20 190,18 C205,20 215,45 260,48 C315,52 325,30 380,30"
+      fill="none" stroke="url(#navWaveGrad)" stroke-width="1.3" stroke-linecap="round" opacity="0.55"/>
+  </svg>
   <button class="nav-btn" data-tab="settings">
     <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.2 4.2l2.9 2.9M16.9 16.9l2.9 2.9M1 12h4M19 12h4M4.2 19.8l2.9-2.9M16.9 7.1l2.9-2.9"/></svg>
     <span>تنظیمات</span>
@@ -467,7 +482,7 @@
   </button>
   <button class="nav-btn" data-tab="installments">
     <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/><path d="M9 14l2 2 4-4"/></svg>
-    <span>یادآور اقساط</span>
+    <span>اقساط</span>
   </button>
 </nav>
 <button type="button" class="nav-btn nav-btn-center-float active" data-tab="dashboard" aria-label="داشبورد">
