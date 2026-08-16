@@ -1307,17 +1307,19 @@ input:focus, select:focus {
   align-items: center;
   isolation: isolate;
   overflow: hidden;
-  background: linear-gradient(180deg, rgba(251,247,240,0.62) 0%, rgba(251,247,240,0.48) 55%, rgba(251,247,240,0.62) 100%);
-  backdrop-filter: blur(24px) saturate(1.4);
-  -webkit-backdrop-filter: blur(24px) saturate(1.4);
-  border: 1px solid rgba(255,255,255,0.4);
+  background: linear-gradient(180deg, rgba(251,247,240,0.72) 0%, rgba(227,241,239,0.5) 45%, rgba(251,247,240,0.7) 100%);
+  backdrop-filter: blur(30px) saturate(1.6);
+  -webkit-backdrop-filter: blur(30px) saturate(1.6);
+  border: 1px solid rgba(255,255,255,0.55);
   border-bottom: none;
-  border-radius: 26px 26px 0 0;
+  border-radius: 28px 28px 0 0;
   box-shadow:
-    0 10px 28px rgba(22,63,60,0.16),
-    0 1px 0 rgba(255,255,255,0.65) inset,
-    0 -1px 6px rgba(255,255,255,0.3) inset,
-    0 0 16px rgba(255,255,255,0.18) inset;
+    0 -1px 0 rgba(255,255,255,0.5) inset,
+    0 18px 40px rgba(16,70,43,0.22),
+    0 4px 10px rgba(16,70,43,0.14),
+    0 1px 0 rgba(255,255,255,0.7) inset,
+    0 -1px 8px rgba(255,255,255,0.35) inset,
+    0 0 20px rgba(255,255,255,0.22) inset;
   padding: 9px 8px calc(9px + env(safe-area-inset-bottom));
 }
 .bottom-nav::before {
@@ -1325,7 +1327,7 @@ input:focus, select:focus {
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: linear-gradient(115deg, rgba(255,255,255,0.65) 0%, rgba(255,255,255,0) 30%, rgba(255,255,255,0) 68%, rgba(255,255,255,0.4) 100%);
+  background: linear-gradient(120deg, rgba(255,255,255,0.75) 0%, rgba(255,255,255,0) 26%, rgba(255,255,255,0) 70%, rgba(255,255,255,0.45) 100%);
   mix-blend-mode: overlay;
   pointer-events: none;
   z-index: 0;
@@ -1337,7 +1339,7 @@ input:focus, select:focus {
   right: 8%;
   top: 1.5px;
   height: 1px;
-  background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.85) 50%, rgba(255,255,255,0) 100%);
+  background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.9) 50%, rgba(255,255,255,0) 100%);
   pointer-events: none;
   z-index: 0;
 }
@@ -1348,7 +1350,7 @@ input:focus, select:focus {
   height: 100%;
   pointer-events: none;
   z-index: 0;
-  opacity: 0.55;
+  opacity: 0.6;
 }
 .nav-btn {
   position: relative;
@@ -1388,33 +1390,36 @@ input:focus, select:focus {
   stroke-linecap: round;
   stroke-linejoin: round;
   transition: stroke .18s ease, transform .18s ease;
+  filter: drop-shadow(0 1px 1px rgba(22,63,60,0.12));
 }
-.nav-btn.active { color: var(--green-deep); background: rgba(255,255,255,0.5); box-shadow: 0 1px 3px rgba(255,255,255,0.85) inset; }
-.nav-btn.active svg { stroke: var(--green-deep); transform: translateY(-1px); }
+.nav-btn.active { color: var(--green-deep); background: rgba(255,255,255,0.55); box-shadow: 0 1px 3px rgba(255,255,255,0.9) inset, 0 4px 10px rgba(22,63,60,0.1); }
+.nav-btn.active svg { stroke: var(--green-deep); transform: translateY(-2px); }
 .nav-btn.active span { font-weight: 700; }
 
 .nav-btn-spacer { flex: 1; }
 
 .nav-btn-center-float {
   position: fixed;
-  bottom: calc(env(safe-area-inset-bottom) + 33px);
+  bottom: calc(env(safe-area-inset-bottom) + 34px);
   left: 50%;
   transform: translateX(-50%);
   z-index: 25;
-  width: 58px;
-  height: 58px;
+  width: 60px;
+  height: 60px;
   border-radius: 50%;
   border: none;
   background:
-    radial-gradient(circle at 32% 26%, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0) 34%),
-    linear-gradient(155deg, var(--green) 0%, var(--green-deep) 78%);
+    radial-gradient(circle at 30% 24%, rgba(255,255,255,0.65) 0%, rgba(255,255,255,0) 38%),
+    radial-gradient(circle at 74% 82%, rgba(0,0,0,0.12) 0%, rgba(0,0,0,0) 45%),
+    linear-gradient(155deg, var(--green) 0%, var(--green-deep) 82%);
   box-shadow:
-    0 14px 26px rgba(22,63,60,0.4),
-    0 3px 8px rgba(22,63,60,0.3),
-    0 0 0 5px rgba(251,247,240,0.65),
-    0 0 0 6px rgba(255,255,255,0.35),
-    inset 0 2px 3px rgba(255,255,255,0.5),
-    inset 0 -4px 8px rgba(0,0,0,0.18);
+    0 4px 8px rgba(22,63,60,0.22),
+    0 16px 30px rgba(22,63,60,0.4),
+    0 28px 46px rgba(22,63,60,0.16),
+    0 0 0 5px rgba(251,247,240,0.7),
+    0 0 0 6.5px rgba(255,255,255,0.4),
+    inset 0 3px 4px rgba(255,255,255,0.55),
+    inset 0 -5px 9px rgba(0,0,0,0.2);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1423,24 +1428,25 @@ input:focus, select:focus {
   transition: transform .15s cubic-bezier(.4,0,.2,1), box-shadow .2s ease;
 }
 .nav-btn-center-float svg {
-  width: 24px;
-  height: 24px;
+  width: 25px;
+  height: 25px;
   fill: none;
   stroke: #fff;
   stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
-  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.2));
+  filter: drop-shadow(0 1.5px 1.5px rgba(0,0,0,0.25));
 }
 .nav-btn-center-float:active { transform: translateX(-50%) scale(0.92); }
 .nav-btn-center-float.active {
   box-shadow:
-    0 14px 26px rgba(22,63,60,0.48),
-    0 3px 8px rgba(22,63,60,0.32),
-    0 0 0 5px rgba(251,247,240,0.65),
-    0 0 0 9px rgba(47,122,114,0.28),
-    inset 0 2px 3px rgba(255,255,255,0.55),
-    inset 0 -4px 8px rgba(0,0,0,0.18);
+    0 4px 8px rgba(22,63,60,0.26),
+    0 16px 30px rgba(22,63,60,0.46),
+    0 28px 46px rgba(22,63,60,0.2),
+    0 0 0 5px rgba(251,247,240,0.7),
+    0 0 0 10px rgba(47,122,114,0.3),
+    inset 0 3px 4px rgba(255,255,255,0.6),
+    inset 0 -5px 9px rgba(0,0,0,0.2);
 }
 
 @media (min-width: 560px) {
@@ -1522,26 +1528,26 @@ input:checked + .toggle-slider:before {
 }
 
 /* =========================================================================
-   تب «اقساط» — پورت‌شده از اپِ «یادآور اقساط»
-   همه‌ی سلکتورها زیر #tab-installments اسکوپ شدن و متغیرهای رنگی با پیشوند
-   --inst- تعریف شدن تا هیچ تداخلی با پالت/کلاس‌های اصلیِ «دخل و خرج» نداشته باشه.
+   تب «اقساط» — پورت‌شده از اپِ «یادآور اقساط»، رنگ‌بندی هماهنگ با پالت اصلیِ
+   «دخل و خرج» (سبز/طلایی/کِرِم) — قبلاً پالت مستقل نویی/برنزی داشت که با بقیه‌ی
+   اپ ناهماهنگ بود؛ ساختار سلکتورها/اسکوپ همون قبلیه، فقط رنگ‌ها یکی شدن.
    ========================================================================= */
 #tab-installments {
-  --inst-cream: #F5EFE3;
-  --inst-cream-2: #ECE2CC;
-  --inst-paper-line: #DDD0AE;
-  --inst-navy: #1B2A4A;
-  --inst-navy-2: #24365C;
-  --inst-navy-ink: #14213A;
-  --inst-brass: #B08D57;
-  --inst-brass-light: #D9C39B;
-  --inst-red: #B5453D;
-  --inst-red-bg: #F5E2DF;
-  --inst-green: #3F7A5A;
-  --inst-ink-soft: #6B6552;
-  --inst-shadow: 0 10px 30px rgba(20, 33, 58, 0.16);
-  --inst-radius-lg: 22px;
-  --inst-radius-md: 14px;
+  --inst-cream: var(--cream);
+  --inst-cream-2: var(--gold-soft);
+  --inst-paper-line: var(--border);
+  --inst-navy: var(--green-deep);
+  --inst-navy-2: var(--green);
+  --inst-navy-ink: var(--text);
+  --inst-brass: var(--gold);
+  --inst-brass-light: var(--gold-soft);
+  --inst-red: var(--expense);
+  --inst-red-bg: var(--expense-soft);
+  --inst-green: var(--green);
+  --inst-ink-soft: var(--text-mute);
+  --inst-shadow: 0 10px 26px rgba(16,70,43,0.14);
+  --inst-radius-lg: var(--radius-lg);
+  --inst-radius-md: var(--radius-md);
 }
 
 #tab-installments .inst-tab-head {
