@@ -663,27 +663,6 @@ sheetOverlay.addEventListener("click", (e) => {
   if (e.target === sheetOverlay) closeSheet();
 });
 
-// ---------------------------------------------------------------------
-// شیت تنظیمات
-// ---------------------------------------------------------------------
-
-const settingsOverlay = document.getElementById("settingsOverlay");
-
-function openSettingsSheet() {
-  settingsOverlay.hidden = false;
-}
-
-function closeSettingsSheet() {
-  settingsOverlay.hidden = true;
-}
-
-document.getElementById("settingsBtn").addEventListener("click", openSettingsSheet);
-document.getElementById("settingsCloseBtn").addEventListener("click", closeSettingsSheet);
-
-settingsOverlay.addEventListener("click", (e) => {
-  if (e.target === settingsOverlay) closeSettingsSheet();
-});
-
 function setType(type) {
   currentType = type;
   document.querySelectorAll(".seg-btn").forEach((b) => {

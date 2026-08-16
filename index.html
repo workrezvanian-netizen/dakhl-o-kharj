@@ -272,7 +272,7 @@
     <div class="inst-app">
       <div class="inst-tab-head">
         <h2>اقساط</h2>
-        <button type="button" id="settingsBtn" class="settings-btn" aria-label="تنظیمات">⚙️</button>
+        <span class="inst-tab-head-icon" aria-hidden="true">📖</span>
       </div>
 
       <section class="summary-card" id="summaryCard">
@@ -367,25 +367,6 @@
       </div>
     </div>
 
-    <!-- شیت تنظیمات -->
-    <div id="settingsOverlay" class="sheet-overlay" hidden>
-      <div class="sheet" role="dialog" aria-labelledby="settingsTitle">
-        <div class="sheet-handle"></div>
-        <h2 id="settingsTitle">تنظیمات یادآوری اقساط</h2>
-
-        <div class="settings-section">
-          <span class="settings-subtitle">نوتیفیکیشن</span>
-          <button id="testPushBtn" type="button" class="test-push-link">🔔 تست یادآوری</button>
-          <button id="reactivatePushBtn" type="button" class="test-push-link">🔄 فعال‌سازی مجدد نوتیفیکیشن</button>
-        </div>
-
-        <div class="sheet-actions">
-          <button type="button" class="inst-btn inst-btn-ghost" id="settingsCloseBtn">بستن</button>
-        </div>
-      </div>
-    </div>
-
-    <div id="toast" class="toast" hidden></div>
   </section>
 
   <!-- SETTINGS -->
@@ -487,6 +468,19 @@
     </details>
 
     <details class="settings-group">
+      <summary class="settings-group-title">یادآوری اقساط</summary>
+      <div class="settings-card">
+        <h2>نوتیفیکیشن یادآور اقساط</h2>
+        <p class="hint">
+          چند روز قبل از سررسید هر قسط، یه یادآوری پوش برات ارسال می‌شه. اگه یادآوری‌ها
+          فعال نمی‌شن یا قطع شدن، از این دکمه‌ها استفاده کن.
+        </p>
+        <button id="testPushBtn" type="button" class="btn btn-neutral full">🔔 تست یادآوری</button>
+        <button id="reactivatePushBtn" type="button" class="btn btn-ghost full" style="margin-top:8px;">🔄 فعال‌سازی مجدد نوتیفیکیشن</button>
+      </div>
+    </details>
+
+    <details class="settings-group">
       <summary class="settings-group-title danger">منطقه‌ی خطر</summary>
       <div class="settings-card danger-zone">
         <h2>پاک کردن اطلاعات</h2>
@@ -494,7 +488,7 @@
       </div>
     </details>
 
-    <p class="app-version">نسخه‌ی ۱.۲۲</p>
+    <p class="app-version">نسخه‌ی ۱.۲۳</p>
 
   </section>
 
@@ -524,7 +518,7 @@
   </button>
   <button class="nav-btn" data-tab="entry">
     <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>
-    <span>ثبت تراکنش</span>
+    <span>ثبت</span>
   </button>
   <div class="nav-btn-spacer" aria-hidden="true"></div>
   <button class="nav-btn" data-tab="analysis">
@@ -539,6 +533,8 @@
 <button type="button" class="nav-btn nav-btn-center-float active" data-tab="dashboard" aria-label="داشبورد">
   <svg viewBox="0 0 24 24"><path d="M3 13h4v8H3zM10 8h4v13h-4zM17 3h4v18h-4z"/></svg>
 </button>
+
+<div id="toast" class="toast" hidden></div>
 
 <input type="checkbox" id="hapticProxy" tabindex="-1" aria-hidden="true" style="position:fixed;top:-100px;left:-100px;width:1px;height:1px;opacity:0;pointer-events:none;">
 <script src="script.js"></script>
