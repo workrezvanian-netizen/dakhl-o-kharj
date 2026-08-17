@@ -1121,19 +1121,24 @@ function renderMonthCompareCard(containerId, period = "month") {
     const changePct = g.prevV > 0 ? Math.round(((g.curV - g.prevV) / g.prevV) * 100) : (g.curV > 0 ? 100 : 0);
     const isGood = g.prevV === 0 && g.curV === 0 ? null : (g.goodWhenDown ? !increased : increased);
 
-    // رنگ‌بندی مینیمال و یکدست (هماهنگ با پالت اصلی برنامه) به‌جای پالت پرتضاد قبلی
+    // رنگ ثابت هر متریک (بدون توجه به وضعیت خوب/بد): مخارج = قرمز/سبز، درآمد = آبی/زرد
     let colorA, colorB, prevColor;
-    colorA = "#2F7A72"; colorB = "#163F3C";
-    prevColor = "#D8BE6E";
+    if (g.key === "expense") {
+      colorA = "#FF375F"; colorB = "#E01346";
+      prevColor = "#57B928";
+    } else {
+      colorA = "#2E9BFF"; colorB = "#0A6FDB";
+      prevColor = "#FFD426";
+    }
 
     const outerPct = (g.curV / overallMax) * 100;
     const innerPct = (g.prevV / overallMax) * 100;
     return { ...g, outerPct, innerPct, changePct, colorA, colorB, prevColor };
   });
 
-  const cx = 78, cy = 78;
-  const rOuter = 62, swOuter = 16;
-  const rInner = 40, swInner = 13;
+  const cx = 70, cy = 70;
+  const rOuter = 56, swOuter = 17;
+  const rInner = 36, swInner = 14;
   const circOuter = 2 * Math.PI * rOuter;
   const circInner = 2 * Math.PI * rInner;
   const uid = Date.now();
@@ -1143,7 +1148,7 @@ function renderMonthCompareCard(containerId, period = "month") {
     const dashInner = (g.innerPct / 100) * circInner;
     return `
       <div class="compare-gauge">
-        <svg viewBox="0 0 156 156" class="compare-gauge-svg">
+        <svg viewBox="0 0 140 140" class="compare-gauge-svg">
           <defs>
             <linearGradient id="gaugeGrad-${uid}-${i}" x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stop-color="${g.colorA}"/>
