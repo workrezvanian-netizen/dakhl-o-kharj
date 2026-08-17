@@ -1136,9 +1136,9 @@ function renderMonthCompareCard(containerId, period = "month") {
     return { ...g, outerPct, innerPct, changePct, colorA, colorB, prevColor };
   });
 
-  const cx = 70, cy = 70;
-  const rOuter = 56, swOuter = 17;
-  const rInner = 36, swInner = 14;
+  const cx = 78, cy = 78;
+  const rOuter = 62, swOuter = 16;
+  const rInner = 40, swInner = 13;
   const circOuter = 2 * Math.PI * rOuter;
   const circInner = 2 * Math.PI * rInner;
   const uid = Date.now();
@@ -1148,7 +1148,7 @@ function renderMonthCompareCard(containerId, period = "month") {
     const dashInner = (g.innerPct / 100) * circInner;
     return `
       <div class="compare-gauge">
-        <svg viewBox="0 0 140 140" class="compare-gauge-svg">
+        <svg viewBox="0 0 156 156" class="compare-gauge-svg">
           <defs>
             <linearGradient id="gaugeGrad-${uid}-${i}" x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stop-color="${g.colorA}"/>
