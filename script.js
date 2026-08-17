@@ -201,6 +201,11 @@ function addMonthsJalali(jy, jm, delta) {
   const nm = (total % 12 + 12) % 12 + 1;
   return { jy: ny, jm: nm };
 }
+function calendarDayOfWeekIndex(jy, jm, jd) {
+  const g = toGregorian(jy, jm, jd);
+  const jsDay = new Date(g.gy, g.gm - 1, g.gd).getDay(); // 0=Sun..6=Sat
+  return (jsDay + 1) % 7; // 0=Sat..6=Fri, matches Persian week order
+}
 
 // =========================================================
 // Digit / number helpers
@@ -221,6 +226,24 @@ function fmtAmount(n) {
   const rounded = Math.round(Math.abs(n));
   const grouped = rounded.toLocaleString("en-US");
   return sign + toPersianDigits(grouped).replace(/,/g, "٬");
+}
+
+function fmtCompactEn(n) {
+  const sign = n > 0 ? "+" : (n < 0 ? "-" : "");
+  const abs = Math.abs(n);
+  let out;
+  if (abs >= 1000000) {
+    const v = abs / 1000000;
+    out = (Number.isInteger(v) ? v : Math.round(v * 10) / 10) + "M";
+  } else if (abs >= 1000) {
+    const v = abs / 1000;
+    out = (Number.isInteger(v) ? v : Math.round(v * 10) / 10) + "k";
+  } else if (abs > 0) {
+    out = String(Math.round(abs));
+  } else {
+    return "";
+  }
+  return sign + out;
 }
 
 // =========================================================
@@ -714,7 +737,7 @@ function deleteExpense(id) {
 }
 function deleteCategory(name) {
   const inUse = state.expenses.some((x) => x.category === name);
-  if (inUse && !confirm("این گروه برای چند خرج ثبت‌شده استفاده شده. حذف بشه؟ خرج‌ها گروه‌شون «سایر» می‌شه.")) return;
+  if (inUse && !confirm("این برچسب برای چند خرج ثبت‌شده استفاده شده. حذف بشه؟ خرج‌ها برچسب‌شون «سایر» می‌شه.")) return;
   state.categories = state.categories.filter((c) => c.name !== name);
   if (!state.categories.some((c) => c.name === "سایر")) state.categories.push({ name: "سایر", icon: "package" });
   state.expenses.forEach((x) => { if (x.category === name) x.category = "سایر"; });
@@ -730,6 +753,7 @@ function renderAll() {
   renderIncomeList();
   renderExpenseList();
   renderAnalysis();
+  renderCalendar();
 }
 
 function renderExpenseCategoryPicker() {
@@ -738,7 +762,7 @@ function renderExpenseCategoryPicker() {
     selectedExpenseCategoryName = state.categories[0] ? state.categories[0].name : null;
   }
   if (!state.categories.length) {
-    wrap.innerHTML = `<p class="empty-hint">اول یک گروه بساز (تب دسته‌ها)</p>`;
+    wrap.innerHTML = `<p class="empty-hint">اول یک برچسب بساز (تب برچسب‌ها)</p>`;
     return;
   }
   wrap.innerHTML = state.categories.map((c) => {
@@ -747,7 +771,7 @@ function renderExpenseCategoryPicker() {
     return `
     <button type="button" class="category-chip ${selected ? "selected" : ""}" data-name="${c.name}"
       style="${selected ? `background:${color}20;border-color:${color};color:${color}` : ""}">
-      ${iconSpanHTML(c.icon, `color:${color}`)}<span class="chip-name">${c.name}</span>
+      ${iconSpanHTML(c.icon, `color:${color}`)}<span class="chip-name">${iconSpanHTML("tag", "width:11px;height:11px;color:#E8791A;margin-left:4px;vertical-align:-1px;")}${c.name}</span>
     </button>
   `;
   }).join("");
@@ -803,14 +827,14 @@ renderCategoryColorPicker();
 function renderCategoryManageList() {
   const wrap = document.getElementById("categoryManageList");
   if (!state.categories.length) {
-    wrap.innerHTML = `<p class="empty-hint">هنوز گروهی نساختی</p>`;
+    wrap.innerHTML = `<p class="empty-hint">هنوز برچسبی نساختی</p>`;
     return;
   }
   wrap.innerHTML = state.categories.map((c) => `
     <div class="category-manage-row">
       <span class="cat-name">
         <span class="cat-color-dot" data-name="${c.name}" style="background:${catColor(c.name)}"></span>
-        ${iconSpanHTML(c.icon)}${c.name}
+        ${iconSpanHTML(c.icon)}${iconSpanHTML("tag", "width:11px;height:11px;color:#E8791A;margin-left:4px;vertical-align:-1px;")}${c.name}
       </span>
       <button class="entry-delete" onclick="deleteCategory('${c.name.replace(/'/g, "\\'")}')">حذف</button>
     </div>
@@ -863,7 +887,7 @@ function renderExpenseList() {
   }
   items = sortEntriesDesc(items);
   if (!items.length) {
-    wrap.innerHTML = `<p class="empty-hint">${expenseListFilter ? "خرجی در این گروه ثبت نشده" : (isViewingCurrentMonth() ? "هنوز خرجی ثبت نشده" : "خرجی در این ماه ثبت نشده")}</p>`;
+    wrap.innerHTML = `<p class="empty-hint">${expenseListFilter ? "خرجی با این برچسب ثبت نشده" : (isViewingCurrentMonth() ? "هنوز خرجی ثبت نشده" : "خرجی در این ماه ثبت نشده")}</p>`;
     return;
   }
   wrap.innerHTML = items.map((x) => entryRowHTML(x, "expense")).join("");
@@ -881,7 +905,7 @@ function entryRowHTML(x, type) {
       <div class="entry-row-main">
         <span class="entry-icon ${isIncome ? "income-icon" : "expense-icon"}" style="${isIncome ? "" : `background:${rowColor}`}">${iconSpanHTML(iconKey)}</span>
         <div>
-          <div class="entry-title">${title}</div>
+          <div class="entry-title">${isIncome ? "" : iconSpanHTML("tag", "width:11px;height:11px;color:#E8791A;margin-left:4px;vertical-align:-1px;")}${title}</div>
           <div class="entry-sub">${sub}</div>
         </div>
       </div>
@@ -920,7 +944,69 @@ function applyViewedMonthState() {
   renderIncomeList();
   renderExpenseList();
   renderAnalysis();
+  renderCalendar();
 }
+
+function renderCalendar() {
+  const grid = document.getElementById("calendarGrid");
+  const label = document.getElementById("calendarMonthLabel");
+  if (!grid || !label) return;
+  label.textContent = `${JALALI_MONTHS[viewedMonth.jm - 1]} ${toPersianDigits(viewedMonth.jy)}`;
+
+  const byDay = {};
+  const addTo = (jd, key, amt) => {
+    if (!byDay[jd]) byDay[jd] = { income: 0, expense: 0 };
+    byDay[jd][key] += amt;
+  };
+  state.incomes.forEach((x) => {
+    const [gy, gm, gd] = x.date.split("-").map(Number);
+    const j = toJalaali(gy, gm, gd);
+    if (j.jy === viewedMonth.jy && j.jm === viewedMonth.jm) addTo(j.jd, "income", x.amount);
+  });
+  state.expenses.forEach((x) => {
+    const [gy, gm, gd] = x.date.split("-").map(Number);
+    const j = toJalaali(gy, gm, gd);
+    if (j.jy === viewedMonth.jy && j.jm === viewedMonth.jm) addTo(j.jd, "expense", x.amount);
+  });
+
+  const daysInMonth = jalaaliMonthLength(viewedMonth.jy, viewedMonth.jm);
+  const firstDow = calendarDayOfWeekIndex(viewedMonth.jy, viewedMonth.jm, 1);
+  const today = todayJalali();
+
+  let html = "";
+  for (let i = 0; i < firstDow; i += 1) {
+    html += `<div class="cal-cell cal-cell-empty"></div>`;
+  }
+  for (let d = 1; d <= daysInMonth; d += 1) {
+    const rec = byDay[d];
+    const net = rec ? rec.income - rec.expense : 0;
+    const amtStr = fmtCompactEn(net);
+    const amtClass = net > 0 ? "cal-amt-pos" : (net < 0 ? "cal-amt-neg" : "");
+    const isToday = today.jy === viewedMonth.jy && today.jm === viewedMonth.jm && today.jd === d;
+    html += `
+      <button type="button" class="cal-cell ${isToday ? "cal-cell-today" : ""}" data-day="${d}">
+        <span class="cal-day-num">${toPersianDigits(d)}</span>
+        ${amtStr ? `<span class="cal-day-amt ${amtClass}">${amtStr}</span>` : ""}
+      </button>`;
+  }
+  grid.innerHTML = html;
+}
+
+document.getElementById("calPrevMonthBtn").addEventListener("click", () => {
+  dashboardMode = "month";
+  viewedMonth = addMonthsJalali(viewedMonth.jy, viewedMonth.jm, -1);
+  applyViewedMonthState();
+});
+document.getElementById("calNextMonthBtn").addEventListener("click", () => {
+  dashboardMode = "month";
+  viewedMonth = addMonthsJalali(viewedMonth.jy, viewedMonth.jm, 1);
+  applyViewedMonthState();
+});
+document.getElementById("calTodayBtn").addEventListener("click", () => {
+  dashboardMode = "month";
+  viewedMonth = todayJalali();
+  applyViewedMonthState();
+});
 
 document.getElementById("prevMonthBtn").addEventListener("click", () => {
   dashboardMode = "month";
@@ -979,12 +1065,14 @@ function renderDashboard() {
   const expensePct = total ? (totalExpense / total) * 100 : 50;
   document.getElementById("scaleIncomeBar").style.width = incomePct + "%";
   document.getElementById("scaleExpenseBar").style.width = expensePct + "%";
+  const flameEl = document.getElementById("scaleFlame");
+  if (flameEl) flameEl.style.left = expensePct + "%";
 
   const byCat = {};
   expenses.forEach((x) => { byCat[x.category] = (byCat[x.category] || 0) + x.amount; });
   const catWrap = document.getElementById("categoryBreakdown");
   if (!state.categories.length) {
-    catWrap.innerHTML = `<p class="empty-hint">اول یک گروه بساز (تب دسته‌ها)</p>`;
+    catWrap.innerHTML = `<p class="empty-hint">اول یک برچسب بساز (تب برچسب‌ها)</p>`;
   } else {
     catWrap.innerHTML = state.categories.map((c) => {
       const color = catColor(c.name);
@@ -992,7 +1080,7 @@ function renderDashboard() {
       return `
         <button type="button" class="quick-cat-card" style="background:${color}3D" onclick="quickAddExpense('${c.name.replace(/'/g, "\\'")}')">
           <span class="quick-cat-bubble" style="background:${color}">${iconSpanHTML(c.icon, "color:#fff")}</span>
-          <span class="quick-cat-name">${c.name}</span>
+          <span class="quick-cat-name">${iconSpanHTML("tag", "width:11px;height:11px;color:#E8791A;margin-left:4px;vertical-align:-1px;")}${c.name}</span>
           <span class="quick-cat-amount">${fmtAmount(amt)}</span>
         </button>`;
     }).join("");
@@ -1502,7 +1590,7 @@ document.getElementById("btnSyncNow").addEventListener("click", async () => {
 });
 
 document.getElementById("btnResetData").addEventListener("click", () => {
-  if (!confirm("همه درآمدها، مخارج و گروه‌های این دستگاه حذف بشه؟ این کار برگشت‌ناپذیره.")) return;
+  if (!confirm("همه درآمدها، مخارج و برچسب‌های این دستگاه حذف بشه؟ این کار برگشت‌ناپذیره.")) return;
   const keepCode = state.syncCode;
   state = { incomes: [], expenses: [], categories: DEFAULT_CATEGORIES.slice(), syncCode: keepCode, updatedAt: Date.now() };
   saveState();
