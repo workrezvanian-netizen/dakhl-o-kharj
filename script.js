@@ -771,7 +771,7 @@ function renderExpenseCategoryPicker() {
     return `
     <button type="button" class="category-chip ${selected ? "selected" : ""}" data-name="${c.name}"
       style="${selected ? `background:${color}20;border-color:${color};color:${color}` : ""}">
-      ${iconSpanHTML(c.icon, `color:${color}`)}<span class="chip-name">${iconSpanHTML("tag", "width:11px;height:11px;color:#E8791A;margin-left:4px;vertical-align:-1px;")}${c.name}</span>
+      ${iconSpanHTML(c.icon, `color:${color}`)}<span class="chip-name">${c.name}</span>
     </button>
   `;
   }).join("");
@@ -905,7 +905,7 @@ function entryRowHTML(x, type) {
       <div class="entry-row-main">
         <span class="entry-icon ${isIncome ? "income-icon" : "expense-icon"}" style="${isIncome ? "" : `background:${rowColor}`}">${iconSpanHTML(iconKey)}</span>
         <div>
-          <div class="entry-title">${isIncome ? "" : iconSpanHTML("tag", "width:11px;height:11px;color:#E8791A;margin-left:4px;vertical-align:-1px;")}${title}</div>
+          <div class="entry-title">${title}</div>
           <div class="entry-sub">${sub}</div>
         </div>
       </div>
@@ -983,8 +983,16 @@ function renderCalendar() {
     const amtStr = fmtCompactEn(net);
     const amtClass = net > 0 ? "cal-amt-pos" : (net < 0 ? "cal-amt-neg" : "");
     const isToday = today.jy === viewedMonth.jy && today.jm === viewedMonth.jm && today.jd === d;
+    let dayTypeClass = "";
+    if (rec) {
+      const hasIncome = rec.income > 0;
+      const hasExpense = rec.expense > 0;
+      if (hasIncome && hasExpense) dayTypeClass = "cal-cell-mixed";
+      else if (hasIncome) dayTypeClass = "cal-cell-income-only";
+      else if (hasExpense) dayTypeClass = "cal-cell-expense-only";
+    }
     html += `
-      <button type="button" class="cal-cell ${isToday ? "cal-cell-today" : ""}" data-day="${d}">
+      <button type="button" class="cal-cell ${dayTypeClass} ${isToday ? "cal-cell-today" : ""}" data-day="${d}">
         <span class="cal-day-num">${toPersianDigits(d)}</span>
         ${amtStr ? `<span class="cal-day-amt ${amtClass}">${amtStr}</span>` : ""}
       </button>`;
@@ -1065,8 +1073,10 @@ function renderDashboard() {
   const expensePct = total ? (totalExpense / total) * 100 : 50;
   document.getElementById("scaleIncomeBar").style.width = incomePct + "%";
   document.getElementById("scaleExpenseBar").style.width = expensePct + "%";
-  const flameEl = document.getElementById("scaleFlame");
+  const flameEl = document.getElementById("scaleMarker");
+  const pctEl = document.getElementById("scaleMarkerPct");
   if (flameEl) flameEl.style.left = expensePct + "%";
+  if (pctEl) pctEl.textContent = toPersianDigits(Math.round(incomePct)) + "٪ درآمد";
 
   const byCat = {};
   expenses.forEach((x) => { byCat[x.category] = (byCat[x.category] || 0) + x.amount; });
@@ -1080,7 +1090,7 @@ function renderDashboard() {
       return `
         <button type="button" class="quick-cat-card" style="background:${color}3D" onclick="quickAddExpense('${c.name.replace(/'/g, "\\'")}')">
           <span class="quick-cat-bubble" style="background:${color}">${iconSpanHTML(c.icon, "color:#fff")}</span>
-          <span class="quick-cat-name">${iconSpanHTML("tag", "width:11px;height:11px;color:#E8791A;margin-left:4px;vertical-align:-1px;")}${c.name}</span>
+          <span class="quick-cat-name">${c.name}</span>
           <span class="quick-cat-amount">${fmtAmount(amt)}</span>
         </button>`;
     }).join("");

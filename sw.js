@@ -1,4 +1,4 @@
-const CACHE_NAME = "dakhl-o-kharj-v38";
+const CACHE_NAME = "dakhl-o-kharj-v39";
 const APP_SHELL = [
   "./",
   "./index.html",

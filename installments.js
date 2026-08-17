@@ -851,6 +851,37 @@ document.getElementById("reactivatePushBtn").addEventListener("click", reactivat
 // شروع
 // ---------------------------------------------------------------------
 
+function seedTestInstallments() {
+  const SEED_FLAG = "installments_test_seed_v1";
+  if (localStorage.getItem(SEED_FLAG)) return;
+  const rows = loadRaw();
+  if (rows.length > 0) {
+    // اقساط واقعی از قبل هست، برای احتیاط داده‌ی تستی اضافه نمی‌کنیم
+    localStorage.setItem(SEED_FLAG, "1");
+    return;
+  }
+  const now = new Date();
+  const jToday = toJalaali(now.getFullYear(), now.getMonth() + 1, now.getDate());
+  const todayStr = `${jToday.jy}-${String(jToday.jm).padStart(2, "0")}-${String(jToday.jd).padStart(2, "0")}`;
+  const startHour = now.getHours() + 1; // اولین یادآوری از یک ساعت دیگه
+  for (let h = startHour; h <= 21; h += 1) {
+    try {
+      store.add({
+        title: `تست یادآوری ساعت ${String(h).padStart(2, "0")}:۰۰`,
+        amount: String(100000 * (h - startHour + 1)),
+        due_type: "once",
+        due_value: todayStr,
+        paid_count: 0,
+        reminder_hour: h,
+      });
+    } catch (e) {
+      /* نادیده گرفتن خطای احتمالی برای این ردیف تستی */
+    }
+  }
+  localStorage.setItem(SEED_FLAG, "1");
+}
+seedTestInstallments();
+
 refreshAll();
 setupNotifications();
 })();

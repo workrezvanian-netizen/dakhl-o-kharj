@@ -467,6 +467,9 @@ h2 {
   color: var(--text-mute);
 }
 
+.tag-label-icon { display: flex; align-items: center; }
+.tag-label-icon .icon-mask { flex-shrink: 0; }
+
 /* ---------- Icon system (masked SVG icons instead of emoji) ---------- */
 .icon-mask {
   display: inline-block;
@@ -1881,6 +1884,16 @@ input:checked + .toggle-slider:before {
 }
 .cal-cell-today .cal-day-num { color: var(--green-deep); font-weight: 800; }
 
+.cal-cell-income-only { background: #EAF6EE; border-color: #CDEAD6; }
+.cal-cell-expense-only { background: #FBEBE7; border-color: #F3D2C9; }
+.cal-cell-mixed { background: #FDF0E1; border-color: #F5DFB8; }
+.cal-cell-income-only.cal-cell-today,
+.cal-cell-expense-only.cal-cell-today,
+.cal-cell-mixed.cal-cell-today {
+  border-color: var(--green);
+  box-shadow: 0 0 0 2px rgba(47,122,114,0.18);
+}
+
 .cal-legend {
   display: flex;
   align-items: center;
@@ -1895,40 +1908,43 @@ input:checked + .toggle-slider:before {
 .cal-dot-income { background: var(--green); }
 .cal-dot-expense { background: var(--expense); }
 
-/* ---------- Income/expense scale — animated flame divider ---------- */
-.scale-track-wrap { position: relative; padding-top: 9px; }
-.scale-track-wrap .scale-track { position: relative; z-index: 0; }
-.scale-flame {
+/* ---------- Income/expense scale — elegant marker divider ---------- */
+.scale-track-wrap { position: relative; padding-top: 22px; }
+.scale-track-wrap .scale-track {
+  position: relative;
+  z-index: 0;
+  height: 8px;
+  background: rgba(179,69,44,0.1);
+}
+.scale-marker {
   position: absolute;
-  top: -3px;
-  transform: translateX(-50%);
-  width: 20px;
-  height: 20px;
+  top: 0;
+  transform: translateX(50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
   z-index: 2;
   pointer-events: none;
   transition: left .5s ease;
 }
-.scale-flame-svg {
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-  animation: flame-flicker 1.6s ease-in-out infinite;
-  transform-origin: 50% 90%;
-  filter: drop-shadow(0 0 4px rgba(255,122,26,0.55));
+.scale-marker-pct {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--green-deep);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 1px 7px;
+  white-space: nowrap;
+  box-shadow: 0 2px 5px rgba(16,70,43,0.08);
 }
-.flame-outer {
-  fill: #FF7A1A;
-}
-.flame-inner {
-  fill: #FFD44D;
-}
-@keyframes flame-flicker {
-  0%   { transform: scale(1) rotate(0deg); }
-  20%  { transform: scale(1.06, 0.95) rotate(-3deg); }
-  45%  { transform: scale(0.94, 1.05) rotate(2deg); }
-  70%  { transform: scale(1.04, 0.97) rotate(-2deg); }
-  100% { transform: scale(1) rotate(0deg); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .scale-flame-svg { animation: none; }
+.scale-marker-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 2.5px solid var(--green-deep);
+  box-shadow: 0 2px 5px rgba(16,70,43,0.18);
+  margin-top: 2px;
 }
