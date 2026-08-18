@@ -1623,51 +1623,55 @@ function renderAnalysis() {
 }
 
 // ---------- AI analysis ----------
-document.getElementById("btnAiAnalyze").addEventListener("click", async () => {
-  const resultBox = document.getElementById("aiAnalysisResult");
-  const btn = document.getElementById("btnAiAnalyze");
-  if (CONFIG.WORKER_URL.includes("YOUR-SUBDOMAIN")) {
-    resultBox.innerHTML = `<div class="ai-result-error">😅 هنوز آدرس سرور تنظیم نشده.</div>`;
-    return;
-  }
-  btn.disabled = true;
-  resultBox.innerHTML = `<div class="ai-result-loading"><span class="ai-spin"></span>در حال تحلیل این ماه...</div>`;
-
-  const t = todayJalali();
-  const lastM = addMonthsJalali(t.jy, t.jm, -1);
-  const thisMonth = computeMonthTotals(t.jy, t.jm);
-  const lastMonth = computeMonthTotals(lastM.jy, lastM.jm);
-
-  try {
-    const res = await fetch(`${CONFIG.WORKER_URL}/analyze`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ thisMonth, lastMonth })
-    });
-    const data = await res.json().catch(() => null);
-    if (!res.ok || !data || !data.summary) {
-      const code = data && data.error;
-      let msg = "متأسفانه الان نشد تحلیل کنم، یه‌بار دیگه امتحان کن.";
-      if (code === "no_ai_binding") {
-        msg = "😅 هنوز Workers AI به این Worker وصل نشده. باید توی wrangler.toml بخش [ai] رو اضافه کنی و دوباره دیپلوی کنی.";
-      } else if (code === "ai_request_failed") {
-        msg = "سرور هوش مصنوعی جواب درستی نداد. یه‌بار دیگه امتحان کن.";
-        if (data && data.detail) msg += `<br><small style="opacity:.75">جزئیات: ${data.detail}</small>`;
-      } else if (code === "empty_response" || code === "no summary") {
-        msg = "جواب خالی برگشت، یه‌بار دیگه امتحان کن.";
-      } else if (res.status === 404) {
-        msg = "این قابلیت هنوز روی Worker آپلود نشده. مطمئن شو worker.js جدید رو آپلود کردی.";
-      }
-      resultBox.innerHTML = `<div class="ai-result-error">${msg}</div>`;
+function setupAiAnalyzeButton(btnId, resultId) {
+  const btn = document.getElementById(btnId);
+  const resultBox = document.getElementById(resultId);
+  if (!btn || !resultBox) return;
+  btn.addEventListener("click", async () => {
+    if (CONFIG.WORKER_URL.includes("YOUR-SUBDOMAIN")) {
+      resultBox.innerHTML = `<div class="ai-result-error">😅 هنوز آدرس سرور تنظیم نشده.</div>`;
       return;
     }
-    resultBox.innerHTML = `<div class="ai-result-text">${data.summary.replace(/\n/g, "<br>")}</div>`;
-  } catch (e) {
-    resultBox.innerHTML = `<div class="ai-result-error">اتصال به سرور برقرار نشد. اینترنتت رو چک کن و دوباره امتحان کن.</div>`;
-  } finally {
-    btn.disabled = false;
-  }
-});
+    btn.disabled = true;
+    resultBox.innerHTML = `<div class="ai-result-loading"><span class="ai-spin"></span>در حال تحلیل این ماه...</div>`;
+
+    const t = todayJalali();
+    const lastM = addMonthsJalali(t.jy, t.jm, -1);
+    const thisMonth = computeMonthTotals(t.jy, t.jm);
+    const lastMonth = computeMonthTotals(lastM.jy, lastM.jm);
+
+    try {
+      const res = await fetch(`${CONFIG.WORKER_URL}/analyze`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ thisMonth, lastMonth })
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data || !data.summary) {
+        const code = data && data.error;
+        let msg = "متأسفانه الان نشد تحلیل کنم، یه‌بار دیگه امتحان کن.";
+        if (code === "no_ai_binding") {
+          msg = "😅 هنوز Workers AI به این Worker وصل نشده. باید توی wrangler.toml بخش [ai] رو اضافه کنی و دوباره دیپلوی کنی.";
+        } else if (code === "ai_request_failed") {
+          msg = "سرور هوش مصنوعی جواب درستی نداد. یه‌بار دیگه امتحان کن.";
+          if (data && data.detail) msg += `<br><small style="opacity:.75">جزئیات: ${data.detail}</small>`;
+        } else if (code === "empty_response" || code === "no summary") {
+          msg = "جواب خالی برگشت، یه‌بار دیگه امتحان کن.";
+        } else if (res.status === 404) {
+          msg = "این قابلیت هنوز روی Worker آپلود نشده. مطمئن شو worker.js جدید رو آپلود کردی.";
+        }
+        resultBox.innerHTML = `<div class="ai-result-error">${msg}</div>`;
+        return;
+      }
+      resultBox.innerHTML = `<div class="ai-result-text">${data.summary.replace(/\n/g, "<br>")}</div>`;
+    } catch (e) {
+      resultBox.innerHTML = `<div class="ai-result-error">اتصال به سرور برقرار نشد. اینترنتت رو چک کن و دوباره امتحان کن.</div>`;
+    } finally {
+      btn.disabled = false;
+    }
+  });
+}
+setupAiAnalyzeButton("btnAiAnalyze", "aiAnalysisResult");
 
 // ---------- Sync ----------
 function genCode() { return String(Math.floor(100000 + Math.random() * 900000)); }
@@ -1825,29 +1829,37 @@ if ("serviceWorker" in navigator) {
   });
 }
 
-// ---------- AI Analysis Button ----------
-const btnAiAnalyze = document.getElementById("btnAiAnalyze");
-const aiAnalysisResult = document.getElementById("aiAnalysisResult");
-const aiAnalysisCard = document.getElementById("aiAnalysisCard");
+// ---------- AI Analysis Button (toggle + scroll collapse, shared by dashboard & analysis cards) ----------
+function setupAiCardToggle(btnId, resultId, insightsId) {
+  const btn = document.getElementById(btnId);
+  const result = document.getElementById(resultId);
+  if (!btn || !result) return;
+  btn.addEventListener("click", () => {
+    if (result.style.display === "none") {
+      // Show analysis
+      if (insightsId) renderAnalysis();
+      btn.style.display = "none";
+      result.style.display = "";
+    } else {
+      // Hide analysis
+      btn.style.display = "";
+      result.style.display = "none";
+      if (insightsId) {
+        const insightsEl = document.getElementById(insightsId);
+        if (insightsEl) insightsEl.innerHTML = "";
+      }
+    }
+  });
+}
+setupAiCardToggle("btnAiAnalyze", "aiAnalysisResult", "smartInsights");
+setupAiCardToggle("dashBtnAiAnalyze", "dashAiAnalysisResult", null);
 
-btnAiAnalyze.addEventListener("click", () => {
-  if (aiAnalysisResult.style.display === "none") {
-    // Show analysis
-    renderAnalysis();
-    btnAiAnalyze.style.display = "none";
-    aiAnalysisResult.style.display = "";
-  } else {
-    // Hide analysis
-    btnAiAnalyze.style.display = "";
-    aiAnalysisResult.style.display = "none";
-    document.getElementById("smartInsights").innerHTML = "";
-  }
-});
-
-// ---------- AI card scroll collapse (نرم و پیوسته با اسکرول) ----------
-(function setupAiCardScrollCollapse() {
-  const card = document.getElementById("aiAnalysisCard");
-  const star = document.getElementById("aiFloatingStar");
+// ---------- AI card scroll collapse (نرم و پیوسته با اسکرول، شبیه هدر) ----------
+function setupAiCardScrollCollapse(cardId, starId, btnId, resultId) {
+  const card = document.getElementById(cardId);
+  const star = document.getElementById(starId);
+  const btn = document.getElementById(btnId);
+  const result = document.getElementById(resultId);
   const scrollRoot = document.querySelector(".app-scroll");
   if (!card || !star || !scrollRoot) return;
 
@@ -1872,9 +1884,11 @@ btnAiAnalyze.addEventListener("click", () => {
 
   star.addEventListener("click", () => {
     scrollRoot.scrollTo({ top: 0, behavior: "smooth" });
-    if (aiAnalysisResult.style.display === "none") btnAiAnalyze.click();
+    if (btn && result && result.style.display === "none") btn.click();
   });
-})();
+}
+setupAiCardScrollCollapse("aiAnalysisCard", "aiFloatingStar", "btnAiAnalyze", "aiAnalysisResult");
+setupAiCardScrollCollapse("dashAiAnalysisCard", "dashAiFloatingStar", "dashBtnAiAnalyze", "dashAiAnalysisResult");
 
 // ---------- Header scroll collapse ----------
 const appScroll = document.getElementById("appScroll");
