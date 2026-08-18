@@ -1294,7 +1294,9 @@ function describeArc(cx, cy, r, startAngle, endAngle) {
 
 function renderPieChart(containerId, segments, chartType = "expense") {
   const wrap = document.getElementById(containerId);
+  const totalEl = document.getElementById("diversityTotal");
   const total = segments.reduce((s, x) => s + x.value, 0);
+  if (totalEl) totalEl.textContent = fmtAmount(total) + " تومان";
   if (!total) {
     wrap.innerHTML = `<p class="empty-hint">داده‌ای برای این بازه نیست</p>`;
     return;
@@ -1305,9 +1307,12 @@ function renderPieChart(containerId, segments, chartType = "expense") {
   const cx = 91, cy = 91, r = 66, sw = 27;
   const gapDeg = visible.length > 1 ? 7 : 0;
   const explodeDist = 4;
+  const labelRadiusPct = 41;
 
   let cursor = 0;
-  const segsHTML = visible.map((seg) => {
+  const segsHTML = [];
+  const labelsHTML = [];
+  visible.forEach((seg) => {
     const frac = seg.value / total;
     const sweep = frac * (360 - gapDeg * visible.length);
     const startA = cursor;
@@ -1318,118 +1323,203 @@ function renderPieChart(containerId, segments, chartType = "expense") {
     const dx = Math.cos(rad) * explodeDist;
     const dy = Math.sin(rad) * explodeDist;
     const d = describeArc(cx, cy, r, startA, endA);
-    return `<path d="${d}" fill="none" stroke="${seg.color}" stroke-width="${sw}" stroke-linecap="round" transform="translate(${dx.toFixed(2)},${dy.toFixed(2)})"/>`;
-  }).join("");
+    segsHTML.push(`<path d="${d}" fill="none" stroke="${seg.color}" stroke-width="${sw}" stroke-linecap="round" transform="translate(${dx.toFixed(2)},${dy.toFixed(2)})"/>`);
 
-  const legend = visible.map((seg) => {
-    const pct = Math.round((seg.value / total) * 100);
-    const iconHTML = seg.icon
-      ? `<span class="legend-icon" style="background:${seg.color}1f">${iconSpanHTML(seg.icon, `color:${seg.color}`)}</span>`
-      : `<span class="legend-dot" style="background:${seg.color}"></span>`;
-    return `
-      <div class="chart-legend-row">
-        ${iconHTML}
-        <span class="legend-label">${seg.label}</span>
-        <span class="legend-pct" style="background:${seg.color}1c;color:${seg.color}">${toPersianDigits(pct)}٪</span>
-        <span class="legend-amt">${fmtAmount(seg.value)}</span>
-      </div>`;
-  }).join("");
+    const lx = (50 + Math.cos(rad) * labelRadiusPct).toFixed(2);
+    const ly = (50 + Math.sin(rad) * labelRadiusPct).toFixed(2);
+    labelsHTML.push(`
+      <div class="donut-radial-label" style="left:${lx}%;top:${ly}%;">
+        <div class="donut-radial-label-top"><span class="legend-dot" style="background:${seg.color}"></span>${seg.label}</div>
+        <div class="donut-radial-label-amt" style="color:${seg.color}">${fmtAmount(seg.value)}</div>
+      </div>`);
+  });
 
   wrap.innerHTML = `
-    <div class="donut-wrap">
+    <div class="donut-radial-wrap">
       <svg viewBox="0 0 182 182" class="donut-svg">
         <defs>
           <filter id="pieShadow-${containerId}" x="-30%" y="-30%" width="160%" height="160%">
             <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#163F3C" flood-opacity="0.18"/>
           </filter>
         </defs>
-        <g style="filter:url(#pieShadow-${containerId})">${segsHTML}</g>
+        <g style="filter:url(#pieShadow-${containerId})">${segsHTML.join("")}</g>
       </svg>
-      <div class="donut-center">
-        <span class="donut-center-label">مجموع مخارج</span>
-        <span class="donut-center-amt">${fmtAmount(total)}</span>
-      </div>
+      ${labelsHTML.join("")}
     </div>
-    <div class="chart-legend">${legend}</div>
   `;
 }
 
-function renderDailyLineChart(containerId, totalElId, items, jy, jm, color, colorSoft) {
+function renderCombinedDailyChart(containerId, incomeTotalElId, expenseTotalElId, jy, jm) {
   const wrap = document.getElementById(containerId);
-  const totalEl = totalElId ? document.getElementById(totalElId) : null;
+  const incomeTotalEl = document.getElementById(incomeTotalElId);
+  const expenseTotalEl = document.getElementById(expenseTotalElId);
   const daysInMonth = jalaaliMonthLength(jy, jm);
 
-  const byDay = new Array(daysInMonth + 1).fill(0);
-  items.forEach((x) => {
+  const byDayIncome = new Array(daysInMonth + 1).fill(0);
+  const byDayExpense = new Array(daysInMonth + 1).fill(0);
+  state.incomes.forEach((x) => {
     const [gy, gm, gd] = x.date.split("-").map(Number);
     const j = toJalaali(gy, gm, gd);
-    if (j.jy === jy && j.jm === jm) byDay[j.jd] += x.amount;
+    if (j.jy === jy && j.jm === jm) byDayIncome[j.jd] += x.amount;
+  });
+  state.expenses.forEach((x) => {
+    const [gy, gm, gd] = x.date.split("-").map(Number);
+    const j = toJalaali(gy, gm, gd);
+    if (j.jy === jy && j.jm === jm) byDayExpense[j.jd] += x.amount;
   });
 
-  const total = byDay.reduce((s, v) => s + v, 0);
-  if (totalEl) totalEl.textContent = fmtAmount(total) + " تومان";
+  const totalIncome = byDayIncome.reduce((s, v) => s + v, 0);
+  const totalExpense = byDayExpense.reduce((s, v) => s + v, 0);
+  if (incomeTotalEl) incomeTotalEl.textContent = fmtAmount(totalIncome) + " تومان";
+  if (expenseTotalEl) expenseTotalEl.textContent = fmtAmount(totalExpense) + " تومان";
 
-  if (!total) {
+  if (!totalIncome && !totalExpense) {
     wrap.innerHTML = `<p class="empty-hint">داده‌ای برای این ماه نیست</p>`;
     return;
   }
 
-  const maxVal = Math.max(...byDay.slice(1)) || 1;
-  const W = 320, H = 118, PAD_TOP = 40, PAD_BOTTOM = 8, PAD_X = 4;
+  const maxVal = Math.max(...byDayIncome.slice(1), ...byDayExpense.slice(1)) || 1;
+  const W = 320, H = 130, PAD_TOP = 40, PAD_BOTTOM = 20, PAD_X = 4;
   const chartH = H - PAD_TOP - PAD_BOTTOM;
   const stepX = (W - PAD_X * 2) / (daysInMonth - 1 || 1);
 
-  const pts = [];
-  for (let d = 1; d <= daysInMonth; d += 1) {
-    const x = PAD_X + (d - 1) * stepX;
-    const y = PAD_TOP + chartH - (byDay[d] / maxVal) * chartH;
-    pts.push({ d, x, y, v: byDay[d] });
-  }
+  const buildPts = (byDay, colorKey) => {
+    const pts = [];
+    for (let d = 1; d <= daysInMonth; d += 1) {
+      const x = PAD_X + (d - 1) * stepX;
+      const y = PAD_TOP + chartH - (byDay[d] / maxVal) * chartH;
+      pts.push({ d, x, y, v: byDay[d] });
+    }
+    return pts;
+  };
+  const incomePts = buildPts(byDayIncome);
+  const expensePts = buildPts(byDayExpense);
 
-  const linePath = pts.map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
-  const areaPath = `${linePath} L${pts[pts.length - 1].x.toFixed(1)},${(PAD_TOP + chartH).toFixed(1)} L${pts[0].x.toFixed(1)},${(PAD_TOP + chartH).toFixed(1)} Z`;
-
-  // برجسته‌ترین روز (بیشترین مبلغ) برای نمایش خط‌چین + حباب مقدار
-  let peak = pts[0];
-  pts.forEach((p) => { if (p.v > peak.v) peak = p; });
+  const buildLinePath = (pts) => pts.map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
+  const incomeLine = buildLinePath(incomePts);
+  const expenseLine = buildLinePath(expensePts);
+  const baseY = (PAD_TOP + chartH).toFixed(1);
+  const incomeArea = `${incomeLine} L${incomePts[incomePts.length - 1].x.toFixed(1)},${baseY} L${incomePts[0].x.toFixed(1)},${baseY} Z`;
+  const expenseArea = `${expenseLine} L${expensePts[expensePts.length - 1].x.toFixed(1)},${baseY} L${expensePts[0].x.toFixed(1)},${baseY} Z`;
 
   const gridLines = [0.33, 0.66].map((f) => {
     const y = PAD_TOP + chartH * f;
     return `<line x1="${PAD_X}" y1="${y.toFixed(1)}" x2="${W - PAD_X}" y2="${y.toFixed(1)}" class="daily-chart-grid"/>`;
   }).join("");
 
+  // برچسب محور روز — هر ۵ روز، فقط عدد روز
+  const axisLabels = [];
+  for (let d = 1; d <= daysInMonth; d += 5) {
+    const x = PAD_X + (d - 1) * stepX;
+    axisLabels.push(`<text x="${x.toFixed(1)}" y="${H - 4}" text-anchor="middle" class="daily-chart-axis-label">${toPersianDigits(d)}</text>`);
+  }
+
   const uid = `${containerId}-${Date.now()}`;
-  const tooltipDate = `${toPersianDigits(peak.d)} ${JALALI_MONTHS[jm - 1]}`;
-  const tooltipVal = fmtAmount(peak.v);
-  const tooltipW = Math.max(64, 12 + Math.max(tooltipDate.length, tooltipVal.length) * 6.4);
-  let tooltipX = peak.v > 0 ? peak.x - tooltipW / 2 : -9999;
-  tooltipX = Math.min(Math.max(tooltipX, PAD_X), W - PAD_X - tooltipW);
+
+  // روز پیش‌فرض برای نمایش مقدار: امروز (اگه توی همین ماهه)، وگرنه روزی با بیشترین مجموع
+  const today = todayJalali();
+  let defaultDay = (today.jy === jy && today.jm === jm) ? today.jd : 1;
+  if (!(today.jy === jy && today.jm === jm)) {
+    let bestSum = -1;
+    for (let d = 1; d <= daysInMonth; d += 1) {
+      const sum = byDayIncome[d] + byDayExpense[d];
+      if (sum > bestSum) { bestSum = sum; defaultDay = d; }
+    }
+  }
 
   wrap.innerHTML = `
-    <svg viewBox="0 0 ${W} ${H}" class="daily-chart-svg" preserveAspectRatio="none">
+    <svg viewBox="0 0 ${W} ${H}" class="daily-chart-svg combined-chart-svg" id="svg-${uid}" preserveAspectRatio="none">
       <defs>
-        <linearGradient id="fill-${uid}" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="${color}" stop-opacity="0.32"/>
-          <stop offset="100%" stop-color="${color}" stop-opacity="0"/>
+        <linearGradient id="fillIncome-${uid}" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#2F7A72" stop-opacity="0.28"/>
+          <stop offset="100%" stop-color="#2F7A72" stop-opacity="0"/>
+        </linearGradient>
+        <linearGradient id="fillExpense-${uid}" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#C24A2E" stop-opacity="0.24"/>
+          <stop offset="100%" stop-color="#C24A2E" stop-opacity="0"/>
         </linearGradient>
       </defs>
       ${gridLines}
-      ${peak.v > 0 ? `<line x1="${peak.x.toFixed(1)}" y1="${PAD_TOP}" x2="${peak.x.toFixed(1)}" y2="${(PAD_TOP + chartH).toFixed(1)}" class="daily-chart-dashed"/>` : ""}
-      <path d="${areaPath}" fill="url(#fill-${uid})" stroke="none"/>
-      <path d="${linePath}" fill="none" stroke="${color}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
-      ${peak.v > 0 ? `<circle cx="${peak.x.toFixed(1)}" cy="${peak.y.toFixed(1)}" r="4" fill="#fff" stroke="${color}" stroke-width="2.4"/>` : ""}
-      ${peak.v > 0 ? `
-      <g>
-        <rect x="${tooltipX.toFixed(1)}" y="4" width="${tooltipW.toFixed(1)}" height="26" rx="9" class="daily-chart-tooltip-bg"/>
-        <text x="${(tooltipX + tooltipW / 2).toFixed(1)}" y="15" text-anchor="middle" class="daily-chart-tooltip-val">${tooltipVal}</text>
-        <text x="${(tooltipX + tooltipW / 2).toFixed(1)}" y="26" text-anchor="middle" class="daily-chart-tooltip-date">${tooltipDate}</text>
-      </g>` : ""}
+      ${axisLabels.join("")}
+      <line id="scrubLine-${uid}" x1="0" y1="${PAD_TOP}" x2="0" y2="${baseY}" class="daily-chart-dashed"/>
+      <path d="${expenseArea}" fill="url(#fillExpense-${uid})" stroke="none"/>
+      <path d="${incomeArea}" fill="url(#fillIncome-${uid})" stroke="none"/>
+      <path d="${expenseLine}" fill="none" stroke="#C24A2E" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="${incomeLine}" fill="none" stroke="#2F7A72" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle id="scrubDotExpense-${uid}" r="3.6" fill="#fff" stroke="#C24A2E" stroke-width="2.2"/>
+      <circle id="scrubDotIncome-${uid}" r="3.6" fill="#fff" stroke="#2F7A72" stroke-width="2.2"/>
+      <g id="scrubTooltip-${uid}">
+        <rect id="scrubTooltipBg-${uid}" y="2" height="34" rx="9" class="daily-chart-tooltip-bg"/>
+        <text id="scrubTooltipIncome-${uid}" y="13" text-anchor="middle" class="daily-chart-tooltip-val income-tooltip-val"></text>
+        <text id="scrubTooltipExpense-${uid}" y="24" text-anchor="middle" class="daily-chart-tooltip-val expense-tooltip-val"></text>
+        <text id="scrubTooltipDate-${uid}" y="34" text-anchor="middle" class="daily-chart-tooltip-date"></text>
+      </g>
+      <rect x="0" y="0" width="${W}" height="${H}" fill="transparent" id="scrubCatcher-${uid}"/>
     </svg>
-    <div class="daily-chart-axis">
-      <span>${toPersianDigits(1)} ${JALALI_MONTHS[jm - 1]}</span>
-      <span>${toPersianDigits(daysInMonth)} ${JALALI_MONTHS[jm - 1]}</span>
-    </div>
   `;
+
+  const svg = document.getElementById(`svg-${uid}`);
+  const scrubLine = document.getElementById(`scrubLine-${uid}`);
+  const scrubDotIncome = document.getElementById(`scrubDotIncome-${uid}`);
+  const scrubDotExpense = document.getElementById(`scrubDotExpense-${uid}`);
+  const tooltipBg = document.getElementById(`scrubTooltipBg-${uid}`);
+  const tooltipIncomeText = document.getElementById(`scrubTooltipIncome-${uid}`);
+  const tooltipExpenseText = document.getElementById(`scrubTooltipExpense-${uid}`);
+  const tooltipDateText = document.getElementById(`scrubTooltipDate-${uid}`);
+  const catcher = document.getElementById(`scrubCatcher-${uid}`);
+
+  function moveToDay(d) {
+    d = Math.min(Math.max(d, 1), daysInMonth);
+    const ip = incomePts[d - 1];
+    const ep = expensePts[d - 1];
+    scrubLine.setAttribute("x1", ip.x.toFixed(1));
+    scrubLine.setAttribute("x2", ip.x.toFixed(1));
+    scrubDotIncome.setAttribute("cx", ip.x.toFixed(1));
+    scrubDotIncome.setAttribute("cy", ip.y.toFixed(1));
+    scrubDotExpense.setAttribute("cx", ep.x.toFixed(1));
+    scrubDotExpense.setAttribute("cy", ep.y.toFixed(1));
+
+    const dateStr = `${toPersianDigits(d)} ${JALALI_MONTHS[jm - 1]}`;
+    const incomeStr = `درآمد: ${fmtAmount(ip.v)}`;
+    const expenseStr = `مخارج: ${fmtAmount(ep.v)}`;
+    tooltipIncomeText.textContent = incomeStr;
+    tooltipExpenseText.textContent = expenseStr;
+    tooltipDateText.textContent = dateStr;
+
+    const maxLen = Math.max(incomeStr.length, expenseStr.length, dateStr.length);
+    const tw = Math.max(76, 14 + maxLen * 5.7);
+    let tx = ip.x - tw / 2;
+    tx = Math.min(Math.max(tx, PAD_X), W - PAD_X - tw);
+    tooltipBg.setAttribute("x", tx.toFixed(1));
+    tooltipBg.setAttribute("width", tw.toFixed(1));
+    const tcx = (tx + tw / 2).toFixed(1);
+    tooltipIncomeText.setAttribute("x", tcx);
+    tooltipExpenseText.setAttribute("x", tcx);
+    tooltipDateText.setAttribute("x", tcx);
+  }
+
+  function xToDay(clientX) {
+    const rect = svg.getBoundingClientRect();
+    const relX = ((clientX - rect.left) / rect.width) * W;
+    return Math.round((relX - PAD_X) / stepX) + 1;
+  }
+
+  let scrubbing = false;
+  catcher.addEventListener("pointerdown", (e) => {
+    scrubbing = true;
+    moveToDay(xToDay(e.clientX));
+    e.preventDefault();
+  });
+  catcher.addEventListener("pointermove", (e) => {
+    if (!scrubbing) return;
+    moveToDay(xToDay(e.clientX));
+  });
+  const endScrub = () => { scrubbing = false; };
+  catcher.addEventListener("pointerup", endScrub);
+  catcher.addEventListener("pointerleave", endScrub);
+  catcher.addEventListener("pointercancel", endScrub);
+
+  moveToDay(defaultDay);
 }
 
 function computeMonthTotals(jy, jm) {
@@ -1449,8 +1539,7 @@ function computeMonthTotals(jy, jm) {
 }
 
 function renderAnalysis() {
-  renderDailyLineChart("incomeDailyChart", "incomeChartTotal", state.incomes, viewedMonth.jy, viewedMonth.jm, "#2F7A72", "#E3F1EF");
-  renderDailyLineChart("expenseDailyChart", "expenseChartTotal", state.expenses, viewedMonth.jy, viewedMonth.jm, "#C24A2E", "#F7E3DC");
+  renderCombinedDailyChart("combinedDailyChart", "incomeChartTotal", "expenseChartTotal", viewedMonth.jy, viewedMonth.jm);
 
   const inPeriod = (dateStr) => {
     if (analysisPeriod === "all") return true;

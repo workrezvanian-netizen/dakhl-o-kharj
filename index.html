@@ -220,29 +220,23 @@
     </div>
 
     <div class="settings-card daily-chart-card">
-      <div class="daily-chart-head">
-        <span class="daily-chart-badge income-badge">
-          <span class="icon-mask" data-icon="trending-up" style="width:14px;height:14px;color:#fff"></span>
-        </span>
-        <div class="daily-chart-head-text">
-          <span class="daily-chart-label">درآمد روزانه</span>
-          <strong id="incomeChartTotal" class="daily-chart-total">۰ تومان</strong>
+      <div class="daily-chart-head combined">
+        <div class="daily-chart-head-item">
+          <span class="daily-chart-dot income-dot"></span>
+          <div class="daily-chart-head-text">
+            <span class="daily-chart-label">درآمد</span>
+            <strong id="incomeChartTotal" class="daily-chart-total income-color">۰ تومان</strong>
+          </div>
+        </div>
+        <div class="daily-chart-head-item align-left">
+          <div class="daily-chart-head-text align-left">
+            <span class="daily-chart-label">مخارج</span>
+            <strong id="expenseChartTotal" class="daily-chart-total expense-color">۰ تومان</strong>
+          </div>
+          <span class="daily-chart-dot expense-dot"></span>
         </div>
       </div>
-      <div id="incomeDailyChart"></div>
-    </div>
-
-    <div class="settings-card daily-chart-card">
-      <div class="daily-chart-head">
-        <span class="daily-chart-badge expense-badge">
-          <span class="icon-mask" data-icon="trending-down" style="width:14px;height:14px;color:#fff"></span>
-        </span>
-        <div class="daily-chart-head-text">
-          <span class="daily-chart-label">مخارج روزانه</span>
-          <strong id="expenseChartTotal" class="daily-chart-total">۰ تومان</strong>
-        </div>
-      </div>
-      <div id="expenseDailyChart"></div>
+      <div id="combinedDailyChart"></div>
     </div>
 
     <div class="settings-card">
@@ -257,7 +251,10 @@
       <div id="incomeExpenseChart"></div>
     </div>
     <div class="settings-card">
-      <h2>تنوع مخارج</h2>
+      <div class="diversity-head">
+        <h2>تنوع مخارج</h2>
+        <strong id="diversityTotal" class="diversity-total">۰ تومان</strong>
+      </div>
       <div id="expenseDiversityChart"></div>
     </div>
   </section>
@@ -483,7 +480,7 @@
       </div>
     </details>
 
-    <p class="app-version">نسخه‌ی ۱.۳۱</p>
+    <p class="app-version">نسخه‌ی ۱.۳۲</p>
 
   </section>
 
