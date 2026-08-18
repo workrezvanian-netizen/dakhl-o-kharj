@@ -219,41 +219,30 @@
       <div id="smartInsights"></div>
     </div>
 
-    <div class="scale-card">
-      <div class="scale-top-row">
-        <div class="scale-stat">
-          <span class="scale-stat-badge income-badge">
-            <span class="icon-mask" data-icon="trending-up" style="width:15px;height:15px;color:#fff"></span>
-          </span>
-          <div class="scale-stat-text">
-            <span class="scale-stat-label">درآمد</span>
-            <strong id="dashIncomeTotal" class="scale-stat-value">۰</strong>
-          </div>
-        </div>
-        <div class="scale-stat reverse">
-          <div class="scale-stat-text align-left">
-            <span class="scale-stat-label">مخارج</span>
-            <strong id="dashExpenseTotal" class="scale-stat-value">۰</strong>
-          </div>
-          <span class="scale-stat-badge expense-badge">
-            <span class="icon-mask" data-icon="trending-down" style="width:15px;height:15px;color:#fff"></span>
-          </span>
+    <div class="settings-card daily-chart-card">
+      <div class="daily-chart-head">
+        <span class="daily-chart-badge income-badge">
+          <span class="icon-mask" data-icon="trending-up" style="width:14px;height:14px;color:#fff"></span>
+        </span>
+        <div class="daily-chart-head-text">
+          <span class="daily-chart-label">درآمد روزانه</span>
+          <strong id="incomeChartTotal" class="daily-chart-total">۰ تومان</strong>
         </div>
       </div>
-      <div class="scale-track-wrap">
-        <div class="scale-track">
-          <div id="scaleIncomeBar" class="scale-fill income"></div>
-          <div id="scaleExpenseBar" class="scale-fill expense"></div>
-        </div>
-        <div id="scaleMarker" class="scale-marker" style="left:50%;">
-          <span id="scaleMarkerPct" class="scale-marker-pct">۵۰٪</span>
-          <span class="scale-marker-dot"></span>
+      <div id="incomeDailyChart"></div>
+    </div>
+
+    <div class="settings-card daily-chart-card">
+      <div class="daily-chart-head">
+        <span class="daily-chart-badge expense-badge">
+          <span class="icon-mask" data-icon="trending-down" style="width:14px;height:14px;color:#fff"></span>
+        </span>
+        <div class="daily-chart-head-text">
+          <span class="daily-chart-label">مخارج روزانه</span>
+          <strong id="expenseChartTotal" class="daily-chart-total">۰ تومان</strong>
         </div>
       </div>
-      <div class="balance-row">
-        <span>مانده</span>
-        <span id="dashBalance" class="balance-amount">۰ تومان</span>
-      </div>
+      <div id="expenseDailyChart"></div>
     </div>
 
     <div class="settings-card">
@@ -379,7 +368,7 @@
     <div class="settings-glow" aria-hidden="true"></div>
 
     <details class="settings-group">
-      <summary class="settings-group-title">امنیت</summary>
+      <summary class="settings-group-title"><span class="icon-mask" data-icon="shield-check" style="width:15px;height:15px;color:var(--green-deep);margin-left:6px;vertical-align:-3px;"></span>امنیت</summary>
       <div class="settings-card">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
           <div>
@@ -426,7 +415,7 @@
     </details>
 
     <details class="settings-group">
-      <summary class="settings-group-title">مدیریت برچسب‌ها</summary>
+      <summary class="settings-group-title"><span class="icon-mask" data-icon="tags" style="width:15px;height:15px;color:var(--green-deep);margin-left:6px;vertical-align:-3px;"></span>مدیریت برچسب‌ها</summary>
       <div class="settings-card">
         <form id="categoryForm" class="inline-form">
           <label>نام برچسب جدید
@@ -443,7 +432,7 @@
     </details>
 
     <details class="settings-group">
-      <summary class="settings-group-title">حساب و همگام‌سازی</summary>
+      <summary class="settings-group-title"><span class="icon-mask" data-icon="refresh-cw" style="width:15px;height:15px;color:var(--green-deep);margin-left:6px;vertical-align:-3px;"></span>حساب و همگام‌سازی</summary>
       <div class="settings-card">
         <h2>همگام‌سازی بین دستگاه‌ها</h2>
         <button id="syncStatusBtn" class="sync-pill sync-pill-inline" title="وضعیت همگام‌سازی">
@@ -474,7 +463,7 @@
     </details>
 
     <details class="settings-group">
-      <summary class="settings-group-title">تنظیمات نوتیفیکیشن</summary>
+      <summary class="settings-group-title"><span class="icon-mask" data-icon="bell" style="width:15px;height:15px;color:var(--green-deep);margin-left:6px;vertical-align:-3px;"></span>تنظیمات نوتیفیکیشن</summary>
       <div class="settings-card">
         <h2>نوتیفیکیشن یادآور اقساط</h2>
         <p class="hint">
@@ -487,14 +476,14 @@
     </details>
 
     <details class="settings-group">
-      <summary class="settings-group-title danger">منطقه‌ی خطر</summary>
+      <summary class="settings-group-title danger"><span class="icon-mask" data-icon="triangle-alert" style="width:15px;height:15px;color:var(--expense);margin-left:6px;vertical-align:-3px;"></span>منطقه‌ی خطر</summary>
       <div class="settings-card danger-zone">
         <h2>پاک کردن اطلاعات</h2>
         <button id="btnResetData" class="btn btn-danger full">حذف همه اطلاعات این دستگاه</button>
       </div>
     </details>
 
-    <p class="app-version">نسخه‌ی ۱.۳۰</p>
+    <p class="app-version">نسخه‌ی ۱.۳۱</p>
 
   </section>
 

@@ -1948,3 +1948,40 @@ input:checked + .toggle-slider:before {
   box-shadow: 0 2px 5px rgba(16,70,43,0.18);
   margin-top: 2px;
 }
+
+/* ---------- نمودار خطی روزانه (درآمد/مخارج) ---------- */
+.daily-chart-card { padding-bottom: 14px; }
+.daily-chart-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.daily-chart-badge {
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.daily-chart-badge.income-badge { background: var(--green); }
+.daily-chart-badge.expense-badge { background: var(--expense); }
+.daily-chart-head-text { display: flex; flex-direction: column; gap: 1px; }
+.daily-chart-label { font-size: 11.5px; color: var(--text-mute); }
+.daily-chart-total { font-size: 17px; font-weight: 800; color: var(--text); }
+
+.daily-chart-svg { width: 100%; height: 128px; display: block; }
+.daily-chart-grid { stroke: var(--border); stroke-width: 1; stroke-dasharray: 2 3; }
+.daily-chart-dashed { stroke: var(--text-mute); stroke-width: 1; stroke-dasharray: 3 3; opacity: 0.6; }
+.daily-chart-tooltip-bg { fill: var(--green-deep); }
+.daily-chart-tooltip-val { fill: #fff; font-size: 9.5px; font-weight: 700; font-family: inherit; }
+.daily-chart-tooltip-date { fill: rgba(255,255,255,0.7); font-size: 7.5px; font-family: inherit; }
+.daily-chart-axis {
+  display: flex;
+  justify-content: space-between;
+  padding: 2px 4px 0;
+  font-size: 10.5px;
+  color: var(--text-mute);
+}

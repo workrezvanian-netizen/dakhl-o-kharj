@@ -1060,23 +1060,12 @@ function renderDashboard() {
   const totalExpense = expenses.reduce((s, x) => s + x.amount, 0);
   const balance = totalIncome - totalExpense;
 
-  document.getElementById("dashIncomeTotal").textContent = fmtAmount(totalIncome);
-  document.getElementById("dashExpenseTotal").textContent = fmtAmount(totalExpense);
   document.getElementById("dashIncomeChip").textContent = fmtAmount(totalIncome);
   document.getElementById("dashExpenseChip").textContent = fmtAmount(totalExpense);
-  const balEl = document.getElementById("dashBalance");
-  balEl.textContent = fmtAmount(balance) + " تومان";
-  balEl.classList.toggle("negative", balance < 0);
 
   const total = totalIncome + totalExpense;
   const incomePct = total ? (totalIncome / total) * 100 : 50;
   const expensePct = total ? (totalExpense / total) * 100 : 50;
-  document.getElementById("scaleIncomeBar").style.width = incomePct + "%";
-  document.getElementById("scaleExpenseBar").style.width = expensePct + "%";
-  const flameEl = document.getElementById("scaleMarker");
-  const pctEl = document.getElementById("scaleMarkerPct");
-  if (flameEl) flameEl.style.left = expensePct + "%";
-  if (pctEl) pctEl.textContent = toPersianDigits(Math.round(incomePct)) + "٪ درآمد";
 
   const byCat = {};
   expenses.forEach((x) => { byCat[x.category] = (byCat[x.category] || 0) + x.amount; });
@@ -1292,6 +1281,17 @@ function renderMonthCompareCard(containerId, period = "month") {
   });
 }
 
+function polarToCartesian(cx, cy, r, angleDeg) {
+  const rad = ((angleDeg - 90) * Math.PI) / 180;
+  return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+}
+function describeArc(cx, cy, r, startAngle, endAngle) {
+  const start = polarToCartesian(cx, cy, r, endAngle);
+  const end = polarToCartesian(cx, cy, r, startAngle);
+  const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
+  return `M ${start.x.toFixed(2)} ${start.y.toFixed(2)} A ${r} ${r} 0 ${largeArcFlag} 0 ${end.x.toFixed(2)} ${end.y.toFixed(2)}`;
+}
+
 function renderPieChart(containerId, segments, chartType = "expense") {
   const wrap = document.getElementById(containerId);
   const total = segments.reduce((s, x) => s + x.value, 0);
@@ -1300,21 +1300,25 @@ function renderPieChart(containerId, segments, chartType = "expense") {
     return;
   }
   const visible = segments.filter((s) => s.value > 0);
-  
-  // رنگ هر بخش از قبل با catColor() تعیین شده تا با داشبورد/تب ثبت/لیست مخارج یکسان بماند
-  const cx = 91, cy = 91, r = 72, sw = 30;
-  const circumference = 2 * Math.PI * r;
-  const uid = Date.now();
 
-  let cumulative = 0;
-  const segsHTML = visible.map((seg, i) => {
-    const dash = (seg.value / total) * circumference;
-    const offset = (cumulative / total) * circumference;
-    cumulative += seg.value;
-    return `<circle class="donut-seg" id="donutSeg-${uid}-${i}" cx="${cx}" cy="${cy}" r="${r}" fill="none"
-      stroke="${seg.color}" stroke-width="${sw}"
-      stroke-dasharray="0 ${circumference}" stroke-dashoffset="${-offset}"
-      transform="rotate(-90 ${cx} ${cy})" data-dash="${dash}" data-circ="${circumference}"/>`;
+  // رنگ هر بخش از قبل با catColor() تعیین شده تا با داشبورد/تب ثبت/لیست مخارج یکسان بماند
+  const cx = 91, cy = 91, r = 66, sw = 27;
+  const gapDeg = visible.length > 1 ? 7 : 0;
+  const explodeDist = 4;
+
+  let cursor = 0;
+  const segsHTML = visible.map((seg) => {
+    const frac = seg.value / total;
+    const sweep = frac * (360 - gapDeg * visible.length);
+    const startA = cursor;
+    const endA = cursor + sweep;
+    cursor = endA + gapDeg;
+    const midA = (startA + endA) / 2;
+    const rad = ((midA - 90) * Math.PI) / 180;
+    const dx = Math.cos(rad) * explodeDist;
+    const dy = Math.sin(rad) * explodeDist;
+    const d = describeArc(cx, cy, r, startA, endA);
+    return `<path d="${d}" fill="none" stroke="${seg.color}" stroke-width="${sw}" stroke-linecap="round" transform="translate(${dx.toFixed(2)},${dy.toFixed(2)})"/>`;
   }).join("");
 
   const legend = visible.map((seg) => {
@@ -1339,7 +1343,6 @@ function renderPieChart(containerId, segments, chartType = "expense") {
             <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#163F3C" flood-opacity="0.18"/>
           </filter>
         </defs>
-        <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--cream)" stroke-width="${sw}"/>
         <g style="filter:url(#pieShadow-${containerId})">${segsHTML}</g>
       </svg>
       <div class="donut-center">
@@ -1349,18 +1352,84 @@ function renderPieChart(containerId, segments, chartType = "expense") {
     </div>
     <div class="chart-legend">${legend}</div>
   `;
+}
 
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      visible.forEach((seg, i) => {
-        const el = document.getElementById(`donutSeg-${uid}-${i}`);
-        if (!el) return;
-        const dash = parseFloat(el.dataset.dash);
-        const circ = parseFloat(el.dataset.circ);
-        el.setAttribute("stroke-dasharray", `${dash} ${circ - dash}`);
-      });
-    });
+function renderDailyLineChart(containerId, totalElId, items, jy, jm, color, colorSoft) {
+  const wrap = document.getElementById(containerId);
+  const totalEl = totalElId ? document.getElementById(totalElId) : null;
+  const daysInMonth = jalaaliMonthLength(jy, jm);
+
+  const byDay = new Array(daysInMonth + 1).fill(0);
+  items.forEach((x) => {
+    const [gy, gm, gd] = x.date.split("-").map(Number);
+    const j = toJalaali(gy, gm, gd);
+    if (j.jy === jy && j.jm === jm) byDay[j.jd] += x.amount;
   });
+
+  const total = byDay.reduce((s, v) => s + v, 0);
+  if (totalEl) totalEl.textContent = fmtAmount(total) + " تومان";
+
+  if (!total) {
+    wrap.innerHTML = `<p class="empty-hint">داده‌ای برای این ماه نیست</p>`;
+    return;
+  }
+
+  const maxVal = Math.max(...byDay.slice(1)) || 1;
+  const W = 320, H = 118, PAD_TOP = 40, PAD_BOTTOM = 8, PAD_X = 4;
+  const chartH = H - PAD_TOP - PAD_BOTTOM;
+  const stepX = (W - PAD_X * 2) / (daysInMonth - 1 || 1);
+
+  const pts = [];
+  for (let d = 1; d <= daysInMonth; d += 1) {
+    const x = PAD_X + (d - 1) * stepX;
+    const y = PAD_TOP + chartH - (byDay[d] / maxVal) * chartH;
+    pts.push({ d, x, y, v: byDay[d] });
+  }
+
+  const linePath = pts.map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
+  const areaPath = `${linePath} L${pts[pts.length - 1].x.toFixed(1)},${(PAD_TOP + chartH).toFixed(1)} L${pts[0].x.toFixed(1)},${(PAD_TOP + chartH).toFixed(1)} Z`;
+
+  // برجسته‌ترین روز (بیشترین مبلغ) برای نمایش خط‌چین + حباب مقدار
+  let peak = pts[0];
+  pts.forEach((p) => { if (p.v > peak.v) peak = p; });
+
+  const gridLines = [0.33, 0.66].map((f) => {
+    const y = PAD_TOP + chartH * f;
+    return `<line x1="${PAD_X}" y1="${y.toFixed(1)}" x2="${W - PAD_X}" y2="${y.toFixed(1)}" class="daily-chart-grid"/>`;
+  }).join("");
+
+  const uid = `${containerId}-${Date.now()}`;
+  const tooltipDate = `${toPersianDigits(peak.d)} ${JALALI_MONTHS[jm - 1]}`;
+  const tooltipVal = fmtAmount(peak.v);
+  const tooltipW = Math.max(64, 12 + Math.max(tooltipDate.length, tooltipVal.length) * 6.4);
+  let tooltipX = peak.v > 0 ? peak.x - tooltipW / 2 : -9999;
+  tooltipX = Math.min(Math.max(tooltipX, PAD_X), W - PAD_X - tooltipW);
+
+  wrap.innerHTML = `
+    <svg viewBox="0 0 ${W} ${H}" class="daily-chart-svg" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="fill-${uid}" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="${color}" stop-opacity="0.32"/>
+          <stop offset="100%" stop-color="${color}" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+      ${gridLines}
+      ${peak.v > 0 ? `<line x1="${peak.x.toFixed(1)}" y1="${PAD_TOP}" x2="${peak.x.toFixed(1)}" y2="${(PAD_TOP + chartH).toFixed(1)}" class="daily-chart-dashed"/>` : ""}
+      <path d="${areaPath}" fill="url(#fill-${uid})" stroke="none"/>
+      <path d="${linePath}" fill="none" stroke="${color}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+      ${peak.v > 0 ? `<circle cx="${peak.x.toFixed(1)}" cy="${peak.y.toFixed(1)}" r="4" fill="#fff" stroke="${color}" stroke-width="2.4"/>` : ""}
+      ${peak.v > 0 ? `
+      <g>
+        <rect x="${tooltipX.toFixed(1)}" y="4" width="${tooltipW.toFixed(1)}" height="26" rx="9" class="daily-chart-tooltip-bg"/>
+        <text x="${(tooltipX + tooltipW / 2).toFixed(1)}" y="15" text-anchor="middle" class="daily-chart-tooltip-val">${tooltipVal}</text>
+        <text x="${(tooltipX + tooltipW / 2).toFixed(1)}" y="26" text-anchor="middle" class="daily-chart-tooltip-date">${tooltipDate}</text>
+      </g>` : ""}
+    </svg>
+    <div class="daily-chart-axis">
+      <span>${toPersianDigits(1)} ${JALALI_MONTHS[jm - 1]}</span>
+      <span>${toPersianDigits(daysInMonth)} ${JALALI_MONTHS[jm - 1]}</span>
+    </div>
+  `;
 }
 
 function computeMonthTotals(jy, jm) {
@@ -1380,6 +1449,9 @@ function computeMonthTotals(jy, jm) {
 }
 
 function renderAnalysis() {
+  renderDailyLineChart("incomeDailyChart", "incomeChartTotal", state.incomes, viewedMonth.jy, viewedMonth.jm, "#2F7A72", "#E3F1EF");
+  renderDailyLineChart("expenseDailyChart", "expenseChartTotal", state.expenses, viewedMonth.jy, viewedMonth.jm, "#C24A2E", "#F7E3DC");
+
   const inPeriod = (dateStr) => {
     if (analysisPeriod === "all") return true;
     const [gy, gm, gd] = dateStr.split("-").map(Number);
