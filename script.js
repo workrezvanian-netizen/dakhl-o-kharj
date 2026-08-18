@@ -497,6 +497,9 @@ function switchTab(tab, opts = {}) {
     if (tab === "dashboard") headerEl.classList.remove("is-compact");
     else headerEl.classList.add("is-compact");
   }
+
+  const scrollRoot = document.getElementById("appScroll");
+  if (scrollRoot) scrollRoot.scrollTop = 0;
 }
 
 document.getElementById("dashSettingsBtn").addEventListener("click", () => switchTab("settings"));
@@ -1852,7 +1855,6 @@ function setupAiCardToggle(btnId, resultId, insightsId) {
   });
 }
 setupAiCardToggle("btnAiAnalyze", "aiAnalysisResult", "smartInsights");
-setupAiCardToggle("dashBtnAiAnalyze", "dashAiAnalysisResult", null);
 
 // ---------- AI card scroll collapse (نرم و پیوسته با اسکرول، شبیه هدر) ----------
 function setupAiCardScrollCollapse(cardId, starId, btnId, resultId) {
@@ -1865,8 +1867,12 @@ function setupAiCardScrollCollapse(cardId, starId, btnId, resultId) {
 
   const applyCollapse = (ratio) => {
     const collapse = 1 - Math.min(Math.max(ratio, 0), 1);
-    card.style.opacity = String(1 - collapse);
-    card.style.transform = `scale(${(1 - collapse * 0.08).toFixed(3)}) translateY(${(-collapse * 10).toFixed(1)}px)`;
+    const scale = 1 - collapse * 0.86;
+    const radius = 22 + collapse * 30; // 22px -> 52px, increasingly circular as it shrinks
+    const fade = Math.max(0, (collapse - 0.55) / 0.45); // only fade during the last part of the shrink
+    card.style.opacity = String(1 - fade);
+    card.style.transform = `scale(${scale.toFixed(3)}) translateY(${(collapse * 14).toFixed(1)}px)`;
+    card.style.borderRadius = `${radius.toFixed(1)}px`;
     card.style.pointerEvents = collapse > 0.6 ? "none" : "";
     star.style.opacity = String(collapse);
     star.style.transform = `scale(${(0.5 + collapse * 0.5).toFixed(3)}) translateY(${((1 - collapse) * -6).toFixed(1)}px)`;
@@ -1888,7 +1894,6 @@ function setupAiCardScrollCollapse(cardId, starId, btnId, resultId) {
   });
 }
 setupAiCardScrollCollapse("aiAnalysisCard", "aiFloatingStar", "btnAiAnalyze", "aiAnalysisResult");
-setupAiCardScrollCollapse("dashAiAnalysisCard", "dashAiFloatingStar", "dashBtnAiAnalyze", "dashAiAnalysisResult");
 
 // ---------- Header scroll collapse ----------
 const appScroll = document.getElementById("appScroll");
