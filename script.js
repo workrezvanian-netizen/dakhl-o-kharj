@@ -1281,22 +1281,9 @@ function renderMonthCompareCard(containerId, period = "month") {
   });
 }
 
-function polarToCartesian(cx, cy, r, angleDeg) {
-  const rad = ((angleDeg - 90) * Math.PI) / 180;
-  return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
-}
-function describeArc(cx, cy, r, startAngle, endAngle) {
-  const start = polarToCartesian(cx, cy, r, endAngle);
-  const end = polarToCartesian(cx, cy, r, startAngle);
-  const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
-  return `M ${start.x.toFixed(2)} ${start.y.toFixed(2)} A ${r} ${r} 0 ${largeArcFlag} 0 ${end.x.toFixed(2)} ${end.y.toFixed(2)}`;
-}
-
 function renderPieChart(containerId, segments, chartType = "expense") {
   const wrap = document.getElementById(containerId);
-  const totalEl = document.getElementById("diversityTotal");
   const total = segments.reduce((s, x) => s + x.value, 0);
-  if (totalEl) totalEl.textContent = fmtAmount(total) + " تومان";
   if (!total) {
     wrap.innerHTML = `<p class="empty-hint">داده‌ای برای این بازه نیست</p>`;
     return;
@@ -1304,49 +1291,65 @@ function renderPieChart(containerId, segments, chartType = "expense") {
   const visible = segments.filter((s) => s.value > 0);
 
   // رنگ هر بخش از قبل با catColor() تعیین شده تا با داشبورد/تب ثبت/لیست مخارج یکسان بماند
-  const cx = 91, cy = 91, r = 66, sw = 27;
-  const gapDeg = visible.length > 1 ? 7 : 0;
-  const explodeDist = 4;
-  const labelRadiusPct = 41;
+  const cx = 91, cy = 91, r = 72, sw = 30;
+  const circumference = 2 * Math.PI * r;
+  const uid = Date.now();
 
-  let cursor = 0;
-  const segsHTML = [];
-  const labelsHTML = [];
-  visible.forEach((seg) => {
-    const frac = seg.value / total;
-    const sweep = frac * (360 - gapDeg * visible.length);
-    const startA = cursor;
-    const endA = cursor + sweep;
-    cursor = endA + gapDeg;
-    const midA = (startA + endA) / 2;
-    const rad = ((midA - 90) * Math.PI) / 180;
-    const dx = Math.cos(rad) * explodeDist;
-    const dy = Math.sin(rad) * explodeDist;
-    const d = describeArc(cx, cy, r, startA, endA);
-    segsHTML.push(`<path d="${d}" fill="none" stroke="${seg.color}" stroke-width="${sw}" stroke-linecap="round" transform="translate(${dx.toFixed(2)},${dy.toFixed(2)})"/>`);
+  let cumulative = 0;
+  const segsHTML = visible.map((seg, i) => {
+    const dash = (seg.value / total) * circumference;
+    const offset = (cumulative / total) * circumference;
+    cumulative += seg.value;
+    return `<circle class="donut-seg" id="donutSeg-${uid}-${i}" cx="${cx}" cy="${cy}" r="${r}" fill="none"
+      stroke="${seg.color}" stroke-width="${sw}"
+      stroke-dasharray="0 ${circumference}" stroke-dashoffset="${-offset}"
+      transform="rotate(-90 ${cx} ${cy})" data-dash="${dash}" data-circ="${circumference}"/>`;
+  }).join("");
 
-    const lx = (50 + Math.cos(rad) * labelRadiusPct).toFixed(2);
-    const ly = (50 + Math.sin(rad) * labelRadiusPct).toFixed(2);
-    labelsHTML.push(`
-      <div class="donut-radial-label" style="left:${lx}%;top:${ly}%;">
-        <div class="donut-radial-label-top"><span class="legend-dot" style="background:${seg.color}"></span>${seg.label}</div>
-        <div class="donut-radial-label-amt" style="color:${seg.color}">${fmtAmount(seg.value)}</div>
-      </div>`);
-  });
+  const legend = visible.map((seg) => {
+    const pct = Math.round((seg.value / total) * 100);
+    const iconHTML = seg.icon
+      ? `<span class="legend-icon" style="background:${seg.color}1f">${iconSpanHTML(seg.icon, `color:${seg.color}`)}</span>`
+      : `<span class="legend-dot" style="background:${seg.color}"></span>`;
+    return `
+      <div class="chart-legend-row">
+        ${iconHTML}
+        <span class="legend-label">${seg.label}</span>
+        <span class="legend-pct" style="background:${seg.color}1c;color:${seg.color}">${toPersianDigits(pct)}٪</span>
+        <span class="legend-amt">${fmtAmount(seg.value)}</span>
+      </div>`;
+  }).join("");
 
   wrap.innerHTML = `
-    <div class="donut-radial-wrap">
+    <div class="donut-wrap">
       <svg viewBox="0 0 182 182" class="donut-svg">
         <defs>
           <filter id="pieShadow-${containerId}" x="-30%" y="-30%" width="160%" height="160%">
             <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#163F3C" flood-opacity="0.18"/>
           </filter>
         </defs>
-        <g style="filter:url(#pieShadow-${containerId})">${segsHTML.join("")}</g>
+        <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--cream)" stroke-width="${sw}"/>
+        <g style="filter:url(#pieShadow-${containerId})">${segsHTML}</g>
       </svg>
-      ${labelsHTML.join("")}
+      <div class="donut-center">
+        <span class="donut-center-label">مجموع مخارج</span>
+        <span class="donut-center-amt">${fmtAmount(total)}</span>
+      </div>
     </div>
+    <div class="chart-legend">${legend}</div>
   `;
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      visible.forEach((seg, i) => {
+        const el = document.getElementById(`donutSeg-${uid}-${i}`);
+        if (!el) return;
+        const dash = parseFloat(el.dataset.dash);
+        const circ = parseFloat(el.dataset.circ);
+        el.setAttribute("stroke-dasharray", `${dash} ${circ - dash}`);
+      });
+    });
+  });
 }
 
 function renderCombinedDailyChart(containerId, incomeTotalElId, expenseTotalElId, jy, jm) {
@@ -1378,12 +1381,13 @@ function renderCombinedDailyChart(containerId, incomeTotalElId, expenseTotalElId
     return;
   }
 
-  const maxVal = Math.max(...byDayIncome.slice(1), ...byDayExpense.slice(1)) || 1;
+  const maxIncome = Math.max(...byDayIncome.slice(1)) || 1;
+  const maxExpense = Math.max(...byDayExpense.slice(1)) || 1;
   const W = 320, H = 130, PAD_TOP = 40, PAD_BOTTOM = 20, PAD_X = 4;
   const chartH = H - PAD_TOP - PAD_BOTTOM;
   const stepX = (W - PAD_X * 2) / (daysInMonth - 1 || 1);
 
-  const buildPts = (byDay, colorKey) => {
+  const buildPts = (byDay, maxVal) => {
     const pts = [];
     for (let d = 1; d <= daysInMonth; d += 1) {
       const x = PAD_X + (d - 1) * stepX;
@@ -1392,8 +1396,8 @@ function renderCombinedDailyChart(containerId, incomeTotalElId, expenseTotalElId
     }
     return pts;
   };
-  const incomePts = buildPts(byDayIncome);
-  const expensePts = buildPts(byDayExpense);
+  const incomePts = buildPts(byDayIncome, maxIncome);
+  const expensePts = buildPts(byDayExpense, maxExpense);
 
   const buildLinePath = (pts) => pts.map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
   const incomeLine = buildLinePath(incomePts);
@@ -1839,6 +1843,38 @@ btnAiAnalyze.addEventListener("click", () => {
     document.getElementById("smartInsights").innerHTML = "";
   }
 });
+
+// ---------- AI card scroll collapse (نرم و پیوسته با اسکرول) ----------
+(function setupAiCardScrollCollapse() {
+  const card = document.getElementById("aiAnalysisCard");
+  const star = document.getElementById("aiFloatingStar");
+  const scrollRoot = document.querySelector(".app-scroll");
+  if (!card || !star || !scrollRoot) return;
+
+  const applyCollapse = (ratio) => {
+    const collapse = 1 - Math.min(Math.max(ratio, 0), 1);
+    card.style.opacity = String(1 - collapse);
+    card.style.transform = `scale(${(1 - collapse * 0.08).toFixed(3)}) translateY(${(-collapse * 10).toFixed(1)}px)`;
+    card.style.pointerEvents = collapse > 0.6 ? "none" : "";
+    star.style.opacity = String(collapse);
+    star.style.transform = `scale(${(0.5 + collapse * 0.5).toFixed(3)}) translateY(${((1 - collapse) * -6).toFixed(1)}px)`;
+    star.style.pointerEvents = collapse > 0.6 ? "auto" : "none";
+  };
+
+  if ("IntersectionObserver" in window) {
+    const thresholds = Array.from({ length: 41 }, (_, i) => i / 40);
+    const io = new IntersectionObserver(
+      (entries) => { entries.forEach((entry) => applyCollapse(entry.intersectionRatio)); },
+      { root: scrollRoot, threshold: thresholds }
+    );
+    io.observe(card);
+  }
+
+  star.addEventListener("click", () => {
+    scrollRoot.scrollTo({ top: 0, behavior: "smooth" });
+    if (aiAnalysisResult.style.display === "none") btnAiAnalyze.click();
+  });
+})();
 
 // ---------- Header scroll collapse ----------
 const appScroll = document.getElementById("appScroll");
