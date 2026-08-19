@@ -757,6 +757,7 @@ function renderAll() {
   renderExpenseList();
   renderAnalysis();
   renderCalendar();
+  renderProfileCard();
 }
 
 function renderExpenseCategoryPicker() {
@@ -1545,6 +1546,72 @@ function computeMonthTotals(jy, jm) {
   return { totalIncome, totalExpense, categories };
 }
 
+function renderCategoryBarChart(containerId, type) {
+  const wrap = document.getElementById(containerId);
+  if (!wrap) return;
+  const inPeriod = (dateStr) => {
+    if (analysisPeriod === "all") return true;
+    const [gy, gm, gd] = dateStr.split("-").map(Number);
+    const d = new Date(gy, gm - 1, gd);
+    const today = new Date();
+    const daysDiff = Math.floor((today - d) / (1000 * 60 * 60 * 24));
+    if (analysisPeriod === "week") return daysDiff >= 0 && daysDiff < 7;
+    if (analysisPeriod === "month") return inViewedMonth(dateStr);
+    return true;
+  };
+
+  const list = (type === "income" ? state.incomes : state.expenses).filter((x) => inPeriod(x.date));
+  const byKey = {};
+  list.forEach((x) => {
+    const key = type === "income" ? x.source : x.category;
+    byKey[key] = (byKey[key] || 0) + x.amount;
+  });
+
+  const segments = Object.entries(byKey)
+    .sort((a, b) => b[1] - a[1])
+    .map(([name, amount], i) => ({
+      name,
+      amount,
+      color: type === "income" ? INCOME_CARD_PALETTE[i % INCOME_CARD_PALETTE.length].icon : catColor(name)
+    }));
+
+  if (!segments.length) {
+    wrap.innerHTML = `<p class="empty-hint">داده‌ای برای این دوره نیست</p>`;
+    return;
+  }
+
+  const max = Math.max(...segments.map((s) => s.amount)) || 1;
+  wrap.innerHTML = `
+    <div class="vbar-chart">
+      ${segments.map((s) => `
+        <div class="vbar-col">
+          <span class="vbar-value">${fmtAmount(s.amount)}</span>
+          <div class="vbar" style="height:0%;background:${s.color};" data-target="${Math.max((s.amount / max) * 100, 6)}"></div>
+          <span class="vbar-label">${s.name}</span>
+        </div>`).join("")}
+    </div>`;
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      wrap.querySelectorAll(".vbar").forEach((el) => { el.style.height = el.dataset.target + "%"; });
+    });
+  });
+}
+
+let categoryBarType = "expense";
+(function setupCategoryBarToggle() {
+  const toggle = document.getElementById("catBarTypeToggle");
+  if (!toggle) return;
+  toggle.querySelectorAll(".chart-period-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      toggle.querySelectorAll(".chart-period-btn").forEach((b) => b.classList.remove("selected"));
+      btn.classList.add("selected");
+      categoryBarType = btn.dataset.type;
+      renderCategoryBarChart("categoryBarChart", categoryBarType);
+    });
+  });
+})();
+
 function renderAnalysis() {
   renderCombinedDailyChart("combinedDailyChart", "incomeChartTotal", "expenseChartTotal", viewedMonth.jy, viewedMonth.jm);
 
@@ -1616,6 +1683,7 @@ function renderAnalysis() {
   }
 
   renderMonthCompareCard("incomeExpenseChart", analysisPeriod);
+  renderCategoryBarChart("categoryBarChart", categoryBarType);
 
   const byCat = {};
   expenses.forEach((x) => { byCat[x.category] = (byCat[x.category] || 0) + x.amount; });
@@ -1866,7 +1934,7 @@ function setupAiCardScrollCollapse(cardId, starId, btnId, resultId) {
   if (!card || !star || !scrollRoot) return;
 
   const FINAL_SCALE = 0.14;
-  let dx = 0, dy = 0;
+  let dx = 0, dy = 0, collapseDistance = 160;
 
   // Measures exactly where the star sits relative to where the shrunk card
   // would otherwise end up, so the collapse can glide precisely onto it.
@@ -1882,12 +1950,15 @@ function setupAiCardScrollCollapse(cardId, starId, btnId, resultId) {
     const starCenterY = starRect.top + starRect.height / 2;
     dx = starCenterX - shrunkCenterX;
     dy = starCenterY - shrunkCenterY;
+    // Fully collapsed well before the card would have scrolled entirely out of
+    // view, so the animation is always visible even with little content below it.
+    collapseDistance = Math.max(cardRect.height * 0.8, 90);
   }
   measureTarget();
   window.addEventListener("resize", measureTarget);
 
-  const applyCollapse = (ratio) => {
-    const collapse = 1 - Math.min(Math.max(ratio, 0), 1);
+  const applyCollapse = (collapse) => {
+    collapse = Math.min(Math.max(collapse, 0), 1);
     const scale = 1 - collapse * (1 - FINAL_SCALE);
     const radius = 22 + collapse * 30; // 22px -> 52px, increasingly circular as it shrinks
     const fade = Math.max(0, (collapse - 0.55) / 0.45); // only fade during the last part of the shrink
@@ -1901,14 +1972,17 @@ function setupAiCardScrollCollapse(cardId, starId, btnId, resultId) {
     star.style.pointerEvents = collapse > 0.6 ? "auto" : "none";
   };
 
-  if ("IntersectionObserver" in window) {
-    const thresholds = Array.from({ length: 41 }, (_, i) => i / 40);
-    const io = new IntersectionObserver(
-      (entries) => { entries.forEach((entry) => applyCollapse(entry.intersectionRatio)); },
-      { root: scrollRoot, threshold: thresholds }
-    );
-    io.observe(card);
+  let ticking = false;
+  function onScroll() {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(() => {
+      applyCollapse(scrollRoot.scrollTop / collapseDistance);
+      ticking = false;
+    });
   }
+  scrollRoot.addEventListener("scroll", onScroll, { passive: true });
+  applyCollapse(scrollRoot.scrollTop / collapseDistance);
 
   star.addEventListener("click", () => {
     scrollRoot.scrollTo({ top: 0, behavior: "smooth" });
@@ -1916,6 +1990,103 @@ function setupAiCardScrollCollapse(cardId, starId, btnId, resultId) {
   });
 }
 setupAiCardScrollCollapse("aiAnalysisCard", "aiFloatingStar", "btnAiAnalyze", "aiAnalysisResult");
+
+// ---------- Profile card (avatar + name) ----------
+const PROFILE_NAME_KEY = "dnk_profile_name_v1";
+const PROFILE_AVATAR_KEY = "dnk_profile_avatar_v1";
+
+function getProfileName() {
+  let name = localStorage.getItem(PROFILE_NAME_KEY);
+  if (!name) {
+    name = "کاربر" + String(Math.floor(1000 + Math.random() * 9000));
+    localStorage.setItem(PROFILE_NAME_KEY, name);
+  }
+  return name;
+}
+function setProfileName(name) {
+  localStorage.setItem(PROFILE_NAME_KEY, name);
+}
+function getProfileAvatar() {
+  return localStorage.getItem(PROFILE_AVATAR_KEY);
+}
+function setProfileAvatar(dataUrl) {
+  if (dataUrl) localStorage.setItem(PROFILE_AVATAR_KEY, dataUrl);
+  else localStorage.removeItem(PROFILE_AVATAR_KEY);
+}
+
+function renderProfileCard() {
+  const nameEl = document.getElementById("profileNameDisplay");
+  const img = document.getElementById("profileAvatarImg");
+  const defaultAvatar = document.getElementById("profileAvatarDefault");
+  if (!nameEl || !img || !defaultAvatar) return;
+  nameEl.textContent = getProfileName();
+  const avatar = getProfileAvatar();
+  if (avatar) {
+    img.src = avatar;
+    img.style.display = "";
+    defaultAvatar.style.display = "none";
+  } else {
+    img.style.display = "none";
+    defaultAvatar.style.display = "";
+  }
+}
+
+(function setupProfileCard() {
+  const nameEl = document.getElementById("profileNameDisplay");
+  const nameInput = document.getElementById("profileNameInput");
+  const avatarBadge = document.getElementById("profileAvatarEditBtn");
+  const avatarInput = document.getElementById("profileAvatarInput");
+  if (!nameEl || !nameInput || !avatarBadge || !avatarInput) return;
+
+  function startEditName() {
+    nameInput.value = getProfileName();
+    nameEl.style.display = "none";
+    nameInput.style.display = "";
+    nameInput.focus();
+    nameInput.select();
+  }
+  function commitEditName() {
+    const val = nameInput.value.trim();
+    if (val) setProfileName(val);
+    nameInput.style.display = "none";
+    nameEl.style.display = "";
+    renderProfileCard();
+  }
+
+  nameEl.addEventListener("click", startEditName);
+  nameInput.addEventListener("blur", commitEditName);
+  nameInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") { e.preventDefault(); nameInput.blur(); }
+  });
+
+  avatarBadge.addEventListener("click", () => avatarInput.click());
+  avatarInput.addEventListener("change", () => {
+    const file = avatarInput.files && avatarInput.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        // Downscale to keep localStorage usage reasonable
+        const MAX = 240;
+        let { width, height } = img;
+        if (width > height && width > MAX) { height = Math.round(height * (MAX / width)); width = MAX; }
+        else if (height > MAX) { width = Math.round(width * (MAX / height)); height = MAX; }
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, width, height);
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
+        setProfileAvatar(dataUrl);
+        renderProfileCard();
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+    avatarInput.value = "";
+  });
+})();
 
 // ---------- Header scroll collapse ----------
 const appScroll = document.getElementById("appScroll");

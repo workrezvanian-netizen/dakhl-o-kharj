@@ -255,6 +255,16 @@
       <div id="incomeExpenseChart"></div>
     </div>
     <div class="settings-card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <h2 style="margin:0;">نمودار میله‌ای</h2>
+        <div class="chart-period-toggle" id="catBarTypeToggle" style="gap:4px;margin:0;">
+          <button type="button" class="chart-period-btn selected" data-type="expense" style="padding:6px 10px;flex:none;width:auto;">مخارج</button>
+          <button type="button" class="chart-period-btn" data-type="income" style="padding:6px 10px;flex:none;width:auto;">درآمد</button>
+        </div>
+      </div>
+      <div id="categoryBarChart"></div>
+    </div>
+    <div class="settings-card">
       <h2>تنوع مخارج</h2>
       <div id="expenseDiversityChart"></div>
     </div>
@@ -364,6 +374,21 @@
   <!-- SETTINGS -->
   <section id="tab-settings" class="tab">
     <div class="settings-glow" aria-hidden="true"></div>
+
+    <div class="profile-card">
+      <div class="profile-avatar-wrap">
+        <img id="profileAvatarImg" class="profile-avatar" alt="عکس کاربر" style="display:none;">
+        <div id="profileAvatarDefault" class="profile-avatar profile-avatar-default">
+          <span class="icon-mask" data-icon="user-round" style="width:36px;height:36px;color:#fff"></span>
+        </div>
+        <button type="button" id="profileAvatarEditBtn" class="profile-avatar-badge" aria-label="تغییر عکس">
+          <span class="icon-mask" data-icon="camera" style="width:13px;height:13px;color:#fff"></span>
+        </button>
+        <input type="file" id="profileAvatarInput" accept="image/*" style="display:none;">
+      </div>
+      <div id="profileNameDisplay" class="profile-name"></div>
+      <input type="text" id="profileNameInput" class="profile-name-input" style="display:none;" maxlength="24">
+    </div>
 
     <details class="settings-group">
       <summary class="settings-group-title"><span class="icon-mask" data-icon="shield-check" style="width:15px;height:15px;color:var(--green-deep);margin-left:6px;vertical-align:-3px;"></span>امنیت</summary>
@@ -481,7 +506,7 @@
       </div>
     </details>
 
-    <p class="app-version">نسخه‌ی ۱.۳۶</p>
+    <p class="app-version">نسخه‌ی ۱.۳۷</p>
 
   </section>
 
