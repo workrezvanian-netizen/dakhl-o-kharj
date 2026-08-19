@@ -1423,12 +1423,25 @@ function renderCombinedDailyChart(containerId, incomeTotalElId, expenseTotalElId
   const pool = isYear ? buildYearlyChartPool(todayJalali().jy) : buildDailyChartPool(DAILY_CHART_POOL_DAYS);
   const n = pool.length;
 
-  const totalIncome = pool.reduce((s, p) => s + p.income, 0);
-  const totalExpense = pool.reduce((s, p) => s + p.expense, 0);
-  if (incomeTotalEl) incomeTotalEl.textContent = fmtAmount(totalIncome) + " تومان";
-  if (expenseTotalEl) expenseTotalEl.textContent = fmtAmount(totalExpense) + " تومان";
+  // مقدار بالای نمودار: متناسب با دکمه‌ی بازه‌ی انتخاب‌شده — سالیانه = کل سال جاری، ماهانه = فقط ماه جاری
+  const todayJHead = todayJalali();
+  let headerIncome = 0, headerExpense = 0;
+  state.incomes.forEach((x) => {
+    const [gy, gm, gd] = x.date.split("-").map(Number);
+    const j = toJalaali(gy, gm, gd);
+    if (isYear ? j.jy === todayJHead.jy : (j.jy === todayJHead.jy && j.jm === todayJHead.jm)) headerIncome += x.amount;
+  });
+  state.expenses.forEach((x) => {
+    const [gy, gm, gd] = x.date.split("-").map(Number);
+    const j = toJalaali(gy, gm, gd);
+    if (isYear ? j.jy === todayJHead.jy : (j.jy === todayJHead.jy && j.jm === todayJHead.jm)) headerExpense += x.amount;
+  });
+  if (incomeTotalEl) incomeTotalEl.textContent = fmtAmount(headerIncome);
+  if (expenseTotalEl) expenseTotalEl.textContent = fmtAmount(headerExpense);
   if (hint) hint.style.display = isYear ? "none" : "block";
 
+  const totalIncome = pool.reduce((s, p) => s + p.income, 0);
+  const totalExpense = pool.reduce((s, p) => s + p.expense, 0);
   if (!totalIncome && !totalExpense) {
     wrap.innerHTML = `<p class="empty-hint">داده‌ای برای این بازه نیست</p>`;
     return;
@@ -1641,26 +1654,23 @@ function renderTopTransactionsList(containerId) {
     return;
   }
 
+  const max = Math.max(...all.map((t) => t.amount)) || 1;
   const rankMedal = ["🥇", "🥈", "🥉"];
   wrap.innerHTML = `
-    <div class="top-tx-list">
-      ${all.map((tx, i) => {
-        const [gy, gm, gd] = tx.date.split("-").map(Number);
-        const j = toJalaali(gy, gm, gd);
-        const dateLabel = `${toPersianDigits(j.jd)} ${JALALI_MONTHS[j.jm - 1]}`;
-        const rank = rankMedal[i] || `#${toPersianDigits(i + 1)}`;
-        return `
-          <div class="top-tx-row">
-            <span class="top-tx-rank">${rank}</span>
-            <span class="top-tx-icon" style="background:${tx.color}1f">${iconSpanHTML(tx.icon, `color:${tx.color}`)}</span>
-            <div class="top-tx-main">
-              <span class="top-tx-title">${tx.title}${tx.note ? ` <span class="top-tx-note">— ${tx.note}</span>` : ""}</span>
-              <span class="top-tx-date">${dateLabel}</span>
-            </div>
-            <span class="top-tx-amount ${tx.kind === "income" ? "income-color" : "expense-color"}">${tx.kind === "income" ? "+" : "−"}${fmtAmount(tx.amount)}</span>
-          </div>`;
-      }).join("")}
+    <div class="vbar-chart">
+      ${all.map((tx, i) => `
+        <div class="vbar-col">
+          <span class="vbar-value">${tx.kind === "income" ? "+" : "−"}${fmtAmount(tx.amount)}</span>
+          <div class="vbar" style="height:0%;background:${tx.color};" data-target="${Math.max((tx.amount / max) * 100, 6)}"></div>
+          <span class="vbar-label">${rankMedal[i] ? rankMedal[i] + " " : ""}${tx.title}</span>
+        </div>`).join("")}
     </div>`;
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      wrap.querySelectorAll(".vbar").forEach((el) => { el.style.height = el.dataset.target + "%"; });
+    });
+  });
 }
 
 function renderAnalysis() {
