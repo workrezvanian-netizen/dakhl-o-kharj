@@ -232,6 +232,10 @@
             <strong id="incomeChartTotal" class="daily-chart-total income-color">۰ تومان</strong>
           </div>
         </div>
+        <div class="chart-period-toggle" id="dailyChartModeToggle" style="gap:4px;margin:0;">
+          <button type="button" class="chart-period-btn selected" data-mode="day" style="padding:6px 10px;flex:none;width:auto;">ماهانه</button>
+          <button type="button" class="chart-period-btn" data-mode="year" style="padding:6px 10px;flex:none;width:auto;">سالیانه</button>
+        </div>
         <div class="daily-chart-head-item align-left">
           <div class="daily-chart-head-text align-left">
             <span class="daily-chart-label">مخارج</span>
@@ -240,7 +244,10 @@
           <span class="daily-chart-dot expense-dot"></span>
         </div>
       </div>
-      <div id="combinedDailyChart"></div>
+      <div class="daily-chart-scroll" id="dailyChartScroll">
+        <div id="combinedDailyChart"></div>
+      </div>
+      <p class="daily-chart-hint" id="dailyChartHint">برای دیدن روزهای قبل، نمودار رو بکش ⇠</p>
     </div>
 
     <div class="settings-card">
@@ -256,13 +263,9 @@
     </div>
     <div class="settings-card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-        <h2 style="margin:0;">نمودار میله‌ای</h2>
-        <div class="chart-period-toggle" id="catBarTypeToggle" style="gap:4px;margin:0;">
-          <button type="button" class="chart-period-btn selected" data-type="expense" style="padding:6px 10px;flex:none;width:auto;">مخارج</button>
-          <button type="button" class="chart-period-btn" data-type="income" style="padding:6px 10px;flex:none;width:auto;">درآمد</button>
-        </div>
+        <h2 style="margin:0;">بزرگ‌ترین تراکنش‌های این ماه</h2>
       </div>
-      <div id="categoryBarChart"></div>
+      <div id="topTransactionsList"></div>
     </div>
     <div class="settings-card">
       <h2>تنوع مخارج</h2>
@@ -506,7 +509,7 @@
       </div>
     </details>
 
-    <p class="app-version">نسخه‌ی ۱.۳۷</p>
+    <p class="app-version">نسخه‌ی ۱.۳۸</p>
 
   </section>
 

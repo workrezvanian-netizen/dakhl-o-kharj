@@ -2131,3 +2131,46 @@ input:checked + .toggle-slider:before {
 .daily-chart-tooltip-val.expense-tooltip-val { fill: #F3A896; }
 .daily-chart-tooltip-date { fill: rgba(255,255,255,0.65); font-size: 7.2px; font-family: inherit; }
 .daily-chart-axis-label { fill: var(--text-mute); font-size: 8px; font-family: inherit; }
+
+.daily-chart-scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  direction: ltr;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  margin: 0 -2px;
+}
+.daily-chart-scroll::-webkit-scrollbar { display: none; }
+.daily-chart-scroll .daily-chart-svg { width: auto; height: 160px; display: block; touch-action: pan-x; }
+.daily-chart-hint {
+  text-align: center;
+  font-size: 10.5px;
+  color: var(--text-mute);
+  opacity: 0.65;
+  margin: 6px 0 0;
+}
+
+.top-tx-list { display: flex; flex-direction: column; gap: 10px; }
+.top-tx-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: 12px;
+  background: var(--cream);
+}
+.top-tx-rank { font-size: 13px; font-weight: 800; width: 22px; text-align: center; color: var(--text-mute); flex-shrink: 0; }
+.top-tx-icon {
+  width: 32px; height: 32px; border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.top-tx-icon .icon-mask { width: 16px; height: 16px; }
+.top-tx-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.top-tx-title { font-size: 13.5px; font-weight: 700; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.top-tx-note { font-weight: 400; color: var(--text-mute); font-size: 12px; }
+.top-tx-date { font-size: 11px; color: var(--text-mute); }
+.top-tx-amount { font-size: 13.5px; font-weight: 800; white-space: nowrap; flex-shrink: 0; }
+.top-tx-amount.income-color { color: var(--green-deep); }
+.top-tx-amount.expense-color { color: var(--expense); }
+
