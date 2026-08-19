@@ -908,14 +908,16 @@ input:focus, select:focus {
 }
 .ai-floating-star {
   position: fixed;
-  top: calc(64px + env(safe-area-inset-top));
+  top: calc(84px + env(safe-area-inset-top));
   right: 16px;
-  width: 48px;
-  height: 48px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
-  border: none;
-  background: linear-gradient(150deg, var(--green-deep) 0%, #2F7A72 70%, #4FA89E 130%);
-  box-shadow: 0 8px 18px rgba(16,70,43,0.32);
+  border: 1px solid rgba(255,255,255,0.3);
+  background: linear-gradient(150deg, rgba(22,63,60,0.55) 0%, rgba(47,122,114,0.55) 70%, rgba(79,168,158,0.55) 130%);
+  backdrop-filter: blur(8px) saturate(120%);
+  -webkit-backdrop-filter: blur(8px) saturate(120%);
+  box-shadow: 0 8px 18px rgba(16,70,43,0.2);
   display: flex;
   align-items: center;
   justify-content: center;

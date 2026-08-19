@@ -1865,16 +1865,38 @@ function setupAiCardScrollCollapse(cardId, starId, btnId, resultId) {
   const scrollRoot = document.querySelector(".app-scroll");
   if (!card || !star || !scrollRoot) return;
 
+  const FINAL_SCALE = 0.14;
+  let dx = 0, dy = 0;
+
+  // Measures exactly where the star sits relative to where the shrunk card
+  // would otherwise end up, so the collapse can glide precisely onto it.
+  function measureTarget() {
+    const prevTransform = card.style.transform;
+    card.style.transform = "none";
+    const cardRect = card.getBoundingClientRect();
+    card.style.transform = prevTransform;
+    const starRect = star.getBoundingClientRect();
+    const shrunkCenterX = cardRect.right - (cardRect.width * FINAL_SCALE) / 2;
+    const shrunkCenterY = cardRect.top + (cardRect.height * FINAL_SCALE) / 2;
+    const starCenterX = starRect.left + starRect.width / 2;
+    const starCenterY = starRect.top + starRect.height / 2;
+    dx = starCenterX - shrunkCenterX;
+    dy = starCenterY - shrunkCenterY;
+  }
+  measureTarget();
+  window.addEventListener("resize", measureTarget);
+
   const applyCollapse = (ratio) => {
     const collapse = 1 - Math.min(Math.max(ratio, 0), 1);
-    const scale = 1 - collapse * 0.86;
+    const scale = 1 - collapse * (1 - FINAL_SCALE);
     const radius = 22 + collapse * 30; // 22px -> 52px, increasingly circular as it shrinks
     const fade = Math.max(0, (collapse - 0.55) / 0.45); // only fade during the last part of the shrink
+    const pull = Math.pow(collapse, 1.7); // gather toward the star only as it nears the end, so the top edge holds still at first
     card.style.opacity = String(1 - fade);
-    card.style.transform = `scale(${scale.toFixed(3)}) translateY(${(collapse * 14).toFixed(1)}px)`;
+    card.style.transform = `translate(${(dx * pull).toFixed(1)}px, ${(dy * pull).toFixed(1)}px) scale(${scale.toFixed(3)})`;
     card.style.borderRadius = `${radius.toFixed(1)}px`;
     card.style.pointerEvents = collapse > 0.6 ? "none" : "";
-    star.style.opacity = String(collapse);
+    star.style.opacity = String(collapse * 0.92);
     star.style.transform = `scale(${(0.5 + collapse * 0.5).toFixed(3)}) translateY(${((1 - collapse) * -6).toFixed(1)}px)`;
     star.style.pointerEvents = collapse > 0.6 ? "auto" : "none";
   };
