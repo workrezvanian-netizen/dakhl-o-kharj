@@ -87,11 +87,12 @@ function loadState() {
         installments: parsed.installments || [],
         categories,
         syncCode: parsed.syncCode || null,
+        profile: parsed.profile || { name: null, avatar: null },
         updatedAt: parsed.updatedAt || Date.now()
       };
     }
   } catch (e) { /* ignore corrupt state */ }
-  return { incomes: [], expenses: [], installments: [], categories: DEFAULT_CATEGORIES.slice(), syncCode: null, updatedAt: Date.now() };
+  return { incomes: [], expenses: [], installments: [], categories: DEFAULT_CATEGORIES.slice(), syncCode: null, profile: { name: null, avatar: null }, updatedAt: Date.now() };
 }
 
 function saveState({ sync = true } = {}) {
@@ -471,6 +472,16 @@ initWelcomeScreen();
 
 document.getElementById("btnDismissInstallGuide").addEventListener("click", () => {
   document.getElementById("installGuide").hidden = true;
+});
+
+// ---------- Settings accordions: only one open at a time ----------
+document.querySelectorAll('#tab-settings .settings-group').forEach((details) => {
+  details.addEventListener("toggle", () => {
+    if (!details.open) return;
+    document.querySelectorAll('#tab-settings .settings-group').forEach((other) => {
+      if (other !== details) other.open = false;
+    });
+  });
 });
 
 // ---------- Tabs ----------
@@ -1655,14 +1666,13 @@ function renderTopTransactionsList(containerId) {
   }
 
   const max = Math.max(...all.map((t) => t.amount)) || 1;
-  const rankMedal = ["🥇", "🥈", "🥉"];
   wrap.innerHTML = `
     <div class="vbar-chart">
       ${all.map((tx, i) => `
         <div class="vbar-col">
           <span class="vbar-value">${tx.kind === "income" ? "+" : "−"}${fmtAmount(tx.amount)}</span>
           <div class="vbar" style="height:0%;background:${tx.color};" data-target="${Math.max((tx.amount / max) * 100, 6)}"></div>
-          <span class="vbar-label">${rankMedal[i] ? rankMedal[i] + " " : ""}${tx.title}</span>
+          <span class="vbar-label">${tx.title}</span>
         </div>`).join("")}
     </div>`;
 
@@ -1903,7 +1913,7 @@ document.getElementById("btnSyncNow").addEventListener("click", async () => {
 document.getElementById("btnResetData").addEventListener("click", () => {
   if (!confirm("همه درآمدها، مخارج و برچسب‌های این دستگاه حذف بشه؟ این کار برگشت‌ناپذیره.")) return;
   const keepCode = state.syncCode;
-  state = { incomes: [], expenses: [], categories: DEFAULT_CATEGORIES.slice(), syncCode: keepCode, updatedAt: Date.now() };
+  state = { incomes: [], expenses: [], categories: DEFAULT_CATEGORIES.slice(), syncCode: keepCode, profile: { name: null, avatar: null }, updatedAt: Date.now() };
   saveState();
   refreshSyncUI();
 });
@@ -2053,26 +2063,46 @@ function setupAiCardScrollCollapse(cardId, starId, btnId, resultId) {
 setupAiCardScrollCollapse("aiAnalysisCard", "aiFloatingStar", "btnAiAnalyze", "aiAnalysisResult");
 
 // ---------- Profile card (avatar + name) ----------
-const PROFILE_NAME_KEY = "dnk_profile_name_v1";
-const PROFILE_AVATAR_KEY = "dnk_profile_avatar_v1";
+// Stored in state.profile so it travels with the sync code, not just this device.
+const LEGACY_PROFILE_NAME_KEY = "dnk_profile_name_v1";
+const LEGACY_PROFILE_AVATAR_KEY = "dnk_profile_avatar_v1";
+
+function migrateLegacyProfile() {
+  if (!state.profile) state.profile = { name: null, avatar: null };
+  let changed = false;
+  if (!state.profile.name) {
+    const legacyName = localStorage.getItem(LEGACY_PROFILE_NAME_KEY);
+    if (legacyName) { state.profile.name = legacyName; changed = true; }
+  }
+  if (!state.profile.avatar) {
+    const legacyAvatar = localStorage.getItem(LEGACY_PROFILE_AVATAR_KEY);
+    if (legacyAvatar) { state.profile.avatar = legacyAvatar; changed = true; }
+  }
+  if (changed) saveState();
+  localStorage.removeItem(LEGACY_PROFILE_NAME_KEY);
+  localStorage.removeItem(LEGACY_PROFILE_AVATAR_KEY);
+}
 
 function getProfileName() {
-  let name = localStorage.getItem(PROFILE_NAME_KEY);
-  if (!name) {
-    name = "کاربر" + String(Math.floor(1000 + Math.random() * 9000));
-    localStorage.setItem(PROFILE_NAME_KEY, name);
+  if (!state.profile) state.profile = { name: null, avatar: null };
+  if (!state.profile.name) {
+    state.profile.name = "کاربر" + String(Math.floor(1000 + Math.random() * 9000));
+    saveState();
   }
-  return name;
+  return state.profile.name;
 }
 function setProfileName(name) {
-  localStorage.setItem(PROFILE_NAME_KEY, name);
+  if (!state.profile) state.profile = { name: null, avatar: null };
+  state.profile.name = name;
+  saveState();
 }
 function getProfileAvatar() {
-  return localStorage.getItem(PROFILE_AVATAR_KEY);
+  return state.profile ? state.profile.avatar : null;
 }
 function setProfileAvatar(dataUrl) {
-  if (dataUrl) localStorage.setItem(PROFILE_AVATAR_KEY, dataUrl);
-  else localStorage.removeItem(PROFILE_AVATAR_KEY);
+  if (!state.profile) state.profile = { name: null, avatar: null };
+  state.profile.avatar = dataUrl || null;
+  saveState();
 }
 
 function renderProfileCard() {
@@ -2093,6 +2123,7 @@ function renderProfileCard() {
 }
 
 (function setupProfileCard() {
+  migrateLegacyProfile();
   const nameEl = document.getElementById("profileNameDisplay");
   const nameInput = document.getElementById("profileNameInput");
   const avatarBadge = document.getElementById("profileAvatarEditBtn");

@@ -862,10 +862,22 @@ h2 {
   width: 200px;
   font-family: inherit;
 }
+.settings-group, .settings-card {
+  direction: rtl;
+}
 .settings-group h2, .settings-group h3, .settings-group p,
 .settings-group label, .settings-group .hint, .settings-group li,
-.settings-group span:not(.icon-mask) {
+.settings-group span:not(.icon-mask),
+.settings-card h2, .settings-card h3, .settings-card p,
+.settings-card label, .settings-card .hint, .settings-card li,
+.settings-card span:not(.icon-mask) {
+  text-align: right !important;
+}
+.settings-group input, .settings-card input {
   text-align: right;
+}
+.settings-card p.sync-msg, .settings-group p.sync-msg {
+  text-align: center !important;
 }
 .settings-card, .settings-group {
   position: relative;
