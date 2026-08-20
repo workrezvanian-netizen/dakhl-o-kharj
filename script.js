@@ -744,10 +744,20 @@ document.getElementById("categoryForm").addEventListener("submit", (e) => {
 function deleteIncome(id) {
   state.incomes = state.incomes.filter((x) => x.id !== id);
   saveState();
+  refreshCalDaySheetIfOpen();
 }
 function deleteExpense(id) {
   state.expenses = state.expenses.filter((x) => x.id !== id);
   saveState();
+  refreshCalDaySheetIfOpen();
+}
+function refreshCalDaySheetIfOpen() {
+  const overlay = document.getElementById("calDaySheetOverlay");
+  if (overlay && !overlay.hidden && overlay.dataset.iso) {
+    const [gy, gm, gd] = overlay.dataset.iso.split("-").map(Number);
+    const j = toJalaali(gy, gm, gd);
+    openCalDaySheet(j.jd);
+  }
 }
 function deleteCategory(name) {
   const inUse = state.expenses.some((x) => x.category === name);
@@ -1013,7 +1023,77 @@ function renderCalendar() {
       </button>`;
   }
   grid.innerHTML = html;
+  grid.querySelectorAll(".cal-cell[data-day]").forEach((btn) => {
+    btn.addEventListener("click", () => openCalDaySheet(Number(btn.dataset.day)));
+  });
 }
+
+// ---------- شیت جزئیات روز تقویم ----------
+function calISOFromViewedDay(jd) {
+  const g = toGregorian(viewedMonth.jy, viewedMonth.jm, jd);
+  return `${g.gy}-${String(g.gm).padStart(2, "0")}-${String(g.gd).padStart(2, "0")}`;
+}
+
+function openCalDaySheet(jd) {
+  const iso = calISOFromViewedDay(jd);
+  const overlay = document.getElementById("calDaySheetOverlay");
+  const title = document.getElementById("calDaySheetTitle");
+  const summary = document.getElementById("calDaySheetSummary");
+  const list = document.getElementById("calDaySheetList");
+
+  title.textContent = `${toPersianDigits(jd)} ${JALALI_MONTHS[viewedMonth.jm - 1]} ${toPersianDigits(viewedMonth.jy)}`;
+
+  const dayIncomes = state.incomes.filter((x) => x.date === iso);
+  const dayExpenses = state.expenses.filter((x) => x.date === iso);
+  const incomeSum = dayIncomes.reduce((s, x) => s + x.amount, 0);
+  const expenseSum = dayExpenses.reduce((s, x) => s + x.amount, 0);
+
+  summary.innerHTML = `
+    <div class="cal-day-sheet-stat">
+      <span class="cal-day-sheet-stat-label">درآمد</span>
+      <strong class="cal-day-sheet-stat-val income-color">${fmtAmount(incomeSum)}</strong>
+    </div>
+    <div class="cal-day-sheet-stat">
+      <span class="cal-day-sheet-stat-label">مخارج</span>
+      <strong class="cal-day-sheet-stat-val expense-color">${fmtAmount(expenseSum)}</strong>
+    </div>`;
+
+  const items = sortEntriesDesc([
+    ...dayIncomes.map((x) => ({ ...x, __type: "income" })),
+    ...dayExpenses.map((x) => ({ ...x, __type: "expense" })),
+  ]);
+  list.innerHTML = items.length
+    ? items.map((x) => entryRowHTML(x, x.__type)).join("")
+    : `<p class="empty-hint">تراکنشی برای این روز ثبت نشده</p>`;
+
+  overlay.dataset.iso = iso;
+  overlay.hidden = false;
+}
+
+function closeCalDaySheet() {
+  document.getElementById("calDaySheetOverlay").hidden = true;
+}
+document.getElementById("calDaySheetClose").addEventListener("click", closeCalDaySheet);
+document.getElementById("calDaySheetOverlay").addEventListener("click", (e) => {
+  if (e.target.id === "calDaySheetOverlay") closeCalDaySheet();
+});
+
+function calDayJumpToEntry(mode) {
+  const iso = document.getElementById("calDaySheetOverlay").dataset.iso;
+  if (!iso) return;
+  closeCalDaySheet();
+  switchTab("entry");
+  setEntryMode(mode);
+  dateQuickMode[mode] = "custom";
+  const group = document.getElementById(mode + "DateQuick");
+  group.querySelectorAll(".date-quick-btn").forEach((b) => b.classList.toggle("selected", b.dataset.value === "custom"));
+  document.getElementById(mode + "CustomDate").style.display = "grid";
+  const [gy, gm, gd] = iso.split("-").map(Number);
+  const j = toJalaali(gy, gm, gd);
+  populateDateSelects(mode, j.jy, j.jm, j.jd);
+}
+document.getElementById("calDayAddExpenseBtn").addEventListener("click", () => calDayJumpToEntry("expense"));
+document.getElementById("calDayAddIncomeBtn").addEventListener("click", () => calDayJumpToEntry("income"));
 
 document.getElementById("calPrevMonthBtn").addEventListener("click", () => {
   dashboardMode = "month";
@@ -1792,8 +1872,8 @@ function setupAiAnalyzeButton(btnId, resultId) {
       if (!res.ok || !data || !data.summary) {
         const code = data && data.error;
         let msg = "متأسفانه الان نشد تحلیل کنم، یه‌بار دیگه امتحان کن.";
-        if (code === "no_ai_binding") {
-          msg = "😅 هنوز Workers AI به این Worker وصل نشده. باید توی wrangler.toml بخش [ai] رو اضافه کنی و دوباره دیپلوی کنی.";
+        if (code === "no_gemini_key") {
+          msg = "😅 هنوز کلید Gemini API به این Worker وصل نشده. باید با دستور wrangler secret put GEMINI_API_KEY کلیدت رو اضافه کنی و دوباره دیپلوی کنی.";
         } else if (code === "ai_request_failed") {
           msg = "سرور هوش مصنوعی جواب درستی نداد. یه‌بار دیگه امتحان کن.";
           if (data && data.detail) msg += `<br><small style="opacity:.75">جزئیات: ${data.detail}</small>`;

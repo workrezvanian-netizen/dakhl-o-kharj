@@ -1,7 +1,9 @@
 // Cloudflare Worker — بک‌اند همگام‌سازی «دخل و خرج»
 // نیازمند یک KV Namespace با نام DNK_KV که به این Worker باند شده باشه.
-// تحلیل هوش مصنوعی با Cloudflare Workers AI کار می‌کنه (رایگان، بدون نیاز به کلید API)
-// فقط کافیه Binding از نوع Workers AI با اسم AI به این Worker اضافه بشه (توی wrangler.toml هست).
+// تحلیل هوش مصنوعی با Gemini API گوگل کار می‌کنه.
+// باید یک Secret به اسم GEMINI_API_KEY به این Worker اضافه بشه:
+//   wrangler secret put GEMINI_API_KEY
+// کلید API رو از https://aistudio.google.com/apikey می‌تونی رایگان بسازی.
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -50,8 +52,8 @@ function buildAnalysisPrompt(body) {
 }
 
 async function handleAnalyze(request, env) {
-  if (!env.AI) {
-    return jsonResponse({ error: "no_ai_binding" }, 500);
+  if (!env.GEMINI_API_KEY) {
+    return jsonResponse({ error: "no_gemini_key" }, 500);
   }
   let body;
   try {
@@ -61,18 +63,38 @@ async function handleAnalyze(request, env) {
   }
 
   const prompt = buildAnalysisPrompt(body);
+  const GEMINI_MODEL = "gemini-2.5-flash";
 
   let aiRes;
   try {
-    aiRes = await env.AI.run("@cf/meta/llama-3.3-70b-instruct-fp8-fast", {
-      messages: [{ role: "user", content: prompt }],
-      max_tokens: 500
-    });
+    aiRes = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-goog-api-key": env.GEMINI_API_KEY
+        },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }]
+        })
+      }
+    );
   } catch (e) {
     return jsonResponse({ error: "ai_request_failed", detail: String((e && e.message) || e) }, 502);
   }
 
-  const text = aiRes && aiRes.response ? String(aiRes.response).trim() : "";
+  if (!aiRes.ok) {
+    const errText = await aiRes.text().catch(() => "");
+    return jsonResponse({ error: "ai_request_failed", detail: errText.slice(0, 300) }, 502);
+  }
+
+  const data = await aiRes.json().catch(() => null);
+  const text = data && data.candidates && data.candidates[0] && data.candidates[0].content
+    && data.candidates[0].content.parts && data.candidates[0].content.parts[0]
+    ? String(data.candidates[0].content.parts[0].text || "").trim()
+    : "";
+
   if (!text) {
     return jsonResponse({ error: "empty_response" }, 502);
   }

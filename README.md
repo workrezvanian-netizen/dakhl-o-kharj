@@ -22,6 +22,16 @@
 بعد از Commit، Cloudflare خودش دوباره دیپلوی می‌کنه. توی تب **Deployments** می‌تونی پیشرفتش رو ببینی،
 و توی تب **Bindings** باید `DNK_KV` رو زیر Connected Bindings ببینی.
 
+## تحلیل هوشمند (Gemini)
+تحلیل هوشمند از Gemini API گوگل استفاده می‌کنه. برای فعال‌سازیش:
+1. برو به [aistudio.google.com/apikey](https://aistudio.google.com/apikey) و یه کلید API رایگان بساز.
+2. توی ترمینال، از پوشه‌ی همون ریپازیتوری Worker این دستور رو بزن:
+   ```
+   wrangler secret put GEMINI_API_KEY
+   ```
+   و کلیدت رو وقتی خواست پیست کن.
+3. همین — بعد از این، دکمه‌ی «تحلیل هوشمند» توی اپ باید کار کنه.
+
 ## آدرس Worker (از قبل توی script.js ثبت شده)
 ```
 https://dakhl-o-kharj.work-rezvanian.workers.dev

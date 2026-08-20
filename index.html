@@ -509,7 +509,7 @@
       </div>
     </details>
 
-    <p class="app-version">نسخه‌ی ۱.۴۰</p>
+    <p class="app-version">نسخه‌ی ۱.۴۲</p>
 
   </section>
 
@@ -572,6 +572,23 @@
 </nav>
 
 <div id="toast" class="toast" hidden></div>
+
+<!-- شیت جزئیات روز تقویم -->
+<div id="calDaySheetOverlay" class="cal-day-sheet-overlay" hidden>
+  <div class="cal-day-sheet" role="dialog" aria-labelledby="calDaySheetTitle">
+    <div class="cal-day-sheet-handle"></div>
+    <div class="cal-day-sheet-head">
+      <h2 id="calDaySheetTitle">—</h2>
+      <button type="button" id="calDaySheetClose" class="cal-day-sheet-close" aria-label="بستن">✕</button>
+    </div>
+    <div id="calDaySheetSummary" class="cal-day-sheet-summary"></div>
+    <div id="calDaySheetList" class="entry-list cal-day-sheet-list"></div>
+    <div class="cal-day-sheet-actions">
+      <button type="button" id="calDayAddExpenseBtn" class="btn btn-expense" style="flex:1;">+ افزودن خرج</button>
+      <button type="button" id="calDayAddIncomeBtn" class="btn btn-income" style="flex:1;">+ افزودن درآمد</button>
+    </div>
+  </div>
+</div>
 
 <input type="checkbox" id="hapticProxy" tabindex="-1" aria-hidden="true" style="position:fixed;top:-100px;left:-100px;width:1px;height:1px;opacity:0;pointer-events:none;">
 <script src="script.js"></script>

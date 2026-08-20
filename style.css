@@ -1488,7 +1488,7 @@ input:focus, select:focus {
 /* ---------- Bottom nav (iOS "liquid glass" — flat minimal pill) ---------- */
 .bottom-nav {
   position: fixed;
-  bottom: calc(14px + env(safe-area-inset-bottom));
+  bottom: calc(8px + env(safe-area-inset-bottom));
   right: 14px;
   left: 14px;
   z-index: 20;
@@ -1535,7 +1535,7 @@ input:focus, select:focus {
   font-family: inherit;
   font-size: 10.5px;
   cursor: pointer;
-  transition: transform .18s cubic-bezier(.4,0,.2,1), color .18s ease, background .18s ease;
+  transition: transform .18s cubic-bezier(.4,0,.2,1), color .18s ease, background .18s ease, box-shadow .18s ease;
 }
 .nav-btn span {
   white-space: nowrap;
@@ -1555,7 +1555,17 @@ input:focus, select:focus {
   stroke-linejoin: round;
   transition: stroke .18s ease, transform .18s ease;
 }
-.nav-btn.active { color: var(--green-deep); background: rgba(255,255,255,0.38); }
+.nav-btn.active {
+  color: var(--green-deep);
+  background: linear-gradient(180deg, rgba(255,255,255,0.85) 0%, rgba(255,255,255,0.5) 100%);
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  border: 1px solid rgba(255,255,255,0.75);
+  box-shadow:
+    0 4px 12px rgba(16,70,43,0.16),
+    inset 0 1px 0 rgba(255,255,255,0.95),
+    inset 0 -1.5px 3px rgba(16,70,43,0.08);
+}
 .nav-btn.active svg { stroke: var(--green-deep); }
 .nav-btn.active span { font-weight: 700; }
 
@@ -1822,7 +1832,7 @@ input:checked + .toggle-slider:before {
 
 #tab-installments .fab {
   position: fixed;
-  bottom: calc(86px + env(safe-area-inset-bottom));
+  bottom: calc(96px + env(safe-area-inset-bottom));
   left: 18px;
   right: auto;
   width: 56px;
@@ -1834,7 +1844,7 @@ input:checked + .toggle-slider:before {
   border: none;
   box-shadow: 0 12px 24px rgba(27, 42, 74, 0.35), inset 0 2px 3px rgba(255,255,255,0.18);
   cursor: pointer;
-  z-index: 21;
+  z-index: 30;
   line-height: 1;
   transition: transform .15s cubic-bezier(.4,0,.2,1);
 }
@@ -2061,6 +2071,51 @@ input:checked + .toggle-slider:before {
 .cal-dot-income { background: var(--green); }
 .cal-dot-expense { background: var(--expense); }
 
+/* ---------- شیت جزئیات روز تقویم ---------- */
+.cal-day-sheet-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(22, 42, 40, 0.45);
+  display: flex;
+  align-items: flex-end;
+  z-index: 50;
+}
+.cal-day-sheet-overlay[hidden] { display: none; }
+.cal-day-sheet {
+  background: var(--cream);
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  border-radius: 24px 24px 0 0;
+  padding: 10px 20px calc(20px + env(safe-area-inset-bottom));
+  max-height: 82vh;
+  overflow-y: auto;
+  animation: cal-sheet-up 0.22s ease-out;
+}
+@keyframes cal-sheet-up {
+  from { transform: translateY(30px); opacity: 0.4; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.cal-day-sheet-handle { width: 40px; height: 4px; background: var(--border); border-radius: 2px; margin: 8px auto 12px; }
+.cal-day-sheet-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.cal-day-sheet-head h2 { font-size: 17px; font-weight: 800; color: var(--green-deep); margin: 0; }
+.cal-day-sheet-close {
+  border: none; background: var(--green-soft); color: var(--text-mute);
+  width: 30px; height: 30px; border-radius: 50%; font-size: 13px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.cal-day-sheet-summary { display: flex; gap: 10px; margin-bottom: 14px; }
+.cal-day-sheet-stat {
+  flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  padding: 10px 12px; display: flex; flex-direction: column; gap: 3px;
+}
+.cal-day-sheet-stat-label { font-size: 11.5px; color: var(--text-mute); font-weight: 500; }
+.cal-day-sheet-stat-val { font-size: 15px; font-weight: 800; }
+.cal-day-sheet-stat-val.income-color { color: var(--green-deep); }
+.cal-day-sheet-stat-val.expense-color { color: var(--expense); }
+.cal-day-sheet-list { margin-bottom: 14px; max-height: 34vh; overflow-y: auto; }
+.cal-day-sheet-actions { display: flex; gap: 10px; }
+
 /* ---------- Income/expense scale — elegant marker divider ---------- */
 .scale-track-wrap { position: relative; padding-top: 22px; }
 .scale-track-wrap .scale-track {
@@ -2186,3 +2241,27 @@ input:checked + .toggle-slider:before {
 .top-tx-amount.income-color { color: var(--green-deep); }
 .top-tx-amount.expense-color { color: var(--expense); }
 
+
+/* =========================================================
+   تب آنالیز — پالت سرمه‌ای (فقط عناصر خنثی/برندی؛
+   رنگ درآمد=سبز و مخارج=قرمز به‌خاطر معنای مالی‌شون دست‌نخورده می‌مونه)
+========================================================= */
+#tab-analysis {
+  --analysis-navy: #1D2B4F;
+  --analysis-navy-2: #33447A;
+  --analysis-navy-3: #5A6FB0;
+}
+#tab-analysis .settings-card h2 { color: var(--analysis-navy); }
+#tab-analysis .chart-period-btn.selected {
+  background: var(--analysis-navy);
+  border-color: var(--analysis-navy);
+}
+#tab-analysis .ai-card {
+  background: linear-gradient(150deg, var(--analysis-navy) 0%, var(--analysis-navy-2) 70%, var(--analysis-navy-3) 130%);
+  box-shadow: 0 10px 26px rgba(29,43,79,0.24);
+}
+#tab-analysis .ai-floating-star {
+  background: linear-gradient(150deg, rgba(29,43,79,0.6) 0%, rgba(51,68,122,0.6) 70%, rgba(90,111,176,0.6) 130%);
+  box-shadow: 0 8px 18px rgba(29,43,79,0.26);
+}
+#tab-analysis .daily-chart-tooltip-bg { fill: var(--analysis-navy); }
