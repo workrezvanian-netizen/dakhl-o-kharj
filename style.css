@@ -1488,7 +1488,7 @@ input:focus, select:focus {
 /* ---------- Bottom nav (iOS "liquid glass" — flat minimal pill) ---------- */
 .bottom-nav {
   position: fixed;
-  bottom: calc(8px + env(safe-area-inset-bottom));
+  bottom: 0;
   right: 14px;
   left: 14px;
   z-index: 20;
@@ -1500,11 +1500,11 @@ input:focus, select:focus {
   backdrop-filter: blur(34px) saturate(2);
   -webkit-backdrop-filter: blur(34px) saturate(2);
   border: 1px solid rgba(255,255,255,0.45);
-  border-radius: 30px;
+  border-radius: 30px 30px 0 0;
   box-shadow:
     0 10px 26px rgba(16,70,43,0.12),
     0 1px 0 rgba(255,255,255,0.6) inset;
-  padding: 7px;
+  padding: 7px 7px calc(7px + env(safe-area-inset-bottom));
 }
 .bottom-nav::after {
   content: "";
@@ -1892,6 +1892,7 @@ input:checked + .toggle-slider:before {
 #tab-installments .settings-subtitle { font-size: 13px; font-weight: 700; color: var(--inst-navy); margin-bottom: 4px; }
 
 #tab-installments .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; font-size: 13px; color: var(--inst-ink-soft); font-weight: 500; }
+#tab-installments .field[hidden] { display: none; }
 #tab-installments .field input {
   font-family: inherit;
   font-size: 15px;
@@ -1907,6 +1908,13 @@ input:checked + .toggle-slider:before {
 #tab-installments .field-checkbox { flex-direction: row-reverse; align-items: center; justify-content: flex-end; gap: 10px; }
 #tab-installments .field-checkbox input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--inst-navy); flex-shrink: 0; }
 #tab-installments .field-checkbox span { font-size: 13.5px; }
+#tab-installments #paidCountField span,
+#tab-installments #reminderHourField span {
+  color: var(--inst-ink-soft);
+  opacity: 0.62;
+  font-size: 12px;
+  font-weight: 400;
+}
 
 #tab-installments .segmented { display: flex; border: 1px solid var(--inst-paper-line); border-radius: 12px; overflow: hidden; }
 #tab-installments .seg-btn {
@@ -1927,17 +1935,18 @@ input:checked + .toggle-slider:before {
 
 #tab-installments .inst-btn {
   flex: 1;
-  padding: 13px;
-  border-radius: 12px;
+  padding: 14px;
+  border-radius: 14px;
   border: none;
   font-family: inherit;
-  font-size: 14.5px;
-  font-weight: 700;
+  font-size: 15px;
+  font-weight: 600;
   cursor: pointer;
+  transition: opacity .12s ease, transform .12s ease;
 }
-#tab-installments .inst-btn-primary { background: var(--inst-navy); color: var(--inst-cream); }
-#tab-installments .inst-btn-primary:active { background: var(--inst-navy-2); }
-#tab-installments .inst-btn-ghost { background: var(--inst-cream-2); color: var(--inst-ink-soft); }
+#tab-installments .inst-btn:active { transform: scale(0.97); opacity: 0.85; }
+#tab-installments .inst-btn-primary { background: var(--inst-navy); color: var(--inst-cream); font-weight: 700; }
+#tab-installments .inst-btn-ghost { background: rgba(27, 42, 74, 0.08); color: var(--inst-navy); }
 
 @media (prefers-reduced-motion: reduce) {
   #tab-installments .sheet { animation: none; }
