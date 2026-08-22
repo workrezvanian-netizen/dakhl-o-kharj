@@ -35,29 +35,15 @@ body.viewing-past-month::after {
 
 /* Body is locked to the viewport (not scrollable) so the fixed bottom nav
    never jitters from iOS rubber-band/bounce scrolling. All real scrolling
-   happens inside .app-scroll instead.
-   -webkit-fill-available fixes iOS Safari cases where 100dvh leaves a gap
-   above the home indicator and pushes fixed bottom UI too high. */
-html {
-  height: 100%;
-  height: -webkit-fill-available;
-}
+   happens inside .app-scroll instead. */
 html, body {
-  overflow: hidden;
-  width: 100%;
-  overscroll-behavior: none;
-}
-body {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
   height: 100%;
   height: 100dvh;
-  height: -webkit-fill-available;
-  min-height: 100%;
-  min-height: -webkit-fill-available;
+  overflow: hidden;
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  overscroll-behavior: none;
 }
 
 /* Safety net: guarantees the safe-area / home-indicator strip at the very
@@ -81,8 +67,7 @@ body::after {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
-  /* فضای کافی برای نوار پایین + home indicator آیفون */
-  padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: 100px;
 }
 
 h2 {
@@ -1343,156 +1328,6 @@ input:focus, select:focus {
   font-variant-numeric: tabular-nums;
 }
 
-/* ---------- Dashboard: ۷ روز اخیر ---------- */
-.dash-week-card {
-  margin: 18px 0 8px;
-  padding: 14px 12px 12px;
-  border-radius: var(--radius-lg);
-  background: rgba(255,255,255,0.55);
-  border: 1px solid rgba(255,255,255,0.7);
-  box-shadow: 0 6px 18px rgba(16,70,43,0.07);
-}
-.dash-week-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 12px;
-  padding: 0 4px;
-}
-.dash-week-head h2 {
-  margin: 0;
-  font-size: 15px;
-}
-.dash-week-more-btn {
-  border: none;
-  background: rgba(47, 122, 114, 0.12);
-  color: var(--green-deep);
-  font-family: inherit;
-  font-size: 11.5px;
-  font-weight: 700;
-  padding: 6px 12px;
-  border-radius: 999px;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background .15s ease, transform .12s ease;
-}
-.dash-week-more-btn:active { transform: scale(0.96); }
-.dash-week-more-btn.is-open {
-  background: var(--green-deep);
-  color: #fff;
-}
-.dash-month-panel {
-  margin-top: 12px;
-  padding-top: 10px;
-  border-top: 1px solid rgba(16, 70, 43, 0.08);
-  display: none;
-}
-.dash-month-panel.is-open { display: block; }
-.dash-month-weekdays {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 2px;
-  margin-bottom: 4px;
-  text-align: center;
-  font-size: 10px;
-  color: var(--text-mute);
-  font-weight: 600;
-}
-.dash-month-grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 3px;
-}
-.dash-month-grid .cal-cell {
-  min-height: 42px;
-  border: none;
-  border-radius: 10px;
-  background: rgba(251, 247, 240, 0.75);
-  font-family: inherit;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 1px;
-  padding: 4px 1px;
-}
-.dash-month-grid .cal-cell-empty {
-  background: transparent;
-  pointer-events: none;
-}
-.dash-month-grid .cal-day-num {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--text);
-}
-.dash-month-grid .cal-day-amt {
-  font-size: 8.5px;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-}
-.dash-month-grid .cal-amt-pos { color: var(--green); }
-.dash-month-grid .cal-amt-neg { color: var(--expense); }
-.dash-month-grid .cal-cell-today {
-  box-shadow: inset 0 0 0 1.5px var(--green);
-  background: var(--green-soft);
-}
-.dash-month-grid .cal-cell-income-only .cal-day-num { color: var(--green); }
-.dash-month-grid .cal-cell-expense-only .cal-day-num { color: var(--expense); }
-.dash-week-strip {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 4px;
-}
-.dash-week-day {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  padding: 8px 2px 6px;
-  border: none;
-  border-radius: 14px;
-  background: rgba(251,247,240,0.7);
-  font-family: inherit;
-  cursor: pointer;
-  transition: transform .12s ease, background .15s ease;
-}
-.dash-week-day:active { transform: scale(0.94); }
-.dash-week-day.is-today {
-  background: var(--green-soft);
-  box-shadow: inset 0 0 0 1.5px var(--green);
-}
-.dash-week-wd {
-  font-size: 10px;
-  color: var(--text-mute);
-  font-weight: 600;
-}
-.dash-week-num {
-  font-size: 14px;
-  font-weight: 800;
-  color: var(--text);
-  font-variant-numeric: tabular-nums;
-}
-.dash-week-day.is-today .dash-week-num { color: var(--green-deep); }
-.dash-week-dots {
-  display: flex;
-  gap: 3px;
-  min-height: 6px;
-  align-items: center;
-}
-.dash-week-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  display: inline-block;
-}
-.dash-week-dot.income { background: var(--green); }
-.dash-week-dot.expense { background: var(--expense); }
-.dash-week-income .dash-week-num { color: var(--green); }
-.dash-week-expense .dash-week-num { color: var(--expense); }
-.dash-week-mixed .dash-week-num { color: var(--green-deep); }
-
 /* ---------- Category picker (expense form) ---------- */
 .category-picker {
   display: flex;
@@ -1653,28 +1488,26 @@ input:focus, select:focus {
 .sync-msg.error { color: var(--expense); }
 .danger-zone h2 { color: var(--expense); }
 
-/* ---------- Bottom nav — iOS liquid glass pill ---------- */
+/* ---------- Bottom nav (iOS "liquid glass" — flat minimal pill) ---------- */
 .bottom-nav {
   position: fixed;
-  left: 14px;
+  bottom: 0;
   right: 14px;
-  /* بالای home indicator؛ بدون فاصله اضافه */
-  bottom: max(8px, env(safe-area-inset-bottom, 8px));
-  z-index: 30;
+  left: 14px;
+  z-index: 20;
   display: flex;
   align-items: center;
   isolation: isolate;
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.22);
-  backdrop-filter: blur(40px) saturate(2.2);
-  -webkit-backdrop-filter: blur(40px) saturate(2.2);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  border-radius: 30px;
+  background: rgba(255,255,255,0.22);
+  backdrop-filter: blur(34px) saturate(2);
+  -webkit-backdrop-filter: blur(34px) saturate(2);
+  border: 1px solid rgba(255,255,255,0.45);
+  border-radius: 30px 30px 0 0;
   box-shadow:
-    0 12px 32px rgba(16, 70, 43, 0.14),
-    0 1px 0 rgba(255, 255, 255, 0.7) inset,
-    0 -1px 0 rgba(255, 255, 255, 0.25) inset;
-  padding: 6px 6px;
+    0 10px 26px rgba(16,70,43,0.12),
+    0 1px 0 rgba(255,255,255,0.6) inset;
+  padding: 7px 7px calc(7px + env(safe-area-inset-bottom));
 }
 .bottom-nav::after {
   content: "";
@@ -1740,52 +1573,7 @@ input:focus, select:focus {
 .nav-btn.active span { font-weight: 700; }
 
 @media (min-width: 560px) {
-  .bottom-nav {
-    max-width: 480px;
-    margin: 0 auto;
-    left: 50%;
-    transform: translateX(-50%);
-    right: auto;
-    width: calc(100% - 28px);
-  }
-}
-
-/* ---------- Tab cascade entrance (کرکره‌ای) ---------- */
-@keyframes tabCascadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(18px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-.tab.tab-enter > *,
-.tab.tab-enter .inst-app > * {
-  animation: tabCascadeIn 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-.tab.tab-enter > *:nth-child(1),
-.tab.tab-enter .inst-app > *:nth-child(1) { animation-delay: 0.02s; }
-.tab.tab-enter > *:nth-child(2),
-.tab.tab-enter .inst-app > *:nth-child(2) { animation-delay: 0.07s; }
-.tab.tab-enter > *:nth-child(3),
-.tab.tab-enter .inst-app > *:nth-child(3) { animation-delay: 0.12s; }
-.tab.tab-enter > *:nth-child(4),
-.tab.tab-enter .inst-app > *:nth-child(4) { animation-delay: 0.17s; }
-.tab.tab-enter > *:nth-child(5),
-.tab.tab-enter .inst-app > *:nth-child(5) { animation-delay: 0.22s; }
-.tab.tab-enter > *:nth-child(6),
-.tab.tab-enter .inst-app > *:nth-child(6) { animation-delay: 0.27s; }
-.tab.tab-enter > *:nth-child(7),
-.tab.tab-enter .inst-app > *:nth-child(7) { animation-delay: 0.32s; }
-.tab.tab-enter > *:nth-child(8),
-.tab.tab-enter .inst-app > *:nth-child(8) { animation-delay: 0.37s; }
-.tab.tab-enter > *:nth-child(n+9),
-.tab.tab-enter .inst-app > *:nth-child(n+9) { animation-delay: 0.42s; }
-@media (prefers-reduced-motion: reduce) {
-  .tab.tab-enter > *,
-  .tab.tab-enter .inst-app > * { animation: none; }
+  .bottom-nav { max-width: 480px; margin: 0 auto; left: 50%; transform: translateX(-50%); right: auto; width: calc(100% - 28px); }
 }
 
 /* ---------- Toggle switch ---------- */
@@ -1953,12 +1741,7 @@ input:checked + .toggle-slider:before {
 
 /* ---------------------------- لیست/دفتر ---------------------------- */
 
-#tab-installments .ledger {
-  padding: 6px 20px calc(90px + env(safe-area-inset-bottom, 0px));
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
+#tab-installments .ledger { padding: 6px 20px 4px; display: flex; flex-direction: column; gap: 12px; }
 
 #tab-installments .row {
   background: var(--inst-cream);
@@ -2052,8 +1835,7 @@ input:checked + .toggle-slider:before {
 
 #tab-installments .fab {
   position: fixed;
-  /* بالای نوار شیشه‌ای شناور */
-  bottom: calc(78px + env(safe-area-inset-bottom, 0px));
+  bottom: calc(96px + env(safe-area-inset-bottom));
   left: 18px;
   right: auto;
   width: 56px;
@@ -2065,7 +1847,7 @@ input:checked + .toggle-slider:before {
   border: none;
   box-shadow: 0 12px 24px rgba(27, 42, 74, 0.35), inset 0 2px 3px rgba(255,255,255,0.18);
   cursor: pointer;
-  z-index: 40;
+  z-index: 30;
   line-height: 1;
   transition: transform .15s cubic-bezier(.4,0,.2,1);
 }
@@ -2089,8 +1871,7 @@ input:checked + .toggle-slider:before {
   max-width: 480px;
   margin: 0 auto;
   border-radius: 24px 24px 0 0;
-  /* فضای دکمه‌های پایین شیت بالاتر از home indicator */
-  padding: 10px 22px calc(28px + env(safe-area-inset-bottom, 0px));
+  padding: 10px 22px calc(24px + env(safe-area-inset-bottom));
   max-height: 88vh;
   overflow-y: auto;
   animation: inst-sheet-up 0.22s ease-out;
@@ -2201,7 +1982,7 @@ input:checked + .toggle-slider:before {
   .toast { animation: none; }
 }
 
-/* ---------- تقویم مالی (Calendar tab) ---------- */
+/* ---------- تقویم مالی (Calendar) ---------- */
 .cal-app {
   position: relative;
   background: rgba(255,255,255,0.28);
@@ -2217,6 +1998,28 @@ input:checked + .toggle-slider:before {
   padding: 16px 14px 18px;
   margin: 2px 0 calc(80px + env(safe-area-inset-bottom));
 }
+.cal-month-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 16px;
+  background: rgba(22, 42, 40, 0.5);
+}
+.cal-month-overlay[hidden] { display: none; }
+.cal-app-popup {
+  margin: 0;
+  width: 100%;
+  max-width: 420px;
+  animation: cal-popup-in 0.2s ease-out;
+}
+@keyframes cal-popup-in {
+  from { transform: scale(0.94); opacity: 0.5; }
+  to { transform: scale(1); opacity: 1; }
+}
+.cal-close-btn { color: var(--expense); margin-right: 2px; }
 .cal-head {
   display: flex;
   align-items: center;
@@ -2345,6 +2148,62 @@ input:checked + .toggle-slider:before {
 .cal-dot-income { background: var(--green); }
 .cal-dot-expense { background: var(--expense); }
 
+/* ---------- ویجت تقویم هفته‌ی اخیر (پایین داشبورد) ---------- */
+.week-cal-card {
+  position: relative;
+  background: rgba(255,255,255,0.28);
+  backdrop-filter: blur(34px) saturate(2.1);
+  -webkit-backdrop-filter: blur(34px) saturate(2.1);
+  border: 1px solid rgba(255,255,255,0.55);
+  border-radius: 26px;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.8) inset,
+    0 -12px 24px rgba(255,255,255,0.12) inset,
+    0 14px 28px rgba(16,70,43,0.1),
+    0 3px 8px rgba(16,70,43,0.06);
+  padding: 16px 14px 18px;
+  margin: 14px 0 6px;
+}
+.week-cal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2px 14px;
+}
+.week-cal-head h2 { margin: 0; font-size: 15px; font-weight: 800; color: var(--green-deep); }
+.week-cal-expand {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid rgba(22,63,60,0.1);
+  background: rgba(255,255,255,0.6);
+  color: var(--green-deep);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform .15s ease, background .15s ease;
+}
+.week-cal-expand svg { width: 16px; height: 16px; }
+.week-cal-expand:active { transform: scale(0.9); background: var(--green-soft); }
+
+.week-cal-strip {
+  display: flex;
+  gap: 6px;
+}
+.week-cal-cell {
+  flex: 1;
+  min-width: 0;
+  aspect-ratio: 1 / 1.05;
+  padding: 4px 1px;
+}
+.week-cal-dow {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: var(--text-mute);
+  opacity: 0.7;
+}
+.cal-cell-today .week-cal-dow { color: rgba(255,255,255,0.75); }
 /* ---------- شیت جزئیات روز تقویم ---------- */
 .cal-day-sheet-overlay {
   position: fixed;

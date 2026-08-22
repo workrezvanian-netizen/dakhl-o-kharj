@@ -489,17 +489,9 @@ document.querySelectorAll(".nav-btn").forEach((btn) => {
   btn.addEventListener("click", () => switchTab(btn.dataset.tab));
 });
 function switchTab(tab, opts = {}) {
-  document.querySelectorAll(".tab").forEach((t) => {
-    t.classList.remove("active", "tab-enter");
-  });
+  document.querySelectorAll(".tab").forEach((t) => t.classList.remove("active"));
   document.querySelectorAll(".nav-btn").forEach((b) => b.classList.remove("active"));
-  const tabEl = document.getElementById("tab-" + tab);
-  if (tabEl) {
-    tabEl.classList.add("active");
-    // reflow سپس انیمیشن کرکره‌ای
-    void tabEl.offsetWidth;
-    tabEl.classList.add("tab-enter");
-  }
+  document.getElementById("tab-" + tab).classList.add("active");
   const navBtn = document.querySelector(`.nav-btn[data-tab="${tab}"]`);
   if (navBtn) navBtn.classList.add("active");
   if (tab === "entry" && !opts.keepExpenseFilter && expenseListFilter) {
@@ -762,9 +754,7 @@ function deleteExpense(id) {
 function refreshCalDaySheetIfOpen() {
   const overlay = document.getElementById("calDaySheetOverlay");
   if (overlay && !overlay.hidden && overlay.dataset.iso) {
-    const [gy, gm, gd] = overlay.dataset.iso.split("-").map(Number);
-    const j = toJalaali(gy, gm, gd);
-    openCalDaySheet(j.jd);
+    openCalDaySheet(overlay.dataset.iso);
   }
 }
 function deleteCategory(name) {
@@ -786,6 +776,7 @@ function renderAll() {
   renderExpenseList();
   renderAnalysis();
   renderCalendar();
+  renderWeekCalStrip();
   renderProfileCard();
 }
 
@@ -980,70 +971,11 @@ function applyViewedMonthState() {
   renderCalendar();
 }
 
-const WEEKDAY_SHORT_FA = ["ی", "د", "س", "چ", "پ", "ج", "ش"]; // Sun..Sat
-
 function renderCalendar() {
-  const strip = document.getElementById("dashWeekStrip");
-  if (!strip) return;
-
-  const today = new Date();
-  today.setHours(12, 0, 0, 0);
-
-  const byISO = {};
-  const addTo = (iso, key, amt) => {
-    if (!byISO[iso]) byISO[iso] = { income: 0, expense: 0 };
-    byISO[iso][key] += amt;
-  };
-  state.incomes.forEach((x) => addTo(x.date, "income", x.amount));
-  state.expenses.forEach((x) => addTo(x.date, "expense", x.amount));
-
-  let html = "";
-  for (let i = 6; i >= 0; i -= 1) {
-    const d = new Date(today);
-    d.setDate(d.getDate() - i);
-    const gy = d.getFullYear();
-    const gm = d.getMonth() + 1;
-    const gd = d.getDate();
-    const iso = `${gy}-${String(gm).padStart(2, "0")}-${String(gd).padStart(2, "0")}`;
-    const j = toJalaali(gy, gm, gd);
-    const rec = byISO[iso];
-    const hasIncome = !!(rec && rec.income > 0);
-    const hasExpense = !!(rec && rec.expense > 0);
-    const isToday = i === 0;
-    const wd = WEEKDAY_SHORT_FA[d.getDay()];
-    let typeClass = "";
-    if (hasIncome && hasExpense) typeClass = "dash-week-mixed";
-    else if (hasIncome) typeClass = "dash-week-income";
-    else if (hasExpense) typeClass = "dash-week-expense";
-
-    html += `
-      <button type="button" class="dash-week-day ${typeClass} ${isToday ? "is-today" : ""}" data-iso="${iso}" data-jd="${j.jd}" data-jm="${j.jm}" data-jy="${j.jy}">
-        <span class="dash-week-wd">${wd}</span>
-        <span class="dash-week-num">${toPersianDigits(j.jd)}</span>
-        <span class="dash-week-dots">
-          ${hasIncome ? '<i class="dash-week-dot income"></i>' : ""}
-          ${hasExpense ? '<i class="dash-week-dot expense"></i>' : ""}
-        </span>
-      </button>`;
-  }
-  strip.innerHTML = html;
-  strip.querySelectorAll(".dash-week-day").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      viewedMonth = {
-        jy: Number(btn.dataset.jy),
-        jm: Number(btn.dataset.jm),
-        jd: Number(btn.dataset.jd)
-      };
-      openCalDaySheet(Number(btn.dataset.jd));
-    });
-  });
-
-  renderDashMonthGrid();
-}
-
-function renderDashMonthGrid() {
-  const grid = document.getElementById("dashMonthGrid");
-  if (!grid) return;
+  const grid = document.getElementById("calendarGrid");
+  const label = document.getElementById("calendarMonthLabel");
+  if (!grid || !label) return;
+  label.textContent = `${JALALI_MONTHS[viewedMonth.jm - 1]} ${toPersianDigits(viewedMonth.jy)}`;
 
   const byDay = {};
   const addTo = (jd, key, amt) => {
@@ -1077,9 +1009,11 @@ function renderDashMonthGrid() {
     const isToday = today.jy === viewedMonth.jy && today.jm === viewedMonth.jm && today.jd === d;
     let dayTypeClass = "";
     if (rec) {
-      if (rec.income > 0 && rec.expense > 0) dayTypeClass = "cal-cell-mixed";
-      else if (rec.income > 0) dayTypeClass = "cal-cell-income-only";
-      else if (rec.expense > 0) dayTypeClass = "cal-cell-expense-only";
+      const hasIncome = rec.income > 0;
+      const hasExpense = rec.expense > 0;
+      if (hasIncome && hasExpense) dayTypeClass = "cal-cell-mixed";
+      else if (hasIncome) dayTypeClass = "cal-cell-income-only";
+      else if (hasExpense) dayTypeClass = "cal-cell-expense-only";
     }
     html += `
       <button type="button" class="cal-cell ${dayTypeClass} ${isToday ? "cal-cell-today" : ""}" data-day="${d}">
@@ -1089,21 +1023,9 @@ function renderDashMonthGrid() {
   }
   grid.innerHTML = html;
   grid.querySelectorAll(".cal-cell[data-day]").forEach((btn) => {
-    btn.addEventListener("click", () => openCalDaySheet(Number(btn.dataset.day)));
+    btn.addEventListener("click", () => openCalDaySheet(calISOFromViewedDay(Number(btn.dataset.day))));
   });
 }
-
-(function setupDashWeekMore() {
-  const btn = document.getElementById("dashWeekMoreBtn");
-  const panel = document.getElementById("dashMonthPanel");
-  if (!btn || !panel) return;
-  btn.addEventListener("click", () => {
-    const open = panel.classList.toggle("is-open");
-    btn.classList.toggle("is-open", open);
-    btn.textContent = open ? "بستن تقویم ماه" : "جزئیات بیشتر";
-    if (open) renderDashMonthGrid();
-  });
-})();
 
 // ---------- شیت جزئیات روز تقویم ----------
 function calISOFromViewedDay(jd) {
@@ -1111,14 +1033,15 @@ function calISOFromViewedDay(jd) {
   return `${g.gy}-${String(g.gm).padStart(2, "0")}-${String(g.gd).padStart(2, "0")}`;
 }
 
-function openCalDaySheet(jd) {
-  const iso = calISOFromViewedDay(jd);
+function openCalDaySheet(iso) {
   const overlay = document.getElementById("calDaySheetOverlay");
   const title = document.getElementById("calDaySheetTitle");
   const summary = document.getElementById("calDaySheetSummary");
   const list = document.getElementById("calDaySheetList");
 
-  title.textContent = `${toPersianDigits(jd)} ${JALALI_MONTHS[viewedMonth.jm - 1]} ${toPersianDigits(viewedMonth.jy)}`;
+  const [gy, gm, gd] = iso.split("-").map(Number);
+  const j = toJalaali(gy, gm, gd);
+  title.textContent = `${toPersianDigits(j.jd)} ${JALALI_MONTHS[j.jm - 1]} ${toPersianDigits(j.jy)}`;
 
   const dayIncomes = state.incomes.filter((x) => x.date === iso);
   const dayExpenses = state.expenses.filter((x) => x.date === iso);
@@ -1171,6 +1094,81 @@ function calDayJumpToEntry(mode) {
 }
 document.getElementById("calDayAddExpenseBtn").addEventListener("click", () => calDayJumpToEntry("expense"));
 document.getElementById("calDayAddIncomeBtn").addEventListener("click", () => calDayJumpToEntry("income"));
+
+document.getElementById("calPrevMonthBtn").addEventListener("click", () => {
+  dashboardMode = "month";
+  viewedMonth = addMonthsJalali(viewedMonth.jy, viewedMonth.jm, -1);
+  applyViewedMonthState();
+});
+document.getElementById("calNextMonthBtn").addEventListener("click", () => {
+  dashboardMode = "month";
+  viewedMonth = addMonthsJalali(viewedMonth.jy, viewedMonth.jm, 1);
+  applyViewedMonthState();
+});
+document.getElementById("calTodayBtn").addEventListener("click", () => {
+  dashboardMode = "month";
+  viewedMonth = todayJalali();
+  applyViewedMonthState();
+});
+
+// ---------- پاپ‌آپ تقویم ماه (از روی ویجت هفته‌ی اخیر داشبورد باز می‌شه) ----------
+function openCalMonthPopup() {
+  viewedMonth = todayJalali();
+  applyViewedMonthState();
+  document.getElementById("calMonthOverlay").hidden = false;
+}
+function closeCalMonthPopup() {
+  document.getElementById("calMonthOverlay").hidden = true;
+}
+document.getElementById("weekCalExpandBtn").addEventListener("click", openCalMonthPopup);
+document.getElementById("calMonthCloseBtn").addEventListener("click", closeCalMonthPopup);
+document.getElementById("calMonthOverlay").addEventListener("click", (e) => {
+  if (e.target.id === "calMonthOverlay") closeCalMonthPopup();
+});
+
+// ---------- ویجت تقویم هفته‌ی اخیر (پایین داشبورد) ----------
+function renderWeekCalStrip() {
+  const strip = document.getElementById("weekCalStrip");
+  if (!strip) return;
+
+  const dowLetters = ["ی", "د", "س", "چ", "پ", "ج", "ش"]; // getDay(): 0=یکشنبه..6=شنبه
+  const now = new Date();
+  const today = todayJalali();
+  let html = "";
+
+  for (let i = 6; i >= 0; i -= 1) {
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+    const gy = d.getFullYear(), gm = d.getMonth() + 1, gd = d.getDate();
+    const iso = `${gy}-${String(gm).padStart(2, "0")}-${String(gd).padStart(2, "0")}`;
+    const j = toJalaali(gy, gm, gd);
+
+    const dayIncomes = state.incomes.filter((x) => x.date === iso);
+    const dayExpenses = state.expenses.filter((x) => x.date === iso);
+    const incomeSum = dayIncomes.reduce((s, x) => s + x.amount, 0);
+    const expenseSum = dayExpenses.reduce((s, x) => s + x.amount, 0);
+    const net = incomeSum - expenseSum;
+    const amtStr = fmtCompactEn(net);
+    const amtClass = net > 0 ? "cal-amt-pos" : (net < 0 ? "cal-amt-neg" : "");
+
+    let dayTypeClass = "";
+    if (incomeSum > 0 && expenseSum > 0) dayTypeClass = "cal-cell-mixed";
+    else if (incomeSum > 0) dayTypeClass = "cal-cell-income-only";
+    else if (expenseSum > 0) dayTypeClass = "cal-cell-expense-only";
+
+    const isToday = j.jy === today.jy && j.jm === today.jm && j.jd === today.jd;
+
+    html += `
+      <button type="button" class="cal-cell week-cal-cell ${dayTypeClass} ${isToday ? "cal-cell-today" : ""}" data-iso="${iso}">
+        <span class="week-cal-dow">${dowLetters[d.getDay()]}</span>
+        <span class="cal-day-num">${toPersianDigits(j.jd)}</span>
+        ${amtStr ? `<span class="cal-day-amt ${amtClass}">${amtStr}</span>` : ""}
+      </button>`;
+  }
+  strip.innerHTML = html;
+  strip.querySelectorAll(".cal-cell[data-iso]").forEach((btn) => {
+    btn.addEventListener("click", () => openCalDaySheet(btn.dataset.iso));
+  });
+}
 
 document.getElementById("prevMonthBtn").addEventListener("click", () => {
   dashboardMode = "month";
@@ -1840,12 +1838,58 @@ function renderAnalysis() {
   };
   const expenses = state.expenses.filter((x) => inPeriod(x.date));
   const incomes = state.incomes.filter((x) => inPeriod(x.date));
-
+  
+  // Smart insights based on selected period
+  const smartInPeriod = (dateStr) => {
+    if (analysisPeriod === "all") return true;
+    const [gy, gm, gd] = dateStr.split("-").map(Number);
+    const d = new Date(gy, gm - 1, gd);
+    const today = new Date();
+    const daysDiff = Math.floor((today - d) / (1000 * 60 * 60 * 24));
+    
+    if (analysisPeriod === "week") return daysDiff >= 0 && daysDiff < 7;
+    if (analysisPeriod === "month") return inViewedMonth(dateStr);
+    return true;
+  };
+  
+  const smartExpenses = state.expenses.filter((x) => smartInPeriod(x.date));
+  const smartIncomes = state.incomes.filter((x) => smartInPeriod(x.date));
+  const totalExpense = smartExpenses.reduce((s, x) => s + x.amount, 0);
+  const totalIncome = smartIncomes.reduce((s, x) => s + x.amount, 0);
+  const lastWeekExpense = state.expenses
+    .filter((x) => {
+      const [gy, gm, gd] = x.date.split("-").map(Number);
+      const d = new Date(gy, gm - 1, gd);
+      const today = new Date();
+      const daysDiff = Math.floor((today - d) / (1000 * 60 * 60 * 24));
+      return daysDiff >= 7 && daysDiff < 14;
+    })
+    .reduce((s, x) => s + x.amount, 0);
+  const avgDaily = totalExpense > 0 ? Math.round(totalExpense / (analysisPeriod === "week" ? 7 : 30)) : 0;
+  
+  let insightMsg = "";
+  if (totalExpense === 0) {
+    insightMsg = "فعلاً خرجی ثبت نشده";
+  } else if (lastWeekExpense > totalExpense * 0.4) {
+    insightMsg = "خرج این دوره بیش‌تر از حد نرمال است";
+  } else if (totalExpense < avgDaily * (analysisPeriod === "week" ? 3 : 15)) {
+    insightMsg = "خرج این دوره کم‌تر از معمول است";
+  }
+  
   // Update title based on period
   const periodLabels = { "week": "این هفته", "month": isViewingCurrentMonth() ? "این ماه" : JALALI_MONTHS[viewedMonth.jm - 1], "all": "کل بازه" };
   const analysisTitle = document.querySelector(".ai-card-head h2");
   if (analysisTitle) {
     analysisTitle.textContent = `تحلیل هوشمند ${periodLabels[analysisPeriod]}`;
+  }
+  
+  const insightEl = document.getElementById("smartInsights");
+  if (insightEl) {
+    if (insightMsg) {
+      insightEl.innerHTML = `<div style="background:rgba(79,168,158,0.1);padding:14px 16px;border-radius:12px;border-left:3px solid #4FA89E;font-size:15px;font-family:'Kamran','Vazirmatn',Tahoma,sans-serif;color:var(--text);">${insightMsg}</div>`;
+    } else {
+      insightEl.innerHTML = "";
+    }
   }
 
   renderMonthCompareCard("incomeExpenseChart", analysisPeriod);
@@ -2062,7 +2106,7 @@ async function initSync() {
 // ---------- Service worker ----------
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js?v=60").catch(() => {});
+    navigator.serviceWorker.register("sw.js").catch(() => {});
   });
 }
 
