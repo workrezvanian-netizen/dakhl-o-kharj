@@ -7,5 +7,5 @@ compatibility_flags = ["nodejs_compat"]
 binding = "DNK_KV"
 id = "2b57ef8f39c4483db71ec44b98bdc3e6"
 
-# کلید OpenAI API به‌صورت secret اضافه می‌شه، نه اینجا:
-#   wrangler secret put OPENAI_API_KEY
+# کلید Groq API به‌صورت secret اضافه می‌شه، نه اینجا:
+#   wrangler secret put GROQ_API_KEY

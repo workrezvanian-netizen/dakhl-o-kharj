@@ -1872,8 +1872,8 @@ function setupAiAnalyzeButton(btnId, resultId) {
       if (!res.ok || !data || !data.summary) {
         const code = data && data.error;
         let msg = "متأسفانه الان نشد تحلیل کنم، یه‌بار دیگه امتحان کن.";
-        if (code === "no_openai_key") {
-          msg = "😅 هنوز کلید OpenAI API به این Worker وصل نشده. باید با دستور wrangler secret put OPENAI_API_KEY کلیدت رو اضافه کنی و دوباره دیپلوی کنی.";
+        if (code === "no_groq_key") {
+          msg = "😅 هنوز کلید Groq API به این Worker وصل نشده. باید با دستور wrangler secret put GROQ_API_KEY کلیدت رو اضافه کنی و دوباره دیپلوی کنی.";
         } else if (code === "ai_request_failed") {
           msg = "سرور هوش مصنوعی جواب درستی نداد. یه‌بار دیگه امتحان کن.";
           if (data && data.detail) msg += `<br><small style="opacity:.75">جزئیات: ${data.detail}</small>`;

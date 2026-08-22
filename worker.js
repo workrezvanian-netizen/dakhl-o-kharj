@@ -1,9 +1,9 @@
 // Cloudflare Worker — بک‌اند همگام‌سازی «دخل و خرج»
 // نیازمند یک KV Namespace با نام DNK_KV که به این Worker باند شده باشه.
-// تحلیل هوش مصنوعی با OpenAI API کار می‌کنه.
-// باید یک Secret به اسم OPENAI_API_KEY به این Worker اضافه بشه:
-//   wrangler secret put OPENAI_API_KEY
-// کلید API رو از https://platform.openai.com/api-keys می‌تونی بسازی.
+// تحلیل هوش مصنوعی با Groq API کار می‌کنه (رایگان، بدون کارت بانکی، سازگار با فرمت OpenAI).
+// باید یک Secret به اسم GROQ_API_KEY به این Worker اضافه بشه:
+//   wrangler secret put GROQ_API_KEY
+// کلید API رو از https://console.groq.com/keys می‌تونی رایگان بسازی.
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -52,8 +52,8 @@ function buildAnalysisPrompt(body) {
 }
 
 async function handleAnalyze(request, env) {
-  if (!env.OPENAI_API_KEY) {
-    return jsonResponse({ error: "no_openai_key" }, 500);
+  if (!env.GROQ_API_KEY) {
+    return jsonResponse({ error: "no_groq_key" }, 500);
   }
   let body;
   try {
@@ -63,18 +63,18 @@ async function handleAnalyze(request, env) {
   }
 
   const prompt = buildAnalysisPrompt(body);
-  const OPENAI_MODEL = "gpt-4o-mini";
+  const GROQ_MODEL = "openai/gpt-oss-120b";
 
   let aiRes;
   try {
-    aiRes = await fetch("https://api.openai.com/v1/chat/completions", {
+    aiRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${env.OPENAI_API_KEY}`
+        "Authorization": `Bearer ${env.GROQ_API_KEY}`
       },
       body: JSON.stringify({
-        model: OPENAI_MODEL,
+        model: GROQ_MODEL,
         messages: [{ role: "user", content: prompt }],
         temperature: 0.8
       })
