@@ -1838,58 +1838,12 @@ function renderAnalysis() {
   };
   const expenses = state.expenses.filter((x) => inPeriod(x.date));
   const incomes = state.incomes.filter((x) => inPeriod(x.date));
-  
-  // Smart insights based on selected period
-  const smartInPeriod = (dateStr) => {
-    if (analysisPeriod === "all") return true;
-    const [gy, gm, gd] = dateStr.split("-").map(Number);
-    const d = new Date(gy, gm - 1, gd);
-    const today = new Date();
-    const daysDiff = Math.floor((today - d) / (1000 * 60 * 60 * 24));
-    
-    if (analysisPeriod === "week") return daysDiff >= 0 && daysDiff < 7;
-    if (analysisPeriod === "month") return inViewedMonth(dateStr);
-    return true;
-  };
-  
-  const smartExpenses = state.expenses.filter((x) => smartInPeriod(x.date));
-  const smartIncomes = state.incomes.filter((x) => smartInPeriod(x.date));
-  const totalExpense = smartExpenses.reduce((s, x) => s + x.amount, 0);
-  const totalIncome = smartIncomes.reduce((s, x) => s + x.amount, 0);
-  const lastWeekExpense = state.expenses
-    .filter((x) => {
-      const [gy, gm, gd] = x.date.split("-").map(Number);
-      const d = new Date(gy, gm - 1, gd);
-      const today = new Date();
-      const daysDiff = Math.floor((today - d) / (1000 * 60 * 60 * 24));
-      return daysDiff >= 7 && daysDiff < 14;
-    })
-    .reduce((s, x) => s + x.amount, 0);
-  const avgDaily = totalExpense > 0 ? Math.round(totalExpense / (analysisPeriod === "week" ? 7 : 30)) : 0;
-  
-  let insightMsg = "";
-  if (totalExpense === 0) {
-    insightMsg = "فعلاً خرجی ثبت نشده";
-  } else if (lastWeekExpense > totalExpense * 0.4) {
-    insightMsg = "خرج این دوره بیش‌تر از حد نرمال است";
-  } else if (totalExpense < avgDaily * (analysisPeriod === "week" ? 3 : 15)) {
-    insightMsg = "خرج این دوره کم‌تر از معمول است";
-  }
-  
+
   // Update title based on period
   const periodLabels = { "week": "این هفته", "month": isViewingCurrentMonth() ? "این ماه" : JALALI_MONTHS[viewedMonth.jm - 1], "all": "کل بازه" };
   const analysisTitle = document.querySelector(".ai-card-head h2");
   if (analysisTitle) {
     analysisTitle.textContent = `تحلیل هوشمند ${periodLabels[analysisPeriod]}`;
-  }
-  
-  const insightEl = document.getElementById("smartInsights");
-  if (insightEl) {
-    if (insightMsg) {
-      insightEl.innerHTML = `<div style="background:rgba(79,168,158,0.1);padding:14px 16px;border-radius:12px;border-left:3px solid #4FA89E;font-size:15px;font-family:'Kamran','Vazirmatn',Tahoma,sans-serif;color:var(--text);">${insightMsg}</div>`;
-    } else {
-      insightEl.innerHTML = "";
-    }
   }
 
   renderMonthCompareCard("incomeExpenseChart", analysisPeriod);

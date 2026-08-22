@@ -2102,23 +2102,18 @@ input:checked + .toggle-slider:before {
 .cal-cell-today .cal-amt-pos { color: #BFEBCF; }
 .cal-cell-today .cal-amt-neg { color: #FFC9BA; }
 
-.cal-cell-income-only { background: rgba(47,122,114,0.09); }
-.cal-cell-expense-only { background: rgba(194,74,46,0.08); }
-.cal-cell-mixed { background: rgba(216,164,74,0.12); }
-.cal-cell-income-only::after,
-.cal-cell-expense-only::after,
-.cal-cell-mixed::after {
-  content: "";
-  position: absolute;
-  bottom: 4px;
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
+.cal-cell-income-only {
+  background: linear-gradient(160deg, rgba(47,122,114,0.24) 0%, rgba(47,122,114,0.09) 100%);
+  border-color: rgba(47,122,114,0.32);
 }
-.cal-cell-income-only::after { background: var(--green); }
-.cal-cell-expense-only::after { background: var(--expense); }
-.cal-cell-mixed::after { background: var(--gold); }
-.cal-cell-today::after { display: none; }
+.cal-cell-expense-only {
+  background: linear-gradient(160deg, rgba(194,74,46,0.22) 0%, rgba(194,74,46,0.08) 100%);
+  border-color: rgba(194,74,46,0.3);
+}
+.cal-cell-mixed {
+  background: linear-gradient(160deg, rgba(216,164,74,0.26) 0%, rgba(216,164,74,0.1) 100%);
+  border-color: rgba(216,164,74,0.34);
+}
 .cal-cell-income-only.cal-cell-today,
 .cal-cell-expense-only.cal-cell-today,
 .cal-cell-mixed.cal-cell-today {
@@ -2211,7 +2206,7 @@ input:checked + .toggle-slider:before {
   background: rgba(22, 42, 40, 0.45);
   display: flex;
   align-items: flex-end;
-  z-index: 50;
+  z-index: 60;
 }
 .cal-day-sheet-overlay[hidden] { display: none; }
 .cal-day-sheet {
