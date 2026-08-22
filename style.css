@@ -1507,7 +1507,8 @@ input:focus, select:focus {
   box-shadow:
     0 10px 26px rgba(16,70,43,0.12),
     0 1px 0 rgba(255,255,255,0.6) inset;
-  padding: 7px 7px calc(7px + env(safe-area-inset-bottom));
+  /* فقط safe-area برای home indicator؛ بدون padding اضافه که نوار رو بالا ببره */
+  padding: 7px 7px max(7px, env(safe-area-inset-bottom, 0px));
 }
 .bottom-nav::after {
   content: "";
