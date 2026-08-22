@@ -972,59 +972,62 @@ function applyViewedMonthState() {
   renderCalendar();
 }
 
+const WEEKDAY_SHORT_FA = ["ی", "د", "س", "چ", "پ", "ج", "ش"]; // Sun..Sat
+
 function renderCalendar() {
-  const grid = document.getElementById("calendarGrid");
-  const label = document.getElementById("calendarMonthLabel");
-  if (!grid || !label) return;
-  label.textContent = `${JALALI_MONTHS[viewedMonth.jm - 1]} ${toPersianDigits(viewedMonth.jy)}`;
+  const strip = document.getElementById("dashWeekStrip");
+  if (!strip) return;
 
-  const byDay = {};
-  const addTo = (jd, key, amt) => {
-    if (!byDay[jd]) byDay[jd] = { income: 0, expense: 0 };
-    byDay[jd][key] += amt;
+  const today = new Date();
+  today.setHours(12, 0, 0, 0);
+
+  const byISO = {};
+  const addTo = (iso, key, amt) => {
+    if (!byISO[iso]) byISO[iso] = { income: 0, expense: 0 };
+    byISO[iso][key] += amt;
   };
-  state.incomes.forEach((x) => {
-    const [gy, gm, gd] = x.date.split("-").map(Number);
-    const j = toJalaali(gy, gm, gd);
-    if (j.jy === viewedMonth.jy && j.jm === viewedMonth.jm) addTo(j.jd, "income", x.amount);
-  });
-  state.expenses.forEach((x) => {
-    const [gy, gm, gd] = x.date.split("-").map(Number);
-    const j = toJalaali(gy, gm, gd);
-    if (j.jy === viewedMonth.jy && j.jm === viewedMonth.jm) addTo(j.jd, "expense", x.amount);
-  });
-
-  const daysInMonth = jalaaliMonthLength(viewedMonth.jy, viewedMonth.jm);
-  const firstDow = calendarDayOfWeekIndex(viewedMonth.jy, viewedMonth.jm, 1);
-  const today = todayJalali();
+  state.incomes.forEach((x) => addTo(x.date, "income", x.amount));
+  state.expenses.forEach((x) => addTo(x.date, "expense", x.amount));
 
   let html = "";
-  for (let i = 0; i < firstDow; i += 1) {
-    html += `<div class="cal-cell cal-cell-empty"></div>`;
-  }
-  for (let d = 1; d <= daysInMonth; d += 1) {
-    const rec = byDay[d];
-    const net = rec ? rec.income - rec.expense : 0;
-    const amtStr = fmtCompactEn(net);
-    const amtClass = net > 0 ? "cal-amt-pos" : (net < 0 ? "cal-amt-neg" : "");
-    const isToday = today.jy === viewedMonth.jy && today.jm === viewedMonth.jm && today.jd === d;
-    let dayTypeClass = "";
-    if (rec) {
-      const hasIncome = rec.income > 0;
-      const hasExpense = rec.expense > 0;
-      if (hasIncome && hasExpense) dayTypeClass = "cal-cell-mixed";
-      else if (hasIncome) dayTypeClass = "cal-cell-income-only";
-      else if (hasExpense) dayTypeClass = "cal-cell-expense-only";
-    }
+  for (let i = 6; i >= 0; i -= 1) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    const gy = d.getFullYear();
+    const gm = d.getMonth() + 1;
+    const gd = d.getDate();
+    const iso = `${gy}-${String(gm).padStart(2, "0")}-${String(gd).padStart(2, "0")}`;
+    const j = toJalaali(gy, gm, gd);
+    const rec = byISO[iso];
+    const hasIncome = !!(rec && rec.income > 0);
+    const hasExpense = !!(rec && rec.expense > 0);
+    const isToday = i === 0;
+    const wd = WEEKDAY_SHORT_FA[d.getDay()];
+    let typeClass = "";
+    if (hasIncome && hasExpense) typeClass = "dash-week-mixed";
+    else if (hasIncome) typeClass = "dash-week-income";
+    else if (hasExpense) typeClass = "dash-week-expense";
+
     html += `
-      <button type="button" class="cal-cell ${dayTypeClass} ${isToday ? "cal-cell-today" : ""}" data-day="${d}">
-        <span class="cal-day-num">${toPersianDigits(d)}</span>
-        ${amtStr ? `<span class="cal-day-amt ${amtClass}">${amtStr}</span>` : ""}
+      <button type="button" class="dash-week-day ${typeClass} ${isToday ? "is-today" : ""}" data-iso="${iso}" data-jd="${j.jd}" data-jm="${j.jm}" data-jy="${j.jy}">
+        <span class="dash-week-wd">${wd}</span>
+        <span class="dash-week-num">${toPersianDigits(j.jd)}</span>
+        <span class="dash-week-dots">
+          ${hasIncome ? '<i class="dash-week-dot income"></i>' : ""}
+          ${hasExpense ? '<i class="dash-week-dot expense"></i>' : ""}
+        </span>
       </button>`;
   }
-  grid.innerHTML = html;
-  grid.querySelectorAll(".cal-cell[data-day]").forEach((btn) => {
-    btn.addEventListener("click", () => openCalDaySheet(Number(btn.dataset.day)));
+  strip.innerHTML = html;
+  strip.querySelectorAll(".dash-week-day").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      viewedMonth = {
+        jy: Number(btn.dataset.jy),
+        jm: Number(btn.dataset.jm),
+        jd: Number(btn.dataset.jd)
+      };
+      openCalDaySheet(Number(btn.dataset.jd));
+    });
   });
 }
 
@@ -1094,22 +1097,6 @@ function calDayJumpToEntry(mode) {
 }
 document.getElementById("calDayAddExpenseBtn").addEventListener("click", () => calDayJumpToEntry("expense"));
 document.getElementById("calDayAddIncomeBtn").addEventListener("click", () => calDayJumpToEntry("income"));
-
-document.getElementById("calPrevMonthBtn").addEventListener("click", () => {
-  dashboardMode = "month";
-  viewedMonth = addMonthsJalali(viewedMonth.jy, viewedMonth.jm, -1);
-  applyViewedMonthState();
-});
-document.getElementById("calNextMonthBtn").addEventListener("click", () => {
-  dashboardMode = "month";
-  viewedMonth = addMonthsJalali(viewedMonth.jy, viewedMonth.jm, 1);
-  applyViewedMonthState();
-});
-document.getElementById("calTodayBtn").addEventListener("click", () => {
-  dashboardMode = "month";
-  viewedMonth = todayJalali();
-  applyViewedMonthState();
-});
 
 document.getElementById("prevMonthBtn").addEventListener("click", () => {
   dashboardMode = "month";
@@ -2001,7 +1988,7 @@ async function initSync() {
 // ---------- Service worker ----------
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js?v=58").catch(() => {});
+    navigator.serviceWorker.register("sw.js?v=59").catch(() => {});
   });
 }
 

@@ -1343,6 +1343,83 @@ input:focus, select:focus {
   font-variant-numeric: tabular-nums;
 }
 
+/* ---------- Dashboard: ۷ روز اخیر ---------- */
+.dash-week-card {
+  margin: 18px 0 8px;
+  padding: 14px 12px 12px;
+  border-radius: var(--radius-lg);
+  background: rgba(255,255,255,0.55);
+  border: 1px solid rgba(255,255,255,0.7);
+  box-shadow: 0 6px 18px rgba(16,70,43,0.07);
+}
+.dash-week-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding: 0 4px;
+}
+.dash-week-head h2 {
+  margin: 0;
+  font-size: 15px;
+}
+.dash-week-hint {
+  font-size: 11px;
+  color: var(--text-mute);
+}
+.dash-week-strip {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+.dash-week-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 2px 6px;
+  border: none;
+  border-radius: 14px;
+  background: rgba(251,247,240,0.7);
+  font-family: inherit;
+  cursor: pointer;
+  transition: transform .12s ease, background .15s ease;
+}
+.dash-week-day:active { transform: scale(0.94); }
+.dash-week-day.is-today {
+  background: var(--green-soft);
+  box-shadow: inset 0 0 0 1.5px var(--green);
+}
+.dash-week-wd {
+  font-size: 10px;
+  color: var(--text-mute);
+  font-weight: 600;
+}
+.dash-week-num {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.dash-week-day.is-today .dash-week-num { color: var(--green-deep); }
+.dash-week-dots {
+  display: flex;
+  gap: 3px;
+  min-height: 6px;
+  align-items: center;
+}
+.dash-week-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.dash-week-dot.income { background: var(--green); }
+.dash-week-dot.expense { background: var(--expense); }
+.dash-week-income .dash-week-num { color: var(--green); }
+.dash-week-expense .dash-week-num { color: var(--expense); }
+.dash-week-mixed .dash-week-num { color: var(--green-deep); }
+
 /* ---------- Category picker (expense form) ---------- */
 .category-picker {
   display: flex;
