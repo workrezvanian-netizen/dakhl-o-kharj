@@ -957,6 +957,20 @@ function isViewingCurrentMonth() {
 function updateMonthLabel() {
   const label = document.getElementById("monthLabel");
   label.textContent = JALALI_MONTHS[viewedMonth.jm - 1];
+
+  const remainEl = document.getElementById("monthRemaining");
+  if (remainEl) {
+    if (isViewingCurrentMonth()) {
+      const t = todayJalali();
+      const len = jalaaliMonthLength(viewedMonth.jy, viewedMonth.jm);
+      const remaining = len - t.jd;
+      remainEl.textContent = remaining > 0
+        ? `${toPersianDigits(remaining)} روز تا پایان ماه مانده`
+        : "امروز آخرین روز ماهه";
+    } else {
+      remainEl.textContent = "";
+    }
+  }
 }
 
 // Every tab (dashboard, entry list, analysis) follows the same viewed month,
@@ -1295,10 +1309,7 @@ const setupPeriodToggle = (toggleId, callback) => {
 };
 setupPeriodToggle("mainPeriodToggle", renderAll);
 
-function renderMonthCompareCard(containerId, period = "month") {
-  const wrap = document.getElementById(containerId);
-  
-  // Get data based on period
+function getCompareData(period) {
   let curData, prevData;
   if (period === "month") {
     const t = viewedMonth;
@@ -1309,7 +1320,7 @@ function renderMonthCompareCard(containerId, period = "month") {
     const today = new Date();
     const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
     const twoWeeksAgo = new Date(today.getTime() - 14 * 24 * 60 * 60 * 1000);
-    
+
     const getWeekData = (startDate, endDate) => {
       const inRange = (dateStr) => {
         const [gy, gm, gd] = dateStr.split("-").map(Number);
@@ -1322,11 +1333,10 @@ function renderMonthCompareCard(containerId, period = "month") {
       const totalExpense = expenses.reduce((s, x) => s + x.amount, 0);
       return { totalIncome, totalExpense, categories: [] };
     };
-    
+
     curData = getWeekData(weekAgo, today);
     prevData = getWeekData(twoWeeksAgo, weekAgo);
   } else {
-    // all time - just show all data vs empty
     curData = {
       totalIncome: state.incomes.reduce((s, x) => s + x.amount, 0),
       totalExpense: state.expenses.reduce((s, x) => s + x.amount, 0),
@@ -1334,16 +1344,6 @@ function renderMonthCompareCard(containerId, period = "month") {
     };
     prevData = { totalIncome: 0, totalExpense: 0, categories: [] };
   }
-
-  if (!curData.totalIncome && !curData.totalExpense && !prevData.totalIncome && !prevData.totalExpense) {
-    wrap.innerHTML = `<p class="empty-hint">داده‌ای برای مقایسه نیست</p>`;
-    return;
-  }
-
-  const defs = [
-    { key: "expense", label: "مخارج", curV: curData.totalExpense, prevV: prevData.totalExpense, goodWhenDown: true },
-    { key: "income", label: "درآمد", curV: curData.totalIncome, prevV: prevData.totalIncome, goodWhenDown: false }
-  ];
 
   const monthPrevJ = addMonthsJalali(viewedMonth.jy, viewedMonth.jm, -1);
   const periodLegend = {
@@ -1354,6 +1354,23 @@ function renderMonthCompareCard(containerId, period = "month") {
     week: { cur: "این هفته", prev: "هفته قبل" },
     all: { cur: "کل بازه", prev: "بدون مقایسه" }
   }[period] || { cur: "دوره فعلی", prev: "دوره قبل" };
+
+  return { curData, prevData, periodLegend };
+}
+
+function renderMonthCompareCard(containerId, period = "month") {
+  const wrap = document.getElementById(containerId);
+  const { curData, prevData, periodLegend } = getCompareData(period);
+
+  if (!curData.totalIncome && !curData.totalExpense && !prevData.totalIncome && !prevData.totalExpense) {
+    wrap.innerHTML = `<p class="empty-hint">داده‌ای برای مقایسه نیست</p>`;
+    return;
+  }
+
+  const defs = [
+    { key: "expense", label: "مخارج", curV: curData.totalExpense, prevV: prevData.totalExpense, goodWhenDown: true },
+    { key: "income", label: "درآمد", curV: curData.totalIncome, prevV: prevData.totalIncome, goodWhenDown: false }
+  ];
 
   const overallMax = Math.max(...defs.map((d) => Math.max(d.curV, d.prevV))) || 1;
 
@@ -1431,6 +1448,55 @@ function renderMonthCompareCard(containerId, period = "month") {
           seg.setAttribute("stroke-dasharray", `${dash} ${circ - dash}`);
         });
       });
+    });
+  });
+}
+
+function renderIncomeExpensePieCompare(containerId, period = "month") {
+  const wrap = document.getElementById(containerId);
+  const { curData, periodLegend } = getCompareData(period);
+  const totalIncome = curData.totalIncome || 0;
+  const totalExpense = curData.totalExpense || 0;
+  const total = totalIncome + totalExpense;
+
+  if (!total) {
+    wrap.innerHTML = `<p class="empty-hint">داده‌ای برای این دوره نیست</p>`;
+    return;
+  }
+
+  const incomePct = (totalIncome / total) * 100;
+  const cx = 90, cy = 90, r = 68, sw = 24;
+  const circ = 2 * Math.PI * r;
+  const incomeDash = (incomePct / 100) * circ;
+  const balance = totalIncome - totalExpense;
+  const uid = Date.now();
+
+  wrap.innerHTML = `
+    <div class="pie-compare">
+      <svg viewBox="0 0 180 180" class="pie-compare-svg">
+        <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#C24A2E" stroke-width="${sw}"/>
+        <circle id="pieCompareIncome-${uid}" cx="${cx}" cy="${cy}" r="${r}" fill="none"
+          stroke="#2F7A72" stroke-width="${sw}" stroke-linecap="round"
+          stroke-dasharray="0 ${circ}" transform="rotate(-90 ${cx} ${cy})"
+          data-dash="${incomeDash}" data-circ="${circ}"/>
+      </svg>
+      <div class="pie-compare-center">
+        <span class="pie-compare-label">تراز ${periodLegend.cur}</span>
+        <strong class="pie-compare-balance ${balance >= 0 ? "income-color" : "expense-color"}">${balance >= 0 ? "+" : "−"}${fmtAmount(Math.abs(balance))}</strong>
+      </div>
+    </div>
+    <div class="pie-compare-legend">
+      <span><i style="background:#2F7A72"></i>درآمد: ${fmtAmount(totalIncome)} (${toPersianDigits(Math.round(incomePct))}٪)</span>
+      <span><i style="background:#C24A2E"></i>مخارج: ${fmtAmount(totalExpense)} (${toPersianDigits(Math.round(100 - incomePct))}٪)</span>
+    </div>`;
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      const seg = document.getElementById(`pieCompareIncome-${uid}`);
+      if (!seg) return;
+      const dash = parseFloat(seg.dataset.dash);
+      const c = parseFloat(seg.dataset.circ);
+      seg.setAttribute("stroke-dasharray", `${dash} ${c - dash}`);
     });
   });
 }
@@ -1754,9 +1820,74 @@ function renderCombinedDailyChart(containerId, incomeTotalElId, expenseTotalElId
       btn.classList.add("selected");
       dailyChartMode = btn.dataset.mode;
       renderCombinedDailyChart("combinedDailyChart", "incomeChartTotal", "expenseChartTotal");
+      renderCombinedBarChart("combinedBarChart");
     });
   });
 })();
+
+// -- نمای دوم (میله‌ای گروهی) همون داده‌ی نمودار ترکیبی — برای صفحه‌ی دومِ ورق‌زدنِ نمودار اول --
+function renderCombinedBarChart(containerId) {
+  const wrap = document.getElementById(containerId);
+  if (!wrap) return;
+  const isYear = dailyChartMode === "year";
+  const pool = isYear ? buildYearlyChartPool(todayJalali().jy) : buildDailyChartPool(DAILY_CHART_POOL_DAYS).slice(-10);
+
+  const max = Math.max(...pool.map((p) => Math.max(p.income, p.expense))) || 1;
+  const today = todayJalali();
+
+  const cols = pool.map((p) => {
+    const label = isYear ? JALALI_MONTHS_SHORT[p.jm - 1] : toPersianDigits(p.jd);
+    const isToday = !isYear && p.jy === today.jy && p.jm === today.jm && p.jd === today.jd;
+    const incomeH = Math.max((p.income / max) * 100, p.income > 0 ? 4 : 0);
+    const expenseH = Math.max((p.expense / max) * 100, p.expense > 0 ? 4 : 0);
+    return `
+      <div class="dual-vbar-col ${isToday ? "is-today" : ""}">
+        <div class="dual-vbar-bars">
+          <div class="bar income" style="height:0%" data-target="${incomeH}"></div>
+          <div class="bar expense" style="height:0%" data-target="${expenseH}"></div>
+        </div>
+        <span class="dual-vbar-label">${label}</span>
+      </div>`;
+  }).join("");
+
+  if (max === 0 || pool.every((p) => !p.income && !p.expense)) {
+    wrap.innerHTML = `<p class="empty-hint">داده‌ای برای این بازه نیست</p>`;
+    return;
+  }
+
+  wrap.innerHTML = `<div class="dual-vbar-chart">${cols}</div>`;
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      wrap.querySelectorAll(".bar").forEach((el) => { el.style.height = el.dataset.target + "%"; });
+    });
+  });
+}
+
+// -- کاروسل ورق‌زدنی (دات‌های زیر هر نمودار برای سوییچ بین نماهای مختلف) --
+function setupChartCarousel(trackId, dotsId) {
+  const track = document.getElementById(trackId);
+  const dots = document.getElementById(dotsId);
+  if (!track || !dots) return;
+  const pages = track.children.length;
+  const dotEls = Array.from(dots.children);
+
+  dotEls.forEach((dot, i) => {
+    dot.addEventListener("click", () => {
+      track.scrollTo({ left: track.clientWidth * i, behavior: "smooth" });
+    });
+  });
+
+  let scrollTimer;
+  track.addEventListener("scroll", () => {
+    clearTimeout(scrollTimer);
+    scrollTimer = setTimeout(() => {
+      const idx = Math.round(track.scrollLeft / track.clientWidth);
+      dotEls.forEach((d, i) => d.classList.toggle("active", i === idx));
+    }, 80);
+  });
+}
+setupChartCarousel("dailyChartTrack", "dailyChartDots");
+setupChartCarousel("compareChartTrack", "compareChartDots");
 
 
 function computeMonthTotals(jy, jm) {
@@ -1824,6 +1955,7 @@ function renderTopTransactionsList(containerId) {
 
 function renderAnalysis() {
   renderCombinedDailyChart("combinedDailyChart", "incomeChartTotal", "expenseChartTotal");
+  renderCombinedBarChart("combinedBarChart");
 
   const inPeriod = (dateStr) => {
     if (analysisPeriod === "all") return true;
@@ -1847,6 +1979,7 @@ function renderAnalysis() {
   }
 
   renderMonthCompareCard("incomeExpenseChart", analysisPeriod);
+  renderIncomeExpensePieCompare("incomeExpensePie", analysisPeriod);
   renderTopTransactionsList("topTransactionsList");
 
   const byCat = {};

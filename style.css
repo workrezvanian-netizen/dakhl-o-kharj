@@ -583,6 +583,15 @@ h2 {
   box-shadow: inset 0 2px 4px rgba(22,63,60,0.12), inset 0 -1px 2px rgba(255,255,255,0.8);
 }
 .month-nav-btn:active { background: var(--green-soft); }
+
+.month-remaining {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-mute);
+  margin: 0 0 14px;
+  min-height: 15px;
+}
 .month-nav-label {
   flex: 1;
   text-align: center;
@@ -1189,6 +1198,110 @@ input:focus, select:focus {
 }
 .compare-gauge-legend span { display: flex; align-items: center; justify-content: center; gap: 5px; }
 .compare-gauge-legend i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex: none; }
+
+/* ---------- کاروسل ورق‌زدنی نمودارها ---------- */
+.chart-carousel { position: relative; }
+.chart-carousel-track {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  direction: ltr;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  border-radius: 14px;
+}
+.chart-carousel-track::-webkit-scrollbar { display: none; }
+.chart-carousel-page {
+  flex: 0 0 100%;
+  scroll-snap-align: start;
+  direction: rtl;
+  min-width: 0;
+}
+.chart-carousel-dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding-top: 10px;
+}
+.chart-carousel-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(22,63,60,0.18);
+  cursor: pointer;
+  transition: background .2s ease, transform .2s ease;
+}
+.chart-carousel-dot.active { background: var(--green-deep); transform: scale(1.3); }
+#tab-analysis .chart-carousel-dot.active { background: var(--analysis-navy); }
+
+/* ---------- نمودار میله‌ای دوگانه (صفحه‌ی دومِ نمودار اول تحلیل) ---------- */
+.dual-vbar-chart {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+  overflow-x: auto;
+  padding: 10px 4px 0;
+  height: 190px;
+  scrollbar-width: none;
+}
+.dual-vbar-chart::-webkit-scrollbar { display: none; }
+.dual-vbar-col {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 40px;
+}
+.dual-vbar-col.is-today .dual-vbar-label { color: var(--green-deep); font-weight: 800; }
+.dual-vbar-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 145px;
+}
+.dual-vbar-bars .bar {
+  width: 13px;
+  border-radius: 5px 5px 2px 2px;
+  transition: height .55s cubic-bezier(.4,0,.2,1);
+}
+.dual-vbar-bars .bar.income { background: linear-gradient(180deg, #3E9C90, #1D5049); }
+.dual-vbar-bars .bar.expense { background: linear-gradient(180deg, #DB6449, #8F3620); }
+.dual-vbar-label { font-size: 10.5px; color: var(--text-mute); }
+
+/* ---------- دونات مقایسه‌ی درآمد/مخارج (صفحه‌ی دومِ کارت مقایسه) ---------- */
+.pie-compare {
+  position: relative;
+  width: 180px;
+  height: 180px;
+  margin: 6px auto 4px;
+}
+.pie-compare-svg { width: 100%; height: 100%; }
+.pie-compare-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+.pie-compare-label { font-size: 11.5px; color: var(--text-mute); font-weight: 500; }
+.pie-compare-balance { font-size: 17px; font-weight: 800; }
+.pie-compare-balance.income-color { color: var(--green-deep); }
+.pie-compare-balance.expense-color { color: var(--expense); }
+.pie-compare-legend {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  font-size: 11.5px;
+  color: var(--text-mute);
+  padding-top: 4px;
+}
+.pie-compare-legend span { display: flex; align-items: center; gap: 5px; }
+.pie-compare-legend i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex: none; }
 
 .pie-wrap {
   width: 190px;

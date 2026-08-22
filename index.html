@@ -91,6 +91,7 @@
         <span class="icon-mask" data-icon="chevron-left" style="width:18px;height:18px;color:var(--green-deep)"></span>
       </button>
     </div>
+    <p id="monthRemaining" class="month-remaining"></p>
 
     <div class="section-heading">
       <h2>مخارج</h2>
@@ -253,10 +254,23 @@
           <span class="daily-chart-dot expense-dot"></span>
         </div>
       </div>
-      <div class="daily-chart-scroll" id="dailyChartScroll">
-        <div id="combinedDailyChart"></div>
+      <div class="chart-carousel">
+        <div class="chart-carousel-track" id="dailyChartTrack">
+          <div class="chart-carousel-page">
+            <div class="daily-chart-scroll" id="dailyChartScroll">
+              <div id="combinedDailyChart"></div>
+            </div>
+            <p class="daily-chart-hint" id="dailyChartHint">برای دیدن روزهای قبل، نمودار رو بکش ⇠</p>
+          </div>
+          <div class="chart-carousel-page">
+            <div id="combinedBarChart"></div>
+          </div>
+        </div>
+        <div class="chart-carousel-dots" id="dailyChartDots">
+          <span class="chart-carousel-dot active"></span>
+          <span class="chart-carousel-dot"></span>
+        </div>
       </div>
-      <p class="daily-chart-hint" id="dailyChartHint">برای دیدن روزهای قبل، نمودار رو بکش ⇠</p>
     </div>
 
     <div class="settings-card">
@@ -268,7 +282,20 @@
           <button type="button" class="chart-period-btn" data-period="all" style="padding:6px 10px;flex:none;width:auto;">کل بازه</button>
         </div>
       </div>
-      <div id="incomeExpenseChart"></div>
+      <div class="chart-carousel">
+        <div class="chart-carousel-track" id="compareChartTrack">
+          <div class="chart-carousel-page">
+            <div id="incomeExpenseChart"></div>
+          </div>
+          <div class="chart-carousel-page">
+            <div id="incomeExpensePie"></div>
+          </div>
+        </div>
+        <div class="chart-carousel-dots" id="compareChartDots">
+          <span class="chart-carousel-dot active"></span>
+          <span class="chart-carousel-dot"></span>
+        </div>
+      </div>
     </div>
     <div class="settings-card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
@@ -518,7 +545,7 @@
       </div>
     </details>
 
-    <p class="app-version">نسخه‌ی ۱.۴۷</p>
+    <p class="app-version">نسخه‌ی ۱.۴۸</p>
 
   </section>
 
