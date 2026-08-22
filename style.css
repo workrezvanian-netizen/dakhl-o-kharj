@@ -35,15 +35,29 @@ body.viewing-past-month::after {
 
 /* Body is locked to the viewport (not scrollable) so the fixed bottom nav
    never jitters from iOS rubber-band/bounce scrolling. All real scrolling
-   happens inside .app-scroll instead. */
-html, body {
+   happens inside .app-scroll instead.
+   -webkit-fill-available fixes iOS Safari cases where 100dvh leaves a gap
+   above the home indicator and pushes fixed bottom UI too high. */
+html {
   height: 100%;
-  height: 100dvh;
+  height: -webkit-fill-available;
+}
+html, body {
   overflow: hidden;
-  position: fixed;
-  inset: 0;
   width: 100%;
   overscroll-behavior: none;
+}
+body {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 100%;
+  height: 100dvh;
+  height: -webkit-fill-available;
+  min-height: 100%;
+  min-height: -webkit-fill-available;
 }
 
 /* Safety net: guarantees the safe-area / home-indicator strip at the very
@@ -1492,8 +1506,8 @@ input:focus, select:focus {
 .bottom-nav {
   position: fixed;
   bottom: 0;
-  right: 14px;
-  left: 14px;
+  right: 10px;
+  left: 10px;
   z-index: 20;
   display: flex;
   align-items: center;
@@ -1503,12 +1517,15 @@ input:focus, select:focus {
   backdrop-filter: blur(34px) saturate(2);
   -webkit-backdrop-filter: blur(34px) saturate(2);
   border: 1px solid rgba(255,255,255,0.45);
-  border-radius: 30px 30px 0 0;
+  border-radius: 26px 26px 0 0;
   box-shadow:
     0 10px 26px rgba(16,70,43,0.12),
     0 1px 0 rgba(255,255,255,0.6) inset;
-  /* فقط safe-area برای home indicator؛ بدون padding اضافه که نوار رو بالا ببره */
-  padding: 7px 7px max(7px, env(safe-area-inset-bottom, 0px));
+  /* چسبیده به لبه پایین؛ فقط safe-area برای home indicator */
+  padding-top: 6px;
+  padding-right: 6px;
+  padding-left: 6px;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 .bottom-nav::after {
   content: "";
@@ -1574,7 +1591,14 @@ input:focus, select:focus {
 .nav-btn.active span { font-weight: 700; }
 
 @media (min-width: 560px) {
-  .bottom-nav { max-width: 480px; margin: 0 auto; left: 50%; transform: translateX(-50%); right: auto; width: calc(100% - 28px); }
+  .bottom-nav {
+    max-width: 480px;
+    margin: 0 auto;
+    left: 50%;
+    transform: translateX(-50%);
+    right: auto;
+    width: calc(100% - 20px);
+  }
 }
 
 /* ---------- Toggle switch ---------- */
