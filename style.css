@@ -1502,30 +1502,25 @@ input:focus, select:focus {
 .sync-msg.error { color: var(--expense); }
 .danger-zone h2 { color: var(--expense); }
 
-/* ---------- Bottom nav (iOS "liquid glass" — flat minimal pill) ---------- */
+/* ---------- Bottom nav (چسبیده کامل به لبه پایین آیفون) ---------- */
 .bottom-nav {
   position: fixed;
+  left: 0;
+  right: 0;
   bottom: 0;
-  right: 10px;
-  left: 10px;
-  z-index: 20;
+  z-index: 30;
   display: flex;
   align-items: center;
   isolation: isolate;
   overflow: hidden;
-  background: rgba(255,255,255,0.22);
+  background: rgba(255,255,255,0.72);
   backdrop-filter: blur(34px) saturate(2);
   -webkit-backdrop-filter: blur(34px) saturate(2);
-  border: 1px solid rgba(255,255,255,0.45);
-  border-radius: 26px 26px 0 0;
-  box-shadow:
-    0 10px 26px rgba(16,70,43,0.12),
-    0 1px 0 rgba(255,255,255,0.6) inset;
-  /* چسبیده به لبه پایین؛ فقط safe-area برای home indicator */
-  padding-top: 6px;
-  padding-right: 6px;
-  padding-left: 6px;
-  padding-bottom: env(safe-area-inset-bottom, 0px);
+  border: none;
+  border-top: 1px solid rgba(255,255,255,0.6);
+  border-radius: 0;
+  box-shadow: 0 -6px 20px rgba(16,70,43,0.08);
+  padding: 8px 4px env(safe-area-inset-bottom, 0px);
 }
 .bottom-nav::after {
   content: "";
@@ -1597,7 +1592,7 @@ input:focus, select:focus {
     left: 50%;
     transform: translateX(-50%);
     right: auto;
-    width: calc(100% - 20px);
+    width: 100%;
   }
 }
 
