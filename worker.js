@@ -1,9 +1,9 @@
 // Cloudflare Worker — بک‌اند همگام‌سازی «دخل و خرج»
 // نیازمند یک KV Namespace با نام DNK_KV که به این Worker باند شده باشه.
-// تحلیل هوش مصنوعی با Gemini API گوگل کار می‌کنه.
-// باید یک Secret به اسم GEMINI_API_KEY به این Worker اضافه بشه:
-//   wrangler secret put GEMINI_API_KEY
-// کلید API رو از https://aistudio.google.com/apikey می‌تونی رایگان بسازی.
+// تحلیل هوش مصنوعی با OpenAI API کار می‌کنه.
+// باید یک Secret به اسم OPENAI_API_KEY به این Worker اضافه بشه:
+//   wrangler secret put OPENAI_API_KEY
+// کلید API رو از https://platform.openai.com/api-keys می‌تونی بسازی.
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -52,8 +52,8 @@ function buildAnalysisPrompt(body) {
 }
 
 async function handleAnalyze(request, env) {
-  if (!env.GEMINI_API_KEY) {
-    return jsonResponse({ error: "no_gemini_key" }, 500);
+  if (!env.OPENAI_API_KEY) {
+    return jsonResponse({ error: "no_openai_key" }, 500);
   }
   let body;
   try {
@@ -63,23 +63,22 @@ async function handleAnalyze(request, env) {
   }
 
   const prompt = buildAnalysisPrompt(body);
-  const GEMINI_MODEL = "gemini-2.5-flash";
+  const OPENAI_MODEL = "gpt-4o-mini";
 
   let aiRes;
   try {
-    aiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": env.GEMINI_API_KEY
-        },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }]
-        })
-      }
-    );
+    aiRes = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${env.OPENAI_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: OPENAI_MODEL,
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.8
+      })
+    });
   } catch (e) {
     return jsonResponse({ error: "ai_request_failed", detail: String((e && e.message) || e) }, 502);
   }
@@ -90,9 +89,8 @@ async function handleAnalyze(request, env) {
   }
 
   const data = await aiRes.json().catch(() => null);
-  const text = data && data.candidates && data.candidates[0] && data.candidates[0].content
-    && data.candidates[0].content.parts && data.candidates[0].content.parts[0]
-    ? String(data.candidates[0].content.parts[0].text || "").trim()
+  const text = data && data.choices && data.choices[0] && data.choices[0].message
+    ? String(data.choices[0].message.content || "").trim()
     : "";
 
   if (!text) {
