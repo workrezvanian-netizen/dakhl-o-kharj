@@ -489,9 +489,17 @@ document.querySelectorAll(".nav-btn").forEach((btn) => {
   btn.addEventListener("click", () => switchTab(btn.dataset.tab));
 });
 function switchTab(tab, opts = {}) {
-  document.querySelectorAll(".tab").forEach((t) => t.classList.remove("active"));
+  document.querySelectorAll(".tab").forEach((t) => {
+    t.classList.remove("active", "tab-enter");
+  });
   document.querySelectorAll(".nav-btn").forEach((b) => b.classList.remove("active"));
-  document.getElementById("tab-" + tab).classList.add("active");
+  const tabEl = document.getElementById("tab-" + tab);
+  if (tabEl) {
+    tabEl.classList.add("active");
+    // reflow سپس انیمیشن کرکره‌ای
+    void tabEl.offsetWidth;
+    tabEl.classList.add("tab-enter");
+  }
   const navBtn = document.querySelector(`.nav-btn[data-tab="${tab}"]`);
   if (navBtn) navBtn.classList.add("active");
   if (tab === "entry" && !opts.keepExpenseFilter && expenseListFilter) {
@@ -1029,7 +1037,73 @@ function renderCalendar() {
       openCalDaySheet(Number(btn.dataset.jd));
     });
   });
+
+  renderDashMonthGrid();
 }
+
+function renderDashMonthGrid() {
+  const grid = document.getElementById("dashMonthGrid");
+  if (!grid) return;
+
+  const byDay = {};
+  const addTo = (jd, key, amt) => {
+    if (!byDay[jd]) byDay[jd] = { income: 0, expense: 0 };
+    byDay[jd][key] += amt;
+  };
+  state.incomes.forEach((x) => {
+    const [gy, gm, gd] = x.date.split("-").map(Number);
+    const j = toJalaali(gy, gm, gd);
+    if (j.jy === viewedMonth.jy && j.jm === viewedMonth.jm) addTo(j.jd, "income", x.amount);
+  });
+  state.expenses.forEach((x) => {
+    const [gy, gm, gd] = x.date.split("-").map(Number);
+    const j = toJalaali(gy, gm, gd);
+    if (j.jy === viewedMonth.jy && j.jm === viewedMonth.jm) addTo(j.jd, "expense", x.amount);
+  });
+
+  const daysInMonth = jalaaliMonthLength(viewedMonth.jy, viewedMonth.jm);
+  const firstDow = calendarDayOfWeekIndex(viewedMonth.jy, viewedMonth.jm, 1);
+  const today = todayJalali();
+
+  let html = "";
+  for (let i = 0; i < firstDow; i += 1) {
+    html += `<div class="cal-cell cal-cell-empty"></div>`;
+  }
+  for (let d = 1; d <= daysInMonth; d += 1) {
+    const rec = byDay[d];
+    const net = rec ? rec.income - rec.expense : 0;
+    const amtStr = fmtCompactEn(net);
+    const amtClass = net > 0 ? "cal-amt-pos" : (net < 0 ? "cal-amt-neg" : "");
+    const isToday = today.jy === viewedMonth.jy && today.jm === viewedMonth.jm && today.jd === d;
+    let dayTypeClass = "";
+    if (rec) {
+      if (rec.income > 0 && rec.expense > 0) dayTypeClass = "cal-cell-mixed";
+      else if (rec.income > 0) dayTypeClass = "cal-cell-income-only";
+      else if (rec.expense > 0) dayTypeClass = "cal-cell-expense-only";
+    }
+    html += `
+      <button type="button" class="cal-cell ${dayTypeClass} ${isToday ? "cal-cell-today" : ""}" data-day="${d}">
+        <span class="cal-day-num">${toPersianDigits(d)}</span>
+        ${amtStr ? `<span class="cal-day-amt ${amtClass}">${amtStr}</span>` : ""}
+      </button>`;
+  }
+  grid.innerHTML = html;
+  grid.querySelectorAll(".cal-cell[data-day]").forEach((btn) => {
+    btn.addEventListener("click", () => openCalDaySheet(Number(btn.dataset.day)));
+  });
+}
+
+(function setupDashWeekMore() {
+  const btn = document.getElementById("dashWeekMoreBtn");
+  const panel = document.getElementById("dashMonthPanel");
+  if (!btn || !panel) return;
+  btn.addEventListener("click", () => {
+    const open = panel.classList.toggle("is-open");
+    btn.classList.toggle("is-open", open);
+    btn.textContent = open ? "بستن تقویم ماه" : "جزئیات بیشتر";
+    if (open) renderDashMonthGrid();
+  });
+})();
 
 // ---------- شیت جزئیات روز تقویم ----------
 function calISOFromViewedDay(jd) {
@@ -1988,7 +2062,7 @@ async function initSync() {
 // ---------- Service worker ----------
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js?v=59").catch(() => {});
+    navigator.serviceWorker.register("sw.js?v=60").catch(() => {});
   });
 }
 

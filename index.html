@@ -14,7 +14,7 @@
 <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css">
 <link href="https://cdn.jsdelivr.net/gh/rastikerdar/kamran@v1.0.0/dist/font-face.css" rel="stylesheet" type="text/css">
 <link href="https://cdn.jsdelivr.net/gh/rastikerdar/samim-font@v4.0.5/dist/font-face.css" rel="stylesheet" type="text/css">
-<link rel="stylesheet" href="style.css?v=59">
+<link rel="stylesheet" href="style.css?v=60">
 </head>
 <body>
 
@@ -123,9 +123,15 @@
     <div class="dash-week-card">
       <div class="dash-week-head">
         <h2>۷ روز اخیر</h2>
-        <span class="dash-week-hint">برای جزئیات لمس کن</span>
+        <button type="button" id="dashWeekMoreBtn" class="dash-week-more-btn">جزئیات بیشتر</button>
       </div>
       <div class="dash-week-strip" id="dashWeekStrip"></div>
+      <div class="dash-month-panel" id="dashMonthPanel">
+        <div class="dash-month-weekdays">
+          <span>ش</span><span>ی</span><span>د</span><span>س</span><span>چ</span><span>پ</span><span>ج</span>
+        </div>
+        <div class="dash-month-grid" id="dashMonthGrid"></div>
+      </div>
     </div>
   </section>
 
@@ -564,7 +570,7 @@
 </div>
 
 <input type="checkbox" id="hapticProxy" tabindex="-1" aria-hidden="true" style="position:fixed;top:-100px;left:-100px;width:1px;height:1px;opacity:0;pointer-events:none;">
-<script src="script.js?v=59"></script>
-<script src="installments.js?v=59"></script>
+<script src="script.js?v=60"></script>
+<script src="installments.js?v=60"></script>
 </body>
 </html>
