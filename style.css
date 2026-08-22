@@ -81,7 +81,8 @@ body::after {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
-  padding-bottom: 100px;
+  /* فضای کافی برای نوار پایین + home indicator آیفون */
+  padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px));
 }
 
 h2 {
@@ -1761,7 +1762,12 @@ input:checked + .toggle-slider:before {
 
 /* ---------------------------- لیست/دفتر ---------------------------- */
 
-#tab-installments .ledger { padding: 6px 20px 4px; display: flex; flex-direction: column; gap: 12px; }
+#tab-installments .ledger {
+  padding: 6px 20px calc(90px + env(safe-area-inset-bottom, 0px));
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
 
 #tab-installments .row {
   background: var(--inst-cream);
@@ -1855,7 +1861,8 @@ input:checked + .toggle-slider:before {
 
 #tab-installments .fab {
   position: fixed;
-  bottom: calc(96px + env(safe-area-inset-bottom));
+  /* بالای نوار پایین + فاصله امن */
+  bottom: calc(72px + env(safe-area-inset-bottom, 0px));
   left: 18px;
   right: auto;
   width: 56px;
@@ -1867,7 +1874,7 @@ input:checked + .toggle-slider:before {
   border: none;
   box-shadow: 0 12px 24px rgba(27, 42, 74, 0.35), inset 0 2px 3px rgba(255,255,255,0.18);
   cursor: pointer;
-  z-index: 30;
+  z-index: 40;
   line-height: 1;
   transition: transform .15s cubic-bezier(.4,0,.2,1);
 }
@@ -1891,7 +1898,8 @@ input:checked + .toggle-slider:before {
   max-width: 480px;
   margin: 0 auto;
   border-radius: 24px 24px 0 0;
-  padding: 10px 22px calc(24px + env(safe-area-inset-bottom));
+  /* فضای دکمه‌های پایین شیت بالاتر از home indicator */
+  padding: 10px 22px calc(28px + env(safe-area-inset-bottom, 0px));
   max-height: 88vh;
   overflow-y: auto;
   animation: inst-sheet-up 0.22s ease-out;
