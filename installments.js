@@ -211,6 +211,26 @@ function todayIso() {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
 }
 
+// اگه توی داشبورد دخل‌وخرج ماه دیگه‌ای مرور می‌شه (متغیر سراسری viewedMonth)،
+// فهرست و جمع اقساط هم همون ماه رو نشون بده؛ وگرنه امروز واقعی.
+// توجه: این فقط روی نمایش لیست/جمع تأثیر می‌ذاره، نه روی محاسبات واقعیِ یادآوری/پوش سمت سرور.
+function viewAnchorIso() {
+  if (typeof viewedMonth === "undefined" || typeof todayJalali !== "function") return todayIso();
+  try {
+    const t = todayJalali();
+    if (viewedMonth.jy === t.jy && viewedMonth.jm === t.jm) return todayIso();
+    const g = toGregorian(viewedMonth.jy, viewedMonth.jm, 1);
+    return dateToISO(g.gy, g.gm, g.gd);
+  } catch (e) {
+    return todayIso();
+  }
+}
+function isViewingCurrentInstallmentMonth() {
+  if (typeof viewedMonth === "undefined" || typeof todayJalali !== "function") return true;
+  const t = todayJalali();
+  return viewedMonth.jy === t.jy && viewedMonth.jm === t.jm;
+}
+
 function loadRaw() {
   try {
     const arr = JSON.parse(localStorage.getItem(STORAGE_KEY));
@@ -329,7 +349,7 @@ const store = {
   },
 
   list() {
-    const today = todayIso();
+    const today = viewAnchorIso();
     const { nextMonthStart } = Jalaali.currentJalaliMonthBounds(today);
     const items = [];
     for (const row of loadRaw()) {
@@ -347,7 +367,7 @@ const store = {
   },
 
   monthlyTotal() {
-    const today = todayIso();
+    const today = viewAnchorIso();
     const { monthStart, nextMonthStart } = Jalaali.currentJalaliMonthBounds(today);
     const monthName = Jalaali.currentJalaliMonthName(today);
 
@@ -432,6 +452,9 @@ function formatAmount(amount) {
 
 function statusBadge(item) {
   if (item.is_paid) return "";
+  if (!isViewingCurrentInstallmentMonth()) {
+    return `<span class="badge badge-due">سررسید ${item.due_jalali}</span>`;
+  }
   if (item.days_left < 0) return `<span class="badge badge-overdue">${Math.abs(item.days_left)} روز گذشته ⚠️</span>`;
   if (item.days_left === 0) return `<span class="badge badge-today">امروز 🔥</span>`;
   return `<span class="badge badge-due">${item.days_left} روز مانده</span>`;

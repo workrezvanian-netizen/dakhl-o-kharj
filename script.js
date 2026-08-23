@@ -778,6 +778,7 @@ function renderAll() {
   renderCalendar();
   renderWeekCalStrip();
   renderProfileCard();
+  if (typeof refreshAll === "function") refreshAll();
 }
 
 function renderExpenseCategoryPicker() {
@@ -960,16 +961,11 @@ function updateMonthLabel() {
 
   const remainEl = document.getElementById("monthRemaining");
   if (remainEl) {
-    if (isViewingCurrentMonth()) {
-      const t = todayJalali();
-      const len = jalaaliMonthLength(viewedMonth.jy, viewedMonth.jm);
-      const remaining = len - t.jd;
-      remainEl.textContent = remaining > 0
-        ? `${toPersianDigits(remaining)} روز تا پایان ماه مانده`
-        : "امروز آخرین روز ماهه";
-    } else {
-      remainEl.textContent = "";
-    }
+    const totals = computeMonthTotals(viewedMonth.jy, viewedMonth.jm);
+    const balance = totals.totalIncome - totals.totalExpense;
+    const cls = balance >= 0 ? "is-positive" : "is-negative";
+    const sign = balance >= 0 ? "+" : "−";
+    remainEl.innerHTML = `مانده‌ی این ماه: <strong class="${cls}">${sign}${fmtAmount(Math.abs(balance))} تومان</strong>`;
   }
 }
 
@@ -983,6 +979,7 @@ function applyViewedMonthState() {
   renderExpenseList();
   renderAnalysis();
   renderCalendar();
+  if (typeof refreshAll === "function") refreshAll(); // تب اقساط هم با همین ماهِ دیده‌شده هماهنگ بشه
 }
 
 function renderCalendar() {
@@ -1930,13 +1927,14 @@ function setupChartCarousel(trackId, dotsId, onShow) {
 
   applyState();
 }
-setupChartCarousel("dailyChartTrack", "dailyChartDots", (idx) => {
-  if (idx === 0) renderCombinedDailyChart("combinedDailyChart", "incomeChartTotal", "expenseChartTotal");
-  else renderCombinedBarChart("combinedBarChart");
+setupChartCarousel("dailyChartTrack", "dailyChartDots", () => {
+  // هر دو صفحه رو دوباره می‌سازیم (نه فقط صفحه‌ی تازه‌نمایان‌شده) تا انیمیشن گرافیکی همیشه پخش بشه
+  renderCombinedDailyChart("combinedDailyChart", "incomeChartTotal", "expenseChartTotal");
+  renderCombinedBarChart("combinedBarChart");
 });
-setupChartCarousel("compareChartTrack", "compareChartDots", (idx) => {
-  if (idx === 0) renderMonthCompareCard("incomeExpenseChart", analysisPeriod);
-  else renderIncomeExpensePieCompare("incomeExpensePie", analysisPeriod);
+setupChartCarousel("compareChartTrack", "compareChartDots", () => {
+  renderMonthCompareCard("incomeExpenseChart", analysisPeriod);
+  renderIncomeExpensePieCompare("incomeExpensePie", analysisPeriod);
 });
 
 
