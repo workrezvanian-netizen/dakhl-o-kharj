@@ -1435,7 +1435,7 @@ function renderMonthCompareCard(containerId, period = "month") {
       </div>`;
   }).join("");
 
-  wrap.innerHTML = `<div class="compare-gauges-row">${gaugeHTML}</div>`;
+  wrap.innerHTML = `<div class="compare-gauges-row chart-graphic-enter">${gaugeHTML}</div>`;
 
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
@@ -1472,7 +1472,7 @@ function renderIncomeExpensePieCompare(containerId, period = "month") {
   const uid = Date.now();
 
   wrap.innerHTML = `
-    <div class="pie-compare">
+    <div class="pie-compare chart-graphic-enter">
       <svg viewBox="0 0 180 180" class="pie-compare-svg">
         <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#C24A2E" stroke-width="${sw}"/>
         <circle id="pieCompareIncome-${uid}" cx="${cx}" cy="${cy}" r="${r}" fill="none"
@@ -1593,7 +1593,6 @@ function smoothPath(pts) {
 
 const JALALI_MONTHS_SHORT = ["فرو", "ارد", "خرد", "تیر", "مرد", "شهر", "مهر", "آبا", "آذر", "دی", "بهم", "اسف"];
 let dailyChartMode = "day"; // 'day' | 'year'
-const DAILY_CHART_POOL_DAYS = 90;
 
 function buildDailyChartPool(days) {
   const now = new Date();
@@ -1631,12 +1630,11 @@ function buildYearlyChartPool(jy) {
 function renderCombinedDailyChart(containerId, incomeTotalElId, expenseTotalElId) {
   const wrap = document.getElementById(containerId);
   const scrollWrap = document.getElementById("dailyChartScroll");
-  const hint = document.getElementById("dailyChartHint");
   const incomeTotalEl = document.getElementById(incomeTotalElId);
   const expenseTotalEl = document.getElementById(expenseTotalElId);
   const isYear = dailyChartMode === "year";
 
-  const pool = isYear ? buildYearlyChartPool(todayJalali().jy) : buildDailyChartPool(DAILY_CHART_POOL_DAYS);
+  const pool = isYear ? buildYearlyChartPool(todayJalali().jy) : buildDailyChartPool(10);
   const n = pool.length;
 
   // مقدار بالای نمودار: متناسب با دکمه‌ی بازه‌ی انتخاب‌شده — سالیانه = کل سال جاری، ماهانه = فقط ماه جاری
@@ -1654,7 +1652,6 @@ function renderCombinedDailyChart(containerId, incomeTotalElId, expenseTotalElId
   });
   if (incomeTotalEl) incomeTotalEl.textContent = fmtAmount(headerIncome);
   if (expenseTotalEl) expenseTotalEl.textContent = fmtAmount(headerExpense);
-  if (hint) hint.style.display = isYear ? "none" : "block";
 
   const totalIncome = pool.reduce((s, p) => s + p.income, 0);
   const totalExpense = pool.reduce((s, p) => s + p.expense, 0);
@@ -1668,14 +1665,8 @@ function renderCombinedDailyChart(containerId, incomeTotalElId, expenseTotalElId
 
   const H = 160, PAD_TOP = 40, PAD_BOTTOM = 28, PAD_X = 18;
   const chartH = H - PAD_TOP - PAD_BOTTOM;
-  const spacing = isYear ? null : 36;
-  let W;
-  if (isYear) {
-    W = Math.max((scrollWrap && scrollWrap.clientWidth) || 320, 280);
-  } else {
-    W = PAD_X * 2 + (n - 1) * spacing;
-  }
-  const stepX = isYear ? (W - PAD_X * 2) / (n - 1 || 1) : spacing;
+  const W = Math.max((scrollWrap && scrollWrap.clientWidth) || 320, 280);
+  const stepX = (W - PAD_X * 2) / (n - 1 || 1);
 
   const buildPts = (key, maxVal) => pool.map((p, i) => ({
     x: PAD_X + i * stepX,
@@ -1699,8 +1690,6 @@ function renderCombinedDailyChart(containerId, incomeTotalElId, expenseTotalElId
 
   const axisLabels = pool.map((p, i) => {
     const x = PAD_X + i * stepX;
-    const show = isYear || n <= 14 || i % 1 === 0; // هر روز لیبل داره چون قابل‌اسکرول شده
-    if (!show) return "";
     const label = isYear ? JALALI_MONTHS_SHORT[p.jm - 1] : toPersianDigits(p.jd);
     return `<text x="${x.toFixed(1)}" y="${H - 8}" text-anchor="middle" class="daily-chart-axis-label">${label}</text>`;
   }).join("");
@@ -1710,7 +1699,7 @@ function renderCombinedDailyChart(containerId, incomeTotalElId, expenseTotalElId
   const defaultIdx = isYear ? (todayJ.jm - 1) : (n - 1);
 
   wrap.innerHTML = `
-    <svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" class="daily-chart-svg combined-chart-svg" id="svg-${uid}" preserveAspectRatio="none">
+    <svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" class="daily-chart-svg combined-chart-svg chart-graphic-enter" id="svg-${uid}" preserveAspectRatio="none">
       <defs>
         <linearGradient id="fillIncome-${uid}" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stop-color="#2F7A72" stop-opacity="0.32"/>
@@ -1805,10 +1794,6 @@ function renderCombinedDailyChart(containerId, incomeTotalElId, expenseTotalElId
   });
 
   moveToIndex(defaultIdx);
-
-  if (!isYear && scrollWrap) {
-    requestAnimationFrame(() => { scrollWrap.scrollLeft = scrollWrap.scrollWidth; });
-  }
 }
 
 (function setupDailyChartModeToggle() {
@@ -1830,7 +1815,7 @@ function renderCombinedBarChart(containerId) {
   const wrap = document.getElementById(containerId);
   if (!wrap) return;
   const isYear = dailyChartMode === "year";
-  const pool = isYear ? buildYearlyChartPool(todayJalali().jy) : buildDailyChartPool(DAILY_CHART_POOL_DAYS).slice(-10);
+  const pool = isYear ? buildYearlyChartPool(todayJalali().jy) : buildDailyChartPool(10);
 
   const max = Math.max(...pool.map((p) => Math.max(p.income, p.expense))) || 1;
   const today = todayJalali();
@@ -1855,7 +1840,7 @@ function renderCombinedBarChart(containerId) {
     return;
   }
 
-  wrap.innerHTML = `<div class="dual-vbar-chart">${cols}</div>`;
+  wrap.innerHTML = `<div class="dual-vbar-chart chart-graphic-enter">${cols}</div>`;
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
       wrap.querySelectorAll(".bar").forEach((el) => { el.style.height = el.dataset.target + "%"; });
@@ -1863,9 +1848,8 @@ function renderCombinedBarChart(containerId) {
   });
 }
 
-// -- کاروسل ورق‌زدنی (دات‌های زیر هر نمودار برای سوییچ بین نماهای مختلف) --
 // -- کاروسل کشویی به‌شکل «دسته کارت روی هم» — ورق‌خوردن با کشیدن یا زدن دات‌ها --
-function setupChartCarousel(trackId, dotsId) {
+function setupChartCarousel(trackId, dotsId, onShow) {
   const track = document.getElementById(trackId);
   const dots = document.getElementById(dotsId);
   if (!track || !dots) return;
@@ -1886,6 +1870,7 @@ function setupChartCarousel(trackId, dotsId) {
     if (index < 0 || index >= pages.length || index === activeIndex || pages.length < 2) return;
     activeIndex = index;
     applyState();
+    if (onShow) onShow(activeIndex); // نمودار صفحه‌ی جدید رو دوباره می‌سازه تا انیمیشن گرافیکیش پخش بشه
   }
 
   dotEls.forEach((dot, i) => {
@@ -1898,9 +1883,6 @@ function setupChartCarousel(trackId, dotsId) {
     if (pages.length < 2) return;
     const front = pages[activeIndex];
     if (!front.contains(e.target)) return;
-    // اگه نقطه‌ی شروع کشیدن، داخل نمودار خطیِ خودش‌اسکرول‌شونده باشه، دست به کارت نمی‌زنیم
-    // تا با اسکرول افقی روزهای قبل تداخل نکنه — دات‌های زیر کارت همیشه در دسترسن.
-    if (e.target.closest(".daily-chart-scroll")) return;
     startX = e.clientX; startY = e.clientY; dragging = true; moved = false;
     front.classList.add("stack-dragging");
   });
@@ -1948,8 +1930,14 @@ function setupChartCarousel(trackId, dotsId) {
 
   applyState();
 }
-setupChartCarousel("dailyChartTrack", "dailyChartDots");
-setupChartCarousel("compareChartTrack", "compareChartDots");
+setupChartCarousel("dailyChartTrack", "dailyChartDots", (idx) => {
+  if (idx === 0) renderCombinedDailyChart("combinedDailyChart", "incomeChartTotal", "expenseChartTotal");
+  else renderCombinedBarChart("combinedBarChart");
+});
+setupChartCarousel("compareChartTrack", "compareChartDots", (idx) => {
+  if (idx === 0) renderMonthCompareCard("incomeExpenseChart", analysisPeriod);
+  else renderIncomeExpensePieCompare("incomeExpensePie", analysisPeriod);
+});
 
 
 function computeMonthTotals(jy, jm) {
