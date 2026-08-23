@@ -584,106 +584,133 @@ h2 {
 }
 .month-nav-btn:active { background: var(--green-soft); }
 
-/* ---------- بلوک «دخل» — شیشه‌ای/سه‌بعدی ---------- */
-.month-remaining {
+/* ---------- بلوک «موجودی» — شیشه‌ای مدرن ---------- */
+.month-remaining,
+.balance-card {
   position: relative;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  margin: 0 0 16px;
-  padding: 16px 22px;
-  border-radius: 24px;
-  overflow: hidden;
-  background: linear-gradient(155deg, rgba(255,255,255,0.62) 0%, rgba(255,255,255,0.22) 55%, rgba(255,255,255,0.32) 100%);
-  backdrop-filter: blur(22px) saturate(1.8);
-  -webkit-backdrop-filter: blur(22px) saturate(1.8);
-  border: 1px solid rgba(255,255,255,0.65);
-  box-shadow:
-    0 1.5px 0 rgba(255,255,255,0.95) inset,
-    0 -16px 26px rgba(255,255,255,0.16) inset,
-    0 2px 4px rgba(255,255,255,0.5) inset,
-    0 18px 34px rgba(22,63,60,0.16),
-    0 6px 12px rgba(22,63,60,0.09);
-}
-.month-balance-icon {
-  position: relative;
-  z-index: 1;
-  flex-shrink: 0;
-  width: 42px;
-  height: 42px;
-  border-radius: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(150deg, var(--green-deep) 0%, #2F7A72 70%, #4FA89E 130%);
-  box-shadow: 0 6px 14px rgba(22,63,60,0.28);
-}
-.month-remaining.is-negative .month-balance-icon {
-  background: linear-gradient(150deg, #7A2F2F 0%, #B0453B 70%, #D97757 130%);
-  box-shadow: 0 6px 14px rgba(122,47,47,0.28);
-}
-.month-balance-text {
-  position: relative;
-  z-index: 1;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 3px;
+  align-items: stretch;
+  gap: 10px;
+  margin: 0 0 18px;
+  padding: 18px 18px 16px;
+  border-radius: 26px;
+  overflow: hidden;
+  background: linear-gradient(160deg, rgba(255,255,255,0.72) 0%, rgba(255,255,255,0.28) 48%, rgba(227,241,239,0.45) 100%);
+  backdrop-filter: blur(28px) saturate(1.9);
+  -webkit-backdrop-filter: blur(28px) saturate(1.9);
+  border: 1px solid rgba(255,255,255,0.72);
+  box-shadow:
+    0 1.5px 0 rgba(255,255,255,0.95) inset,
+    0 -18px 28px rgba(255,255,255,0.14) inset,
+    0 2px 4px rgba(255,255,255,0.45) inset,
+    0 20px 40px rgba(22,63,60,0.14),
+    0 6px 14px rgba(22,63,60,0.08);
 }
-.month-remaining.is-positive {
-  background: linear-gradient(155deg, rgba(197,232,213,0.55) 0%, rgba(255,255,255,0.24) 55%, rgba(197,232,213,0.28) 100%);
+.month-remaining.is-positive,
+.balance-card.is-positive {
+  background: linear-gradient(160deg, rgba(197,232,213,0.62) 0%, rgba(255,255,255,0.3) 50%, rgba(197,232,213,0.32) 100%);
 }
-.month-remaining.is-negative {
-  background: linear-gradient(155deg, rgba(245,203,190,0.5) 0%, rgba(255,255,255,0.24) 55%, rgba(245,203,190,0.26) 100%);
+.month-remaining.is-negative,
+.balance-card.is-negative {
+  background: linear-gradient(160deg, rgba(245,203,190,0.55) 0%, rgba(255,255,255,0.28) 50%, rgba(245,203,190,0.3) 100%);
 }
-.month-remaining::before {
-  /* درخشش شیشه‌ای بالای بلوک */
+.month-remaining::before,
+.balance-card::before {
   content: "";
   position: absolute;
-  top: -6px; left: 8%; right: 8%;
-  height: 46%;
-  background: linear-gradient(180deg, rgba(255,255,255,0.75) 0%, rgba(255,255,255,0) 100%);
+  top: -10px; left: 6%; right: 6%;
+  height: 48%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 100%);
   border-radius: 50%;
   pointer-events: none;
-  opacity: 0.8;
+  opacity: 0.85;
 }
-.month-remaining::after {
-  /* خط نور ظریف دور لبه‌ی بلوک */
+.month-remaining::after,
+.balance-card::after {
   content: "";
   position: absolute;
   inset: 0;
-  border-radius: 24px;
-  box-shadow: 0 0 0 1px rgba(255,255,255,0.3) inset;
+  border-radius: 26px;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.35) inset;
   pointer-events: none;
+}
+.balance-card-top {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 }
 .month-balance-label {
   position: relative;
   z-index: 1;
-  font-size: 12.5px;
-  font-weight: 700;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--green-deep);
+  letter-spacing: 0.02em;
+}
+.balance-card-badge {
+  font-size: 10.5px;
+  font-weight: 600;
   color: var(--text-mute);
-  letter-spacing: 0.03em;
+  background: rgba(255,255,255,0.55);
+  border: 1px solid rgba(255,255,255,0.7);
+  padding: 4px 10px;
+  border-radius: 999px;
 }
 .month-balance-amount {
   position: relative;
   z-index: 1;
-  font-size: 23px;
+  font-size: 26px;
   font-weight: 800;
   display: flex;
   align-items: baseline;
-  gap: 5px;
-  letter-spacing: -0.3px;
-  text-shadow: 0 1px 0 rgba(255,255,255,0.6);
+  gap: 6px;
+  letter-spacing: -0.4px;
+  text-shadow: 0 1px 0 rgba(255,255,255,0.55);
+  line-height: 1.15;
 }
-.month-remaining.is-positive .month-balance-amount { color: var(--green-deep); }
-.month-remaining.is-negative .month-balance-amount { color: var(--expense); }
+.month-remaining.is-positive .month-balance-amount,
+.balance-card.is-positive .month-balance-amount { color: var(--green-deep); }
+.month-remaining.is-negative .month-balance-amount,
+.balance-card.is-negative .month-balance-amount { color: var(--expense); }
 .month-balance-unit {
-  font-size: 11px;
-  font-weight: 500;
+  font-size: 12px;
+  font-weight: 600;
   color: var(--text-mute);
 }
+.balance-card-meta {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  gap: 8px;
+  margin-top: 2px;
+}
+.balance-meta-item {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-mute);
+  background: rgba(255,255,255,0.45);
+  border-radius: 12px;
+  padding: 8px 10px;
+  border: 1px solid rgba(255,255,255,0.55);
+}
+.balance-meta-item i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex: none;
+}
+.balance-meta-item.income i { background: var(--green); }
+.balance-meta-item.expense i { background: var(--expense); }
+.balance-meta-item.income { color: var(--green-deep); }
+.balance-meta-item.expense { color: #a33d28; }
 .month-nav-label {
   flex: 1;
   text-align: center;
