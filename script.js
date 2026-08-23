@@ -955,17 +955,32 @@ function isViewingCurrentMonth() {
   return viewedMonth.jy === t.jy && viewedMonth.jm === t.jm;
 }
 
+function computeCumulativeBalance(jy, jm) {
+  // مانده‌ی حساب تا پایان این ماه — با احتساب همه‌ی تراکنش‌های قبل‌تر، پس خودش از ماه به ماه منتقل می‌شه
+  const len = jalaaliMonthLength(jy, jm);
+  const gEnd = toGregorian(jy, jm, len);
+  const endIso = `${gEnd.gy}-${String(gEnd.gm).padStart(2, "0")}-${String(gEnd.gd).padStart(2, "0")}`;
+  let income = 0, expense = 0;
+  state.incomes.forEach((x) => { if (x.date <= endIso) income += x.amount; });
+  state.expenses.forEach((x) => { if (x.date <= endIso) expense += x.amount; });
+  return income - expense;
+}
+
 function updateMonthLabel() {
   const label = document.getElementById("monthLabel");
   label.textContent = JALALI_MONTHS[viewedMonth.jm - 1];
 
   const remainEl = document.getElementById("monthRemaining");
   if (remainEl) {
-    const totals = computeMonthTotals(viewedMonth.jy, viewedMonth.jm);
-    const balance = totals.totalIncome - totals.totalExpense;
+    const balance = computeCumulativeBalance(viewedMonth.jy, viewedMonth.jm);
     const cls = balance >= 0 ? "is-positive" : "is-negative";
     const sign = balance >= 0 ? "+" : "−";
-    remainEl.innerHTML = `مانده‌ی این ماه: <strong class="${cls}">${sign}${fmtAmount(Math.abs(balance))} تومان</strong>`;
+    remainEl.innerHTML = `
+      <span class="month-balance-icon">${balance >= 0 ? "💰" : "⚠️"}</span>
+      <span class="month-balance-text">
+        <span class="month-balance-label">مانده‌ی حساب تا پایان این ماه</span>
+        <strong class="month-balance-amount ${cls}">${sign}${fmtAmount(Math.abs(balance))} <span class="month-balance-unit">تومان</span></strong>
+      </span>`;
   }
 }
 
