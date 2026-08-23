@@ -499,6 +499,7 @@ function switchTab(tab, opts = {}) {
     renderExpenseList();
   }
   if (tab === "analysis") renderAnalysis();
+  if (tab === "installments" && typeof refreshAll === "function") refreshAll();
 
   // Settings accordions always start closed, whether we're leaving or entering the tab
   document.querySelectorAll("#tab-settings .settings-group").forEach((d) => { d.open = false; });
@@ -1837,40 +1838,84 @@ function renderCombinedDailyChart(containerId, incomeTotalElId, expenseTotalElId
   });
 })();
 
-// -- نمای دوم (میله‌ای گروهی) همون داده‌ی نمودار ترکیبی — برای صفحه‌ی دومِ ورق‌زدنِ نمودار اول --
+// -- نمای دوم مدرن: دو رینگ خلاصه + نوار فعالیت روزانه (مینیمال) --
 function renderCombinedBarChart(containerId) {
   const wrap = document.getElementById(containerId);
   if (!wrap) return;
   const isYear = dailyChartMode === "year";
   const pool = isYear ? buildYearlyChartPool(viewedMonth.jy) : buildDailyChartPool();
 
-  const max = Math.max(...pool.map((p) => Math.max(p.income, p.expense))) || 1;
-  const today = todayJalali();
-
-  const cols = pool.map((p) => {
-    const label = isYear ? JALALI_MONTHS_SHORT[p.jm - 1] : toPersianDigits(p.jd);
-    const isToday = !isYear && p.jy === today.jy && p.jm === today.jm && p.jd === today.jd;
-    const incomeH = Math.max((p.income / max) * 100, p.income > 0 ? 4 : 0);
-    const expenseH = Math.max((p.expense / max) * 100, p.expense > 0 ? 4 : 0);
-    return `
-      <div class="dual-vbar-col ${isToday ? "is-today" : ""}">
-        <div class="dual-vbar-bars">
-          <div class="bar income" style="height:0%" data-target="${incomeH}"></div>
-          <div class="bar expense" style="height:0%" data-target="${expenseH}"></div>
-        </div>
-        <span class="dual-vbar-label">${label}</span>
-      </div>`;
-  }).join("");
-
-  if (max === 0 || pool.every((p) => !p.income && !p.expense)) {
+  const totalIncome = pool.reduce((s, p) => s + p.income, 0);
+  const totalExpense = pool.reduce((s, p) => s + p.expense, 0);
+  if (!totalIncome && !totalExpense) {
     wrap.innerHTML = `<p class="empty-hint">داده‌ای برای این بازه نیست</p>`;
     return;
   }
 
-  wrap.innerHTML = `<div class="dual-vbar-chart chart-graphic-enter">${cols}</div>`;
+  const maxSide = Math.max(totalIncome, totalExpense) || 1;
+  const incomePct = Math.round((totalIncome / maxSide) * 100);
+  const expensePct = Math.round((totalExpense / maxSide) * 100);
+  const R = 42, C = 2 * Math.PI * R;
+  const incomeDash = (incomePct / 100) * C;
+  const expenseDash = (expensePct / 100) * C;
+  const maxDay = Math.max(...pool.map((p) => Math.max(p.income, p.expense))) || 1;
+  const today = todayJalali();
+
+  const activity = pool.map((p) => {
+    const h = Math.max((Math.max(p.income, p.expense) / maxDay) * 100, (p.income || p.expense) ? 8 : 0);
+    const dominant = p.expense > p.income ? "expense" : (p.income > 0 ? "income" : "empty");
+    const label = isYear ? JALALI_MONTHS_SHORT[p.jm - 1] : toPersianDigits(p.jd);
+    const isToday = !isYear && p.jy === today.jy && p.jm === today.jm && p.jd === today.jd;
+    return `
+      <div class="soft-activity-col ${isToday ? "is-today" : ""}" title="${label}">
+        <div class="soft-activity-bar ${dominant}" style="height:0%" data-target="${h}"></div>
+        <span class="soft-activity-label">${label}</span>
+      </div>`;
+  }).join("");
+
+  wrap.innerHTML = `
+    <div class="soft-summary-chart chart-graphic-enter">
+      <div class="soft-rings-row">
+        <div class="soft-ring-card">
+          <svg viewBox="0 0 100 100" class="soft-ring-svg">
+            <circle cx="50" cy="50" r="${R}" class="soft-ring-track"/>
+            <circle cx="50" cy="50" r="${R}" class="soft-ring-value income"
+              stroke-dasharray="0 ${C}"
+              data-dash="${incomeDash.toFixed(1)} ${C.toFixed(1)}"
+              transform="rotate(-90 50 50)"/>
+          </svg>
+          <div class="soft-ring-center">
+            <span class="soft-ring-pct">${toPersianDigits(incomePct)}٪</span>
+            <span class="soft-ring-label">درآمد</span>
+          </div>
+          <strong class="soft-ring-amount income-color">${fmtAmount(totalIncome)}</strong>
+        </div>
+        <div class="soft-ring-card">
+          <svg viewBox="0 0 100 100" class="soft-ring-svg">
+            <circle cx="50" cy="50" r="${R}" class="soft-ring-track"/>
+            <circle cx="50" cy="50" r="${R}" class="soft-ring-value expense"
+              stroke-dasharray="0 ${C}"
+              data-dash="${expenseDash.toFixed(1)} ${C.toFixed(1)}"
+              transform="rotate(-90 50 50)"/>
+          </svg>
+          <div class="soft-ring-center">
+            <span class="soft-ring-pct">${toPersianDigits(expensePct)}٪</span>
+            <span class="soft-ring-label">مخارج</span>
+          </div>
+          <strong class="soft-ring-amount expense-color">${fmtAmount(totalExpense)}</strong>
+        </div>
+      </div>
+      <div class="soft-activity-strip">${activity}</div>
+    </div>`;
+
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
-      wrap.querySelectorAll(".bar").forEach((el) => { el.style.height = el.dataset.target + "%"; });
+      wrap.querySelectorAll(".soft-ring-value").forEach((el) => {
+        el.style.strokeDasharray = el.dataset.dash;
+      });
+      wrap.querySelectorAll(".soft-activity-bar").forEach((el) => {
+        el.style.height = el.dataset.target + "%";
+      });
     });
   });
 }
@@ -2086,7 +2131,7 @@ function setupAiAnalyzeButton(btnId, resultId) {
     btn.disabled = true;
     resultBox.innerHTML = `<div class="ai-result-loading"><span class="ai-spin"></span>در حال تحلیل این ماه...</div>`;
 
-    const t = todayJalali();
+    const t = viewedMonth;
     const lastM = addMonthsJalali(t.jy, t.jm, -1);
     const thisMonth = computeMonthTotals(t.jy, t.jm);
     const lastMonth = computeMonthTotals(lastM.jy, lastM.jm);
@@ -2115,6 +2160,8 @@ function setupAiAnalyzeButton(btnId, resultId) {
         return;
       }
       resultBox.innerHTML = `<div class="ai-result-text">${data.summary.replace(/\n/g, "<br>")}</div>`;
+      // بعد از تحلیل، نمودارها را دوباره با انیمیشن روان بساز
+      renderAnalysis();
     } catch (e) {
       resultBox.innerHTML = `<div class="ai-result-error">اتصال به سرور برقرار نشد. اینترنتت رو چک کن و دوباره امتحان کن.</div>`;
     } finally {
@@ -2276,7 +2323,7 @@ async function initSync() {
 // ---------- Service worker ----------
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js?v=63").catch(() => {});
+    navigator.serviceWorker.register("sw.js?v=64").catch(() => {});
   });
 }
 
