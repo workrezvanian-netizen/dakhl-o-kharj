@@ -1199,30 +1199,44 @@ input:focus, select:focus {
 .compare-gauge-legend span { display: flex; align-items: center; justify-content: center; gap: 5px; }
 .compare-gauge-legend i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex: none; }
 
-/* ---------- کاروسل ورق‌زدنی نمودارها ---------- */
+/* ---------- کاروسل کشویی — دسته‌کارت‌های روی‌هم که ورق می‌خورن ---------- */
 .chart-carousel { position: relative; }
 .chart-carousel-track {
-  display: flex;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  direction: ltr;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-  border-radius: 14px;
+  position: relative;
+  padding-top: 4px;
 }
-.chart-carousel-track::-webkit-scrollbar { display: none; }
 .chart-carousel-page {
-  flex: 0 0 100%;
-  scroll-snap-align: start;
-  direction: rtl;
-  min-width: 0;
+  position: relative;
+  width: 100%;
+  border-radius: 16px;
+  background: rgba(255,255,255,0.4);
+  transition: transform .32s cubic-bezier(.4,0,.2,1), opacity .32s cubic-bezier(.4,0,.2,1), box-shadow .32s ease;
+  will-change: transform, opacity;
+  touch-action: pan-y;
 }
+.chart-carousel-page.stack-front {
+  position: relative;
+  z-index: 3;
+  transform: translateY(0) scale(1) rotate(0deg);
+  opacity: 1;
+  box-shadow: 0 10px 22px rgba(16,70,43,0.1);
+}
+.chart-carousel-page.stack-back {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  transform: translateY(10px) scale(0.94) rotate(-1.4deg);
+  opacity: 0.55;
+  pointer-events: none;
+  box-shadow: 0 4px 10px rgba(16,70,43,0.08);
+}
+.chart-carousel-page.stack-dragging { transition: none; cursor: grabbing; }
 .chart-carousel-dots {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding-top: 10px;
+  padding-top: 12px;
 }
 .chart-carousel-dot {
   width: 6px;

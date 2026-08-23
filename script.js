@@ -1864,27 +1864,89 @@ function renderCombinedBarChart(containerId) {
 }
 
 // -- کاروسل ورق‌زدنی (دات‌های زیر هر نمودار برای سوییچ بین نماهای مختلف) --
+// -- کاروسل کشویی به‌شکل «دسته کارت روی هم» — ورق‌خوردن با کشیدن یا زدن دات‌ها --
 function setupChartCarousel(trackId, dotsId) {
   const track = document.getElementById(trackId);
   const dots = document.getElementById(dotsId);
   if (!track || !dots) return;
-  const pages = track.children.length;
+  const pages = Array.from(track.children);
   const dotEls = Array.from(dots.children);
+  let activeIndex = 0;
+
+  function applyState() {
+    pages.forEach((p, i) => {
+      p.style.transform = "";
+      p.classList.remove("stack-front", "stack-back");
+      p.classList.add(i === activeIndex ? "stack-front" : "stack-back");
+    });
+    dotEls.forEach((d, i) => d.classList.toggle("active", i === activeIndex));
+  }
+
+  function goTo(index) {
+    if (index < 0 || index >= pages.length || index === activeIndex || pages.length < 2) return;
+    activeIndex = index;
+    applyState();
+  }
 
   dotEls.forEach((dot, i) => {
-    dot.addEventListener("click", () => {
-      track.scrollTo({ left: track.clientWidth * i, behavior: "smooth" });
-    });
+    dot.addEventListener("click", () => goTo(i));
   });
 
-  let scrollTimer;
-  track.addEventListener("scroll", () => {
-    clearTimeout(scrollTimer);
-    scrollTimer = setTimeout(() => {
-      const idx = Math.round(track.scrollLeft / track.clientWidth);
-      dotEls.forEach((d, i) => d.classList.toggle("active", i === idx));
-    }, 80);
+  let startX = null, startY = null, dragging = false, moved = false;
+
+  track.addEventListener("pointerdown", (e) => {
+    if (pages.length < 2) return;
+    const front = pages[activeIndex];
+    if (!front.contains(e.target)) return;
+    // اگه نقطه‌ی شروع کشیدن، داخل نمودار خطیِ خودش‌اسکرول‌شونده باشه، دست به کارت نمی‌زنیم
+    // تا با اسکرول افقی روزهای قبل تداخل نکنه — دات‌های زیر کارت همیشه در دسترسن.
+    if (e.target.closest(".daily-chart-scroll")) return;
+    startX = e.clientX; startY = e.clientY; dragging = true; moved = false;
+    front.classList.add("stack-dragging");
   });
+
+  track.addEventListener("pointermove", (e) => {
+    if (!dragging) return;
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+    if (!moved && Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 8) {
+      dragging = false;
+      pages[activeIndex].classList.remove("stack-dragging");
+      pages[activeIndex].style.transform = "";
+      return;
+    }
+    if (Math.abs(dx) < 4) return;
+    moved = true;
+    const rot = dx / 22;
+    pages[activeIndex].style.transform = `translateX(${dx}px) rotate(${rot}deg)`;
+  });
+
+  function endDrag(e) {
+    if (!dragging) return;
+    dragging = false;
+    const front = pages[activeIndex];
+    front.classList.remove("stack-dragging");
+    const dx = (e.clientX || 0) - startX;
+    if (moved && Math.abs(dx) > 60) {
+      const dir = dx > 0 ? 1 : -1;
+      front.style.transition = "transform .28s ease-out, opacity .28s ease-out";
+      front.style.transform = `translateX(${dir * 380}px) rotate(${dir * 20}deg)`;
+      front.style.opacity = "0";
+      setTimeout(() => {
+        front.style.transition = "";
+        front.style.opacity = "";
+        front.style.transform = "";
+        goTo((activeIndex + 1) % pages.length);
+      }, 240);
+    } else {
+      front.style.transform = "";
+    }
+    moved = false;
+  }
+  track.addEventListener("pointerup", endDrag);
+  track.addEventListener("pointercancel", endDrag);
+
+  applyState();
 }
 setupChartCarousel("dailyChartTrack", "dailyChartDots");
 setupChartCarousel("compareChartTrack", "compareChartDots");
