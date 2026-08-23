@@ -977,8 +977,11 @@ function updateMonthLabel() {
     const sign = balance >= 0 ? "+" : "−";
     remainEl.className = `month-remaining ${cls}`;
     remainEl.innerHTML = `
-      <span class="month-balance-label">دخل</span>
-      <strong class="month-balance-amount">${sign}${fmtAmount(Math.abs(balance))} <span class="month-balance-unit">تومان</span></strong>`;
+      <span class="month-balance-icon">${iconSpanHTML("wallet", "width:20px;height:20px;")}</span>
+      <span class="month-balance-text">
+        <span class="month-balance-label">موجودی</span>
+        <strong class="month-balance-amount">${sign}${fmtAmount(Math.abs(balance))} <span class="month-balance-unit">تومان</span></strong>
+      </span>`;
   }
 }
 
@@ -1604,15 +1607,16 @@ function smoothPath(pts) {
 const JALALI_MONTHS_SHORT = ["فرو", "ارد", "خرد", "تیر", "مرد", "شهر", "مهر", "آبا", "آذر", "دی", "بهم", "اسف"];
 let dailyChartMode = "day"; // 'day' | 'year'
 
-function buildDailyChartPool(days) {
-  const now = new Date();
+function buildDailyChartPool() {
+  const jy = viewedMonth.jy, jm = viewedMonth.jm;
+  const daysInMonth = jalaaliMonthLength(jy, jm);
+  const today = todayJalali();
+  const lastDay = (jy === today.jy && jm === today.jm) ? today.jd : daysInMonth;
   const pool = [];
-  for (let i = days - 1; i >= 0; i -= 1) {
-    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
-    const gy = d.getFullYear(), gm = d.getMonth() + 1, gd = d.getDate();
-    const iso = `${gy}-${String(gm).padStart(2, "0")}-${String(gd).padStart(2, "0")}`;
-    const j = toJalaali(gy, gm, gd);
-    pool.push({ iso, jy: j.jy, jm: j.jm, jd: j.jd, income: 0, expense: 0 });
+  for (let jd = 1; jd <= lastDay; jd += 1) {
+    const g = toGregorian(jy, jm, jd);
+    const iso = `${g.gy}-${String(g.gm).padStart(2, "0")}-${String(g.gd).padStart(2, "0")}`;
+    pool.push({ iso, jy, jm, jd, income: 0, expense: 0 });
   }
   const idx = {};
   pool.forEach((p, i) => { idx[p.iso] = i; });
@@ -1644,21 +1648,21 @@ function renderCombinedDailyChart(containerId, incomeTotalElId, expenseTotalElId
   const expenseTotalEl = document.getElementById(expenseTotalElId);
   const isYear = dailyChartMode === "year";
 
-  const pool = isYear ? buildYearlyChartPool(todayJalali().jy) : buildDailyChartPool(10);
+  const pool = isYear ? buildYearlyChartPool(viewedMonth.jy) : buildDailyChartPool();
   const n = pool.length;
 
-  // مقدار بالای نمودار: متناسب با دکمه‌ی بازه‌ی انتخاب‌شده — سالیانه = کل سال جاری، ماهانه = فقط ماه جاری
-  const todayJHead = todayJalali();
+  // مقدار بالای نمودار: متناسب با دکمه‌ی بازه‌ی انتخاب‌شده — سالیانه = سالِ ماهِ دیده‌شده، ماهانه = فقط همون ماه دیده‌شده
+  const headJ = viewedMonth;
   let headerIncome = 0, headerExpense = 0;
   state.incomes.forEach((x) => {
     const [gy, gm, gd] = x.date.split("-").map(Number);
     const j = toJalaali(gy, gm, gd);
-    if (isYear ? j.jy === todayJHead.jy : (j.jy === todayJHead.jy && j.jm === todayJHead.jm)) headerIncome += x.amount;
+    if (isYear ? j.jy === headJ.jy : (j.jy === headJ.jy && j.jm === headJ.jm)) headerIncome += x.amount;
   });
   state.expenses.forEach((x) => {
     const [gy, gm, gd] = x.date.split("-").map(Number);
     const j = toJalaali(gy, gm, gd);
-    if (isYear ? j.jy === todayJHead.jy : (j.jy === todayJHead.jy && j.jm === todayJHead.jm)) headerExpense += x.amount;
+    if (isYear ? j.jy === headJ.jy : (j.jy === headJ.jy && j.jm === headJ.jm)) headerExpense += x.amount;
   });
   if (incomeTotalEl) incomeTotalEl.textContent = fmtAmount(headerIncome);
   if (expenseTotalEl) expenseTotalEl.textContent = fmtAmount(headerExpense);
@@ -1825,14 +1829,15 @@ function renderCombinedBarChart(containerId) {
   const wrap = document.getElementById(containerId);
   if (!wrap) return;
   const isYear = dailyChartMode === "year";
-  const pool = isYear ? buildYearlyChartPool(todayJalali().jy) : buildDailyChartPool(10);
+  const pool = isYear ? buildYearlyChartPool(viewedMonth.jy) : buildDailyChartPool();
 
   const max = Math.max(...pool.map((p) => Math.max(p.income, p.expense))) || 1;
   const today = todayJalali();
+  const viewingCurrent = isViewingCurrentMonth();
 
   const cols = pool.map((p) => {
     const label = isYear ? JALALI_MONTHS_SHORT[p.jm - 1] : toPersianDigits(p.jd);
-    const isToday = !isYear && p.jy === today.jy && p.jm === today.jm && p.jd === today.jd;
+    const isToday = !isYear && viewingCurrent && p.jy === today.jy && p.jm === today.jm && p.jd === today.jd;
     const incomeH = Math.max((p.income / max) * 100, p.income > 0 ? 4 : 0);
     const expenseH = Math.max((p.expense / max) * 100, p.expense > 0 ? 4 : 0);
     return `

@@ -588,11 +588,12 @@ h2 {
 .month-remaining {
   position: relative;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: 5px;
+  justify-content: center;
+  gap: 12px;
   margin: 0 0 16px;
-  padding: 18px 20px 20px;
+  padding: 16px 22px;
   border-radius: 24px;
   overflow: hidden;
   background: linear-gradient(155deg, rgba(255,255,255,0.62) 0%, rgba(255,255,255,0.22) 55%, rgba(255,255,255,0.32) 100%);
@@ -605,6 +606,31 @@ h2 {
     0 2px 4px rgba(255,255,255,0.5) inset,
     0 18px 34px rgba(22,63,60,0.16),
     0 6px 12px rgba(22,63,60,0.09);
+}
+.month-balance-icon {
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(150deg, var(--green-deep) 0%, #2F7A72 70%, #4FA89E 130%);
+  box-shadow: 0 6px 14px rgba(22,63,60,0.28);
+}
+.month-remaining.is-negative .month-balance-icon {
+  background: linear-gradient(150deg, #7A2F2F 0%, #B0453B 70%, #D97757 130%);
+  box-shadow: 0 6px 14px rgba(122,47,47,0.28);
+}
+.month-balance-text {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
 }
 .month-remaining.is-positive {
   background: linear-gradient(155deg, rgba(197,232,213,0.55) 0%, rgba(255,255,255,0.24) 55%, rgba(197,232,213,0.28) 100%);
