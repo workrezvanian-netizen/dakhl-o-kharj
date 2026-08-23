@@ -584,52 +584,77 @@ h2 {
 }
 .month-nav-btn:active { background: var(--green-soft); }
 
+/* ---------- بلوک «دخل» — شیشه‌ای/سه‌بعدی ---------- */
 .month-remaining {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  margin: 0 0 14px;
-  padding: 11px 18px;
-  border-radius: 18px;
-  background: linear-gradient(135deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.32) 100%);
-  backdrop-filter: blur(18px) saturate(1.6);
-  -webkit-backdrop-filter: blur(18px) saturate(1.6);
-  border: 1px solid rgba(255,255,255,0.6);
-  box-shadow:
-    0 1px 0 rgba(255,255,255,0.8) inset,
-    0 8px 18px rgba(22,63,60,0.08);
-  min-height: 20px;
-}
-.month-balance-icon {
-  font-size: 19px;
-  flex-shrink: 0;
-  filter: drop-shadow(0 1px 2px rgba(22,63,60,0.12));
-}
-.month-balance-text {
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 2px;
   align-items: center;
+  gap: 5px;
+  margin: 0 0 16px;
+  padding: 18px 20px 20px;
+  border-radius: 24px;
+  overflow: hidden;
+  background: linear-gradient(155deg, rgba(255,255,255,0.62) 0%, rgba(255,255,255,0.22) 55%, rgba(255,255,255,0.32) 100%);
+  backdrop-filter: blur(22px) saturate(1.8);
+  -webkit-backdrop-filter: blur(22px) saturate(1.8);
+  border: 1px solid rgba(255,255,255,0.65);
+  box-shadow:
+    0 1.5px 0 rgba(255,255,255,0.95) inset,
+    0 -16px 26px rgba(255,255,255,0.16) inset,
+    0 2px 4px rgba(255,255,255,0.5) inset,
+    0 18px 34px rgba(22,63,60,0.16),
+    0 6px 12px rgba(22,63,60,0.09);
+}
+.month-remaining.is-positive {
+  background: linear-gradient(155deg, rgba(197,232,213,0.55) 0%, rgba(255,255,255,0.24) 55%, rgba(197,232,213,0.28) 100%);
+}
+.month-remaining.is-negative {
+  background: linear-gradient(155deg, rgba(245,203,190,0.5) 0%, rgba(255,255,255,0.24) 55%, rgba(245,203,190,0.26) 100%);
+}
+.month-remaining::before {
+  /* درخشش شیشه‌ای بالای بلوک */
+  content: "";
+  position: absolute;
+  top: -6px; left: 8%; right: 8%;
+  height: 46%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.75) 0%, rgba(255,255,255,0) 100%);
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0.8;
+}
+.month-remaining::after {
+  /* خط نور ظریف دور لبه‌ی بلوک */
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 24px;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.3) inset;
+  pointer-events: none;
 }
 .month-balance-label {
-  font-size: 10.5px;
-  font-weight: 600;
+  position: relative;
+  z-index: 1;
+  font-size: 12.5px;
+  font-weight: 700;
   color: var(--text-mute);
-  opacity: 0.85;
+  letter-spacing: 0.03em;
 }
 .month-balance-amount {
-  font-size: 16px;
+  position: relative;
+  z-index: 1;
+  font-size: 23px;
   font-weight: 800;
   display: flex;
   align-items: baseline;
-  gap: 4px;
-  letter-spacing: -0.2px;
+  gap: 5px;
+  letter-spacing: -0.3px;
+  text-shadow: 0 1px 0 rgba(255,255,255,0.6);
 }
-.month-balance-amount.is-positive { color: var(--green-deep); }
-.month-balance-amount.is-negative { color: var(--expense); }
+.month-remaining.is-positive .month-balance-amount { color: var(--green-deep); }
+.month-remaining.is-negative .month-balance-amount { color: var(--expense); }
 .month-balance-unit {
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 500;
   color: var(--text-mute);
 }

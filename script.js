@@ -975,12 +975,10 @@ function updateMonthLabel() {
     const balance = computeCumulativeBalance(viewedMonth.jy, viewedMonth.jm);
     const cls = balance >= 0 ? "is-positive" : "is-negative";
     const sign = balance >= 0 ? "+" : "−";
+    remainEl.className = `month-remaining ${cls}`;
     remainEl.innerHTML = `
-      <span class="month-balance-icon">${balance >= 0 ? "💰" : "⚠️"}</span>
-      <span class="month-balance-text">
-        <span class="month-balance-label">مانده‌ی حساب تا پایان این ماه</span>
-        <strong class="month-balance-amount ${cls}">${sign}${fmtAmount(Math.abs(balance))} <span class="month-balance-unit">تومان</span></strong>
-      </span>`;
+      <span class="month-balance-label">دخل</span>
+      <strong class="month-balance-amount">${sign}${fmtAmount(Math.abs(balance))} <span class="month-balance-unit">تومان</span></strong>`;
   }
 }
 
