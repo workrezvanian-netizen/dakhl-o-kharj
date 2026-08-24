@@ -488,10 +488,29 @@ document.querySelectorAll('#tab-settings .settings-group').forEach((details) => 
 document.querySelectorAll(".nav-btn").forEach((btn) => {
   btn.addEventListener("click", () => switchTab(btn.dataset.tab));
 });
+const _tabOrder = ["entry", "dashboard", "analysis", "installments", "settings"];
 function switchTab(tab, opts = {}) {
-  document.querySelectorAll(".tab").forEach((t) => t.classList.remove("active"));
+  const prevTab = document.querySelector(".tab.active");
+  const prevTabId = prevTab ? prevTab.id.replace("tab-", "") : null;
+  const prevIdx = prevTabId ? _tabOrder.indexOf(prevTabId) : -1;
+  const nextIdx = _tabOrder.indexOf(tab);
+
+  // Clean up old transition classes
+  document.querySelectorAll(".tab").forEach((t) => {
+    t.classList.remove("active", "slide-from-right", "slide-from-left",
+      "slide-from-bottom", "slide-exit-left", "slide-exit-right", "slide-exit-up");
+  });
+
+  // Determine direction for the new tab
+  let enterClass = "slide-from-bottom";
+  if (prevIdx !== -1 && nextIdx !== -1) {
+    if (nextIdx < prevIdx) enterClass = "slide-from-right";
+    else if (nextIdx > prevIdx) enterClass = "slide-from-left";
+    else enterClass = "slide-from-bottom";
+  }
+
+  document.getElementById("tab-" + tab).classList.add("active", enterClass);
   document.querySelectorAll(".nav-btn").forEach((b) => b.classList.remove("active"));
-  document.getElementById("tab-" + tab).classList.add("active");
   const navBtn = document.querySelector(`.nav-btn[data-tab="${tab}"]`);
   if (navBtn) navBtn.classList.add("active");
   if (tab === "entry" && !opts.keepExpenseFilter && expenseListFilter) {
