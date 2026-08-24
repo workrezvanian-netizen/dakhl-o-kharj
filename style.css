@@ -33,6 +33,91 @@ body.viewing-past-month::after {
   background: #F2E7D3;
 }
 
+/* ---------- Three.js layer ---------- */
+.three-bg {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+  display: block;
+}
+body.has-three {
+  background: linear-gradient(165deg, #f7f3ea 0%, #e8f2ef 45%, #f5ebe3 100%);
+}
+body.has-three.viewing-past-month {
+  background: linear-gradient(165deg, #f0e6d4 0%, #ebe0ce 50%, #e8dcc8 100%);
+}
+body.has-three::after {
+  background: transparent;
+}
+body.has-three .app-header {
+  background: rgba(251, 247, 240, 0.55);
+  backdrop-filter: blur(18px) saturate(1.4);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+}
+body.has-three .app-scroll {
+  position: absolute;
+  z-index: 1;
+}
+body.has-three .bottom-nav {
+  z-index: 30;
+}
+body.has-three .welcome-screen {
+  z-index: 100;
+}
+body.has-three .welcome-bg {
+  background: linear-gradient(160deg, rgba(22, 63, 60, 0.72) 0%, rgba(47, 122, 114, 0.55) 100%);
+  backdrop-filter: blur(2px);
+}
+
+/* کارت‌های شیشه‌ای سه‌بعدی‌نما */
+body.has-three .settings-card,
+body.has-three .balance-card,
+body.has-three .month-remaining,
+body.has-three .week-cal-card,
+body.has-three .dash-week-card,
+body.has-three .quick-cat-card,
+body.has-three .ai-card,
+body.has-three .summary-card {
+  transform: translateZ(0);
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.35s ease;
+}
+body.has-three .settings-card:active,
+body.has-three .quick-cat-card:active {
+  transform: scale(0.98) translateY(1px);
+}
+
+/* ورود نرم بخش‌ها */
+@keyframes floatIn3d {
+  from {
+    opacity: 0;
+    transform: translateY(22px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+body.has-three .tab.active > *,
+body.has-three .tab.active .inst-app > * {
+  animation: floatIn3d 0.48s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+body.has-three .tab.active > *:nth-child(1) { animation-delay: 0.03s; }
+body.has-three .tab.active > *:nth-child(2) { animation-delay: 0.08s; }
+body.has-three .tab.active > *:nth-child(3) { animation-delay: 0.13s; }
+body.has-three .tab.active > *:nth-child(4) { animation-delay: 0.18s; }
+body.has-three .tab.active > *:nth-child(5) { animation-delay: 0.23s; }
+body.has-three .tab.active > *:nth-child(6) { animation-delay: 0.28s; }
+body.has-three .tab.active > *:nth-child(7) { animation-delay: 0.33s; }
+body.has-three .tab.active > *:nth-child(n+8) { animation-delay: 0.38s; }
+@media (prefers-reduced-motion: reduce) {
+  body.has-three .tab.active > *,
+  body.has-three .tab.active .inst-app > * { animation: none; }
+  .three-bg { display: none; }
+}
+
 /* Body is locked to the viewport (not scrollable) so the fixed bottom nav
    never jitters from iOS rubber-band/bounce scrolling. All real scrolling
    happens inside .app-scroll instead. */
@@ -584,73 +669,136 @@ h2 {
 }
 .month-nav-btn:active { background: var(--green-soft); }
 
-/* ---------- بلوک «دخل» — کوچک، مینیمال، شیشه‌ای ---------- */
-.month-remaining {
+/* ---------- بلوک «موجودی» — شیشه‌ای مدرن ---------- */
+.month-remaining,
+.balance-card {
   position: relative;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  margin: 0 auto 14px;
-  width: fit-content;
-  padding: 7px 14px 7px 12px;
-  border-radius: 999px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  margin: 0 0 18px;
+  padding: 18px 18px 16px;
+  border-radius: 26px;
   overflow: hidden;
-  background: linear-gradient(155deg, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.22) 100%);
-  backdrop-filter: blur(18px) saturate(1.8);
-  -webkit-backdrop-filter: blur(18px) saturate(1.8);
-  border: 1px solid rgba(255,255,255,0.6);
+  background: linear-gradient(160deg, rgba(255,255,255,0.72) 0%, rgba(255,255,255,0.28) 48%, rgba(227,241,239,0.45) 100%);
+  backdrop-filter: blur(28px) saturate(1.9);
+  -webkit-backdrop-filter: blur(28px) saturate(1.9);
+  border: 1px solid rgba(255,255,255,0.72);
   box-shadow:
-    0 1px 0 rgba(255,255,255,0.9) inset,
-    0 6px 14px rgba(22,63,60,0.1),
-    0 2px 4px rgba(22,63,60,0.06);
+    0 1.5px 0 rgba(255,255,255,0.95) inset,
+    0 -18px 28px rgba(255,255,255,0.14) inset,
+    0 2px 4px rgba(255,255,255,0.45) inset,
+    0 20px 40px rgba(22,63,60,0.14),
+    0 6px 14px rgba(22,63,60,0.08);
 }
-.month-remaining.is-positive {
-  background: linear-gradient(155deg, rgba(197,232,213,0.6) 0%, rgba(255,255,255,0.2) 100%);
+.month-remaining.is-positive,
+.balance-card.is-positive {
+  background: linear-gradient(160deg, rgba(197,232,213,0.62) 0%, rgba(255,255,255,0.3) 50%, rgba(197,232,213,0.32) 100%);
 }
-.month-remaining.is-negative {
-  background: linear-gradient(155deg, rgba(245,203,190,0.55) 0%, rgba(255,255,255,0.2) 100%);
+.month-remaining.is-negative,
+.balance-card.is-negative {
+  background: linear-gradient(160deg, rgba(245,203,190,0.55) 0%, rgba(255,255,255,0.28) 50%, rgba(245,203,190,0.3) 100%);
 }
-.month-balance-icon-badge {
+.month-remaining::before,
+.balance-card::before {
+  content: "";
+  position: absolute;
+  top: -10px; left: 6%; right: 6%;
+  height: 48%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 100%);
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0.85;
+}
+.month-remaining::after,
+.balance-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 26px;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.35) inset;
+  pointer-events: none;
+}
+.balance-card-top {
   position: relative;
   z-index: 1;
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  background: rgba(255,255,255,0.55);
-  box-shadow: 0 1px 3px rgba(22,63,60,0.12), 0 1px 0 rgba(255,255,255,0.7) inset;
+  justify-content: space-between;
+  gap: 8px;
 }
-.month-remaining.is-positive .month-balance-icon-badge .icon-mask { color: var(--green-deep); }
-.month-remaining.is-negative .month-balance-icon-badge .icon-mask { color: var(--expense); }
 .month-balance-label {
   position: relative;
   z-index: 1;
-  font-size: 11.5px;
-  font-weight: 700;
-  color: var(--text-mute);
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--green-deep);
   letter-spacing: 0.02em;
+}
+.balance-card-badge {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--text-mute);
+  background: rgba(255,255,255,0.55);
+  border: 1px solid rgba(255,255,255,0.7);
+  padding: 4px 10px;
+  border-radius: 999px;
 }
 .month-balance-amount {
   position: relative;
   z-index: 1;
-  font-size: 14px;
+  font-size: 26px;
   font-weight: 800;
   display: flex;
   align-items: baseline;
-  gap: 4px;
-  letter-spacing: -0.2px;
+  justify-content: center;
+  gap: 6px;
+  letter-spacing: -0.4px;
+  text-shadow: 0 1px 0 rgba(255,255,255,0.55);
+  line-height: 1.15;
+  width: 100%;
+  text-align: center;
 }
-.month-remaining.is-positive .month-balance-amount { color: var(--green-deep); }
-.month-remaining.is-negative .month-balance-amount { color: var(--expense); }
+.month-remaining.is-positive .month-balance-amount,
+.balance-card.is-positive .month-balance-amount { color: var(--green-deep); }
+.month-remaining.is-negative .month-balance-amount,
+.balance-card.is-negative .month-balance-amount { color: var(--expense); }
 .month-balance-unit {
-  font-size: 10px;
-  font-weight: 500;
+  font-size: 12px;
+  font-weight: 600;
   color: var(--text-mute);
 }
+.balance-card-meta {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  gap: 8px;
+  margin-top: 2px;
+}
+.balance-meta-item {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-mute);
+  background: rgba(255,255,255,0.45);
+  border-radius: 12px;
+  padding: 8px 10px;
+  border: 1px solid rgba(255,255,255,0.55);
+}
+.balance-meta-item i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex: none;
+}
+.balance-meta-item.income i { background: var(--green); }
+.balance-meta-item.expense i { background: var(--expense); }
+.balance-meta-item.income { color: var(--green-deep); }
+.balance-meta-item.expense { color: #a33d28; }
 .month-nav-label {
   flex: 1;
   text-align: center;
@@ -1310,7 +1458,123 @@ input:focus, select:focus {
 .chart-carousel-dot.active { background: var(--green-deep); transform: scale(1.3); }
 #tab-analysis .chart-carousel-dot.active { background: var(--analysis-navy); }
 
-/* ---------- نمودار میله‌ای دوگانه (صفحه‌ی دومِ نمودار اول تحلیل) ---------- */
+/* ---------- نمودار مینیمال رینگی (صفحه‌ی دومِ نمودار اول تحلیل) ---------- */
+.soft-summary-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 4px 2px 2px;
+}
+.soft-rings-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.soft-ring-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 6px 8px;
+}
+.soft-ring-svg {
+  width: 112px;
+  height: 112px;
+}
+.soft-ring-track {
+  fill: none;
+  stroke: rgba(22, 63, 60, 0.08);
+  stroke-width: 8;
+}
+.soft-ring-value {
+  fill: none;
+  stroke-width: 8;
+  stroke-linecap: round;
+  transition: stroke-dasharray 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.soft-ring-value.income { stroke: #2F7A72; }
+.soft-ring-value.expense { stroke: #C24A2E; }
+.soft-ring-center {
+  position: absolute;
+  top: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 112px;
+  height: 112px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+.soft-ring-pct {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1;
+}
+.soft-ring-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-mute);
+  margin-top: 3px;
+}
+.soft-ring-amount {
+  font-size: 12.5px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.soft-activity-strip {
+  display: flex;
+  gap: 4px;
+  align-items: flex-end;
+  overflow-x: auto;
+  padding: 4px 2px 0;
+  height: 72px;
+  scrollbar-width: none;
+}
+.soft-activity-strip::-webkit-scrollbar { display: none; }
+.soft-activity-col {
+  flex: 0 0 auto;
+  min-width: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  height: 100%;
+  justify-content: flex-end;
+}
+.soft-activity-bar {
+  width: 8px;
+  border-radius: 99px;
+  transition: height 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+  min-height: 0;
+}
+.soft-activity-bar.income {
+  background: linear-gradient(180deg, #4FA89E, #2F7A72);
+}
+.soft-activity-bar.expense {
+  background: linear-gradient(180deg, #E07A5F, #C24A2E);
+}
+.soft-activity-bar.empty {
+  background: rgba(22, 63, 60, 0.08);
+  height: 6px !important;
+}
+.soft-activity-col.is-today .soft-activity-bar {
+  box-shadow: 0 0 0 2px rgba(47, 122, 114, 0.25);
+}
+.soft-activity-label {
+  font-size: 8.5px;
+  color: var(--text-mute);
+  font-weight: 600;
+}
+.soft-activity-col.is-today .soft-activity-label {
+  color: var(--green-deep);
+  font-weight: 800;
+}
+
+/* legacy dual-vbar (اگر جایی مانده باشد) */
 .dual-vbar-chart {
   display: flex;
   gap: 10px;

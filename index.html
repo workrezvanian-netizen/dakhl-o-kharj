@@ -14,9 +14,19 @@
 <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css">
 <link href="https://cdn.jsdelivr.net/gh/rastikerdar/kamran@v1.0.0/dist/font-face.css" rel="stylesheet" type="text/css">
 <link href="https://cdn.jsdelivr.net/gh/rastikerdar/samim-font@v4.0.5/dist/font-face.css" rel="stylesheet" type="text/css">
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v=65">
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js"
+  }
+}
+</script>
 </head>
-<body>
+<body class="has-three">
+
+<!-- پس‌زمینه سه‌بعدی Three.js -->
+<canvas id="threeBg" class="three-bg" aria-hidden="true"></canvas>
 
 <div id="welcomeScreen" class="welcome-screen">
   <div id="welcomeBg" class="welcome-bg"></div>
@@ -544,7 +554,7 @@
       </div>
     </details>
 
-    <p class="app-version">نسخه‌ی ۱.۵۴</p>
+    <p class="app-version">نسخه‌ی ۱.۵۳</p>
 
   </section>
 
@@ -625,7 +635,8 @@
 </div>
 
 <input type="checkbox" id="hapticProxy" tabindex="-1" aria-hidden="true" style="position:fixed;top:-100px;left:-100px;width:1px;height:1px;opacity:0;pointer-events:none;">
-<script src="script.js"></script>
-<script src="installments.js"></script>
+<script src="script.js?v=65"></script>
+<script src="installments.js?v=65"></script>
+<script type="module" src="three-scene.js?v=65"></script>
 </body>
 </html>
