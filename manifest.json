@@ -1,0 +1,38 @@
+{
+  "id": "./index.html",
+  "name": "دخل و خرج",
+  "short_name": "دخل و خرج",
+  "description": "مدیریت درآمد و مخارج شخصی",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["standalone"],
+  "orientation": "portrait",
+  "background_color": "#FBF7F0",
+  "theme_color": "#163F3C",
+  "lang": "fa",
+  "dir": "rtl",
+  "categories": ["finance", "productivity"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    {
+      "name": "ثبت خرج جدید",
+      "short_name": "ثبت خرج",
+      "description": "افزودن سریع یک هزینه‌ی جدید",
+      "url": "./index.html?action=expense",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "ثبت درآمد جدید",
+      "short_name": "ثبت درآمد",
+      "description": "افزودن سریع یک درآمد جدید",
+      "url": "./index.html?action=income",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}
