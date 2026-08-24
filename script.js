@@ -1769,8 +1769,8 @@ function renderCombinedDailyChart(containerId, incomeTotalElId, expenseTotalElId
       <path d="${expenseArea}" fill="url(#fillExpense-${uid})" stroke="none"/>
       <path d="${incomeArea}" fill="url(#fillIncome-${uid})" stroke="none"/>
       <g filter="url(#lineGlow-${uid})">
-        <path d="${expenseLine}" fill="none" stroke="#C24A2E" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="${incomeLine}" fill="none" stroke="#2F7A72" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+        <path id="lineExpense-${uid}" d="${expenseLine}" fill="none" stroke="#C24A2E" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+        <path id="lineIncome-${uid}" d="${incomeLine}" fill="none" stroke="#2F7A72" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
       </g>
       <circle id="scrubDotExpense-${uid}" r="4" fill="#fff" stroke="#C24A2E" stroke-width="2.4"/>
       <circle id="scrubDotIncome-${uid}" r="4" fill="#fff" stroke="#2F7A72" stroke-width="2.4"/>
@@ -1841,6 +1841,32 @@ function renderCombinedDailyChart(containerId, incomeTotalElId, expenseTotalElId
   catcher.addEventListener("pointerup", (e) => {
     if (!moved) moveToIndex(xToIndex(e.clientX));
     downX = null;
+  });
+
+  // Line-drawing animation for income/expense paths
+  const lineExpense = document.getElementById(`lineExpense-${uid}`);
+  const lineIncome = document.getElementById(`lineIncome-${uid}`);
+  [lineExpense, lineIncome].forEach((path) => {
+    if (!path) return;
+    const len = path.getTotalLength();
+    path.style.strokeDasharray = len;
+    path.style.strokeDashoffset = len;
+    path.style.transition = 'stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1)';
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        path.style.strokeDashoffset = '0';
+      });
+    });
+  });
+
+  // Fade-in the area fills after lines finish drawing
+  const areaExpense = wrap.querySelector(`[fill="url(#fillExpense-${uid})"]`);
+  const areaIncome = wrap.querySelector(`[fill="url(#fillIncome-${uid})"]`);
+  [areaExpense, areaIncome].forEach((area) => {
+    if (!area) return;
+    area.style.opacity = '0';
+    area.style.transition = 'opacity .6s ease .8s';
+    requestAnimationFrame(() => { area.style.opacity = '1'; });
   });
 
   moveToIndex(defaultIdx);

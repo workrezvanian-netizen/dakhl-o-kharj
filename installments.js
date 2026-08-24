@@ -444,6 +444,23 @@ function showToast(msg) {
 
 let currentItems = [];
 
+// Animated number counter for installments (English digit format)
+function animateNumberInst(el, target, duration = 600) {
+  if (!el) return;
+  const start = parseInt(el.textContent.replace(/[^0-9]/g, "")) || 0;
+  if (start === target) { el.textContent = formatAmount(String(target)); return; }
+  const startTime = performance.now();
+  function tick(now) {
+    const elapsed = now - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    const ease = 1 - Math.pow(1 - progress, 3);
+    const current = Math.round(start + (target - start) * ease);
+    el.textContent = formatAmount(String(current));
+    if (progress < 1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+
 function formatAmount(amount) {
   const n = parseInt(amount, 10);
   if (Number.isNaN(n)) return amount || "0";
@@ -563,9 +580,9 @@ function loadMonthlyTotal() {
   try {
     const data = store.monthlyTotal();
     document.getElementById("summaryMonth").textContent = data.month_name;
-    document.getElementById("summaryTotal").textContent = formatAmount(String(data.total));
-    document.getElementById("summaryPaid").textContent = formatAmount(String(data.paid_total));
-    document.getElementById("summaryRemaining").textContent = formatAmount(String(data.remaining_total));
+    animateNumberInst(document.getElementById("summaryTotal"), data.total);
+    animateNumberInst(document.getElementById("summaryPaid"), data.paid_total);
+    animateNumberInst(document.getElementById("summaryRemaining"), data.remaining_total);
   } catch (e) {
     /* خطای غیرحیاتی، لیست اصلی همچنان کار می‌کنه */
   }
