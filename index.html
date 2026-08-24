@@ -14,7 +14,7 @@
 <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css">
 <link href="https://cdn.jsdelivr.net/gh/rastikerdar/kamran@v1.0.0/dist/font-face.css" rel="stylesheet" type="text/css">
 <link href="https://cdn.jsdelivr.net/gh/rastikerdar/samim-font@v4.0.5/dist/font-face.css" rel="stylesheet" type="text/css">
-<link rel="stylesheet" href="style.css?v=67">
+<link rel="stylesheet" href="style.css?v=68">
 </head>
 <body class="has-three">
 
@@ -62,17 +62,19 @@
 
 <div id="appScroll" class="app-scroll">
 <header class="app-header">
-  <div class="header-inner">
+  <div class="header-inner clay-bar">
+    <!-- در RTL سمت راست: لوگو + عنوان -->
     <span class="brand" id="headerBrand">
       <span class="brand-badge" id="headerBrandBadge">
-        <img src="icons/icon-192.png" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit" />
+        <img src="icons/icon-192.png" alt="" />
       </span>
       <span class="brand-text">دخل و خرج</span>
     </span>
+    <!-- در RTL سمت چپ: Nelin + تنظیمات -->
     <div class="header-side">
-      <img id="headerWatermark" class="watermark" src="icons/watermark-nelin.png" alt="Nelin" />
+      <span class="nelin-wordmark" id="headerWatermark" aria-label="Nelin">Nelin</span>
       <button id="dashSettingsBtn" class="header-settings-btn" aria-label="تنظیمات">
-        <span class="icon-mask" data-icon="settings" style="width:16px;height:16px;color:var(--cream)"></span>
+        <span class="icon-mask" data-icon="settings" style="width:15px;height:15px;color:#E8F5F2"></span>
       </button>
     </div>
   </div>
@@ -626,8 +628,8 @@
 </div>
 
 <input type="checkbox" id="hapticProxy" tabindex="-1" aria-hidden="true" style="position:fixed;top:-100px;left:-100px;width:1px;height:1px;opacity:0;pointer-events:none;">
-<script src="script.js?v=67"></script>
-<script src="installments.js?v=67"></script>
-<script src="three-scene.js?v=67"></script>
+<script src="script.js?v=68"></script>
+<script src="installments.js?v=68"></script>
+<script src="three-scene.js?v=68"></script>
 </body>
 </html>
