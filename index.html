@@ -14,7 +14,7 @@
 <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css">
 <link href="https://cdn.jsdelivr.net/gh/rastikerdar/kamran@v1.0.0/dist/font-face.css" rel="stylesheet" type="text/css">
 <link href="https://cdn.jsdelivr.net/gh/rastikerdar/samim-font@v4.0.5/dist/font-face.css" rel="stylesheet" type="text/css">
-<link rel="stylesheet" href="style.css?v=64">
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 
@@ -92,6 +92,16 @@
       </button>
     </div>
     <p id="monthRemaining" class="month-remaining"></p>
+
+    <div class="balance-hero-card" id="dashBalanceCard">
+      <div class="balance-hero-top">
+        <span class="balance-hero-label">
+          <span class="icon-mask" data-icon="wallet" style="width:13px;height:13px;color:rgba(255,255,255,0.85)"></span>
+          موجودی کل
+        </span>
+      </div>
+      <div class="balance-hero-amount" id="dashBalanceAmount">۰ <span class="balance-hero-unit">تومان</span></div>
+    </div>
 
     <div class="section-heading">
       <h2>مخارج</h2>
@@ -544,7 +554,7 @@
       </div>
     </details>
 
-    <p class="app-version">نسخه‌ی ۱.۵۳</p>
+    <p class="app-version">نسخه‌ی ۱.۵۱</p>
 
   </section>
 
@@ -625,7 +635,7 @@
 </div>
 
 <input type="checkbox" id="hapticProxy" tabindex="-1" aria-hidden="true" style="position:fixed;top:-100px;left:-100px;width:1px;height:1px;opacity:0;pointer-events:none;">
-<script src="script.js?v=64"></script>
-<script src="installments.js?v=64"></script>
+<script src="script.js"></script>
+<script src="installments.js"></script>
 </body>
 </html>

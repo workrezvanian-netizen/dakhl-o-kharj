@@ -499,7 +499,6 @@ function switchTab(tab, opts = {}) {
     renderExpenseList();
   }
   if (tab === "analysis") renderAnalysis();
-  if (tab === "installments" && typeof refreshAll === "function") refreshAll();
 
   // Settings accordions always start closed, whether we're leaving or entering the tab
   document.querySelectorAll("#tab-settings .settings-group").forEach((d) => { d.open = false; });
@@ -779,7 +778,6 @@ function renderAll() {
   renderCalendar();
   renderWeekCalStrip();
   renderProfileCard();
-  if (typeof refreshAll === "function") refreshAll();
 }
 
 function renderExpenseCategoryPicker() {
@@ -956,38 +954,22 @@ function isViewingCurrentMonth() {
   return viewedMonth.jy === t.jy && viewedMonth.jm === t.jm;
 }
 
-function computeCumulativeBalance(jy, jm) {
-  // مانده‌ی حساب تا پایان این ماه — با احتساب همه‌ی تراکنش‌های قبل‌تر، پس خودش از ماه به ماه منتقل می‌شه
-  const len = jalaaliMonthLength(jy, jm);
-  const gEnd = toGregorian(jy, jm, len);
-  const endIso = `${gEnd.gy}-${String(gEnd.gm).padStart(2, "0")}-${String(gEnd.gd).padStart(2, "0")}`;
-  let income = 0, expense = 0;
-  state.incomes.forEach((x) => { if (x.date <= endIso) income += x.amount; });
-  state.expenses.forEach((x) => { if (x.date <= endIso) expense += x.amount; });
-  return income - expense;
-}
-
 function updateMonthLabel() {
   const label = document.getElementById("monthLabel");
   label.textContent = JALALI_MONTHS[viewedMonth.jm - 1];
 
   const remainEl = document.getElementById("monthRemaining");
   if (remainEl) {
-    const balance = computeCumulativeBalance(viewedMonth.jy, viewedMonth.jm);
-    const monthTotals = computeMonthTotals(viewedMonth.jy, viewedMonth.jm);
-    const cls = balance >= 0 ? "is-positive" : "is-negative";
-    const sign = balance >= 0 ? "+" : "−";
-    remainEl.className = `month-remaining balance-card ${cls}`;
-    remainEl.innerHTML = `
-      <div class="balance-card-top">
-        <span class="month-balance-label">موجودی</span>
-        <span class="balance-card-badge">${isViewingCurrentMonth() ? "تا امروز" : "تا پایان " + JALALI_MONTHS[viewedMonth.jm - 1]}</span>
-      </div>
-      <strong class="month-balance-amount">${sign}${fmtAmount(Math.abs(balance))} <span class="month-balance-unit">تومان</span></strong>
-      <div class="balance-card-meta">
-        <span class="balance-meta-item income"><i></i>درآمد ماه ${fmtAmount(monthTotals.totalIncome)}</span>
-        <span class="balance-meta-item expense"><i></i>مخارج ماه ${fmtAmount(monthTotals.totalExpense)}</span>
-      </div>`;
+    if (isViewingCurrentMonth()) {
+      const t = todayJalali();
+      const len = jalaaliMonthLength(viewedMonth.jy, viewedMonth.jm);
+      const remaining = len - t.jd;
+      remainEl.textContent = remaining > 0
+        ? `${toPersianDigits(remaining)} روز تا پایان ماه مانده`
+        : "امروز آخرین روز ماهه";
+    } else {
+      remainEl.textContent = "";
+    }
   }
 }
 
@@ -1001,7 +983,10 @@ function applyViewedMonthState() {
   renderExpenseList();
   renderAnalysis();
   renderCalendar();
-  if (typeof refreshAll === "function") refreshAll(); // تب اقساط هم با همین ماهِ دیده‌شده هماهنگ بشه
+  if (window.InstallmentsApp) {
+    if (isViewingCurrentMonth()) window.InstallmentsApp.resetToCurrentMonth();
+    else window.InstallmentsApp.setViewedMonth(viewedMonth.jy, viewedMonth.jm);
+  }
 }
 
 function renderCalendar() {
@@ -1235,6 +1220,19 @@ document.addEventListener("visibilitychange", () => {
 
 function renderDashboard() {
   updateMonthLabel();
+
+  // موجودی = مانده‌ی کل حساب (کل درآمد منهای کل مخارج، از ابتدا تا الان) —
+  // برخلاف بقیه‌ی کارت‌های داشبورد، به ماهِ در حال مرور وابسته نیست چون موجودی
+  // واقعیِ حساب با جابه‌جا شدن بین ماه‌ها عوض نمی‌شه.
+  const allTimeIncome = state.incomes.reduce((s, x) => s + x.amount, 0);
+  const allTimeExpense = state.expenses.reduce((s, x) => s + x.amount, 0);
+  const totalBalance = allTimeIncome - allTimeExpense;
+  const balEl = document.getElementById("dashBalanceAmount");
+  if (balEl) {
+    balEl.innerHTML = `${totalBalance < 0 ? "−" : ""}${fmtAmount(Math.abs(totalBalance))} <span class="balance-hero-unit">تومان</span>`;
+    balEl.classList.toggle("negative", totalBalance < 0);
+  }
+
   const inPeriod = (dateStr) => {
     if (dashboardMode === "all") return true;
     return inViewedMonth(dateStr);
@@ -1435,13 +1433,11 @@ function renderMonthCompareCard(containerId, period = "month") {
           <circle cx="${cx}" cy="${cy}" r="${rOuter}" fill="none" stroke="var(--cream)" stroke-width="${swOuter}"/>
           <circle class="compare-gauge-seg" id="gaugeOuter-${uid}-${i}" cx="${cx}" cy="${cy}" r="${rOuter}" fill="none"
             stroke="url(#gaugeGrad-${uid}-${i})" stroke-width="${swOuter}" stroke-linecap="round"
-            stroke-dasharray="0 ${circOuter}" transform="rotate(-90 ${cx} ${cy})"
-            data-dash="${dashOuter}" data-circ="${circOuter}"/>
+            stroke-dasharray="${dashOuter} ${circOuter - dashOuter}" transform="rotate(-90 ${cx} ${cy})"/>
           <circle cx="${cx}" cy="${cy}" r="${rInner}" fill="none" stroke="var(--cream)" stroke-width="${swInner}"/>
           <circle class="compare-gauge-seg" id="gaugeInner-${uid}-${i}" cx="${cx}" cy="${cy}" r="${rInner}" fill="none"
             stroke="${g.prevColor}" stroke-width="${swInner}" stroke-linecap="round"
-            stroke-dasharray="0 ${circInner}" transform="rotate(-90 ${cx} ${cy})"
-            data-dash="${dashInner}" data-circ="${circInner}"/>
+            stroke-dasharray="${dashInner} ${circInner - dashInner}" transform="rotate(-90 ${cx} ${cy})"/>
         </svg>
         <div class="compare-gauge-center">
           <span class="compare-gauge-pct">${g.changePct > 0 ? "+" : ""}${toPersianDigits(g.changePct)}٪</span>
@@ -1455,20 +1451,6 @@ function renderMonthCompareCard(containerId, period = "month") {
   }).join("");
 
   wrap.innerHTML = `<div class="compare-gauges-row chart-graphic-enter">${gaugeHTML}</div>`;
-
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      gauges.forEach((g, i) => {
-        ["Outer", "Inner"].forEach((part) => {
-          const seg = document.getElementById(`gauge${part}-${uid}-${i}`);
-          if (!seg) return;
-          const dash = parseFloat(seg.dataset.dash);
-          const circ = parseFloat(seg.dataset.circ);
-          seg.setAttribute("stroke-dasharray", `${dash} ${circ - dash}`);
-        });
-      });
-    });
-  });
 }
 
 function renderIncomeExpensePieCompare(containerId, period = "month") {
@@ -1496,8 +1478,7 @@ function renderIncomeExpensePieCompare(containerId, period = "month") {
         <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#C24A2E" stroke-width="${sw}"/>
         <circle id="pieCompareIncome-${uid}" cx="${cx}" cy="${cy}" r="${r}" fill="none"
           stroke="#2F7A72" stroke-width="${sw}" stroke-linecap="round"
-          stroke-dasharray="0 ${circ}" transform="rotate(-90 ${cx} ${cy})"
-          data-dash="${incomeDash}" data-circ="${circ}"/>
+          stroke-dasharray="${incomeDash} ${circ - incomeDash}" transform="rotate(-90 ${cx} ${cy})"/>
       </svg>
       <div class="pie-compare-center">
         <span class="pie-compare-label">تراز ${periodLegend.cur}</span>
@@ -1508,16 +1489,6 @@ function renderIncomeExpensePieCompare(containerId, period = "month") {
       <span><i style="background:#2F7A72"></i>درآمد: ${fmtAmount(totalIncome)} (${toPersianDigits(Math.round(incomePct))}٪)</span>
       <span><i style="background:#C24A2E"></i>مخارج: ${fmtAmount(totalExpense)} (${toPersianDigits(Math.round(100 - incomePct))}٪)</span>
     </div>`;
-
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      const seg = document.getElementById(`pieCompareIncome-${uid}`);
-      if (!seg) return;
-      const dash = parseFloat(seg.dataset.dash);
-      const c = parseFloat(seg.dataset.circ);
-      seg.setAttribute("stroke-dasharray", `${dash} ${c - dash}`);
-    });
-  });
 }
 
 function renderPieChart(containerId, segments, chartType = "expense") {
@@ -1541,8 +1512,8 @@ function renderPieChart(containerId, segments, chartType = "expense") {
     cumulative += seg.value;
     return `<circle class="donut-seg" id="donutSeg-${uid}-${i}" cx="${cx}" cy="${cy}" r="${r}" fill="none"
       stroke="${seg.color}" stroke-width="${sw}"
-      stroke-dasharray="0 ${circumference}" stroke-dashoffset="${-offset}"
-      transform="rotate(-90 ${cx} ${cy})" data-dash="${dash}" data-circ="${circumference}"/>`;
+      stroke-dasharray="${dash} ${circumference - dash}" stroke-dashoffset="${-offset}"
+      transform="rotate(-90 ${cx} ${cy})"/>`;
   }).join("");
 
   const legend = visible.map((seg) => {
@@ -1577,18 +1548,6 @@ function renderPieChart(containerId, segments, chartType = "expense") {
     </div>
     <div class="chart-legend">${legend}</div>
   `;
-
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      visible.forEach((seg, i) => {
-        const el = document.getElementById(`donutSeg-${uid}-${i}`);
-        if (!el) return;
-        const dash = parseFloat(el.dataset.dash);
-        const circ = parseFloat(el.dataset.circ);
-        el.setAttribute("stroke-dasharray", `${dash} ${circ - dash}`);
-      });
-    });
-  });
 }
 
 // ---------- نمودار خطی ترکیبی درآمد/مخارج (روزانه قابل‌اسکرول + سالیانه) ----------
@@ -1613,17 +1572,10 @@ function smoothPath(pts) {
 const JALALI_MONTHS_SHORT = ["فرو", "ارد", "خرد", "تیر", "مرد", "شهر", "مهر", "آبا", "آذر", "دی", "بهم", "اسف"];
 let dailyChartMode = "day"; // 'day' | 'year'
 
-// نمودار ماهانه: از روز ۱ ماهِ انتخاب‌شده در داشبورد تا آخر همان ماه
-// (اگر ماه جاری باشد، فقط تا امروز — با شروع ماه جدید از ۱ شروع می‌شود)
-function buildDailyChartPool(_unusedDays) {
-  const jy = viewedMonth.jy;
-  const jm = viewedMonth.jm;
-  const daysInMonth = jalaaliMonthLength(jy, jm);
-  const today = todayJalali();
-  const lastDay = (jy === today.jy && jm === today.jm) ? today.jd : daysInMonth;
-
+function buildDailyChartPool(jy, jm) {
+  const len = jalaaliMonthLength(jy, jm);
   const pool = [];
-  for (let d = 1; d <= lastDay; d += 1) {
+  for (let d = 1; d <= len; d += 1) {
     const g = toGregorian(jy, jm, d);
     const iso = `${g.gy}-${String(g.gm).padStart(2, "0")}-${String(g.gd).padStart(2, "0")}`;
     pool.push({ iso, jy, jm, jd: d, income: 0, expense: 0 });
@@ -1636,18 +1588,17 @@ function buildDailyChartPool(_unusedDays) {
 }
 
 function buildYearlyChartPool(jy) {
-  const year = jy || viewedMonth.jy;
   const pool = [];
-  for (let m = 1; m <= 12; m += 1) pool.push({ jy: year, jm: m, income: 0, expense: 0 });
+  for (let m = 1; m <= 12; m += 1) pool.push({ jy, jm: m, income: 0, expense: 0 });
   state.incomes.forEach((x) => {
     const [gy, gm, gd] = x.date.split("-").map(Number);
     const j = toJalaali(gy, gm, gd);
-    if (j.jy === year) pool[j.jm - 1].income += x.amount;
+    if (j.jy === jy) pool[j.jm - 1].income += x.amount;
   });
   state.expenses.forEach((x) => {
     const [gy, gm, gd] = x.date.split("-").map(Number);
     const j = toJalaali(gy, gm, gd);
-    if (j.jy === year) pool[j.jm - 1].expense += x.amount;
+    if (j.jy === jy) pool[j.jm - 1].expense += x.amount;
   });
   return pool;
 }
@@ -1659,10 +1610,10 @@ function renderCombinedDailyChart(containerId, incomeTotalElId, expenseTotalElId
   const expenseTotalEl = document.getElementById(expenseTotalElId);
   const isYear = dailyChartMode === "year";
 
-  const pool = isYear ? buildYearlyChartPool(viewedMonth.jy) : buildDailyChartPool();
+  const pool = isYear ? buildYearlyChartPool(viewedMonth.jy) : buildDailyChartPool(viewedMonth.jy, viewedMonth.jm);
   const n = pool.length;
 
-  // هدر نمودار: ماه/سال انتخاب‌شده در داشبورد
+  // مقدار بالای نمودار: متناسب با بازه‌ی انتخاب‌شده — سالیانه = همون سالِ ماهِ در حال مرور، ماهانه = فقط همون ماه
   let headerIncome = 0, headerExpense = 0;
   state.incomes.forEach((x) => {
     const [gy, gm, gd] = x.date.split("-").map(Number);
@@ -1689,9 +1640,7 @@ function renderCombinedDailyChart(containerId, incomeTotalElId, expenseTotalElId
 
   const H = 160, PAD_TOP = 40, PAD_BOTTOM = 28, PAD_X = 18;
   const chartH = H - PAD_TOP - PAD_BOTTOM;
-  const baseW = (scrollWrap && scrollWrap.clientWidth) || 320;
-  // ماه کامل: عرض بیشتر برای خوانایی روزها (اسکرول افقی)
-  const W = Math.max(baseW, 280, isYear ? baseW : (n * 22 + PAD_X * 2));
+  const W = Math.max((scrollWrap && scrollWrap.clientWidth) || 320, 280);
   const stepX = (W - PAD_X * 2) / (n - 1 || 1);
 
   const buildPts = (key, maxVal) => pool.map((p, i) => ({
@@ -1722,9 +1671,8 @@ function renderCombinedDailyChart(containerId, incomeTotalElId, expenseTotalElId
 
   const uid = `${containerId}-${Date.now()}`;
   const todayJ = todayJalali();
-  const defaultIdx = isYear
-    ? Math.min(Math.max(viewedMonth.jm - 1, 0), n - 1)
-    : (n - 1);
+  const isCurrentViewedMonth = viewedMonth.jy === todayJ.jy && viewedMonth.jm === todayJ.jm;
+  const defaultIdx = isYear ? (viewedMonth.jm - 1) : (isCurrentViewedMonth ? todayJ.jd - 1 : n - 1);
 
   wrap.innerHTML = `
     <svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" class="daily-chart-svg combined-chart-svg chart-graphic-enter" id="svg-${uid}" preserveAspectRatio="none">
@@ -1838,86 +1786,37 @@ function renderCombinedDailyChart(containerId, incomeTotalElId, expenseTotalElId
   });
 })();
 
-// -- نمای دوم مدرن: دو رینگ خلاصه + نوار فعالیت روزانه (مینیمال) --
+// -- نمای دوم (میله‌ای گروهی) همون داده‌ی نمودار ترکیبی — برای صفحه‌ی دومِ ورق‌زدنِ نمودار اول --
 function renderCombinedBarChart(containerId) {
   const wrap = document.getElementById(containerId);
   if (!wrap) return;
   const isYear = dailyChartMode === "year";
-  const pool = isYear ? buildYearlyChartPool(viewedMonth.jy) : buildDailyChartPool();
+  const pool = isYear ? buildYearlyChartPool(viewedMonth.jy) : buildDailyChartPool(viewedMonth.jy, viewedMonth.jm);
 
-  const totalIncome = pool.reduce((s, p) => s + p.income, 0);
-  const totalExpense = pool.reduce((s, p) => s + p.expense, 0);
-  if (!totalIncome && !totalExpense) {
+  const max = Math.max(...pool.map((p) => Math.max(p.income, p.expense))) || 1;
+  const today = todayJalali();
+
+  const cols = pool.map((p) => {
+    const label = isYear ? JALALI_MONTHS_SHORT[p.jm - 1] : toPersianDigits(p.jd);
+    const isToday = !isYear && p.jy === today.jy && p.jm === today.jm && p.jd === today.jd;
+    const incomeH = Math.max((p.income / max) * 100, p.income > 0 ? 4 : 0);
+    const expenseH = Math.max((p.expense / max) * 100, p.expense > 0 ? 4 : 0);
+    return `
+      <div class="dual-vbar-col ${isToday ? "is-today" : ""}">
+        <div class="dual-vbar-bars">
+          <div class="bar income" style="height:${incomeH}%"></div>
+          <div class="bar expense" style="height:${expenseH}%"></div>
+        </div>
+        <span class="dual-vbar-label">${label}</span>
+      </div>`;
+  }).join("");
+
+  if (max === 0 || pool.every((p) => !p.income && !p.expense)) {
     wrap.innerHTML = `<p class="empty-hint">داده‌ای برای این بازه نیست</p>`;
     return;
   }
 
-  const maxSide = Math.max(totalIncome, totalExpense) || 1;
-  const incomePct = Math.round((totalIncome / maxSide) * 100);
-  const expensePct = Math.round((totalExpense / maxSide) * 100);
-  const R = 42, C = 2 * Math.PI * R;
-  const incomeDash = (incomePct / 100) * C;
-  const expenseDash = (expensePct / 100) * C;
-  const maxDay = Math.max(...pool.map((p) => Math.max(p.income, p.expense))) || 1;
-  const today = todayJalali();
-
-  const activity = pool.map((p) => {
-    const h = Math.max((Math.max(p.income, p.expense) / maxDay) * 100, (p.income || p.expense) ? 8 : 0);
-    const dominant = p.expense > p.income ? "expense" : (p.income > 0 ? "income" : "empty");
-    const label = isYear ? JALALI_MONTHS_SHORT[p.jm - 1] : toPersianDigits(p.jd);
-    const isToday = !isYear && p.jy === today.jy && p.jm === today.jm && p.jd === today.jd;
-    return `
-      <div class="soft-activity-col ${isToday ? "is-today" : ""}" title="${label}">
-        <div class="soft-activity-bar ${dominant}" style="height:0%" data-target="${h}"></div>
-        <span class="soft-activity-label">${label}</span>
-      </div>`;
-  }).join("");
-
-  wrap.innerHTML = `
-    <div class="soft-summary-chart chart-graphic-enter">
-      <div class="soft-rings-row">
-        <div class="soft-ring-card">
-          <svg viewBox="0 0 100 100" class="soft-ring-svg">
-            <circle cx="50" cy="50" r="${R}" class="soft-ring-track"/>
-            <circle cx="50" cy="50" r="${R}" class="soft-ring-value income"
-              stroke-dasharray="0 ${C}"
-              data-dash="${incomeDash.toFixed(1)} ${C.toFixed(1)}"
-              transform="rotate(-90 50 50)"/>
-          </svg>
-          <div class="soft-ring-center">
-            <span class="soft-ring-pct">${toPersianDigits(incomePct)}٪</span>
-            <span class="soft-ring-label">درآمد</span>
-          </div>
-          <strong class="soft-ring-amount income-color">${fmtAmount(totalIncome)}</strong>
-        </div>
-        <div class="soft-ring-card">
-          <svg viewBox="0 0 100 100" class="soft-ring-svg">
-            <circle cx="50" cy="50" r="${R}" class="soft-ring-track"/>
-            <circle cx="50" cy="50" r="${R}" class="soft-ring-value expense"
-              stroke-dasharray="0 ${C}"
-              data-dash="${expenseDash.toFixed(1)} ${C.toFixed(1)}"
-              transform="rotate(-90 50 50)"/>
-          </svg>
-          <div class="soft-ring-center">
-            <span class="soft-ring-pct">${toPersianDigits(expensePct)}٪</span>
-            <span class="soft-ring-label">مخارج</span>
-          </div>
-          <strong class="soft-ring-amount expense-color">${fmtAmount(totalExpense)}</strong>
-        </div>
-      </div>
-      <div class="soft-activity-strip">${activity}</div>
-    </div>`;
-
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      wrap.querySelectorAll(".soft-ring-value").forEach((el) => {
-        el.style.strokeDasharray = el.dataset.dash;
-      });
-      wrap.querySelectorAll(".soft-activity-bar").forEach((el) => {
-        el.style.height = el.dataset.target + "%";
-      });
-    });
-  });
+  wrap.innerHTML = `<div class="dual-vbar-chart chart-graphic-enter">${cols}</div>`;
 }
 
 // -- کاروسل کشویی به‌شکل «دسته کارت روی هم» — ورق‌خوردن با کشیدن یا زدن دات‌ها --
@@ -1942,12 +1841,7 @@ function setupChartCarousel(trackId, dotsId, onShow) {
     if (index < 0 || index >= pages.length || index === activeIndex || pages.length < 2) return;
     activeIndex = index;
     applyState();
-    // بعد از جابه‌جایی کارت، نمودار را دوباره بساز تا انیمیشن گرافیکی همیشه پخش شود
-    if (onShow) {
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => onShow(activeIndex));
-      });
-    }
+    if (onShow) onShow(activeIndex); // نمودار صفحه‌ی جدید رو دوباره می‌سازه تا انیمیشن گرافیکیش پخش بشه
   }
 
   dotEls.forEach((dot, i) => {
@@ -2007,14 +1901,13 @@ function setupChartCarousel(trackId, dotsId, onShow) {
 
   applyState();
 }
-setupChartCarousel("dailyChartTrack", "dailyChartDots", () => {
-  // هر دو صفحه رو دوباره می‌سازیم (نه فقط صفحه‌ی تازه‌نمایان‌شده) تا انیمیشن گرافیکی همیشه پخش بشه
-  renderCombinedDailyChart("combinedDailyChart", "incomeChartTotal", "expenseChartTotal");
-  renderCombinedBarChart("combinedBarChart");
+setupChartCarousel("dailyChartTrack", "dailyChartDots", (idx) => {
+  if (idx === 0) renderCombinedDailyChart("combinedDailyChart", "incomeChartTotal", "expenseChartTotal");
+  else renderCombinedBarChart("combinedBarChart");
 });
-setupChartCarousel("compareChartTrack", "compareChartDots", () => {
-  renderMonthCompareCard("incomeExpenseChart", analysisPeriod);
-  renderIncomeExpensePieCompare("incomeExpensePie", analysisPeriod);
+setupChartCarousel("compareChartTrack", "compareChartDots", (idx) => {
+  if (idx === 0) renderMonthCompareCard("incomeExpenseChart", analysisPeriod);
+  else renderIncomeExpensePieCompare("incomeExpensePie", analysisPeriod);
 });
 
 
@@ -2069,16 +1962,10 @@ function renderTopTransactionsList(containerId) {
       ${all.map((tx, i) => `
         <div class="vbar-col">
           <span class="vbar-value">${tx.kind === "income" ? "+" : "−"}${fmtAmount(tx.amount)}</span>
-          <div class="vbar" style="height:0%;background:${tx.color};" data-target="${Math.max((tx.amount / max) * 100, 6)}"></div>
+          <div class="vbar" style="height:${Math.max((tx.amount / max) * 100, 6)}%;background:${tx.color};"></div>
           <span class="vbar-label">${tx.title}</span>
         </div>`).join("")}
     </div>`;
-
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      wrap.querySelectorAll(".vbar").forEach((el) => { el.style.height = el.dataset.target + "%"; });
-    });
-  });
 }
 
 function renderAnalysis() {
@@ -2131,7 +2018,7 @@ function setupAiAnalyzeButton(btnId, resultId) {
     btn.disabled = true;
     resultBox.innerHTML = `<div class="ai-result-loading"><span class="ai-spin"></span>در حال تحلیل این ماه...</div>`;
 
-    const t = viewedMonth;
+    const t = todayJalali();
     const lastM = addMonthsJalali(t.jy, t.jm, -1);
     const thisMonth = computeMonthTotals(t.jy, t.jm);
     const lastMonth = computeMonthTotals(lastM.jy, lastM.jm);
@@ -2160,8 +2047,6 @@ function setupAiAnalyzeButton(btnId, resultId) {
         return;
       }
       resultBox.innerHTML = `<div class="ai-result-text">${data.summary.replace(/\n/g, "<br>")}</div>`;
-      // بعد از تحلیل، نمودارها را دوباره با انیمیشن روان بساز
-      renderAnalysis();
     } catch (e) {
       resultBox.innerHTML = `<div class="ai-result-error">اتصال به سرور برقرار نشد. اینترنتت رو چک کن و دوباره امتحان کن.</div>`;
     } finally {
@@ -2323,7 +2208,7 @@ async function initSync() {
 // ---------- Service worker ----------
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js?v=64").catch(() => {});
+    navigator.serviceWorker.register("sw.js").catch(() => {});
   });
 }
 
