@@ -229,6 +229,25 @@ function fmtAmount(n) {
   return sign + toPersianDigits(grouped).replace(/,/g, "٬");
 }
 
+// Animated number counter — smoothly counts from current value to target
+function animateNumber(el, target, duration = 600) {
+  if (!el) return;
+  const startText = el.textContent.replace(/[^0-9−۰-۹]/g, "").replace(/−/g, "-");
+  const start = parseInt(startText) || 0;
+  if (start === target) { el.textContent = fmtAmount(target); return; }
+  const startTime = performance.now();
+  function tick(now) {
+    const elapsed = now - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    // ease-out cubic
+    const ease = 1 - Math.pow(1 - progress, 3);
+    const current = Math.round(start + (target - start) * ease);
+    el.textContent = fmtAmount(current);
+    if (progress < 1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+
 function fmtCompactEn(n) {
   const sign = n > 0 ? "+" : (n < 0 ? "-" : "");
   const abs = Math.abs(n);
@@ -1259,8 +1278,8 @@ function renderDashboard() {
   const totalExpense = expenses.reduce((s, x) => s + x.amount, 0);
   const balance = totalIncome - totalExpense;
 
-  document.getElementById("dashIncomeChip").textContent = fmtAmount(totalIncome);
-  document.getElementById("dashExpenseChip").textContent = fmtAmount(totalExpense);
+  animateNumber(document.getElementById("dashIncomeChip"), totalIncome);
+  animateNumber(document.getElementById("dashExpenseChip"), totalExpense);
 
   const total = totalIncome + totalExpense;
   const incomePct = total ? (totalIncome / total) * 100 : 50;
@@ -1681,8 +1700,8 @@ function renderCombinedDailyChart(containerId, incomeTotalElId, expenseTotalElId
     const j = toJalaali(gy, gm, gd);
     if (isYear ? j.jy === todayJHead.jy : (j.jy === todayJHead.jy && j.jm === todayJHead.jm)) headerExpense += x.amount;
   });
-  if (incomeTotalEl) incomeTotalEl.textContent = fmtAmount(headerIncome);
-  if (expenseTotalEl) expenseTotalEl.textContent = fmtAmount(headerExpense);
+  if (incomeTotalEl) animateNumber(incomeTotalEl, headerIncome, 500);
+  if (expenseTotalEl) animateNumber(expenseTotalEl, headerExpense, 500);
 
   const totalIncome = pool.reduce((s, p) => s + p.income, 0);
   const totalExpense = pool.reduce((s, p) => s + p.expense, 0);
