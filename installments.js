@@ -219,9 +219,7 @@ function viewAnchorIso() {
   try {
     const t = todayJalali();
     if (viewedMonth.jy === t.jy && viewedMonth.jm === t.jm) return todayIso();
-    // وسط ماه انتخاب‌شده تا حدود ماه و سررسیدها پایدار بمانند
-    const day = Math.min(15, 28);
-    const g = toGregorian(viewedMonth.jy, viewedMonth.jm, day);
+    const g = toGregorian(viewedMonth.jy, viewedMonth.jm, 1);
     return dateToISO(g.gy, g.gm, g.gd);
   } catch (e) {
     return todayIso();
@@ -564,16 +562,7 @@ function loadInstallments() {
 function loadMonthlyTotal() {
   try {
     const data = store.monthlyTotal();
-    let monthLabel = data.month_name;
-    // اگر ماه داشبورد غیر از ماه جاری است، سال را هم نشان بده
-    if (typeof viewedMonth !== "undefined" && typeof todayJalali === "function") {
-      const t = todayJalali();
-      if (viewedMonth.jy !== t.jy || viewedMonth.jm !== t.jm) {
-        const faDigits = (n) => String(n).replace(/\d/g, (d) => "۰۱۲۳۴۵۶۷۸۹"[d]);
-        monthLabel = `${data.month_name} ${faDigits(viewedMonth.jy)}`;
-      }
-    }
-    document.getElementById("summaryMonth").textContent = monthLabel;
+    document.getElementById("summaryMonth").textContent = data.month_name;
     document.getElementById("summaryTotal").textContent = formatAmount(String(data.total));
     document.getElementById("summaryPaid").textContent = formatAmount(String(data.paid_total));
     document.getElementById("summaryRemaining").textContent = formatAmount(String(data.remaining_total));

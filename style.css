@@ -1,23 +1,19 @@
 :root {
-  --green-deep: #1A5C56;
-  --green: #2F8A80;
-  --green-soft: #D8EFEA;
+  --green-deep: #163F3C;
+  --green: #2F7A72;
+  --green-soft: #E3F1EF;
   --gold: #C9A227;
   --gold-soft: #F3E7BE;
-  --expense: #D4654A;
-  --expense-soft: #F8E4DC;
-  --cream: #F0E8DC;
-  --cream-2: #EBE4D8;
-  --surface: #F4EFE6;
-  --text: #2C3A37;
-  --text-mute: #7A8682;
-  --border: #E0D7C8;
-  --radius-lg: 28px;
-  --radius-md: 18px;
-  --radius-sm: 12px;
-  --clay-shadow: 0 8px 20px rgba(60, 50, 40, 0.12), 0 2px 4px rgba(60, 50, 40, 0.06);
-  --clay-inset: inset 0 2px 4px rgba(255,255,255,0.7), inset 0 -3px 6px rgba(60, 50, 40, 0.06);
-  --clay-press: inset 0 3px 8px rgba(60, 50, 40, 0.12);
+  --expense: #C24A2E;
+  --expense-soft: #F7E3DC;
+  --cream: #FBF7F0;
+  --surface: #FFFFFF;
+  --text: #26302E;
+  --text-mute: #7A8582;
+  --border: #E8E1D3;
+  --radius-lg: 22px;
+  --radius-md: 14px;
+  --radius-sm: 9px;
   font-family: "Vazirmatn", Tahoma, sans-serif;
 }
 
@@ -34,176 +30,8 @@ html, body {
 }
 body.viewing-past-month,
 body.viewing-past-month::after {
-  background: #E8DFD0;
+  background: #F2E7D3;
 }
-
-/* ---------- UI سه‌بعدی (بدون پس‌زمینه شلوغ) ---------- */
-.three-bg {
-  display: none !important; /* پس‌زمینه WebGL حذف شد */
-}
-
-body.has-three {
-  background: var(--cream);
-  perspective: 1200px;
-}
-body.has-three.viewing-past-month {
-  background: #E8DFD0;
-}
-body.has-three::after {
-  background: var(--cream);
-}
-body.has-three.viewing-past-month::after {
-  background: #E8DFD0;
-}
-body.has-three .app-header {
-  background: transparent;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-}
-body.has-three .app-scroll {
-  position: absolute;
-  z-index: 1;
-  transform-style: preserve-3d;
-}
-
-/* بلوک‌ها به‌صورت کارت سه‌بعدی نرم */
-body.has-three .settings-card,
-body.has-three .balance-card,
-body.has-three .month-remaining,
-body.has-three .week-cal-card,
-body.has-three .dash-week-card,
-body.has-three .ai-card,
-body.has-three .summary-card,
-body.has-three .cal-app,
-body.has-three .chart-carousel-page,
-body.has-three .soft-ring-card {
-  transform-style: preserve-3d;
-  transform: translateZ(0) rotateX(0deg);
-  transition:
-    transform 0.45s cubic-bezier(0.22, 1, 0.36, 1),
-    box-shadow 0.45s ease,
-    opacity 0.35s ease;
-  box-shadow:
-    0 1px 0 rgba(255,255,255,0.85) inset,
-    0 10px 28px rgba(16, 70, 43, 0.1),
-    0 2px 6px rgba(16, 70, 43, 0.05);
-}
-body.has-three .settings-card:active,
-body.has-three .quick-cat-card:active,
-body.has-three .ai-card:active {
-  transform: translateY(2px) scale(0.985);
-}
-
-body.has-three .quick-cat-card {
-  border: none;
-  border-radius: 18px;
-  padding: 10px 6px 9px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 5px;
-  cursor: pointer;
-  font-family: inherit;
-  text-align: center;
-  transition: transform .15s ease;
-  background: linear-gradient(165deg, #FAF7F1 0%, #EFE8DC 100%);
-  box-shadow:
-    0 6px 14px rgba(60, 50, 40, 0.08),
-    inset 0 1px 2px rgba(255,255,255,0.85),
-    inset 0 -2px 4px rgba(60, 50, 40, 0.04);
-}
-body.has-three .quick-cat-card:active {
-  transform: translateY(2px) scale(0.96);
-}
-
-/* ورود سه‌بعدی تب‌ها */
-@keyframes ui3dIn {
-  from {
-    opacity: 0;
-    transform: translateY(28px) rotateX(12deg) scale(0.96);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) rotateX(0) scale(1);
-  }
-}
-body.has-three .tab.active {
-  transform-style: preserve-3d;
-  perspective: 900px;
-}
-body.has-three .tab.active > *,
-body.has-three .tab.active .inst-app > * {
-  animation: ui3dIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
-  transform-origin: center top;
-}
-body.has-three .tab.active > *:nth-child(1),
-body.has-three .tab.active .inst-app > *:nth-child(1) { animation-delay: 0.02s; }
-body.has-three .tab.active > *:nth-child(2),
-body.has-three .tab.active .inst-app > *:nth-child(2) { animation-delay: 0.07s; }
-body.has-three .tab.active > *:nth-child(3),
-body.has-three .tab.active .inst-app > *:nth-child(3) { animation-delay: 0.12s; }
-body.has-three .tab.active > *:nth-child(4),
-body.has-three .tab.active .inst-app > *:nth-child(4) { animation-delay: 0.17s; }
-body.has-three .tab.active > *:nth-child(5),
-body.has-three .tab.active .inst-app > *:nth-child(5) { animation-delay: 0.22s; }
-body.has-three .tab.active > *:nth-child(6),
-body.has-three .tab.active .inst-app > *:nth-child(6) { animation-delay: 0.27s; }
-body.has-three .tab.active > *:nth-child(7),
-body.has-three .tab.active .inst-app > *:nth-child(7) { animation-delay: 0.32s; }
-body.has-three .tab.active > *:nth-child(n+8),
-body.has-three .tab.active .inst-app > *:nth-child(n+8) { animation-delay: 0.37s; }
-
-/* انیمیشن نمودارها — ورود سه‌بعدی */
-@keyframes chart3dIn {
-  from {
-    opacity: 0;
-    transform: translateY(18px) rotateX(18deg) scale(0.94);
-    filter: blur(2px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-    filter: none;
-  }
-}
-body.has-three .chart-graphic-enter {
-  animation: chart3dIn 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
-  transform-origin: center bottom;
-  transform-style: preserve-3d;
-}
-
-/* کاروسل نمودار: حس ورق سه‌بعدی */
-body.has-three .chart-carousel-page.stack-front {
-  transform: translateY(0) scale(1) rotateX(0deg);
-  opacity: 1;
-}
-body.has-three .chart-carousel-page.stack-back {
-  transform: translateY(14px) scale(0.94) rotateX(6deg);
-  opacity: 0.5;
-}
-
-/* بلوک موجودی — عمق بیشتر */
-body.has-three .balance-card,
-body.has-three .month-remaining {
-  transform: translateZ(8px);
-}
-
-/* نوار پایین — کمی شناور سه‌بعدی */
-body.has-three .bottom-nav {
-  box-shadow:
-    0 12px 32px rgba(16, 70, 43, 0.16),
-    0 1px 0 rgba(255, 255, 255, 0.75) inset,
-    0 -8px 20px rgba(16, 70, 43, 0.06);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  body.has-three .tab.active > *,
-  body.has-three .tab.active .inst-app > *,
-  body.has-three .chart-graphic-enter {
-    animation: none;
-  }
-}
-
 
 /* Body is locked to the viewport (not scrollable) so the fixed bottom nav
    never jitters from iOS rubber-band/bounce scrolling. All real scrolling
@@ -255,7 +83,7 @@ h2 {
   top: 0;
   z-index: 20;
   padding: calc(env(safe-area-inset-top) + 12px) 14px 0;
-  background: transparent;
+  background: var(--cream);
 }
 /* ---------- Welcome screen (FLIP intro animation) ---------- */
 .welcome-screen {
@@ -433,79 +261,59 @@ h2 {
 .app-header {
   transition: padding .4s cubic-bezier(.4,0,.2,1);
 }
-/* هدر دقیقاً مطابق طرح clay مرجع */
-.header-inner,
-.header-inner.clay-bar {
+.header-inner {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: 78px;
-  padding: 10px 12px 10px 16px;
-  background: #3D9B8F;
-  background-image: linear-gradient(180deg, #4AADA0 0%, #3D9B8F 38%, #348F84 100%);
-  border-radius: 44px;
+  padding: 15px 20px;
+  background: linear-gradient(-45deg, #4FA89E, #163F3C, #2F7A72, #4FA89E);
+  background-size: 300% 300%;
+  animation: headerGradient 8s ease infinite;
+  border-radius: 34px;
   position: relative;
-  overflow: visible;
-  box-shadow:
-    0 18px 36px rgba(40, 100, 92, 0.28),
-    0 6px 12px rgba(40, 100, 92, 0.14),
-    inset 0 3px 6px rgba(255,255,255,0.22),
-    inset 0 -6px 14px rgba(0,0,0,0.14);
-  transition: padding .35s ease, border-radius .35s ease, box-shadow .35s ease, min-height .35s ease;
-  animation: none;
+  overflow: hidden;
+  box-shadow: 0 12px 26px rgba(22,63,60,0.32), inset 0 1px 0 rgba(255,255,255,0.22);
+  transition: padding .4s cubic-bezier(.4,0,.2,1), border-radius .4s cubic-bezier(.4,0,.2,1), box-shadow .4s ease;
+}
+
+@keyframes headerGradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 .header-inner::after {
   content: "";
   position: absolute;
-  left: 10%;
-  right: 10%;
-  top: 2px;
-  height: 38%;
-  border-radius: 50%;
-  background: linear-gradient(180deg, rgba(255,255,255,0.28) 0%, rgba(255,255,255,0) 100%);
+  inset: 0;
+  background: linear-gradient(180deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0) 45%);
   pointer-events: none;
-  filter: blur(1px);
 }
 .brand {
   display: flex;
   align-items: center;
-  gap: 12px;
-  color: #F4F7F5;
+  gap: 10px;
+  color: var(--cream);
   position: relative;
   z-index: 1;
 }
 .brand-badge {
-  width: 58px;
-  height: 58px;
+  width: 52px;
+  height: 52px;
   border-radius: 16px;
-  background: linear-gradient(160deg, #F7F2EA, #E8E0D4);
-  box-shadow:
-    0 8px 16px rgba(0,0,0,0.2),
-    0 2px 4px rgba(0,0,0,0.1),
-    inset 0 2px 3px rgba(255,255,255,0.95),
-    inset 0 -3px 5px rgba(0,0,0,0.08);
+  background: rgba(255,255,255,0.14);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.2), 0 2px 6px rgba(0,0,0,0.15);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   overflow: hidden;
-  padding: 5px;
-  transition: width .35s ease, height .35s ease;
-}
-.brand-badge img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 11px;
-  display: block;
+  transition: width .4s cubic-bezier(.4,0,.2,1), height .4s cubic-bezier(.4,0,.2,1);
 }
 .brand-text {
   font-weight: 800;
-  font-size: 22px;
+  font-size: 21px;
   letter-spacing: -0.3px;
-  color: #F4F7F5;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.18);
-  transition: font-size .35s ease;
+  transition: font-size .4s cubic-bezier(.4,0,.2,1);
 }
 .sync-pill {
   display: flex;
@@ -527,71 +335,56 @@ h2 {
 }
 .sync-dot.linked { background: var(--gold); }
 
-.watermark { display: none; }
-.nelin-wordmark {
-  font-family: Georgia, "Times New Roman", serif;
-  font-style: italic;
-  font-weight: 700;
-  font-size: 22px;
-  line-height: 1;
-  color: #F4F7F5;
-  letter-spacing: 0.5px;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.2);
-  user-select: none;
-  transition: font-size .3s ease, opacity .3s ease;
+.watermark {
+  height: 22px;
+  width: auto;
+  opacity: 0.9;
+  transition: height .4s cubic-bezier(.4,0,.2,1), opacity .4s ease;
 }
 .header-side {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
   gap: 8px;
   position: relative;
   z-index: 1;
-  padding-left: 4px;
-  transition: gap .3s ease;
+  transition: gap .35s cubic-bezier(.4,0,.2,1);
 }
 .header-settings-btn {
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
   border: none;
-  background: #2F6F66;
-  box-shadow:
-    inset 0 3px 5px rgba(0,0,0,0.35),
-    inset 0 -1px 1px rgba(255,255,255,0.12),
-    0 1px 2px rgba(0,0,0,0.1);
+  background: rgba(251,247,240,0.16);
+  box-shadow: inset 0 0 0 1px rgba(251,247,240,0.35);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   overflow: hidden;
   flex-shrink: 0;
-  transition: transform .15s ease, opacity .3s ease;
+  transition: width .35s cubic-bezier(.4,0,.2,1), height .35s cubic-bezier(.4,0,.2,1),
+              opacity .3s ease, transform .35s cubic-bezier(.4,0,.2,1), margin .35s ease;
 }
-.header-settings-btn:active {
-  transform: scale(0.9);
-  box-shadow: inset 0 4px 8px rgba(0,0,0,0.4);
-}
+.header-settings-btn:active { background: rgba(251,247,240,0.3); }
 
 /* ---------- Compact header (shrinks smoothly on scroll) ---------- */
 .app-header.is-compact .header-inner {
-  min-height: 56px;
-  padding: 8px 12px;
-  border-radius: 28px;
-  box-shadow:
-    0 10px 22px rgba(40, 100, 92, 0.22),
-    inset 0 2px 3px rgba(255,255,255,0.2),
-    inset 0 -3px 8px rgba(0,0,0,0.12);
+  padding: 8px 16px;
+  border-radius: 22px;
+  box-shadow: 0 8px 18px rgba(22,63,60,0.26), inset 0 1px 0 rgba(255,255,255,0.22);
 }
-.app-header.is-compact .brand-badge { width: 40px; height: 40px; border-radius: 12px; padding: 3px; }
-.app-header.is-compact .brand-text { font-size: 16px; }
-.app-header.is-compact .nelin-wordmark { font-size: 16px; }
-.app-header.is-compact .header-side { gap: 4px; }
+.app-header.is-compact .brand-badge { width: 30px; height: 30px; border-radius: 9px; }
+.app-header.is-compact .brand-text { font-size: 15.5px; }
+.app-header.is-compact .watermark { height: 16px; opacity: 0.75; }
+.app-header.is-compact .header-side { gap: 0; }
 .app-header.is-compact .header-settings-btn {
-  width: 22px;
-  height: 22px;
-  opacity: 0.85;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  transform: scale(0.4);
+  margin: 0;
+  pointer-events: none;
 }
 
 .sync-pill-inline {
@@ -639,29 +432,21 @@ h2 {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 11px 12px 11px 16px;
+  padding: 9px 12px 9px 16px;
   border-radius: 999px;
-  background: #F4EFE6;
+  background: var(--surface);
   border: none;
-  box-shadow:
-    0 10px 22px rgba(70, 55, 40, 0.12),
-    0 3px 6px rgba(70, 55, 40, 0.06),
-    inset 0 2px 4px rgba(255,255,255,0.95),
-    inset 0 -4px 8px rgba(70, 55, 40, 0.06);
+  box-shadow: 0 4px 12px rgba(22,63,60,0.09), inset 0 1px 2px rgba(255,255,255,0.7);
 }
-.mini-stat.reverse { flex-direction: row-reverse; padding: 11px 16px 11px 12px; }
+.mini-stat.reverse { flex-direction: row-reverse; padding: 9px 16px 9px 12px; }
 .mini-stat-badge {
-  width: 38px;
-  height: 38px;
-  border-radius: 14px;
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  box-shadow:
-    0 5px 12px rgba(0,0,0,0.18),
-    inset 0 2px 3px rgba(255,255,255,0.35),
-    inset 0 -3px 5px rgba(0,0,0,0.15);
 }
 .mini-stat-text { display: flex; flex-direction: column; line-height: 1.3; }
 .mini-stat-text.align-left { align-items: flex-end; }
@@ -731,8 +516,8 @@ h2 {
   justify-content: center;
   flex-shrink: 0;
 }
-.income-badge { background: linear-gradient(145deg, #4BA89C, #2A7A70); }
-.expense-badge { background: linear-gradient(145deg, #E8926F, #D25A3E); }
+.income-badge { background: linear-gradient(135deg, var(--green), var(--green-deep)); }
+.expense-badge { background: linear-gradient(135deg, #DA7A52, var(--expense)); }
 .scale-stat-text { display: flex; flex-direction: column; }
 .scale-stat-text.align-left { align-items: flex-end; }
 .scale-stat-label { font-size: 10px; color: var(--text-mute); }
@@ -774,178 +559,104 @@ h2 {
 .balance-amount.negative { color: var(--expense); }
 
 /* ---------- Month navigator ---------- */
-/* نوار ماه — دقیقاً مثل طرح مرجع */
 .month-nav {
   display: flex;
   align-items: center;
-  gap: 4px;
-  margin: 8px 0 16px;
-  padding: 7px 8px;
-  min-height: 56px;
+  gap: 6px;
+  margin: 4px 0 6px;
+  background: var(--surface);
   border-radius: 999px;
-  background: #F4EFE6;
-  box-shadow:
-    0 12px 28px rgba(70, 55, 40, 0.12),
-    0 3px 6px rgba(70, 55, 40, 0.05),
-    inset 0 2px 4px rgba(255,255,255,0.95),
-    inset 0 -5px 12px rgba(70, 55, 40, 0.07);
+  padding: 8px;
+  box-shadow: 0 3px 10px rgba(22,63,60,0.08), inset 0 -2px 4px rgba(22,63,60,0.03), inset 0 2px 3px rgba(255,255,255,0.9);
 }
 .month-nav-btn {
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   border: none;
-  background: #EBE4D8;
-  box-shadow:
-    inset 0 4px 8px rgba(70, 55, 40, 0.16),
-    inset 0 -1px 1px rgba(255,255,255,0.55);
+  background: var(--cream);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   flex-shrink: 0;
+  box-shadow: inset 0 2px 4px rgba(22,63,60,0.12), inset 0 -1px 2px rgba(255,255,255,0.8);
 }
-.month-nav-btn:active {
-  box-shadow: inset 0 5px 10px rgba(70, 55, 40, 0.2);
-  transform: scale(0.96);
-}
+.month-nav-btn:active { background: var(--green-soft); }
 
-/* ---------- بلوک «موجودی» — شیشه‌ای مدرن ---------- */
-.month-remaining,
-.balance-card {
+/* ---------- بلوک «دخل» — کوچک، مینیمال، شیشه‌ای ---------- */
+.month-remaining {
   position: relative;
   display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 10px;
-  margin: 0 0 18px;
-  padding: 18px 18px 16px;
-  border-radius: 28px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 0 auto 14px;
+  width: fit-content;
+  padding: 7px 14px 7px 12px;
+  border-radius: 999px;
   overflow: hidden;
-  background: linear-gradient(165deg, #FAF7F1 0%, #EFE8DC 100%);
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  border: none;
+  background: linear-gradient(155deg, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.22) 100%);
+  backdrop-filter: blur(18px) saturate(1.8);
+  -webkit-backdrop-filter: blur(18px) saturate(1.8);
+  border: 1px solid rgba(255,255,255,0.6);
   box-shadow:
-    0 14px 30px rgba(60, 50, 40, 0.12),
-    0 4px 10px rgba(60, 50, 40, 0.05),
-    inset 0 2px 3px rgba(255,255,255,0.95),
-    inset 0 -5px 12px rgba(60, 50, 40, 0.05);
+    0 1px 0 rgba(255,255,255,0.9) inset,
+    0 6px 14px rgba(22,63,60,0.1),
+    0 2px 4px rgba(22,63,60,0.06);
 }
-.month-remaining.is-positive,
-.balance-card.is-positive {
-  background: linear-gradient(165deg, #E5F3EF 0%, #D5EBE5 100%);
+.month-remaining.is-positive {
+  background: linear-gradient(155deg, rgba(197,232,213,0.6) 0%, rgba(255,255,255,0.2) 100%);
 }
-.month-remaining.is-negative,
-.balance-card.is-negative {
-  background: linear-gradient(165deg, #F8E8E2 0%, #F0D9D0 100%);
+.month-remaining.is-negative {
+  background: linear-gradient(155deg, rgba(245,203,190,0.55) 0%, rgba(255,255,255,0.2) 100%);
 }
-.month-remaining::before,
-.balance-card::before {
-  content: "";
-  position: absolute;
-  top: -10px; left: 6%; right: 6%;
-  height: 48%;
-  background: linear-gradient(180deg, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 100%);
-  border-radius: 50%;
-  pointer-events: none;
-  opacity: 0.85;
-}
-.month-remaining::after,
-.balance-card::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 26px;
-  box-shadow: 0 0 0 1px rgba(255,255,255,0.35) inset;
-  pointer-events: none;
-}
-.balance-card-top {
+.month-balance-icon-badge {
   position: relative;
   z-index: 1;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: rgba(255,255,255,0.55);
+  box-shadow: 0 1px 3px rgba(22,63,60,0.12), 0 1px 0 rgba(255,255,255,0.7) inset;
 }
+.month-remaining.is-positive .month-balance-icon-badge .icon-mask { color: var(--green-deep); }
+.month-remaining.is-negative .month-balance-icon-badge .icon-mask { color: var(--expense); }
 .month-balance-label {
   position: relative;
   z-index: 1;
-  font-size: 13px;
-  font-weight: 800;
-  color: var(--green-deep);
-  letter-spacing: 0.02em;
-}
-.balance-card-badge {
-  font-size: 10.5px;
-  font-weight: 600;
+  font-size: 11.5px;
+  font-weight: 700;
   color: var(--text-mute);
-  background: rgba(255,255,255,0.55);
-  border: 1px solid rgba(255,255,255,0.7);
-  padding: 4px 10px;
-  border-radius: 999px;
+  letter-spacing: 0.02em;
 }
 .month-balance-amount {
   position: relative;
   z-index: 1;
-  font-size: 26px;
+  font-size: 14px;
   font-weight: 800;
   display: flex;
   align-items: baseline;
-  justify-content: center;
-  gap: 6px;
-  letter-spacing: -0.4px;
-  text-shadow: 0 1px 0 rgba(255,255,255,0.55);
-  line-height: 1.15;
-  width: 100%;
-  text-align: center;
+  gap: 4px;
+  letter-spacing: -0.2px;
 }
-.month-remaining.is-positive .month-balance-amount,
-.balance-card.is-positive .month-balance-amount { color: var(--green-deep); }
-.month-remaining.is-negative .month-balance-amount,
-.balance-card.is-negative .month-balance-amount { color: var(--expense); }
+.month-remaining.is-positive .month-balance-amount { color: var(--green-deep); }
+.month-remaining.is-negative .month-balance-amount { color: var(--expense); }
 .month-balance-unit {
-  font-size: 12px;
-  font-weight: 600;
+  font-size: 10px;
+  font-weight: 500;
   color: var(--text-mute);
 }
-.balance-card-meta {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  gap: 8px;
-  margin-top: 2px;
-}
-.balance-meta-item {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-mute);
-  background: rgba(255,255,255,0.45);
-  border-radius: 12px;
-  padding: 8px 10px;
-  border: 1px solid rgba(255,255,255,0.55);
-}
-.balance-meta-item i {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  flex: none;
-}
-.balance-meta-item.income i { background: var(--green); }
-.balance-meta-item.expense i { background: var(--expense); }
-.balance-meta-item.income { color: var(--green-deep); }
-.balance-meta-item.expense { color: #a33d28; }
 .month-nav-label {
   flex: 1;
   text-align: center;
   font-weight: 800;
-  font-size: 19px;
-  color: #2C4A45;
-  letter-spacing: -0.2px;
+  font-size: 20px;
+  color: var(--green-deep);
 }
 .alltime-toggle {
   border: 1px solid var(--border);
@@ -1101,14 +812,12 @@ h2 {
 /* ---------- Forms ---------- */
 .entry-mode-toggle {
   display: flex;
-  gap: 6px;
-  padding: 6px;
-  margin-bottom: 14px;
+  gap: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 999px;
-  background: linear-gradient(165deg, #FAF7F1 0%, #EDE6DA 100%);
-  box-shadow:
-    inset 0 3px 6px rgba(60, 50, 40, 0.1),
-    inset 0 -1px 1px rgba(255,255,255,0.6);
+  padding: 4px;
+  margin-bottom: 16px;
 }
 .entry-mode-btn {
   flex: 1;
@@ -1240,16 +949,16 @@ h2 {
 }
 .settings-card, .settings-group {
   position: relative;
-  background: linear-gradient(165deg, #FAF7F1 0%, #F0E9DD 100%);
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  border: none;
+  background: rgba(255,255,255,0.28);
+  backdrop-filter: blur(34px) saturate(2.1);
+  -webkit-backdrop-filter: blur(34px) saturate(2.1);
+  border: 1px solid rgba(255,255,255,0.55);
   border-radius: 26px;
   box-shadow:
-    0 12px 28px rgba(60, 50, 40, 0.1),
-    0 3px 8px rgba(60, 50, 40, 0.05),
-    inset 0 2px 3px rgba(255,255,255,0.9),
-    inset 0 -4px 10px rgba(60, 50, 40, 0.05);
+    0 1px 0 rgba(255,255,255,0.8) inset,
+    0 -12px 24px rgba(255,255,255,0.12) inset,
+    0 14px 28px rgba(16,70,43,0.1),
+    0 3px 8px rgba(16,70,43,0.06);
 }
 .settings-card { padding: 18px; margin-bottom: 10px; }
 .settings-group {
@@ -1558,8 +1267,8 @@ input:focus, select:focus {
 .chart-carousel-page {
   position: relative;
   width: 100%;
-  border-radius: 20px;
-  background: linear-gradient(165deg, #FAF7F1 0%, #F0E9DD 100%);
+  border-radius: 16px;
+  background: var(--cream);
   padding: 12px 10px;
   transition: transform .32s cubic-bezier(.4,0,.2,1), opacity .32s cubic-bezier(.4,0,.2,1), box-shadow .32s ease;
   will-change: transform, opacity;
@@ -1601,123 +1310,7 @@ input:focus, select:focus {
 .chart-carousel-dot.active { background: var(--green-deep); transform: scale(1.3); }
 #tab-analysis .chart-carousel-dot.active { background: var(--analysis-navy); }
 
-/* ---------- نمودار مینیمال رینگی (صفحه‌ی دومِ نمودار اول تحلیل) ---------- */
-.soft-summary-chart {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding: 4px 2px 2px;
-}
-.soft-rings-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-.soft-ring-card {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 6px 8px;
-}
-.soft-ring-svg {
-  width: 112px;
-  height: 112px;
-}
-.soft-ring-track {
-  fill: none;
-  stroke: rgba(22, 63, 60, 0.08);
-  stroke-width: 8;
-}
-.soft-ring-value {
-  fill: none;
-  stroke-width: 8;
-  stroke-linecap: round;
-  transition: stroke-dasharray 0.7s cubic-bezier(0.22, 1, 0.36, 1);
-}
-.soft-ring-value.income { stroke: #2F7A72; }
-.soft-ring-value.expense { stroke: #C24A2E; }
-.soft-ring-center {
-  position: absolute;
-  top: 28px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 112px;
-  height: 112px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-}
-.soft-ring-pct {
-  font-size: 18px;
-  font-weight: 800;
-  color: var(--text);
-  line-height: 1;
-}
-.soft-ring-label {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-mute);
-  margin-top: 3px;
-}
-.soft-ring-amount {
-  font-size: 12.5px;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-}
-.soft-activity-strip {
-  display: flex;
-  gap: 4px;
-  align-items: flex-end;
-  overflow-x: auto;
-  padding: 4px 2px 0;
-  height: 72px;
-  scrollbar-width: none;
-}
-.soft-activity-strip::-webkit-scrollbar { display: none; }
-.soft-activity-col {
-  flex: 0 0 auto;
-  min-width: 14px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  height: 100%;
-  justify-content: flex-end;
-}
-.soft-activity-bar {
-  width: 8px;
-  border-radius: 99px;
-  transition: height 0.55s cubic-bezier(0.22, 1, 0.36, 1);
-  min-height: 0;
-}
-.soft-activity-bar.income {
-  background: linear-gradient(180deg, #4FA89E, #2F7A72);
-}
-.soft-activity-bar.expense {
-  background: linear-gradient(180deg, #E07A5F, #C24A2E);
-}
-.soft-activity-bar.empty {
-  background: rgba(22, 63, 60, 0.08);
-  height: 6px !important;
-}
-.soft-activity-col.is-today .soft-activity-bar {
-  box-shadow: 0 0 0 2px rgba(47, 122, 114, 0.25);
-}
-.soft-activity-label {
-  font-size: 8.5px;
-  color: var(--text-mute);
-  font-weight: 600;
-}
-.soft-activity-col.is-today .soft-activity-label {
-  color: var(--green-deep);
-  font-weight: 800;
-}
-
-/* legacy dual-vbar (اگر جایی مانده باشد) */
+/* ---------- نمودار میله‌ای دوگانه (صفحه‌ی دومِ نمودار اول تحلیل) ---------- */
 .dual-vbar-chart {
   display: flex;
   gap: 10px;
@@ -2024,17 +1617,13 @@ input:focus, select:focus {
 
 .btn {
   border: none;
-  border-radius: 16px;
-  padding: 13px 18px;
+  border-radius: var(--radius-sm);
+  padding: 12px 18px;
   font-family: inherit;
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
   color: #fff;
-  box-shadow:
-    0 8px 18px rgba(60, 50, 40, 0.14),
-    inset 0 1px 2px rgba(255,255,255,0.25),
-    inset 0 -3px 6px rgba(0,0,0,0.12);
 }
 .btn.full { width: 100%; margin-top: 10px; }
 .btn-income { background: var(--green); }
@@ -2087,28 +1676,26 @@ input:focus, select:focus {
 .sync-msg.error { color: var(--expense); }
 .danger-zone h2 { color: var(--expense); }
 
-/* ---------- Bottom nav — clay soft pill ---------- */
+/* ---------- Bottom nav (iOS "liquid glass" — flat minimal pill) ---------- */
 .bottom-nav {
   position: fixed;
-  bottom: max(10px, env(safe-area-inset-bottom, 10px));
+  bottom: 0;
   right: 14px;
   left: 14px;
-  z-index: 30;
+  z-index: 20;
   display: flex;
   align-items: center;
   isolation: isolate;
   overflow: hidden;
-  background: linear-gradient(165deg, #FAF7F1 0%, #EDE6DA 100%);
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  border: none;
-  border-radius: 30px;
+  background: rgba(255,255,255,0.22);
+  backdrop-filter: blur(34px) saturate(2);
+  -webkit-backdrop-filter: blur(34px) saturate(2);
+  border: 1px solid rgba(255,255,255,0.45);
+  border-radius: 30px 30px 0 0;
   box-shadow:
-    0 14px 32px rgba(60, 50, 40, 0.14),
-    0 4px 10px rgba(60, 50, 40, 0.06),
-    inset 0 2px 3px rgba(255,255,255,0.95),
-    inset 0 -4px 8px rgba(60, 50, 40, 0.06);
-  padding: 8px 8px;
+    0 10px 26px rgba(16,70,43,0.12),
+    0 1px 0 rgba(255,255,255,0.6) inset;
+  padding: 7px 7px calc(7px + env(safe-area-inset-bottom));
 }
 .bottom-nav::after {
   content: "";
@@ -2161,14 +1748,14 @@ input:focus, select:focus {
 }
 .nav-btn.active {
   color: var(--green-deep);
-  background: linear-gradient(165deg, #E5F3F0 0%, #D0E8E3 100%);
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  border: none;
+  background: linear-gradient(180deg, rgba(255,255,255,0.85) 0%, rgba(255,255,255,0.5) 100%);
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  border: 1px solid rgba(255,255,255,0.75);
   box-shadow:
-    0 4px 12px rgba(30, 90, 82, 0.14),
-    inset 0 1px 2px rgba(255,255,255,0.9),
-    inset 0 -2px 4px rgba(30, 90, 82, 0.08);
+    0 4px 12px rgba(16,70,43,0.16),
+    inset 0 1px 0 rgba(255,255,255,0.95),
+    inset 0 -1.5px 3px rgba(16,70,43,0.08);
 }
 .nav-btn.active svg { stroke: var(--green-deep); }
 .nav-btn.active span { font-weight: 700; }
@@ -2746,14 +2333,19 @@ input:checked + .toggle-slider:before {
 
 /* ---------- ویجت تقویم هفته‌ی اخیر (پایین داشبورد) ---------- */
 .week-cal-card {
-  margin: 16px 0 8px;
-  padding: 14px 12px 12px;
+  position: relative;
+  background: rgba(255,255,255,0.28);
+  backdrop-filter: blur(34px) saturate(2.1);
+  -webkit-backdrop-filter: blur(34px) saturate(2.1);
+  border: 1px solid rgba(255,255,255,0.55);
   border-radius: 26px;
-  background: linear-gradient(165deg, #FAF7F1 0%, #EFE8DC 100%);
   box-shadow:
-    0 12px 28px rgba(60, 50, 40, 0.1),
-    inset 0 2px 3px rgba(255,255,255,0.9),
-    inset 0 -4px 10px rgba(60, 50, 40, 0.05);
+    0 1px 0 rgba(255,255,255,0.8) inset,
+    0 -12px 24px rgba(255,255,255,0.12) inset,
+    0 14px 28px rgba(16,70,43,0.1),
+    0 3px 8px rgba(16,70,43,0.06);
+  padding: 16px 14px 18px;
+  margin: 14px 0 6px;
 }
 .week-cal-head {
   display: flex;
@@ -2916,22 +2508,10 @@ input:checked + .toggle-slider:before {
 .daily-chart-svg { width: 100%; height: 138px; display: block; touch-action: pan-y; }
 
 @keyframes chart-graphic-enter {
-  from {
-    opacity: 0;
-    transform: translateY(20px) rotateX(14deg) scale(0.94);
-    filter: blur(1.5px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-    filter: none;
-  }
+  from { opacity: 0; transform: scale(0.96) translateY(4px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
 }
-.chart-graphic-enter {
-  animation: chart-graphic-enter 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
-  transform-origin: center bottom;
-  transform-style: preserve-3d;
-}
+.chart-graphic-enter { animation: chart-graphic-enter .4s cubic-bezier(.4,0,.2,1) both; }
 @media (prefers-reduced-motion: reduce) {
   .chart-graphic-enter { animation: none; }
 }
