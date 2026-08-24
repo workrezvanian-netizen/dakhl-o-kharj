@@ -33,90 +33,162 @@ body.viewing-past-month::after {
   background: #F2E7D3;
 }
 
-/* ---------- Three.js layer ---------- */
+/* ---------- UI سه‌بعدی (بدون پس‌زمینه شلوغ) ---------- */
 .three-bg {
-  position: fixed;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 0;
-  pointer-events: none;
-  display: block;
+  display: none !important; /* پس‌زمینه WebGL حذف شد */
 }
+
 body.has-three {
-  background: linear-gradient(165deg, #f7f3ea 0%, #e8f2ef 45%, #f5ebe3 100%);
+  background: var(--cream);
+  perspective: 1200px;
 }
 body.has-three.viewing-past-month {
-  background: linear-gradient(165deg, #f0e6d4 0%, #ebe0ce 50%, #e8dcc8 100%);
+  background: #F2E7D3;
 }
 body.has-three::after {
-  background: transparent;
+  background: var(--cream);
+}
+body.has-three.viewing-past-month::after {
+  background: #F2E7D3;
 }
 body.has-three .app-header {
-  background: rgba(251, 247, 240, 0.55);
-  backdrop-filter: blur(18px) saturate(1.4);
-  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+  background: rgba(251, 247, 240, 0.88);
+  backdrop-filter: blur(16px) saturate(1.3);
+  -webkit-backdrop-filter: blur(16px) saturate(1.3);
 }
 body.has-three .app-scroll {
   position: absolute;
   z-index: 1;
-}
-body.has-three .bottom-nav {
-  z-index: 30;
-}
-body.has-three .welcome-screen {
-  z-index: 100;
-}
-body.has-three .welcome-bg {
-  background: linear-gradient(160deg, rgba(22, 63, 60, 0.72) 0%, rgba(47, 122, 114, 0.55) 100%);
-  backdrop-filter: blur(2px);
+  transform-style: preserve-3d;
 }
 
-/* کارت‌های شیشه‌ای سه‌بعدی‌نما */
+/* بلوک‌ها به‌صورت کارت سه‌بعدی نرم */
 body.has-three .settings-card,
 body.has-three .balance-card,
 body.has-three .month-remaining,
 body.has-three .week-cal-card,
 body.has-three .dash-week-card,
-body.has-three .quick-cat-card,
 body.has-three .ai-card,
-body.has-three .summary-card {
-  transform: translateZ(0);
-  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.35s ease;
+body.has-three .summary-card,
+body.has-three .cal-app,
+body.has-three .chart-carousel-page,
+body.has-three .soft-ring-card {
+  transform-style: preserve-3d;
+  transform: translateZ(0) rotateX(0deg);
+  transition:
+    transform 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.45s ease,
+    opacity 0.35s ease;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.85) inset,
+    0 10px 28px rgba(16, 70, 43, 0.1),
+    0 2px 6px rgba(16, 70, 43, 0.05);
 }
 body.has-three .settings-card:active,
-body.has-three .quick-cat-card:active {
-  transform: scale(0.98) translateY(1px);
+body.has-three .quick-cat-card:active,
+body.has-three .ai-card:active {
+  transform: translateY(2px) scale(0.985);
 }
 
-/* ورود نرم بخش‌ها */
-@keyframes floatIn3d {
+body.has-three .quick-cat-card {
+  transform-style: preserve-3d;
+  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.28s ease;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.7) inset,
+    0 6px 14px rgba(16, 70, 43, 0.08);
+}
+body.has-three .quick-cat-card:active {
+  transform: translateY(2px) scale(0.96);
+}
+
+/* ورود سه‌بعدی تب‌ها */
+@keyframes ui3dIn {
   from {
     opacity: 0;
-    transform: translateY(22px) scale(0.97);
+    transform: translateY(28px) rotateX(12deg) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) rotateX(0) scale(1);
+  }
+}
+body.has-three .tab.active {
+  transform-style: preserve-3d;
+  perspective: 900px;
+}
+body.has-three .tab.active > *,
+body.has-three .tab.active .inst-app > * {
+  animation: ui3dIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  transform-origin: center top;
+}
+body.has-three .tab.active > *:nth-child(1),
+body.has-three .tab.active .inst-app > *:nth-child(1) { animation-delay: 0.02s; }
+body.has-three .tab.active > *:nth-child(2),
+body.has-three .tab.active .inst-app > *:nth-child(2) { animation-delay: 0.07s; }
+body.has-three .tab.active > *:nth-child(3),
+body.has-three .tab.active .inst-app > *:nth-child(3) { animation-delay: 0.12s; }
+body.has-three .tab.active > *:nth-child(4),
+body.has-three .tab.active .inst-app > *:nth-child(4) { animation-delay: 0.17s; }
+body.has-three .tab.active > *:nth-child(5),
+body.has-three .tab.active .inst-app > *:nth-child(5) { animation-delay: 0.22s; }
+body.has-three .tab.active > *:nth-child(6),
+body.has-three .tab.active .inst-app > *:nth-child(6) { animation-delay: 0.27s; }
+body.has-three .tab.active > *:nth-child(7),
+body.has-three .tab.active .inst-app > *:nth-child(7) { animation-delay: 0.32s; }
+body.has-three .tab.active > *:nth-child(n+8),
+body.has-three .tab.active .inst-app > *:nth-child(n+8) { animation-delay: 0.37s; }
+
+/* انیمیشن نمودارها — ورود سه‌بعدی */
+@keyframes chart3dIn {
+  from {
+    opacity: 0;
+    transform: translateY(18px) rotateX(18deg) scale(0.94);
+    filter: blur(2px);
   }
   to {
     opacity: 1;
     transform: none;
+    filter: none;
   }
 }
-body.has-three .tab.active > *,
-body.has-three .tab.active .inst-app > * {
-  animation: floatIn3d 0.48s cubic-bezier(0.22, 1, 0.36, 1) both;
+body.has-three .chart-graphic-enter {
+  animation: chart3dIn 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+  transform-origin: center bottom;
+  transform-style: preserve-3d;
 }
-body.has-three .tab.active > *:nth-child(1) { animation-delay: 0.03s; }
-body.has-three .tab.active > *:nth-child(2) { animation-delay: 0.08s; }
-body.has-three .tab.active > *:nth-child(3) { animation-delay: 0.13s; }
-body.has-three .tab.active > *:nth-child(4) { animation-delay: 0.18s; }
-body.has-three .tab.active > *:nth-child(5) { animation-delay: 0.23s; }
-body.has-three .tab.active > *:nth-child(6) { animation-delay: 0.28s; }
-body.has-three .tab.active > *:nth-child(7) { animation-delay: 0.33s; }
-body.has-three .tab.active > *:nth-child(n+8) { animation-delay: 0.38s; }
+
+/* کاروسل نمودار: حس ورق سه‌بعدی */
+body.has-three .chart-carousel-page.stack-front {
+  transform: translateY(0) scale(1) rotateX(0deg);
+  opacity: 1;
+}
+body.has-three .chart-carousel-page.stack-back {
+  transform: translateY(14px) scale(0.94) rotateX(6deg);
+  opacity: 0.5;
+}
+
+/* بلوک موجودی — عمق بیشتر */
+body.has-three .balance-card,
+body.has-three .month-remaining {
+  transform: translateZ(8px);
+}
+
+/* نوار پایین — کمی شناور سه‌بعدی */
+body.has-three .bottom-nav {
+  box-shadow:
+    0 12px 32px rgba(16, 70, 43, 0.16),
+    0 1px 0 rgba(255, 255, 255, 0.75) inset,
+    0 -8px 20px rgba(16, 70, 43, 0.06);
+}
+
 @media (prefers-reduced-motion: reduce) {
   body.has-three .tab.active > *,
-  body.has-three .tab.active .inst-app > * { animation: none; }
-  .three-bg { display: none; }
+  body.has-three .tab.active .inst-app > *,
+  body.has-three .chart-graphic-enter {
+    animation: none;
+  }
 }
+
 
 /* Body is locked to the viewport (not scrollable) so the fixed bottom nav
    never jitters from iOS rubber-band/bounce scrolling. All real scrolling
@@ -2772,10 +2844,22 @@ input:checked + .toggle-slider:before {
 .daily-chart-svg { width: 100%; height: 138px; display: block; touch-action: pan-y; }
 
 @keyframes chart-graphic-enter {
-  from { opacity: 0; transform: scale(0.96) translateY(4px); }
-  to { opacity: 1; transform: scale(1) translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(20px) rotateX(14deg) scale(0.94);
+    filter: blur(1.5px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
 }
-.chart-graphic-enter { animation: chart-graphic-enter .4s cubic-bezier(.4,0,.2,1) both; }
+.chart-graphic-enter {
+  animation: chart-graphic-enter 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+  transform-origin: center bottom;
+  transform-style: preserve-3d;
+}
 @media (prefers-reduced-motion: reduce) {
   .chart-graphic-enter { animation: none; }
 }
