@@ -400,9 +400,24 @@ h2 {
   margin: 0 auto;
   padding: 16px 16px 8px;
 }
-.tab { display: none; animation: fade .25s ease; }
-.tab.active { display: block; }
-@keyframes fade { from { opacity: 0; transform: translateY(6px);} to {opacity:1; transform:none;} }
+.tab { display: none; }
+.tab.active { display: block; animation: tabSlideIn .35s cubic-bezier(.22,1,.36,1) both; }
+
+/* Direction-aware tab transitions */
+.tab.slide-from-right { animation: tabSlideRight .35s cubic-bezier(.22,1,.36,1) both; }
+.tab.slide-from-left  { animation: tabSlideLeft  .35s cubic-bezier(.22,1,.36,1) both; }
+.tab.slide-from-bottom { animation: tabSlideUp .35s cubic-bezier(.22,1,.36,1) both; }
+.tab.slide-exit-left  { animation: tabExitLeft  .25s cubic-bezier(.55,0,1,.45) both; }
+.tab.slide-exit-right { animation: tabExitRight .25s cubic-bezier(.55,0,1,.45) both; }
+.tab.slide-exit-up    { animation: tabExitUp    .25s cubic-bezier(.55,0,1,.45) both; }
+
+@keyframes tabSlideIn    { from { opacity:0; transform: translateY(20px); }  to { opacity:1; transform: none; } }
+@keyframes tabSlideRight { from { opacity:0; transform: translateX(40px); } to { opacity:1; transform: none; } }
+@keyframes tabSlideLeft  { from { opacity:0; transform: translateX(-40px);} to { opacity:1; transform: none; } }
+@keyframes tabSlideUp    { from { opacity:0; transform: translateY(30px); }  to { opacity:1; transform: none; } }
+@keyframes tabExitLeft   { from { opacity:1; transform: none; } to { opacity:0; transform: translateX(-30px); } }
+@keyframes tabExitRight  { from { opacity:1; transform: none; } to { opacity:0; transform: translateX(30px);  } }
+@keyframes tabExitUp     { from { opacity:1; transform: none; } to { opacity:0; transform: translateY(-20px); } }
 
 .dash-kicker {
   font-size: 11px;
@@ -488,68 +503,6 @@ h2 {
 }
 
 /* ---------- Dashboard scale (hero) ---------- */
-.balance-hero-card {
-  position: relative;
-  overflow: hidden;
-  background: linear-gradient(150deg, var(--green-deep) 0%, #2F7A72 70%, #4FA89E 130%);
-  border-radius: 22px;
-  padding: 18px 20px 20px;
-  margin-bottom: 14px;
-  box-shadow: 0 10px 26px rgba(16,70,43,0.22);
-}
-.balance-hero-card::before {
-  content: "";
-  position: absolute;
-  top: -34px;
-  left: -28px;
-  width: 130px;
-  height: 130px;
-  border-radius: 50%;
-  background: rgba(255,255,255,0.07);
-  pointer-events: none;
-}
-.balance-hero-card::after {
-  content: "";
-  position: absolute;
-  bottom: -46px;
-  right: -20px;
-  width: 110px;
-  height: 110px;
-  border-radius: 50%;
-  background: rgba(255,255,255,0.05);
-  pointer-events: none;
-}
-.balance-hero-top {
-  display: flex;
-  align-items: center;
-  margin-bottom: 8px;
-  position: relative;
-  z-index: 1;
-}
-.balance-hero-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12.5px;
-  font-weight: 600;
-  color: rgba(255,255,255,0.85);
-}
-.balance-hero-amount {
-  position: relative;
-  z-index: 1;
-  font-size: 30px;
-  font-weight: 800;
-  color: #fff;
-  letter-spacing: -0.5px;
-  font-variant-numeric: tabular-nums;
-}
-.balance-hero-amount.negative { color: #FFD9CF; }
-.balance-hero-unit {
-  font-size: 14px;
-  font-weight: 500;
-  color: rgba(255,255,255,0.72);
-}
-
 .scale-card {
   background: linear-gradient(165deg, var(--surface) 0%, var(--green-soft) 130%);
   border-radius: 20px;
@@ -632,27 +585,87 @@ h2 {
   box-shadow: 0 3px 10px rgba(22,63,60,0.08), inset 0 -2px 4px rgba(22,63,60,0.03), inset 0 2px 3px rgba(255,255,255,0.9);
 }
 .month-nav-btn {
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
   border: none;
-  background: var(--cream);
+  background: linear-gradient(155deg, var(--cream) 0%, #f0ebe0 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   flex-shrink: 0;
-  box-shadow: inset 0 2px 4px rgba(22,63,60,0.12), inset 0 -1px 2px rgba(255,255,255,0.8);
+  box-shadow: 0 2px 6px rgba(22,63,60,0.1), inset 0 1px 2px rgba(255,255,255,0.9);
+  transition: transform .15s ease, background .15s ease, box-shadow .15s ease;
 }
-.month-nav-btn:active { background: var(--green-soft); }
+.month-nav-btn:active { background: var(--green-soft); transform: scale(0.92); box-shadow: 0 1px 2px rgba(22,63,60,0.1); }
 
+/* ---------- بلوک «دخل» — کوچک، مینیمال، شیشه‌ای ---------- */
 .month-remaining {
-  text-align: center;
-  font-size: 12px;
-  font-weight: 600;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 0 auto 14px;
+  width: fit-content;
+  padding: 7px 14px 7px 12px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: linear-gradient(155deg, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.22) 100%);
+  backdrop-filter: blur(18px) saturate(1.8);
+  -webkit-backdrop-filter: blur(18px) saturate(1.8);
+  border: 1px solid rgba(255,255,255,0.6);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.9) inset,
+    0 6px 14px rgba(22,63,60,0.1),
+    0 2px 4px rgba(22,63,60,0.06);
+}
+.month-remaining.is-positive {
+  background: linear-gradient(155deg, rgba(197,232,213,0.6) 0%, rgba(255,255,255,0.2) 100%);
+}
+.month-remaining.is-negative {
+  background: linear-gradient(155deg, rgba(245,203,190,0.55) 0%, rgba(255,255,255,0.2) 100%);
+}
+.month-balance-icon-badge {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: rgba(255,255,255,0.55);
+  box-shadow: 0 1px 3px rgba(22,63,60,0.12), 0 1px 0 rgba(255,255,255,0.7) inset;
+}
+.month-remaining.is-positive .month-balance-icon-badge .icon-mask { color: var(--green-deep); }
+.month-remaining.is-negative .month-balance-icon-badge .icon-mask { color: var(--expense); }
+.month-balance-label {
+  position: relative;
+  z-index: 1;
+  font-size: 11.5px;
+  font-weight: 700;
   color: var(--text-mute);
-  margin: 0 0 14px;
-  min-height: 15px;
+  letter-spacing: 0.02em;
+}
+.month-balance-amount {
+  position: relative;
+  z-index: 1;
+  font-size: 14px;
+  font-weight: 800;
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  letter-spacing: -0.2px;
+}
+.month-remaining.is-positive .month-balance-amount { color: var(--green-deep); }
+.month-remaining.is-negative .month-balance-amount { color: var(--expense); }
+.month-balance-unit {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text-mute);
 }
 .month-nav-label {
   flex: 1;
@@ -963,7 +976,8 @@ h2 {
     0 14px 28px rgba(16,70,43,0.1),
     0 3px 8px rgba(16,70,43,0.06);
 }
-.settings-card { padding: 18px; margin-bottom: 10px; }
+.settings-card { padding: 18px; margin-bottom: 10px; transition: box-shadow .2s ease; }
+.settings-card:hover { box-shadow: 0 2px 0 rgba(255,255,255,0.8) inset, 0 -8px 18px rgba(255,255,255,0.12) inset, 0 18px 32px rgba(16,70,43,0.12), 0 4px 10px rgba(16,70,43,0.08); }
 .settings-group {
   margin-bottom: 12px;
   overflow: hidden;
@@ -1229,6 +1243,8 @@ input:focus, select:focus {
   height: 148px;
 }
 .compare-gauge-seg { transition: stroke-dasharray .7s cubic-bezier(.4,0,.2,1); }
+.compare-gauge-svg { filter: drop-shadow(0 6px 16px rgba(16,70,43,0.18)); transition: filter .2s ease, transform .2s ease; }
+.compare-gauge:hover .compare-gauge-svg { filter: drop-shadow(0 8px 22px rgba(16,70,43,0.26)); transform: scale(1.03); }
 .compare-gauge-center {
   position: absolute;
   top: 0;
@@ -1242,7 +1258,7 @@ input:focus, select:focus {
 }
 .compare-gauge-emoji { font-size: 20px; line-height: 1; }
 .compare-gauge-pct { font-size: 15px; font-weight: 800; color: var(--text); }
-.compare-gauge-label { margin-top: 8px; font-size: 12.5px; font-weight: 700; color: var(--text); }
+.compare-gauge-label { margin-top: 8px; font-size: 12.5px; font-weight: 700; color: var(--text); transition: color .2s ease; }
 .compare-gauge-sub {
   margin-top: 3px;
   font-size: 10.5px;
@@ -1332,7 +1348,7 @@ input:focus, select:focus {
   gap: 6px;
   min-width: 40px;
 }
-.dual-vbar-col.is-today .dual-vbar-label { color: var(--green-deep); font-weight: 800; }
+.dual-vbar-col.is-today .dual-vbar-label { color: var(--green-deep); font-weight: 800; background: var(--green-soft); padding: 2px 6px; border-radius: 6px; }
 .dual-vbar-bars {
   display: flex;
   align-items: flex-end;
@@ -1340,12 +1356,17 @@ input:focus, select:focus {
   height: 145px;
 }
 .dual-vbar-bars .bar {
-  width: 13px;
-  border-radius: 5px 5px 2px 2px;
-  transition: height .55s cubic-bezier(.4,0,.2,1);
+  width: 16px;
+  border-radius: 8px 8px 4px 4px;
+  transition: height .55s cubic-bezier(.4,0,.2,1), filter .2s ease, box-shadow .2s ease, transform .15s ease;
+  position: relative;
+  cursor: pointer;
 }
-.dual-vbar-bars .bar.income { background: linear-gradient(180deg, #3E9C90, #1D5049); }
-.dual-vbar-bars .bar.expense { background: linear-gradient(180deg, #DB6449, #8F3620); }
+.dual-vbar-bars .bar:active { transform: scaleY(0.96); transform-origin: bottom; }
+.dual-vbar-bars .bar.income { background: linear-gradient(180deg, #6DD4C0 0%, #4CB8A8 25%, #2F7A72 60%, #1D5049 100%); box-shadow: 0 2px 8px rgba(47,122,114,0.15); }
+.dual-vbar-bars .bar.expense { background: linear-gradient(180deg, #F0A08E 0%, #E8836A 25%, #C24A2E 60%, #8F3620 100%); box-shadow: 0 2px 8px rgba(194,74,46,0.15); }
+.dual-vbar-bars .bar.income:hover { filter: brightness(1.12); box-shadow: 0 4px 16px rgba(47,122,114,0.45); }
+.dual-vbar-bars .bar.expense:hover { filter: brightness(1.12); box-shadow: 0 4px 16px rgba(194,74,46,0.45); }
 .dual-vbar-label { font-size: 10.5px; color: var(--text-mute); }
 
 /* ---------- دونات مقایسه‌ی درآمد/مخارج (صفحه‌ی دومِ کارت مقایسه) ---------- */
@@ -1355,7 +1376,8 @@ input:focus, select:focus {
   height: 180px;
   margin: 6px auto 4px;
 }
-.pie-compare-svg { width: 100%; height: 100%; }
+.pie-compare-svg { width: 100%; height: 100%; filter: drop-shadow(0 6px 16px rgba(16,70,43,0.16)); transition: filter .25s ease; }
+.pie-compare:hover .pie-compare-svg { filter: drop-shadow(0 8px 24px rgba(16,70,43,0.24)); }
 .pie-compare-center {
   position: absolute;
   inset: 0;
@@ -1366,7 +1388,7 @@ input:focus, select:focus {
   gap: 4px;
 }
 .pie-compare-label { font-size: 11.5px; color: var(--text-mute); font-weight: 500; }
-.pie-compare-balance { font-size: 17px; font-weight: 800; }
+.pie-compare-balance { font-size: 18px; font-weight: 800; }
 .pie-compare-balance.income-color { color: var(--green-deep); }
 .pie-compare-balance.expense-color { color: var(--expense); }
 .pie-compare-legend {
@@ -1399,8 +1421,9 @@ input:focus, select:focus {
   height: 182px;
   margin: 4px auto 22px;
 }
-.donut-svg { width: 100%; height: 100%; }
-.donut-seg { transition: stroke-dasharray .6s ease; }
+.donut-svg { width: 100%; height: 100%; filter: drop-shadow(0 4px 10px rgba(16,70,43,0.12)); }
+.donut-seg { transition: stroke-dasharray .6s ease, filter .2s ease, stroke-width .2s ease; cursor: pointer; }
+.donut-seg:hover { filter: brightness(1.15) drop-shadow(0 2px 6px rgba(0,0,0,0.2)); stroke-width: 34; }
 .donut-center {
   position: absolute;
   inset: 0;
@@ -1418,9 +1441,9 @@ input:focus, select:focus {
   font-weight: 600;
 }
 .donut-center-amt {
-  font-size: 14.5px;
+  font-size: 15px;
   font-weight: 800;
-  color: var(--text);
+  color: var(--green-deep);
   line-height: 1.3;
 }
 .chart-legend {
@@ -1438,7 +1461,9 @@ input:focus, select:focus {
   border-radius: 14px;
   padding: 9px 12px;
   box-shadow: 0 1px 3px rgba(16,70,43,0.04);
+  transition: transform .15s ease, box-shadow .15s ease, background .15s ease;
 }
+.chart-legend-row:active { transform: scale(0.98); background: var(--cream); box-shadow: 0 0 0 rgba(0,0,0,0); }
 .legend-dot { width: 11px; height: 11px; border-radius: 4px; flex-shrink: 0; }
 .legend-icon {
   width: 28px;
@@ -1485,26 +1510,38 @@ input:focus, select:focus {
 }
 .quick-cat-card {
   border: none;
-  border-radius: 14px;
-  padding: 8px 5px 7px;
+  border-radius: 16px;
+  padding: 12px 5px 10px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
   cursor: pointer;
   font-family: inherit;
   text-align: center;
-  transition: transform .12s ease;
-  box-shadow: 0 2px 5px rgba(16,70,43,0.06);
+  transition: transform .2s cubic-bezier(.22,1,.36,1), box-shadow .2s ease, filter .2s ease;
+  box-shadow: 0 3px 10px rgba(16,70,43,0.08);
+  position: relative;
+  overflow: hidden;
 }
-.quick-cat-card:active { transform: scale(0.96); }
+.quick-cat-card:hover { filter: brightness(1.04); box-shadow: 0 6px 18px rgba(16,70,43,0.12); transform: translateY(-2px); }
+.quick-cat-card:active { transform: scale(0.95) translateY(0); box-shadow: 0 1px 3px rgba(16,70,43,0.08); }
+.quick-cat-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0) 50%);
+  pointer-events: none;
+  border-radius: inherit;
+}
 .quick-cat-bubble {
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
 }
 .quick-cat-bubble .icon-mask { width: 13px; height: 13px; }
 .quick-cat-name {
@@ -1627,13 +1664,18 @@ input:focus, select:focus {
   font-weight: 700;
   cursor: pointer;
   color: #fff;
+  transition: transform .15s ease, box-shadow .15s ease, background .15s ease;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.12);
 }
+.btn:active { transform: scale(0.96); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
 .btn.full { width: 100%; margin-top: 10px; }
-.btn-income { background: var(--green); }
-.btn-expense { background: var(--expense); }
-.btn-neutral { background: var(--green-deep); }
-.btn-ghost { background: transparent; color: var(--green-deep); border: 1px solid var(--border); }
-.btn-danger { background: var(--surface); color: var(--expense); border: 1px solid var(--expense-soft); }
+.btn-income { background: linear-gradient(155deg, var(--green) 0%, #269a8a 100%); }
+.btn-expense { background: linear-gradient(155deg, var(--expense) 0%, #d45a3e 100%); }
+.btn-neutral { background: linear-gradient(155deg, var(--green-deep) 0%, #1e524e 100%); }
+.btn-ghost { background: transparent; color: var(--green-deep); border: 1px solid var(--border); box-shadow: none; }
+.btn-ghost:active { background: var(--green-soft); transform: scale(0.96); }
+.btn-danger { background: var(--surface); color: var(--expense); border: 1px solid var(--expense-soft); box-shadow: none; }
+.btn-danger:active { background: var(--expense-soft); transform: scale(0.96); }
 
 /* ---------- Categories manage ---------- */
 .category-manage-list { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
@@ -1723,13 +1765,13 @@ input:focus, select:focus {
   background: none;
   border: none;
   border-radius: 18px;
-  padding: 8px 2px;
+  padding: 9px 2px;
   margin: 0 2px;
   color: var(--text-mute);
   font-family: inherit;
   font-size: 10.5px;
   cursor: pointer;
-  transition: transform .18s cubic-bezier(.4,0,.2,1), color .18s ease, background .18s ease, box-shadow .18s ease;
+  transition: transform .2s cubic-bezier(.4,0,.2,1), color .2s ease, background .2s ease, box-shadow .2s ease;
 }
 .nav-btn span {
   white-space: nowrap;
@@ -2510,52 +2552,26 @@ input:checked + .toggle-slider:before {
 
 .daily-chart-svg { width: 100%; height: 138px; display: block; touch-action: pan-y; }
 
-@keyframes chart-graphic-enter {
-  from { opacity: 0; transform: scale(0.96) translateY(4px); }
-  to { opacity: 1; transform: scale(1) translateY(0); }
-}
-.chart-graphic-enter { animation: chart-graphic-enter .4s cubic-bezier(.4,0,.2,1) both; }
-
-/* رشدِ شیک و روون رینگ/دونات از صفر تا مقدار نهایی — کاملاً با CSS (بدون rAF شکننده) */
-@keyframes ring-draw-in {
-  from { stroke-dashoffset: var(--ring-dash, 0); }
+/* ---------- Line chart stroke-draw animation ---------- */
+@keyframes line-draw {
+  from { stroke-dashoffset: var(--line-len, 2000); }
   to { stroke-dashoffset: 0; }
 }
-.ring-draw-anim {
-  animation: ring-draw-in .9s cubic-bezier(.22,.8,.28,1) both;
-  animation-delay: var(--ring-delay, 0s);
+@keyframes area-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
-
-/* رشدِ شعاعیِ هر بخشِ دونات (طول دش از صفر تا مقدار نهایی، آفستِ موقعیت ثابت می‌مونه) */
-@keyframes donut-seg-grow-in {
-  from { stroke-dasharray: 0 var(--seg-circ); }
-  to { stroke-dasharray: var(--seg-dash) var(--seg-circ); }
+@keyframes chart-graphic-enter {
+  from { opacity: 0; transform: scale(0.94) translateY(8px); filter: blur(2px); }
+  to { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); }
 }
-.donut-seg-anim {
-  animation: donut-seg-grow-in .8s cubic-bezier(.22,.8,.28,1) both;
-  animation-delay: var(--seg-delay, 0s);
-}
-
-/* رشدِ شیک و روون میله‌ها از صفر تا مقدار نهایی */
-@keyframes bar-grow-in {
-  from { height: 0; }
-  to { height: var(--bar-target); }
-}
-.bar-grow-anim {
-  animation: bar-grow-in .7s cubic-bezier(.22,.8,.28,1) both;
-  animation-delay: var(--bar-delay, 0s);
-}
-
+.chart-graphic-enter { animation: chart-graphic-enter .5s cubic-bezier(.22,1,.36,1) both; }
 @media (prefers-reduced-motion: reduce) {
   .chart-graphic-enter { animation: none; }
-  /* بدون انیمیشن هم باید نمودار حالت نهاییِ درستش رو نشون بده، نه خالی/صفر */
-  .ring-draw-anim { animation: none; stroke-dashoffset: 0; }
-  .donut-seg-anim { animation: none; stroke-dasharray: var(--seg-dash) var(--seg-circ); }
-  .bar-grow-anim { animation: none; height: var(--bar-target); }
 }
 .daily-chart-grid { stroke: var(--border); stroke-width: 1; stroke-dasharray: 2 3; }
 .daily-chart-dashed { stroke: var(--text-mute); stroke-width: 1; stroke-dasharray: 3 3; opacity: 0.55; }
-.daily-chart-tooltip-bg { fill: var(--green-deep); }
+.daily-chart-tooltip-bg { fill: var(--analysis-navy, var(--green-deep)); rx: 10; }
 .daily-chart-tooltip-val { font-size: 8.6px; font-weight: 700; font-family: inherit; }
 .daily-chart-tooltip-val.income-tooltip-val { fill: #8FE3C8; }
 .daily-chart-tooltip-val.expense-tooltip-val { fill: #F3A896; }
@@ -2574,10 +2590,14 @@ input:checked + .toggle-slider:before {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 9px 10px;
-  border-radius: 12px;
+  padding: 11px 14px;
+  border-radius: 14px;
   background: var(--cream);
+  border: 1px solid transparent;
+  transition: transform .2s cubic-bezier(.22,1,.36,1), background .2s ease, border-color .2s ease, box-shadow .2s ease;
 }
+.top-tx-row:hover { box-shadow: 0 4px 12px rgba(16,70,43,0.08); border-color: rgba(16,70,43,0.06); }
+.top-tx-row:active { transform: scale(0.98); background: var(--surface); border-color: var(--border); }
 .top-tx-rank { font-size: 13px; font-weight: 800; width: 22px; text-align: center; color: var(--text-mute); flex-shrink: 0; }
 .top-tx-icon {
   width: 32px; height: 32px; border-radius: 9px;
