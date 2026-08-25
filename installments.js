@@ -219,7 +219,9 @@ function viewAnchorIso() {
   try {
     const t = todayJalali();
     if (viewedMonth.jy === t.jy && viewedMonth.jm === t.jm) return todayIso();
-    const g = toGregorian(viewedMonth.jy, viewedMonth.jm, 1);
+    // وسط ماه انتخاب‌شده تا حدود ماه و سررسیدها پایدار بمانند
+    const day = Math.min(15, 28);
+    const g = toGregorian(viewedMonth.jy, viewedMonth.jm, day);
     return dateToISO(g.gy, g.gm, g.gd);
   } catch (e) {
     return todayIso();
@@ -444,23 +446,6 @@ function showToast(msg) {
 
 let currentItems = [];
 
-// Animated number counter for installments (English digit format)
-function animateNumberInst(el, target, duration = 600) {
-  if (!el) return;
-  const start = parseInt(el.textContent.replace(/[^0-9]/g, "")) || 0;
-  if (start === target) { el.textContent = formatAmount(String(target)); return; }
-  const startTime = performance.now();
-  function tick(now) {
-    const elapsed = now - startTime;
-    const progress = Math.min(elapsed / duration, 1);
-    const ease = 1 - Math.pow(1 - progress, 3);
-    const current = Math.round(start + (target - start) * ease);
-    el.textContent = formatAmount(String(current));
-    if (progress < 1) requestAnimationFrame(tick);
-  }
-  requestAnimationFrame(tick);
-}
-
 function formatAmount(amount) {
   const n = parseInt(amount, 10);
   if (Number.isNaN(n)) return amount || "0";
@@ -579,10 +564,19 @@ function loadInstallments() {
 function loadMonthlyTotal() {
   try {
     const data = store.monthlyTotal();
-    document.getElementById("summaryMonth").textContent = data.month_name;
-    animateNumberInst(document.getElementById("summaryTotal"), data.total);
-    animateNumberInst(document.getElementById("summaryPaid"), data.paid_total);
-    animateNumberInst(document.getElementById("summaryRemaining"), data.remaining_total);
+    let monthLabel = data.month_name;
+    // اگر ماه داشبورد غیر از ماه جاری است، سال را هم نشان بده
+    if (typeof viewedMonth !== "undefined" && typeof todayJalali === "function") {
+      const t = todayJalali();
+      if (viewedMonth.jy !== t.jy || viewedMonth.jm !== t.jm) {
+        const faDigits = (n) => String(n).replace(/\d/g, (d) => "۰۱۲۳۴۵۶۷۸۹"[d]);
+        monthLabel = `${data.month_name} ${faDigits(viewedMonth.jy)}`;
+      }
+    }
+    document.getElementById("summaryMonth").textContent = monthLabel;
+    document.getElementById("summaryTotal").textContent = formatAmount(String(data.total));
+    document.getElementById("summaryPaid").textContent = formatAmount(String(data.paid_total));
+    document.getElementById("summaryRemaining").textContent = formatAmount(String(data.remaining_total));
   } catch (e) {
     /* خطای غیرحیاتی، لیست اصلی همچنان کار می‌کنه */
   }
@@ -605,14 +599,6 @@ document.getElementById("ledger").addEventListener("click", (e) => {
   if (btn.dataset.action === "pay") {
     try {
       const paidCount = store.pay(id, btn.dataset.due);
-      // Find the installment details for the event
-      const instItem = currentItems.find((i) => String(i.id) === String(id));
-      const instAmount = instItem ? parseInt(instItem.amount, 10) || 0 : 0;
-      const instTitle = instItem ? instItem.title : "قسط";
-      // Dispatch event so script.js can add it as an expense
-      window.dispatchEvent(new CustomEvent("installment-paid", {
-        detail: { title: instTitle, amount: instAmount, dueKey: btn.dataset.due }
-      }));
       showToast(`پرداخت ثبت شد ✅ — قسط شماره ${paidCount}`);
       refreshAll();
       syncToServer();
@@ -933,21 +919,4 @@ seedTestInstallments();
 
 refreshAll();
 setupNotifications();
-
-// Expose refreshAll for tab-switch animation (called from script.js)
-window.refreshInstallments = refreshAll;
-window.resetInstallmentNumbers = function() {
-  const totalEl = document.getElementById("summaryTotal");
-  const paidEl = document.getElementById("summaryPaid");
-  const remainingEl = document.getElementById("summaryRemaining");
-  if (totalEl) totalEl.textContent = "0";
-  if (paidEl) paidEl.textContent = "0";
-  if (remainingEl) remainingEl.textContent = "0";
-};
-
-// Expose store for installment payment bridge
-window.getInstallmentById = function(id) {
-  return currentItems.find((i) => String(i.id) === String(id));
-};
-
 })();

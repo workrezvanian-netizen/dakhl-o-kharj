@@ -34,8 +34,8 @@ const DEFAULT_CATEGORIES = [
 const DEFAULT_ICON_MAP = { "خوراک": "utensils", "حمل‌ونقل": "car", "قبض‌ها": "receipt", "خرید": "shopping-bag", "تفریح": "film", "درمان": "stethoscope", "اقساط": "credit-card", "سایر": "package" };
 const INCOME_SOURCE_ICON = { "حقوق": "briefcase", "پاداش": "award", "فروش": "tag", "هدیه": "gift", "سایر": "wallet" };
 const CATEGORY_COLORS = [
-  "#FF5252", "#FF9100", "#FFC400", "#4CAF50",
-  "#00BCD4", "#5C6BC0", "#AB47BC", "#EC407A"
+  "#FF6B6B", "#FFA94D", "#FFD43B", "#69DB7C",
+  "#22B8CF", "#4C6EF5", "#9775FA", "#F783AC"
 ];
 const CATEGORY_COLOR_CHOICES = [
   "#FF6B6B", "#FF922B", "#FFA94D", "#FFD43B", "#94D82D", "#69DB7C", "#20C997",
@@ -86,14 +86,13 @@ function loadState() {
         expenses: parsed.expenses || [],
         installments: parsed.installments || [],
         categories,
-        budget: parsed.budget || { total: 0, categories: {} },
         syncCode: parsed.syncCode || null,
         profile: parsed.profile || { name: null, avatar: null },
         updatedAt: parsed.updatedAt || Date.now()
       };
     }
   } catch (e) { /* ignore corrupt state */ }
-  return { incomes: [], expenses: [], installments: [], categories: DEFAULT_CATEGORIES.slice(), budget: { total: 0, categories: {} }, syncCode: null, profile: { name: null, avatar: null }, updatedAt: Date.now() };
+  return { incomes: [], expenses: [], installments: [], categories: DEFAULT_CATEGORIES.slice(), syncCode: null, profile: { name: null, avatar: null }, updatedAt: Date.now() };
 }
 
 function saveState({ sync = true } = {}) {
@@ -228,44 +227,6 @@ function fmtAmount(n) {
   const rounded = Math.round(Math.abs(n));
   const grouped = rounded.toLocaleString("en-US");
   return sign + toPersianDigits(grouped).replace(/,/g, "٬");
-}
-
-// Animated number counter with sign prefix (for balance display)
-function animateNumberWithSign(el, target, duration = 800, sign = "") {
-  if (!el) return;
-  const absTarget = Math.abs(target);
-  const unitEl = el.querySelector(".month-balance-unit");
-  const unitText = unitEl ? unitEl.textContent : "تومان";
-  const startTime = performance.now();
-  function tick(now) {
-    const elapsed = now - startTime;
-    const progress = Math.min(elapsed / duration, 1);
-    const ease = 1 - Math.pow(1 - progress, 3);
-    const current = Math.round(absTarget * ease);
-    el.innerHTML = `${sign}${fmtAmount(current)} <span class="month-balance-unit">${unitText}</span>`;
-    if (progress < 1) requestAnimationFrame(tick);
-  }
-  requestAnimationFrame(tick);
-}
-
-// Animated number counter — smoothly counts from current value to target
-function animateNumber(el, target, duration = 600) {
-  if (!el) return;
-  // Use normalizeDigits to correctly parse Persian/Arabic digits
-  const startText = normalizeDigits(el.textContent.replace(/[^0-9−۰-۹٠-٩]/g, "")).replace(/−/g, "-");
-  const start = parseInt(startText) || 0;
-  if (start === target) { el.textContent = fmtAmount(target); return; }
-  const startTime = performance.now();
-  function tick(now) {
-    const elapsed = now - startTime;
-    const progress = Math.min(elapsed / duration, 1);
-    // ease-out cubic
-    const ease = 1 - Math.pow(1 - progress, 3);
-    const current = Math.round(start + (target - start) * ease);
-    el.textContent = fmtAmount(current);
-    if (progress < 1) requestAnimationFrame(tick);
-  }
-  requestAnimationFrame(tick);
 }
 
 function fmtCompactEn(n) {
@@ -527,53 +488,18 @@ document.querySelectorAll('#tab-settings .settings-group').forEach((details) => 
 document.querySelectorAll(".nav-btn").forEach((btn) => {
   btn.addEventListener("click", () => switchTab(btn.dataset.tab));
 });
-const _tabOrder = ["entry", "analysis", "dashboard", "installments", "budget", "settings"];
 function switchTab(tab, opts = {}) {
-  const prevTab = document.querySelector(".tab.active");
-  const prevTabId = prevTab ? prevTab.id.replace("tab-", "") : null;
-  const prevIdx = prevTabId ? _tabOrder.indexOf(prevTabId) : -1;
-  const nextIdx = _tabOrder.indexOf(tab);
-
-  // Clean up old transition classes
-  document.querySelectorAll(".tab").forEach((t) => {
-    t.classList.remove("active", "slide-from-right", "slide-from-left",
-      "slide-from-bottom", "slide-exit-left", "slide-exit-right", "slide-exit-up");
-  });
-
-  // Determine direction for the new tab
-  let enterClass = "slide-from-bottom";
-  if (prevIdx !== -1 && nextIdx !== -1) {
-    if (nextIdx < prevIdx) enterClass = "slide-from-right";
-    else if (nextIdx > prevIdx) enterClass = "slide-from-left";
-    else enterClass = "slide-from-bottom";
-  }
-
-  document.getElementById("tab-" + tab).classList.add("active", enterClass);
+  document.querySelectorAll(".tab").forEach((t) => t.classList.remove("active"));
   document.querySelectorAll(".nav-btn").forEach((b) => b.classList.remove("active"));
+  document.getElementById("tab-" + tab).classList.add("active");
   const navBtn = document.querySelector(`.nav-btn[data-tab="${tab}"]`);
   if (navBtn) navBtn.classList.add("active");
   if (tab === "entry" && !opts.keepExpenseFilter && expenseListFilter) {
     expenseListFilter = null;
     renderExpenseList();
   }
-  if (tab === "dashboard") {
-    // Reset numbers to 0 so animateNumber plays from scratch
-    const incomeChip = document.getElementById("dashIncomeChip");
-    const expenseChip = document.getElementById("dashExpenseChip");
-    const balanceAmount = document.querySelector(".month-balance-amount");
-    if (incomeChip) incomeChip.textContent = "۰";
-    if (expenseChip) expenseChip.textContent = "۰";
-    if (balanceAmount) balanceAmount.innerHTML = `+۰ <span class="month-balance-unit">تومان</span>`;
-    // Small delay to ensure DOM updates before animation starts
-    requestAnimationFrame(() => renderDashboard());
-  }
   if (tab === "analysis") renderAnalysis();
-  if (tab === "installments" && typeof window.refreshInstallments === "function") {
-    // Reset numbers to 0 so animation plays from scratch
-    if (typeof window.resetInstallmentNumbers === "function") window.resetInstallmentNumbers();
-    requestAnimationFrame(() => window.refreshInstallments());
-  }
-  if (tab === "budget") renderBudget();
+  if (tab === "installments" && typeof refreshAll === "function") refreshAll();
 
   // Settings accordions always start closed, whether we're leaving or entering the tab
   document.querySelectorAll("#tab-settings .settings-group").forEach((d) => { d.open = false; });
@@ -800,29 +726,6 @@ document.getElementById("expenseForm").addEventListener("submit", (e) => {
   e.target.reset();
   setDatePickerToToday("expense");
   resetDateQuickPicker("expense");
-  saveState();
-});
-
-// ---------- Installment payment → add expense under "اقساط" category ----------
-window.addEventListener("installment-paid", (e) => {
-  const { title, amount, dueKey } = e.detail;
-  if (!amount || amount <= 0) return;
-  // Convert dueKey (ISO date) to the expense date
-  const expDate = dueKey || new Date().toISOString().slice(0, 10);
-  // Check if this exact installment payment was already added (avoid duplicates)
-  const exists = state.expenses.some(
-    (x) => x.category === "اقساط" && x.note === title && x.date === expDate && x.amount === amount
-  );
-  if (exists) return;
-  state.expenses.push({
-    id: uid(),
-    amount,
-    category: "اقساط",
-    note: title,
-    date: expDate,
-    createdAt: Date.now(),
-    installmentPaid: true,
-  });
   saveState();
 });
 
@@ -1068,31 +971,23 @@ function updateMonthLabel() {
   const label = document.getElementById("monthLabel");
   label.textContent = JALALI_MONTHS[viewedMonth.jm - 1];
 
-  // Update balance hero card with wallet icon
-  const balance = computeCumulativeBalance(viewedMonth.jy, viewedMonth.jm);
-  const balanceCard = document.getElementById("dashBalanceCard");
-  const balanceAmountEl = document.getElementById("dashBalanceAmount");
-  if (balanceCard && balanceAmountEl) {
-    const isPositive = balance >= 0;
-    balanceCard.className = `balance-hero-card ${isPositive ? "positive" : "negative"}`;
-    animateNumber(balanceAmountEl, Math.abs(balance), 800);
-  }
-
   const remainEl = document.getElementById("monthRemaining");
   if (remainEl) {
+    const balance = computeCumulativeBalance(viewedMonth.jy, viewedMonth.jm);
+    const monthTotals = computeMonthTotals(viewedMonth.jy, viewedMonth.jm);
     const cls = balance >= 0 ? "is-positive" : "is-negative";
     const sign = balance >= 0 ? "+" : "−";
-    const icon = balance >= 0 ? "wallet" : "trending-down";
-    remainEl.className = `month-remaining ${cls}`;
+    remainEl.className = `month-remaining balance-card ${cls}`;
     remainEl.innerHTML = `
-      <span class="month-balance-icon-badge">${iconSpanHTML(icon, "width:15px;height:15px")}</span>
-      <span class="month-balance-label">دخل</span>
-      <strong class="month-balance-amount">${sign}۰ <span class="month-balance-unit">تومان</span></strong>`;
-    const balanceEl = remainEl.querySelector(".month-balance-amount");
-    if (balanceEl) {
-      const signSpan = `${sign}`;
-      animateNumberWithSign(balanceEl, balance, 800, sign);
-    }
+      <div class="balance-card-top">
+        <span class="month-balance-label">موجودی</span>
+        <span class="balance-card-badge">${isViewingCurrentMonth() ? "تا امروز" : "تا پایان " + JALALI_MONTHS[viewedMonth.jm - 1]}</span>
+      </div>
+      <strong class="month-balance-amount">${sign}${fmtAmount(Math.abs(balance))} <span class="month-balance-unit">تومان</span></strong>
+      <div class="balance-card-meta">
+        <span class="balance-meta-item income"><i></i>درآمد ماه ${fmtAmount(monthTotals.totalIncome)}</span>
+        <span class="balance-meta-item expense"><i></i>مخارج ماه ${fmtAmount(monthTotals.totalExpense)}</span>
+      </div>`;
   }
 }
 
@@ -1100,7 +995,11 @@ function updateMonthLabel() {
 // and the whole app gets a distinct background tint while browsing history
 // so it's obvious you're not looking at the current month.
 function applyViewedMonthState() {
-  document.body.classList.toggle("viewing-past-month", !isViewingCurrentMonth());
+  const isPast = !isViewingCurrentMonth();
+  document.body.classList.toggle("viewing-past-month", isPast);
+  if (window.__dakhlThree && typeof window.__dakhlThree.setPastMonth === "function") {
+    window.__dakhlThree.setPastMonth(isPast);
+  }
   renderDashboard();
   renderIncomeList();
   renderExpenseList();
@@ -1352,8 +1251,8 @@ function renderDashboard() {
   const totalExpense = expenses.reduce((s, x) => s + x.amount, 0);
   const balance = totalIncome - totalExpense;
 
-  animateNumber(document.getElementById("dashIncomeChip"), totalIncome);
-  animateNumber(document.getElementById("dashExpenseChip"), totalExpense);
+  document.getElementById("dashIncomeChip").textContent = fmtAmount(totalIncome);
+  document.getElementById("dashExpenseChip").textContent = fmtAmount(totalExpense);
 
   const total = totalIncome + totalExpense;
   const incomePct = total ? (totalIncome / total) * 100 : 50;
@@ -1369,7 +1268,7 @@ function renderDashboard() {
       const color = catColor(c.name);
       const amt = byCat[c.name] || 0;
       return `
-        <button type="button" class="quick-cat-card" style="background:linear-gradient(135deg, ${color}22 0%, ${color}11 100%)" onclick="quickAddExpense('${c.name.replace(/'/g, "\\'")}')">
+        <button type="button" class="quick-cat-card" style="background:${color}3D" onclick="quickAddExpense('${c.name.replace(/'/g, "\\'")}')">
           <span class="quick-cat-bubble" style="background:${color}">${iconSpanHTML(c.icon, "color:#fff")}</span>
           <span class="quick-cat-name">${c.name}</span>
           <span class="quick-cat-amount">${fmtAmount(amt)}</span>
@@ -1718,15 +1617,20 @@ function smoothPath(pts) {
 const JALALI_MONTHS_SHORT = ["فرو", "ارد", "خرد", "تیر", "مرد", "شهر", "مهر", "آبا", "آذر", "دی", "بهم", "اسف"];
 let dailyChartMode = "day"; // 'day' | 'year'
 
-function buildDailyChartPool(days) {
-  const now = new Date();
+// نمودار ماهانه: از روز ۱ ماهِ انتخاب‌شده در داشبورد تا آخر همان ماه
+// (اگر ماه جاری باشد، فقط تا امروز — با شروع ماه جدید از ۱ شروع می‌شود)
+function buildDailyChartPool(_unusedDays) {
+  const jy = viewedMonth.jy;
+  const jm = viewedMonth.jm;
+  const daysInMonth = jalaaliMonthLength(jy, jm);
+  const today = todayJalali();
+  const lastDay = (jy === today.jy && jm === today.jm) ? today.jd : daysInMonth;
+
   const pool = [];
-  for (let i = days - 1; i >= 0; i -= 1) {
-    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
-    const gy = d.getFullYear(), gm = d.getMonth() + 1, gd = d.getDate();
-    const iso = `${gy}-${String(gm).padStart(2, "0")}-${String(gd).padStart(2, "0")}`;
-    const j = toJalaali(gy, gm, gd);
-    pool.push({ iso, jy: j.jy, jm: j.jm, jd: j.jd, income: 0, expense: 0 });
+  for (let d = 1; d <= lastDay; d += 1) {
+    const g = toGregorian(jy, jm, d);
+    const iso = `${g.gy}-${String(g.gm).padStart(2, "0")}-${String(g.gd).padStart(2, "0")}`;
+    pool.push({ iso, jy, jm, jd: d, income: 0, expense: 0 });
   }
   const idx = {};
   pool.forEach((p, i) => { idx[p.iso] = i; });
@@ -1736,17 +1640,18 @@ function buildDailyChartPool(days) {
 }
 
 function buildYearlyChartPool(jy) {
+  const year = jy || viewedMonth.jy;
   const pool = [];
-  for (let m = 1; m <= 12; m += 1) pool.push({ jy, jm: m, income: 0, expense: 0 });
+  for (let m = 1; m <= 12; m += 1) pool.push({ jy: year, jm: m, income: 0, expense: 0 });
   state.incomes.forEach((x) => {
     const [gy, gm, gd] = x.date.split("-").map(Number);
     const j = toJalaali(gy, gm, gd);
-    if (j.jy === jy) pool[j.jm - 1].income += x.amount;
+    if (j.jy === year) pool[j.jm - 1].income += x.amount;
   });
   state.expenses.forEach((x) => {
     const [gy, gm, gd] = x.date.split("-").map(Number);
     const j = toJalaali(gy, gm, gd);
-    if (j.jy === jy) pool[j.jm - 1].expense += x.amount;
+    if (j.jy === year) pool[j.jm - 1].expense += x.amount;
   });
   return pool;
 }
@@ -1758,24 +1663,23 @@ function renderCombinedDailyChart(containerId, incomeTotalElId, expenseTotalElId
   const expenseTotalEl = document.getElementById(expenseTotalElId);
   const isYear = dailyChartMode === "year";
 
-  const pool = isYear ? buildYearlyChartPool(todayJalali().jy) : buildDailyChartPool(10);
+  const pool = isYear ? buildYearlyChartPool(viewedMonth.jy) : buildDailyChartPool();
   const n = pool.length;
 
-  // مقدار بالای نمودار: متناسب با دکمه‌ی بازه‌ی انتخاب‌شده — سالیانه = کل سال جاری، ماهانه = فقط ماه جاری
-  const todayJHead = todayJalali();
+  // هدر نمودار: ماه/سال انتخاب‌شده در داشبورد
   let headerIncome = 0, headerExpense = 0;
   state.incomes.forEach((x) => {
     const [gy, gm, gd] = x.date.split("-").map(Number);
     const j = toJalaali(gy, gm, gd);
-    if (isYear ? j.jy === todayJHead.jy : (j.jy === todayJHead.jy && j.jm === todayJHead.jm)) headerIncome += x.amount;
+    if (isYear ? j.jy === viewedMonth.jy : (j.jy === viewedMonth.jy && j.jm === viewedMonth.jm)) headerIncome += x.amount;
   });
   state.expenses.forEach((x) => {
     const [gy, gm, gd] = x.date.split("-").map(Number);
     const j = toJalaali(gy, gm, gd);
-    if (isYear ? j.jy === todayJHead.jy : (j.jy === todayJHead.jy && j.jm === todayJHead.jm)) headerExpense += x.amount;
+    if (isYear ? j.jy === viewedMonth.jy : (j.jy === viewedMonth.jy && j.jm === viewedMonth.jm)) headerExpense += x.amount;
   });
-  if (incomeTotalEl) animateNumber(incomeTotalEl, headerIncome, 500);
-  if (expenseTotalEl) animateNumber(expenseTotalEl, headerExpense, 500);
+  if (incomeTotalEl) incomeTotalEl.textContent = fmtAmount(headerIncome);
+  if (expenseTotalEl) expenseTotalEl.textContent = fmtAmount(headerExpense);
 
   const totalIncome = pool.reduce((s, p) => s + p.income, 0);
   const totalExpense = pool.reduce((s, p) => s + p.expense, 0);
@@ -1789,7 +1693,9 @@ function renderCombinedDailyChart(containerId, incomeTotalElId, expenseTotalElId
 
   const H = 160, PAD_TOP = 40, PAD_BOTTOM = 28, PAD_X = 18;
   const chartH = H - PAD_TOP - PAD_BOTTOM;
-  const W = Math.max((scrollWrap && scrollWrap.clientWidth) || 320, 280);
+  const baseW = (scrollWrap && scrollWrap.clientWidth) || 320;
+  // ماه کامل: عرض بیشتر برای خوانایی روزها (اسکرول افقی)
+  const W = Math.max(baseW, 280, isYear ? baseW : (n * 22 + PAD_X * 2));
   const stepX = (W - PAD_X * 2) / (n - 1 || 1);
 
   const buildPts = (key, maxVal) => pool.map((p, i) => ({
@@ -1820,7 +1726,9 @@ function renderCombinedDailyChart(containerId, incomeTotalElId, expenseTotalElId
 
   const uid = `${containerId}-${Date.now()}`;
   const todayJ = todayJalali();
-  const defaultIdx = isYear ? (todayJ.jm - 1) : (n - 1);
+  const defaultIdx = isYear
+    ? Math.min(Math.max(viewedMonth.jm - 1, 0), n - 1)
+    : (n - 1);
 
   wrap.innerHTML = `
     <svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" class="daily-chart-svg combined-chart-svg chart-graphic-enter" id="svg-${uid}" preserveAspectRatio="none">
@@ -1843,8 +1751,8 @@ function renderCombinedDailyChart(containerId, incomeTotalElId, expenseTotalElId
       <path d="${expenseArea}" fill="url(#fillExpense-${uid})" stroke="none"/>
       <path d="${incomeArea}" fill="url(#fillIncome-${uid})" stroke="none"/>
       <g filter="url(#lineGlow-${uid})">
-        <path id="lineExpense-${uid}" d="${expenseLine}" fill="none" stroke="#C24A2E" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
-        <path id="lineIncome-${uid}" d="${incomeLine}" fill="none" stroke="#2F7A72" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="${expenseLine}" fill="none" stroke="#C24A2E" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="${incomeLine}" fill="none" stroke="#2F7A72" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
       </g>
       <circle id="scrubDotExpense-${uid}" r="4" fill="#fff" stroke="#C24A2E" stroke-width="2.4"/>
       <circle id="scrubDotIncome-${uid}" r="4" fill="#fff" stroke="#2F7A72" stroke-width="2.4"/>
@@ -1917,43 +1825,6 @@ function renderCombinedDailyChart(containerId, incomeTotalElId, expenseTotalElId
     downX = null;
   });
 
-  // Line-drawing animation for income/expense paths with glow trail
-  const lineExpense = document.getElementById(`lineExpense-${uid}`);
-  const lineIncome = document.getElementById(`lineIncome-${uid}`);
-  [lineExpense, lineIncome].forEach((path, idx) => {
-    if (!path) return;
-    const len = path.getTotalLength();
-    path.style.strokeDasharray = len;
-    path.style.strokeDashoffset = len;
-    // Stagger: income draws first, expense follows 200ms later
-    const delay = idx === 0 ? '0s' : '0.2s';
-    path.style.transition = `stroke-dashoffset 1.4s cubic-bezier(.22,1,.36,1) ${delay}`;
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        path.style.strokeDashoffset = '0';
-      });
-    });
-  });
-
-  // Fade-in the area fills after lines finish drawing
-  const areaExpense = wrap.querySelector(`[fill="url(#fillExpense-${uid})"]`);
-  const areaIncome = wrap.querySelector(`[fill="url(#fillIncome-${uid})"]`);
-  [areaIncome, areaExpense].forEach((area, idx) => {
-    if (!area) return;
-    area.style.opacity = '0';
-    const delay = idx === 0 ? '0.8s' : '1.0s';
-    area.style.transition = `opacity .7s cubic-bezier(.22,1,.36,1) ${delay}`;
-    requestAnimationFrame(() => { area.style.opacity = '1'; });
-  });
-
-  // Pulse the scrub dots after animation completes
-  setTimeout(() => {
-    [lineExpense, lineIncome].forEach((path) => {
-      if (!path) return;
-      path.style.filter = 'drop-shadow(0 0 4px ' + (path === lineIncome ? 'rgba(47,122,114,0.4)' : 'rgba(194,74,46,0.4)') + ')';
-    });
-  }, 1600);
-
   moveToIndex(defaultIdx);
 }
 
@@ -1971,40 +1842,84 @@ function renderCombinedDailyChart(containerId, incomeTotalElId, expenseTotalElId
   });
 })();
 
-// -- نمای دوم (میله‌ای گروهی) همون داده‌ی نمودار ترکیبی — برای صفحه‌ی دومِ ورق‌زدنِ نمودار اول --
+// -- نمای دوم مدرن: دو رینگ خلاصه + نوار فعالیت روزانه (مینیمال) --
 function renderCombinedBarChart(containerId) {
   const wrap = document.getElementById(containerId);
   if (!wrap) return;
   const isYear = dailyChartMode === "year";
-  const pool = isYear ? buildYearlyChartPool(todayJalali().jy) : buildDailyChartPool(10);
+  const pool = isYear ? buildYearlyChartPool(viewedMonth.jy) : buildDailyChartPool();
 
-  const max = Math.max(...pool.map((p) => Math.max(p.income, p.expense))) || 1;
-  const today = todayJalali();
-
-  const cols = pool.map((p) => {
-    const label = isYear ? JALALI_MONTHS_SHORT[p.jm - 1] : toPersianDigits(p.jd);
-    const isToday = !isYear && p.jy === today.jy && p.jm === today.jm && p.jd === today.jd;
-    const incomeH = Math.max((p.income / max) * 100, p.income > 0 ? 4 : 0);
-    const expenseH = Math.max((p.expense / max) * 100, p.expense > 0 ? 4 : 0);
-    return `
-      <div class="dual-vbar-col ${isToday ? "is-today" : ""}">
-        <div class="dual-vbar-bars">
-          <div class="bar income" style="height:0%" data-target="${incomeH}"></div>
-          <div class="bar expense" style="height:0%" data-target="${expenseH}"></div>
-        </div>
-        <span class="dual-vbar-label">${label}</span>
-      </div>`;
-  }).join("");
-
-  if (max === 0 || pool.every((p) => !p.income && !p.expense)) {
+  const totalIncome = pool.reduce((s, p) => s + p.income, 0);
+  const totalExpense = pool.reduce((s, p) => s + p.expense, 0);
+  if (!totalIncome && !totalExpense) {
     wrap.innerHTML = `<p class="empty-hint">داده‌ای برای این بازه نیست</p>`;
     return;
   }
 
-  wrap.innerHTML = `<div class="dual-vbar-chart chart-graphic-enter">${cols}</div>`;
+  const maxSide = Math.max(totalIncome, totalExpense) || 1;
+  const incomePct = Math.round((totalIncome / maxSide) * 100);
+  const expensePct = Math.round((totalExpense / maxSide) * 100);
+  const R = 42, C = 2 * Math.PI * R;
+  const incomeDash = (incomePct / 100) * C;
+  const expenseDash = (expensePct / 100) * C;
+  const maxDay = Math.max(...pool.map((p) => Math.max(p.income, p.expense))) || 1;
+  const today = todayJalali();
+
+  const activity = pool.map((p) => {
+    const h = Math.max((Math.max(p.income, p.expense) / maxDay) * 100, (p.income || p.expense) ? 8 : 0);
+    const dominant = p.expense > p.income ? "expense" : (p.income > 0 ? "income" : "empty");
+    const label = isYear ? JALALI_MONTHS_SHORT[p.jm - 1] : toPersianDigits(p.jd);
+    const isToday = !isYear && p.jy === today.jy && p.jm === today.jm && p.jd === today.jd;
+    return `
+      <div class="soft-activity-col ${isToday ? "is-today" : ""}" title="${label}">
+        <div class="soft-activity-bar ${dominant}" style="height:0%" data-target="${h}"></div>
+        <span class="soft-activity-label">${label}</span>
+      </div>`;
+  }).join("");
+
+  wrap.innerHTML = `
+    <div class="soft-summary-chart chart-graphic-enter">
+      <div class="soft-rings-row">
+        <div class="soft-ring-card">
+          <svg viewBox="0 0 100 100" class="soft-ring-svg">
+            <circle cx="50" cy="50" r="${R}" class="soft-ring-track"/>
+            <circle cx="50" cy="50" r="${R}" class="soft-ring-value income"
+              stroke-dasharray="0 ${C}"
+              data-dash="${incomeDash.toFixed(1)} ${C.toFixed(1)}"
+              transform="rotate(-90 50 50)"/>
+          </svg>
+          <div class="soft-ring-center">
+            <span class="soft-ring-pct">${toPersianDigits(incomePct)}٪</span>
+            <span class="soft-ring-label">درآمد</span>
+          </div>
+          <strong class="soft-ring-amount income-color">${fmtAmount(totalIncome)}</strong>
+        </div>
+        <div class="soft-ring-card">
+          <svg viewBox="0 0 100 100" class="soft-ring-svg">
+            <circle cx="50" cy="50" r="${R}" class="soft-ring-track"/>
+            <circle cx="50" cy="50" r="${R}" class="soft-ring-value expense"
+              stroke-dasharray="0 ${C}"
+              data-dash="${expenseDash.toFixed(1)} ${C.toFixed(1)}"
+              transform="rotate(-90 50 50)"/>
+          </svg>
+          <div class="soft-ring-center">
+            <span class="soft-ring-pct">${toPersianDigits(expensePct)}٪</span>
+            <span class="soft-ring-label">مخارج</span>
+          </div>
+          <strong class="soft-ring-amount expense-color">${fmtAmount(totalExpense)}</strong>
+        </div>
+      </div>
+      <div class="soft-activity-strip">${activity}</div>
+    </div>`;
+
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
-      wrap.querySelectorAll(".bar").forEach((el) => { el.style.height = el.dataset.target + "%"; });
+      wrap.querySelectorAll(".soft-ring-value").forEach((el) => {
+        el.style.strokeDasharray = el.dataset.dash;
+      });
+      wrap.querySelectorAll(".soft-activity-bar").forEach((el) => {
+        el.style.height = el.dataset.target + "%";
+      });
     });
   });
 }
@@ -2031,7 +1946,12 @@ function setupChartCarousel(trackId, dotsId, onShow) {
     if (index < 0 || index >= pages.length || index === activeIndex || pages.length < 2) return;
     activeIndex = index;
     applyState();
-    if (onShow) onShow(activeIndex); // نمودار صفحه‌ی جدید رو دوباره می‌سازه تا انیمیشن گرافیکیش پخش بشه
+    // بعد از جابه‌جایی کارت، نمودار را دوباره بساز تا انیمیشن گرافیکی همیشه پخش شود
+    if (onShow) {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => onShow(activeIndex));
+      });
+    }
   }
 
   dotEls.forEach((dot, i) => {
@@ -2215,7 +2135,7 @@ function setupAiAnalyzeButton(btnId, resultId) {
     btn.disabled = true;
     resultBox.innerHTML = `<div class="ai-result-loading"><span class="ai-spin"></span>در حال تحلیل این ماه...</div>`;
 
-    const t = todayJalali();
+    const t = viewedMonth;
     const lastM = addMonthsJalali(t.jy, t.jm, -1);
     const thisMonth = computeMonthTotals(t.jy, t.jm);
     const lastMonth = computeMonthTotals(lastM.jy, lastM.jm);
@@ -2244,6 +2164,8 @@ function setupAiAnalyzeButton(btnId, resultId) {
         return;
       }
       resultBox.innerHTML = `<div class="ai-result-text">${data.summary.replace(/\n/g, "<br>")}</div>`;
+      // بعد از تحلیل، نمودارها را دوباره با انیمیشن روان بساز
+      renderAnalysis();
     } catch (e) {
       resultBox.innerHTML = `<div class="ai-result-error">اتصال به سرور برقرار نشد. اینترنتت رو چک کن و دوباره امتحان کن.</div>`;
     } finally {
@@ -2405,7 +2327,7 @@ async function initSync() {
 // ---------- Service worker ----------
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js").catch(() => {});
+    navigator.serviceWorker.register("sw.js?v=68").catch(() => {});
   });
 }
 
@@ -2921,74 +2843,3 @@ initSync();
     history.replaceState(null, "", window.location.pathname);
   }
 })();
-
-// ==================== Budget Tab ====================
-function renderBudget() {
-  if (!state.budget) state.budget = { total: 0, categories: {} };
-  const total = state.budget.total || 0;
-  const catBudgets = state.budget.categories || {};
-
-  // Calculate spent per category this month
-  const inPeriod = (dateStr) => inViewedMonth(dateStr);
-  const expenses = state.expenses.filter((x) => inPeriod(x.date));
-  const spentByCat = {};
-  expenses.forEach((x) => { spentByCat[x.category] = (spentByCat[x.category] || 0) + x.amount; });
-  const totalSpent = expenses.reduce((s, x) => s + x.amount, 0);
-
-  // Update total card
-  document.getElementById("budgetTotalSpent").textContent = fmtAmount(totalSpent);
-  document.getElementById("budgetTotalLimit").textContent = fmtAmount(total);
-  const pct = total > 0 ? Math.min((totalSpent / total) * 100, 100) : 0;
-  const fillEl = document.getElementById("budgetProgressFill");
-  fillEl.style.width = pct + "%";
-  fillEl.className = "budget-progress-fill" + (pct > 80 ? " danger" : pct > 60 ? " warning" : "");
-
-  // Render category rows
-  const listEl = document.getElementById("budgetCategoryList");
-  listEl.innerHTML = state.categories.map((c) => {
-    const budget = catBudgets[c.name] || 0;
-    const spent = spentByCat[c.name] || 0;
-    const catPct = budget > 0 ? Math.min((spent / budget) * 100, 100) : 0;
-    const color = catColor(c.name);
-    return `
-      <div class="budget-cat-row">
-        <div class="budget-cat-head">
-          <span class="budget-cat-icon" style="background:${color}">${iconSpanHTML(c.icon, "color:#fff;width:13px;height:13px")}</span>
-          <span class="budget-cat-name">${c.name}</span>
-          <span class="budget-cat-amounts">${fmtAmount(spent)}<small> / ${fmtAmount(budget)}</small></span>
-        </div>
-        <div class="budget-cat-bar"><div class="budget-cat-fill" style="width:${catPct}%;background:${color}"></div></div>
-        <div class="budget-cat-input-row">
-          <input type="text" inputmode="numeric" class="budget-cat-input" data-cat="${c.name}" value="${budget || ""}" placeholder="بدون محدودیت">
-        </div>
-      </div>`;
-  }).join("");
-
-  // Set total input
-  document.getElementById("budgetTotalInput").value = total || "";
-}
-
-// Save total budget
-document.getElementById("budgetSaveTotalBtn").addEventListener("click", () => {
-  const val = getAmountValue(document.getElementById("budgetTotalInput"));
-  state.budget.total = val || 0;
-  saveState();
-  renderBudget();
-});
-
-// Save category budgets on input change
-document.getElementById("budgetCategoryList").addEventListener("input", (e) => {
-  if (e.target.classList.contains("budget-cat-input")) {
-    const cat = e.target.dataset.cat;
-    const val = getAmountValue(e.target);
-    if (!state.budget.categories) state.budget.categories = {};
-    state.budget.categories[cat] = val || 0;
-  }
-});
-
-// Save on blur
-document.getElementById("budgetCategoryList").addEventListener("blur", (e) => {
-  if (e.target.classList.contains("budget-cat-input")) {
-    saveState();
-  }
-}, true);

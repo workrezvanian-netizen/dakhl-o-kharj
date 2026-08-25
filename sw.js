@@ -5,6 +5,7 @@ const APP_SHELL = [
   "./style.css",
   "./script.js",
   "./installments.js",
+  "./three-scene.js",
   "./manifest.json",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
@@ -31,8 +32,29 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
 
-  // Never cache API/sync calls - always go to network
-  if (url.pathname.startsWith("/data") || url.hostname.includes("workers.dev")) {
+  if (url.pathname.startsWith("/data") || url.hostname.includes("workers.dev") || url.hostname.includes("jsdelivr.net") || url.hostname.includes("cdn.")) {
+    return;
+  }
+
+  const isAppShell =
+    url.pathname.endsWith(".css") ||
+    url.pathname.endsWith(".js") ||
+    url.pathname.endsWith(".html") ||
+    url.pathname.endsWith("/") ||
+    url.pathname.includes("sw.js");
+
+  if (isAppShell && event.request.method === "GET") {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          if (response && response.status === 200) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          }
+          return response;
+        })
+        .catch(() => caches.match(event.request))
+    );
     return;
   }
 
@@ -52,19 +74,11 @@ self.addEventListener("fetch", (event) => {
   );
 });
 
-// ---------------------------------------------------------------------
-// یادآوریِ پوشِ تب «اقساط» (پورت‌شده از سرویس‌ورکرِ اپِ یادآور اقساط)
-// این تب یه ورکرِ Cloudflare جداگانه (aghsat2) داره که مستقل از ورکر اصلیِ
-// «دخل و خرج» کرون یادآوری می‌فرسته؛ همین یه سرویس‌ورکر برای هر دو کافیه.
-// ---------------------------------------------------------------------
-
 self.addEventListener("push", (event) => {
   let data = { title: "یادآوری قسط", body: "یه قسط نزدیکه سررسیدشه." };
   try {
     if (event.data) data = event.data.json();
-  } catch (e) {
-    /* payload متنی ساده بود، از پیش‌فرض استفاده می‌شه */
-  }
+  } catch (e) {}
 
   const options = {
     body: data.body,

@@ -14,10 +14,11 @@
 <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css">
 <link href="https://cdn.jsdelivr.net/gh/rastikerdar/kamran@v1.0.0/dist/font-face.css" rel="stylesheet" type="text/css">
 <link href="https://cdn.jsdelivr.net/gh/rastikerdar/samim-font@v4.0.5/dist/font-face.css" rel="stylesheet" type="text/css">
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v=68">
 </head>
-<body>
+<body class="has-three">
 
+<!-- پس‌زمینه سه‌بعدی Three.js -->
 <div id="welcomeScreen" class="welcome-screen">
   <div id="welcomeBg" class="welcome-bg"></div>
   <div class="welcome-content">
@@ -61,17 +62,19 @@
 
 <div id="appScroll" class="app-scroll">
 <header class="app-header">
-  <div class="header-inner">
+  <div class="header-inner clay-bar">
+    <!-- در RTL سمت راست: لوگو + عنوان -->
     <span class="brand" id="headerBrand">
       <span class="brand-badge" id="headerBrandBadge">
-        <img src="icons/icon-192.png" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit" />
+        <img src="icons/icon-192.png" alt="" />
       </span>
       <span class="brand-text">دخل و خرج</span>
     </span>
+    <!-- در RTL سمت چپ: Nelin + تنظیمات -->
     <div class="header-side">
-      <img id="headerWatermark" class="watermark" src="icons/watermark-nelin.png" alt="Nelin" />
+      <span class="nelin-wordmark" id="headerWatermark" aria-label="Nelin">Nelin</span>
       <button id="dashSettingsBtn" class="header-settings-btn" aria-label="تنظیمات">
-        <span class="icon-mask" data-icon="settings" style="width:16px;height:16px;color:var(--cream)"></span>
+        <span class="icon-mask" data-icon="settings" style="width:15px;height:15px;color:#E8F5F2"></span>
       </button>
     </div>
   </div>
@@ -91,15 +94,7 @@
         <span class="icon-mask" data-icon="chevron-left" style="width:18px;height:18px;color:var(--green-deep)"></span>
       </button>
     </div>
-    <div class="balance-hero-card" id="dashBalanceCard">
-      <div class="balance-hero-wallet">
-        <img src="https://cdn.jsdelivr.net/npm/lucide-static@0.400.0/icons/wallet.svg" alt="">
-      </div>
-      <div class="balance-hero-right">
-        <span class="balance-hero-label">موجودی کل</span>
-        <div class="balance-hero-amount"><span id="dashBalanceAmount">۰</span> <span class="balance-hero-unit">تومان</span></div>
-      </div>
-    </div>
+    <p id="monthRemaining" class="month-remaining"></p>
 
     <div class="section-heading">
       <h2>مخارج</h2>
@@ -417,27 +412,6 @@
 
   </section>
 
-  <!-- BUDGET -->
-  <section id="tab-budget" class="tab">
-    <h2 style="margin-bottom:14px;">بودجه ماهانه</h2>
-    <div class="budget-total-card" id="budgetTotalCard">
-      <span class="budget-total-label">بودجه کل این ماه</span>
-      <div class="budget-total-row">
-        <span class="budget-total-amount"><span id="budgetTotalSpent">۰</span> <small>از</small> <span id="budgetTotalLimit">۰</span></span>
-        <span class="budget-total-unit">تومان</span>
-      </div>
-      <div class="budget-progress-bar"><div class="budget-progress-fill" id="budgetProgressFill"></div></div>
-    </div>
-    <div id="budgetCategoryList" class="budget-cat-list"></div>
-    <div class="budget-add-row">
-      <label style="font-size:12px;font-weight:600;color:var(--text-mute);">بودجه کل ماه (تومان)</label>
-      <div class="budget-add-input-row">
-        <input type="text" id="budgetTotalInput" inputmode="numeric" placeholder="مثلاً ۵۰٬۰۰۰٬۰۰۰" style="flex:1;padding:8px 12px;border-radius:10px;border:1px solid var(--border);font-family:inherit;font-size:13px;background:var(--cream);direction:ltr;text-align:right;">
-        <button type="button" id="budgetSaveTotalBtn" class="btn btn-neutral" style="font-size:12px;">ذخیره</button>
-      </div>
-    </div>
-  </section>
-
   <!-- SETTINGS -->
   <section id="tab-settings" class="tab">
     <div class="settings-glow" aria-hidden="true"></div>
@@ -573,7 +547,7 @@
       </div>
     </details>
 
-    <p class="app-version">نسخه‌ی ۱.۵۲</p>
+    <p class="app-version">نسخه‌ی ۱.۵۳</p>
 
   </section>
 
@@ -620,21 +594,17 @@
     <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>
     <span>ثبت</span>
   </button>
-  <button class="nav-btn" data-tab="analysis">
-    <svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7"/><path d="M2 20h20"/></svg>
-    <span>آنالیز</span>
-  </button>
   <button class="nav-btn active" data-tab="dashboard">
     <svg viewBox="0 0 24 24"><path d="M3 10.5L12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1V9.5"/></svg>
     <span>داشبورد</span>
   </button>
+  <button class="nav-btn" data-tab="analysis">
+    <svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7"/><path d="M2 20h20"/></svg>
+    <span>آنالیز</span>
+  </button>
   <button class="nav-btn" data-tab="installments">
     <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/><path d="M9 14l2 2 4-4"/></svg>
     <span>اقساط</span>
-  </button>
-  <button class="nav-btn" data-tab="budget">
-    <svg viewBox="0 0 24 24"><path d="M19 7V4a1 1 0 00-1-1H5a2 2 0 000 4h12a2 2 0 010 4H5a1 1 0 00-1 1v3"/><path d="M5 12a2 2 0 000 4h12a2 2 0 000-4"/><circle cx="18" cy="18" r="2"/><circle cx="6" cy="18" r="2"/><path d="M12 12v6"/></svg>
-    <span>بودجه</span>
   </button>
 </nav>
 
@@ -658,7 +628,8 @@
 </div>
 
 <input type="checkbox" id="hapticProxy" tabindex="-1" aria-hidden="true" style="position:fixed;top:-100px;left:-100px;width:1px;height:1px;opacity:0;pointer-events:none;">
-<script src="script.js"></script>
-<script src="installments.js"></script>
+<script src="script.js?v=68"></script>
+<script src="installments.js?v=68"></script>
+<script src="three-scene.js?v=68"></script>
 </body>
 </html>
