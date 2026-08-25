@@ -34,8 +34,8 @@ const DEFAULT_CATEGORIES = [
 const DEFAULT_ICON_MAP = { "خوراک": "utensils", "حمل‌ونقل": "car", "قبض‌ها": "receipt", "خرید": "shopping-bag", "تفریح": "film", "درمان": "stethoscope", "اقساط": "credit-card", "سایر": "package" };
 const INCOME_SOURCE_ICON = { "حقوق": "briefcase", "پاداش": "award", "فروش": "tag", "هدیه": "gift", "سایر": "wallet" };
 const CATEGORY_COLORS = [
-  "#FF6B6B", "#FFA94D", "#FFD43B", "#69DB7C",
-  "#22B8CF", "#4C6EF5", "#9775FA", "#F783AC"
+  "#FF5252", "#FF9100", "#FFC400", "#4CAF50",
+  "#00BCD4", "#5C6BC0", "#AB47BC", "#EC407A"
 ];
 const CATEGORY_COLOR_CHOICES = [
   "#FF6B6B", "#FF922B", "#FFA94D", "#FFD43B", "#94D82D", "#69DB7C", "#20C997",
@@ -86,13 +86,14 @@ function loadState() {
         expenses: parsed.expenses || [],
         installments: parsed.installments || [],
         categories,
+        budget: parsed.budget || { total: 0, categories: {} },
         syncCode: parsed.syncCode || null,
         profile: parsed.profile || { name: null, avatar: null },
         updatedAt: parsed.updatedAt || Date.now()
       };
     }
   } catch (e) { /* ignore corrupt state */ }
-  return { incomes: [], expenses: [], installments: [], categories: DEFAULT_CATEGORIES.slice(), syncCode: null, profile: { name: null, avatar: null }, updatedAt: Date.now() };
+  return { incomes: [], expenses: [], installments: [], categories: DEFAULT_CATEGORIES.slice(), budget: { total: 0, categories: {} }, syncCode: null, profile: { name: null, avatar: null }, updatedAt: Date.now() };
 }
 
 function saveState({ sync = true } = {}) {
@@ -526,7 +527,7 @@ document.querySelectorAll('#tab-settings .settings-group').forEach((details) => 
 document.querySelectorAll(".nav-btn").forEach((btn) => {
   btn.addEventListener("click", () => switchTab(btn.dataset.tab));
 });
-const _tabOrder = ["entry", "dashboard", "analysis", "installments", "settings"];
+const _tabOrder = ["entry", "analysis", "dashboard", "installments", "budget", "settings"];
 function switchTab(tab, opts = {}) {
   const prevTab = document.querySelector(".tab.active");
   const prevTabId = prevTab ? prevTab.id.replace("tab-", "") : null;
@@ -572,6 +573,7 @@ function switchTab(tab, opts = {}) {
     if (typeof window.resetInstallmentNumbers === "function") window.resetInstallmentNumbers();
     requestAnimationFrame(() => window.refreshInstallments());
   }
+  if (tab === "budget") renderBudget();
 
   // Settings accordions always start closed, whether we're leaving or entering the tab
   document.querySelectorAll("#tab-settings .settings-group").forEach((d) => { d.open = false; });
@@ -1066,9 +1068,18 @@ function updateMonthLabel() {
   const label = document.getElementById("monthLabel");
   label.textContent = JALALI_MONTHS[viewedMonth.jm - 1];
 
+  // Update balance hero card with wallet icon
+  const balance = computeCumulativeBalance(viewedMonth.jy, viewedMonth.jm);
+  const balanceCard = document.getElementById("dashBalanceCard");
+  const balanceAmountEl = document.getElementById("dashBalanceAmount");
+  if (balanceCard && balanceAmountEl) {
+    const isPositive = balance >= 0;
+    balanceCard.className = `balance-hero-card ${isPositive ? "positive" : "negative"}`;
+    animateNumber(balanceAmountEl, Math.abs(balance), 800);
+  }
+
   const remainEl = document.getElementById("monthRemaining");
   if (remainEl) {
-    const balance = computeCumulativeBalance(viewedMonth.jy, viewedMonth.jm);
     const cls = balance >= 0 ? "is-positive" : "is-negative";
     const sign = balance >= 0 ? "+" : "−";
     const icon = balance >= 0 ? "wallet" : "trending-down";
@@ -1358,7 +1369,7 @@ function renderDashboard() {
       const color = catColor(c.name);
       const amt = byCat[c.name] || 0;
       return `
-        <button type="button" class="quick-cat-card" style="background:${color}3D" onclick="quickAddExpense('${c.name.replace(/'/g, "\\'")}')">
+        <button type="button" class="quick-cat-card" style="background:linear-gradient(135deg, ${color}22 0%, ${color}11 100%)" onclick="quickAddExpense('${c.name.replace(/'/g, "\\'")}')">
           <span class="quick-cat-bubble" style="background:${color}">${iconSpanHTML(c.icon, "color:#fff")}</span>
           <span class="quick-cat-name">${c.name}</span>
           <span class="quick-cat-amount">${fmtAmount(amt)}</span>
@@ -2910,3 +2921,74 @@ initSync();
     history.replaceState(null, "", window.location.pathname);
   }
 })();
+
+// ==================== Budget Tab ====================
+function renderBudget() {
+  if (!state.budget) state.budget = { total: 0, categories: {} };
+  const total = state.budget.total || 0;
+  const catBudgets = state.budget.categories || {};
+
+  // Calculate spent per category this month
+  const inPeriod = (dateStr) => inViewedMonth(dateStr);
+  const expenses = state.expenses.filter((x) => inPeriod(x.date));
+  const spentByCat = {};
+  expenses.forEach((x) => { spentByCat[x.category] = (spentByCat[x.category] || 0) + x.amount; });
+  const totalSpent = expenses.reduce((s, x) => s + x.amount, 0);
+
+  // Update total card
+  document.getElementById("budgetTotalSpent").textContent = fmtAmount(totalSpent);
+  document.getElementById("budgetTotalLimit").textContent = fmtAmount(total);
+  const pct = total > 0 ? Math.min((totalSpent / total) * 100, 100) : 0;
+  const fillEl = document.getElementById("budgetProgressFill");
+  fillEl.style.width = pct + "%";
+  fillEl.className = "budget-progress-fill" + (pct > 80 ? " danger" : pct > 60 ? " warning" : "");
+
+  // Render category rows
+  const listEl = document.getElementById("budgetCategoryList");
+  listEl.innerHTML = state.categories.map((c) => {
+    const budget = catBudgets[c.name] || 0;
+    const spent = spentByCat[c.name] || 0;
+    const catPct = budget > 0 ? Math.min((spent / budget) * 100, 100) : 0;
+    const color = catColor(c.name);
+    return `
+      <div class="budget-cat-row">
+        <div class="budget-cat-head">
+          <span class="budget-cat-icon" style="background:${color}">${iconSpanHTML(c.icon, "color:#fff;width:13px;height:13px")}</span>
+          <span class="budget-cat-name">${c.name}</span>
+          <span class="budget-cat-amounts">${fmtAmount(spent)}<small> / ${fmtAmount(budget)}</small></span>
+        </div>
+        <div class="budget-cat-bar"><div class="budget-cat-fill" style="width:${catPct}%;background:${color}"></div></div>
+        <div class="budget-cat-input-row">
+          <input type="text" inputmode="numeric" class="budget-cat-input" data-cat="${c.name}" value="${budget || ""}" placeholder="بدون محدودیت">
+        </div>
+      </div>`;
+  }).join("");
+
+  // Set total input
+  document.getElementById("budgetTotalInput").value = total || "";
+}
+
+// Save total budget
+document.getElementById("budgetSaveTotalBtn").addEventListener("click", () => {
+  const val = getAmountValue(document.getElementById("budgetTotalInput"));
+  state.budget.total = val || 0;
+  saveState();
+  renderBudget();
+});
+
+// Save category budgets on input change
+document.getElementById("budgetCategoryList").addEventListener("input", (e) => {
+  if (e.target.classList.contains("budget-cat-input")) {
+    const cat = e.target.dataset.cat;
+    const val = getAmountValue(e.target);
+    if (!state.budget.categories) state.budget.categories = {};
+    state.budget.categories[cat] = val || 0;
+  }
+});
+
+// Save on blur
+document.getElementById("budgetCategoryList").addEventListener("blur", (e) => {
+  if (e.target.classList.contains("budget-cat-input")) {
+    saveState();
+  }
+}, true);

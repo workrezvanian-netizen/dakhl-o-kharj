@@ -600,6 +600,76 @@ h2 {
 }
 .month-nav-btn:active { background: var(--green-soft); transform: scale(0.92); box-shadow: 0 1px 2px rgba(22,63,60,0.1); }
 
+/* ---------- باکس موجودی کل — مینیمال با آیکون کیف پول ---------- */
+.balance-hero-card {
+  margin: 0 auto 12px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.45);
+  backdrop-filter: blur(10px) saturate(1.5);
+  -webkit-backdrop-filter: blur(10px) saturate(1.5);
+  border: 1px solid rgba(255,255,255,0.65);
+  box-shadow: 0 1px 0 rgba(255,255,255,0.7) inset, 0 2px 8px rgba(16,70,43,0.04);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.balance-hero-card.negative {
+  border-color: rgba(194,74,46,0.12);
+  background: rgba(255,240,238,0.45);
+}
+.balance-hero-wallet {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: var(--green-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.balance-hero-card.negative .balance-hero-wallet {
+  background: rgba(194,74,46,0.1);
+}
+.balance-hero-wallet img {
+  width: 18px;
+  height: 18px;
+  filter: brightness(0.4) saturate(2);
+}
+.balance-hero-card.negative .balance-hero-wallet img {
+  filter: brightness(0.6) saturate(2) hue-rotate(340deg);
+}
+.balance-hero-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-mute);
+}
+.balance-hero-right {
+  margin-right: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.balance-hero-amount {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--green-deep);
+  direction: ltr;
+  text-align: left;
+  line-height: 1.2;
+}
+.balance-hero-card.negative .balance-hero-amount {
+  color: var(--expense);
+}
+.balance-hero-amount #dashBalanceAmount {
+  font-variant-numeric: tabular-nums;
+}
+.balance-hero-unit {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text-mute);
+}
+
 /* ---------- بلوک «دخل» — کوچک، مینیمال، شیشه‌ای ---------- */
 .month-remaining {
   position: relative;
@@ -1509,39 +1579,42 @@ input:focus, select:focus {
   gap: 6px;
 }
 .quick-cat-card {
-  border: none;
-  border-radius: 16px;
-  padding: 12px 5px 10px;
+  border: 1px solid rgba(255,255,255,0.6);
+  border-radius: 18px;
+  padding: 14px 6px 12px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
   cursor: pointer;
   font-family: inherit;
   text-align: center;
-  transition: transform .2s cubic-bezier(.22,1,.36,1), box-shadow .2s ease, filter .2s ease;
-  box-shadow: 0 3px 10px rgba(16,70,43,0.08);
+  transition: transform .2s cubic-bezier(.22,1,.36,1), box-shadow .2s ease, filter .2s ease, border-color .2s ease;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04), inset 0 1px 2px rgba(255,255,255,0.9);
   position: relative;
   overflow: hidden;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
-.quick-cat-card:hover { filter: brightness(1.04); box-shadow: 0 6px 18px rgba(16,70,43,0.12); transform: translateY(-2px); }
-.quick-cat-card:active { transform: scale(0.95) translateY(0); box-shadow: 0 1px 3px rgba(16,70,43,0.08); }
+.quick-cat-card:hover { filter: brightness(1.06); box-shadow: 0 6px 20px rgba(0,0,0,0.08), inset 0 1px 2px rgba(255,255,255,0.9); transform: translateY(-2px); }
+.quick-cat-card:active { transform: scale(0.95) translateY(0); box-shadow: 0 1px 3px rgba(0,0,0,0.05), inset 0 1px 2px rgba(255,255,255,0.9); }
 .quick-cat-card::before {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0) 50%);
+  background: linear-gradient(180deg, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.1) 60%, rgba(255,255,255,0) 100%);
   pointer-events: none;
   border-radius: inherit;
 }
 .quick-cat-bubble {
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1), inset 0 1px 1px rgba(255,255,255,0.6);
+  border: 1px solid rgba(255,255,255,0.4);
 }
 .quick-cat-bubble .icon-mask { width: 13px; height: 13px; }
 .quick-cat-name {
@@ -2637,3 +2710,168 @@ input:checked + .toggle-slider:before {
   box-shadow: 0 8px 18px rgba(29,43,79,0.26);
 }
 #tab-analysis .daily-chart-tooltip-bg { fill: var(--analysis-navy); }
+
+/* ==================== Budget Tab ==================== */
+#tab-budget h2 { color: var(--green-deep); margin-bottom: 12px; }
+
+.budget-total-card {
+  background: linear-gradient(135deg, var(--green-deep) 0%, #1a5450 60%, #0f3d3a 100%);
+  border-radius: 18px;
+  padding: 18px 18px 14px;
+  margin-bottom: 16px;
+  box-shadow: 0 6px 20px rgba(22,63,60,0.18);
+  position: relative;
+  overflow: hidden;
+}
+.budget-total-card::before {
+  content: "";
+  position: absolute;
+  top: -20px;
+  right: -20px;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+}
+.budget-total-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.7);
+  display: block;
+  margin-bottom: 8px;
+}
+.budget-total-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.budget-total-amount {
+  font-size: 22px;
+  font-weight: 900;
+  color: #fff;
+}
+.budget-total-amount small {
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.6);
+}
+.budget-total-unit {
+  font-size: 11px;
+  color: rgba(255,255,255,0.5);
+}
+.budget-progress-bar {
+  height: 8px;
+  background: rgba(255,255,255,0.15);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.budget-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4CAF50, #81C784);
+  border-radius: 4px;
+  transition: width .5s cubic-bezier(.4,0,.2,1);
+  box-shadow: 0 0 8px rgba(76,175,80,0.4);
+}
+.budget-progress-fill.warning { background: linear-gradient(90deg, #FFA726, #FFB74D); box-shadow: 0 0 8px rgba(255,167,38,0.4); }
+.budget-progress-fill.danger { background: linear-gradient(90deg, #EF5350, #E57373); box-shadow: 0 0 8px rgba(239,83,80,0.4); }
+
+.budget-cat-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.budget-cat-row {
+  background: rgba(255,255,255,0.5);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.6);
+  border-radius: 14px;
+  padding: 10px 12px 8px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.03), inset 0 1px 1px rgba(255,255,255,0.8);
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.budget-cat-row:hover { transform: translateY(-1px); box-shadow: 0 3px 10px rgba(0,0,0,0.06); }
+.budget-cat-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.budget-cat-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+.budget-cat-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+.budget-cat-amounts {
+  margin-right: auto;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  direction: ltr;
+  text-align: left;
+}
+.budget-cat-amounts small {
+  font-weight: 400;
+  color: var(--text-mute);
+}
+.budget-cat-bar {
+  height: 5px;
+  background: var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+.budget-cat-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width .5s cubic-bezier(.4,0,.2,1);
+}
+.budget-cat-input-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.budget-cat-input {
+  width: 100%;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 12px;
+  font-family: inherit;
+  background: rgba(255,255,255,0.7);
+  direction: ltr;
+  text-align: right;
+  transition: border-color .2s ease;
+}
+.budget-cat-input:focus {
+  outline: none;
+  border-color: var(--green);
+  box-shadow: 0 0 0 3px rgba(22,63,60,0.08);
+}
+.budget-add-row {
+  background: rgba(255,255,255,0.45);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.6);
+  border-radius: 14px;
+  padding: 12px 14px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+}
+.budget-add-input-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
