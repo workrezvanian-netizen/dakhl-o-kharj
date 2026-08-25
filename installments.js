@@ -206,29 +206,27 @@ function getDeviceId() {
 // دیتای محلی (جایگزین دیتابیس/Flask قبلی)
 // ---------------------------------------------------------------------
 
+// اگه تب داشبورد روی یه ماه غیر از ماه جاری باشه (با فلش‌های ماه)، اسکریپت اصلی
+// (script.js) این مقدار رو ست می‌کنه تا اقساط هم همون ماه رو نشون بده؛ null یعنی
+// همون «امروز» واقعی.
+let viewedMonthOverride = null;
+
 function todayIso() {
+  if (viewedMonthOverride) {
+    const now = new Date();
+    const realToday = toJalaali(now.getFullYear(), now.getMonth() + 1, now.getDate());
+    const monthStartG = toGregorian(viewedMonthOverride.jy, viewedMonthOverride.jm, 1);
+    const monthStartJdn = j2d(viewedMonthOverride.jy, viewedMonthOverride.jm, 1);
+    let nJy = viewedMonthOverride.jy, nJm = viewedMonthOverride.jm + 1;
+    if (nJm > 12) { nJm = 1; nJy += 1; }
+    const nextMonthJdn = j2d(nJy, nJm, 1);
+    const monthLen = nextMonthJdn - monthStartJdn;
+    const day = Math.min(realToday.jd, monthLen);
+    const g = toGregorian(viewedMonthOverride.jy, viewedMonthOverride.jm, day);
+    return dateToISO(g.gy, g.gm, g.gd);
+  }
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
-}
-
-// اگه توی داشبورد دخل‌وخرج ماه دیگه‌ای مرور می‌شه (متغیر سراسری viewedMonth)،
-// فهرست و جمع اقساط هم همون ماه رو نشون بده؛ وگرنه امروز واقعی.
-// توجه: این فقط روی نمایش لیست/جمع تأثیر می‌ذاره، نه روی محاسبات واقعیِ یادآوری/پوش سمت سرور.
-function viewAnchorIso() {
-  if (typeof viewedMonth === "undefined" || typeof todayJalali !== "function") return todayIso();
-  try {
-    const t = todayJalali();
-    if (viewedMonth.jy === t.jy && viewedMonth.jm === t.jm) return todayIso();
-    const g = toGregorian(viewedMonth.jy, viewedMonth.jm, 1);
-    return dateToISO(g.gy, g.gm, g.gd);
-  } catch (e) {
-    return todayIso();
-  }
-}
-function isViewingCurrentInstallmentMonth() {
-  if (typeof viewedMonth === "undefined" || typeof todayJalali !== "function") return true;
-  const t = todayJalali();
-  return viewedMonth.jy === t.jy && viewedMonth.jm === t.jm;
 }
 
 function loadRaw() {
@@ -349,7 +347,7 @@ const store = {
   },
 
   list() {
-    const today = viewAnchorIso();
+    const today = todayIso();
     const { nextMonthStart } = Jalaali.currentJalaliMonthBounds(today);
     const items = [];
     for (const row of loadRaw()) {
@@ -367,7 +365,7 @@ const store = {
   },
 
   monthlyTotal() {
-    const today = viewAnchorIso();
+    const today = todayIso();
     const { monthStart, nextMonthStart } = Jalaali.currentJalaliMonthBounds(today);
     const monthName = Jalaali.currentJalaliMonthName(today);
 
@@ -444,34 +442,31 @@ function showToast(msg) {
 
 let currentItems = [];
 
-// Animated number counter for installments (English digit format)
-function animateNumberInst(el, target, duration = 600) {
-  if (!el) return;
-  const start = parseInt(el.textContent.replace(/[^0-9]/g, "")) || 0;
-  if (start === target) { el.textContent = formatAmount(String(target)); return; }
-  const startTime = performance.now();
-  function tick(now) {
-    const elapsed = now - startTime;
-    const progress = Math.min(elapsed / duration, 1);
-    const ease = 1 - Math.pow(1 - progress, 3);
-    const current = Math.round(start + (target - start) * ease);
-    el.textContent = formatAmount(String(current));
-    if (progress < 1) requestAnimationFrame(tick);
-  }
-  requestAnimationFrame(tick);
-}
-
 function formatAmount(amount) {
   const n = parseInt(amount, 10);
   if (Number.isNaN(n)) return amount || "0";
   return n.toLocaleString("en-US");
 }
 
+// شمارش شیک اعداد از صفر (یا مقدار قبلی) تا مقدار نهایی — بر اساس زمان سپری‌شده،
+// پس با جا موندن یک-دو فریم گیر نمی‌کنه.
+function animateCountUp(el, endValue, opts = {}) {
+  if (!el) return;
+  const duration = opts.duration || 900;
+  const startValue = opts.from || 0;
+  const startTime = performance.now();
+  function tick(now) {
+    const progress = Math.min((now - startTime) / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    const current = startValue + (endValue - startValue) * eased;
+    el.textContent = formatAmount(String(Math.round(progress < 1 ? current : endValue)));
+    if (progress < 1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+
 function statusBadge(item) {
   if (item.is_paid) return "";
-  if (!isViewingCurrentInstallmentMonth()) {
-    return `<span class="badge badge-due">سررسید ${item.due_jalali}</span>`;
-  }
   if (item.days_left < 0) return `<span class="badge badge-overdue">${Math.abs(item.days_left)} روز گذشته ⚠️</span>`;
   if (item.days_left === 0) return `<span class="badge badge-today">امروز 🔥</span>`;
   return `<span class="badge badge-due">${item.days_left} روز مانده</span>`;
@@ -580,9 +575,18 @@ function loadMonthlyTotal() {
   try {
     const data = store.monthlyTotal();
     document.getElementById("summaryMonth").textContent = data.month_name;
-    animateNumberInst(document.getElementById("summaryTotal"), data.total);
-    animateNumberInst(document.getElementById("summaryPaid"), data.paid_total);
-    animateNumberInst(document.getElementById("summaryRemaining"), data.remaining_total);
+    const fields = [
+      ["summaryTotal", data.total],
+      ["summaryPaid", data.paid_total],
+      ["summaryRemaining", data.remaining_total],
+    ];
+    fields.forEach(([id, value]) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const prev = Number(el.dataset.value || 0);
+      el.dataset.value = value;
+      animateCountUp(el, value, { from: prev });
+    });
   } catch (e) {
     /* خطای غیرحیاتی، لیست اصلی همچنان کار می‌کنه */
   }
@@ -925,4 +929,19 @@ seedTestInstallments();
 
 refreshAll();
 setupNotifications();
+
+// API عمومی برای هماهنگی با ماهِ انتخاب‌شده در داشبورد (script.js)
+window.InstallmentsApp = {
+  setViewedMonth(jy, jm) {
+    const changed = !viewedMonthOverride || viewedMonthOverride.jy !== jy || viewedMonthOverride.jm !== jm;
+    viewedMonthOverride = { jy, jm };
+    if (changed) refreshAll();
+  },
+  resetToCurrentMonth() {
+    if (viewedMonthOverride) {
+      viewedMonthOverride = null;
+      refreshAll();
+    }
+  },
+};
 })();
