@@ -944,4 +944,15 @@ seedTestInstallments();
 
 refreshAll();
 setupNotifications();
+
+// Expose to window for tab switching animation
+window.refreshInstallments = refreshAll;
+window.resetInstallmentNumbers = function() {
+  const totalEl = document.getElementById("summaryTotal");
+  const paidEl = document.getElementById("summaryPaid");
+  const remainingEl = document.getElementById("summaryRemaining");
+  if (totalEl) totalEl.textContent = "0";
+  if (paidEl) paidEl.textContent = "0";
+  if (remainingEl) remainingEl.textContent = "0";
+};
 })();

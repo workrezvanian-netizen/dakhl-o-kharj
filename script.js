@@ -567,7 +567,14 @@ function switchTab(tab, opts = {}) {
     // Small delay to ensure DOM updates before animation starts
     requestAnimationFrame(() => renderDashboard());
   }
-  if (tab === "analysis") renderAnalysis();
+  if (tab === "analysis") {
+    // Reset analysis numbers to 0 so animateNumber plays from scratch
+    const incEl = document.getElementById("incomeChartTotal");
+    const expEl = document.getElementById("expenseChartTotal");
+    if (incEl) incEl.textContent = "۰";
+    if (expEl) expEl.textContent = "۰";
+    requestAnimationFrame(() => renderAnalysis());
+  }
   if (tab === "installments" && typeof window.refreshInstallments === "function") {
     // Reset numbers to 0 so animation plays from scratch
     if (typeof window.resetInstallmentNumbers === "function") window.resetInstallmentNumbers();
@@ -3042,7 +3049,7 @@ document.getElementById("budgetCategoryList").addEventListener("blur", (e) => {
 }, true);
 
 // ═══════════════════════════════════════════════════
-// ONBOARDING (scroll-driven intro)
+// ONBOARDING — Apple-style scroll-driven
 // ═══════════════════════════════════════════════════
 (function initOnboarding() {
   const KEY = "onboarding_done";
@@ -3050,59 +3057,64 @@ document.getElementById("budgetCategoryList").addEventListener("blur", (e) => {
   if (!overlay || localStorage.getItem(KEY)) return;
 
   overlay.hidden = false;
-  const snap = document.getElementById("onboardingSnap");
-  const dots = document.querySelectorAll(".onboard-dot");
-  const sections = overlay.querySelectorAll(".onboard-section");
-  let currentSection = 0;
+  const scroll = document.getElementById("onboardingScroll");
+  const sections = overlay.querySelectorAll(".ob-section");
+  const progressFill = document.getElementById("obProgressFill");
+  let currentIdx = 0;
+  const total = sections.length;
 
-  // Intersection Observer to detect which section is in view
+  // IntersectionObserver for section reveal
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
-        const idx = parseInt(entry.target.dataset.section);
-        currentSection = idx;
-        // Add in-view class for animations
+        const idx = parseInt(entry.target.dataset.idx);
+        currentIdx = idx;
         sections.forEach(s => s.classList.remove("in-view"));
         entry.target.classList.add("in-view");
-        // Update dots
-        dots.forEach((d, i) => d.classList.toggle("active", i === idx));
       }
     });
-  }, { threshold: 0.55 });
-
+  }, { threshold: 0.5 });
   sections.forEach(s => observer.observe(s));
-
-  // Make first section in-view immediately
   sections[0].classList.add("in-view");
 
-  // Animate chart bars' inline heights when they become visible
-  const chartBars = overlay.querySelectorAll(".chart-bar");
-  chartBars.forEach(bar => {
-    const h = bar.style.height;
-    bar.style.setProperty("--h", h);
-  });
-  const budgetFills = overlay.querySelectorAll(".budget-mock-fill");
-  budgetFills.forEach(fill => {
-    const w = fill.style.width;
-    fill.style.setProperty("--w", w);
+  // Scroll progress bar
+  scroll.addEventListener("scroll", () => {
+    const pct = Math.min(100, (scroll.scrollTop / (scroll.scrollHeight - scroll.clientHeight)) * 100);
+    if (progressFill) progressFill.style.width = pct + "%";
+    // Parallax on orbs
+    const sy = scroll.scrollTop;
+    overlay.querySelectorAll(".ob-orb").forEach((orb, i) => {
+      const speed = 0.15 + i * 0.08;
+      orb.style.transform = `translateY(${sy * speed}px)`;
+    });
+    // Hero text parallax (fade & shift up as you scroll past)
+    const heroTitle = overlay.querySelector(".ob-hero-title");
+    const heroSub = overlay.querySelector(".ob-hero-sub");
+    if (heroTitle) {
+      const p = Math.min(1, sy / (window.innerHeight * 0.5));
+      heroTitle.style.opacity = 1 - p;
+      heroTitle.style.transform = `translateY(${-p * 60}px) scale(${1 - p * 0.1})`;
+    }
+    if (heroSub) {
+      const p = Math.min(1, sy / (window.innerHeight * 0.5));
+      heroSub.style.opacity = 1 - p;
+      heroSub.style.transform = `translateY(${-p * 40}px)`;
+    }
   });
 
-  // Dismiss function
-  function dismissOnboarding() {
+  // Dismiss
+  function dismiss() {
     overlay.style.opacity = "0";
-    overlay.style.transition = "opacity .4s ease";
+    overlay.style.transition = "opacity .5s cubic-bezier(.4,0,.2,1)";
     setTimeout(() => {
       overlay.hidden = true;
       localStorage.setItem(KEY, "1");
       observer.disconnect();
-    }, 400);
+    }, 500);
   }
 
-  // Start button
   const startBtn = document.getElementById("onboardStartBtn");
-  if (startBtn) startBtn.addEventListener("click", dismissOnboarding);
-
-  // Skip button
+  if (startBtn) startBtn.addEventListener("click", dismiss);
   const skipBtn = document.getElementById("onboardSkipBtn");
-  if (skipBtn) skipBtn.addEventListener("click", dismissOnboarding);
+  if (skipBtn) skipBtn.addEventListener("click", dismiss);
 })();

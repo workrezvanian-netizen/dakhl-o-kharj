@@ -667,162 +667,137 @@
 
 <!-- ═══════════════ ONBOARDING OVERLAY ═══════════════ -->
 <div id="onboarding" class="onboarding" hidden>
-  <div class="onboarding-snap" id="onboardingSnap">
+  <div class="onboarding-scroll" id="onboardingScroll">
 
-    <!-- Section 1: Welcome -->
-    <div class="onboard-section" data-section="0">
-      <div class="onboard-bg onboard-bg-welcome"></div>
-      <div class="onboard-content">
-        <div class="onboard-icon-wrap onboard-float">
-          <img src="icons/icon-192.png" alt="" class="onboard-app-icon" />
+    <!-- Hero: Welcome -->
+    <div class="ob-section ob-hero" data-idx="0">
+      <div class="ob-orb ob-orb-1"></div>
+      <div class="ob-orb ob-orb-2"></div>
+      <div class="ob-orb ob-orb-3"></div>
+      <div class="ob-hero-inner">
+        <div class="ob-app-badge">
+          <img src="icons/icon-192.png" alt="" class="ob-app-img" />
         </div>
-        <h1 class="onboard-title">دخل و خرج</h1>
-        <p class="onboard-subtitle">مدیریت مالی شخصی، ساده و زیبا</p>
-        <div class="onboard-scroll-hint">
-          <span>اسکرول کنید</span>
-          <div class="onboard-arrow">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+        <h1 class="ob-hero-title">دخل و خرج</h1>
+        <p class="ob-hero-sub">مدیریت مالی شخصی<br/>ساده، زیبا، خصوصی</p>
+        <div class="ob-scroll-cue">
+          <span class="ob-scroll-text">اسکرول کنید</span>
+          <svg class="ob-scroll-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Feature 1: Income -->
+    <div class="ob-section ob-feature" data-idx="1">
+      <div class="ob-feature-bg" style="background:radial-gradient(ellipse at 30% 60%,rgba(46,125,50,0.35) 0%,transparent 70%)"></div>
+      <div class="ob-feat-inner">
+        <span class="ob-feat-label">درآمد</span>
+        <h2 class="ob-feat-title">درآمدت رو<br/><span class="ob-feat-highlight" style="color:#66BB6A">ثبت کن</span></h2>
+        <p class="ob-feat-desc">حقوق، پاداش، فروش — هر درآمدی رو با یه لمس اضافه کن</p>
+        <div class="ob-mock-phone">
+          <div class="ob-mock-notch"></div>
+          <div class="ob-mock-card-ob">
+            <div class="ob-mock-row"><span class="ob-mock-dot" style="background:#4CAF50"></span><span>حقوق</span><span class="ob-mock-val" style="color:#66BB6A">+۱۵,۰۰۰,۰۰۰</span></div>
+            <div class="ob-mock-row"><span class="ob-mock-dot" style="background:#81C784"></span><span>پاداش</span><span class="ob-mock-val" style="color:#66BB6A">+۲,۰۰۰,۰۰۰</span></div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Section 2: Track Income -->
-    <div class="onboard-section" data-section="1">
-      <div class="onboard-bg onboard-bg-income"></div>
-      <div class="onboard-content">
-        <div class="onboard-feature-icon onboard-float">
-          <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#4CAF50" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v12M8 10h8M8 14h8"/></svg>
-        </div>
-        <h2 class="onboard-title">درآمدت رو ثبت کن</h2>
-        <p class="onboard-desc">حقوق، پاداش، فروش و هر درآمد دیگه‌ای رو اضافه کن. با یه لمس ساده!</p>
-        <div class="onboard-mock-card income-mock">
-          <div class="mock-label">حقوق</div>
-          <div class="mock-amount">۱۵,۰۰۰,۰۰۰</div>
-          <div class="mock-badge income-badge">+ درآمد</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Section 3: Track Expenses -->
-    <div class="onboard-section" data-section="2">
-      <div class="onboard-bg onboard-bg-expense"></div>
-      <div class="onboard-content">
-        <div class="onboard-feature-icon onboard-float">
-          <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#FF5252" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg>
-        </div>
-        <h2 class="onboard-title">خرج‌ها رو دسته‌بندی کن</h2>
-        <p class="onboard-desc">خوراک، حمل‌ونقل، خرید و بیش از ۱۰ دسته‌بندی رنگی. همه‌چیز مرتب و شفاف.</p>
-        <div class="onboard-cat-grid">
-          <div class="onboard-cat-chip" style="--cat-color:#FF5252">🍽 خوراک</div>
-          <div class="onboard-cat-chip" style="--cat-color:#FF9100">🚗 حمل‌ونقل</div>
-          <div class="onboard-cat-chip" style="--cat-color:#4CAF50">🛍 خرید</div>
-          <div class="onboard-cat-chip" style="--cat-color:#00BCD4">📱 اینترنت</div>
+    <!-- Feature 2: Expenses -->
+    <div class="ob-section ob-feature" data-idx="2">
+      <div class="ob-feature-bg" style="background:radial-gradient(ellipse at 70% 40%,rgba(229,57,53,0.3) 0%,transparent 70%)"></div>
+      <div class="ob-feat-inner">
+        <span class="ob-feat-label">مخارج</span>
+        <h2 class="ob-feat-title">خرج‌ها رو<br/><span class="ob-feat-highlight" style="color:#EF5350">دسته‌بندی کن</span></h2>
+        <p class="ob-feat-desc">بیش از ۱۰ دسته‌بندی رنگی — مرتب و شفاف</p>
+        <div class="ob-cat-row">
+          <div class="ob-cat-pill" style="--pc:#FF5252">🍽 خوراک</div>
+          <div class="ob-cat-pill" style="--pc:#FF9100">🚗 حمل‌ونقل</div>
+          <div class="ob-cat-pill" style="--pc:#4CAF50">🛍 خرید</div>
+          <div class="ob-cat-pill" style="--pc:#00BCD4">📱 اینترنت</div>
+          <div class="ob-cat-pill" style="--pc:#5C6BC0">🏠 اجاره</div>
+          <div class="ob-cat-pill" style="--pc:#AB47BC">🎮 تفریح</div>
         </div>
       </div>
     </div>
 
-    <!-- Section 4: Installments -->
-    <div class="onboard-section" data-section="3">
-      <div class="onboard-bg onboard-bg-installment"></div>
-      <div class="onboard-content">
-        <div class="onboard-feature-icon onboard-float">
-          <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#5C6BC0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
-        </div>
-        <h2 class="onboard-title">اقساط رو مدیریت کن</h2>
-        <p class="onboard-desc">تاریخ سررسید، مبلغ باقیمانده و یادآوری خودکار. دیگه قسطی رو فراموش نمی‌کنی!</p>
-        <div class="onboard-mock-card installment-mock">
-          <div class="mock-left">
-            <div class="mock-label">قسط ماشین</div>
-            <div class="mock-sub">۱۲ روز مانده</div>
-          </div>
-          <div class="mock-right">
-            <div class="mock-amount small">۲,۵۰۰,۰۰۰</div>
-            <div class="mock-badge installment-badge">📅 ماهانه</div>
+    <!-- Feature 3: Installments -->
+    <div class="ob-section ob-feature" data-idx="3">
+      <div class="ob-feature-bg" style="background:radial-gradient(ellipse at 40% 50%,rgba(63,81,181,0.35) 0%,transparent 70%)"></div>
+      <div class="ob-feat-inner">
+        <span class="ob-feat-label">اقساط</span>
+        <h2 class="ob-feat-title">اقساط رو<br/><span class="ob-feat-highlight" style="color:#7986CB">فراموش نکن</span></h2>
+        <p class="ob-feat-desc">تاریخ سررسید، یادآوری خودکار و پیگیری آسان</p>
+        <div class="ob-mock-phone">
+          <div class="ob-mock-notch"></div>
+          <div class="ob-mock-card-ob">
+            <div class="ob-mock-row"><span class="ob-mock-dot" style="background:#5C6BC0"></span><span>قسط ماشین</span><span class="ob-mock-val">۲,۵۰۰,۰۰۰</span></div>
+            <div class="ob-mock-row"><span class="ob-mock-dot" style="background:#9FA8DA"></span><span>وام مسکن</span><span class="ob-mock-val">۸,۰۰۰,۰۰۰</span></div>
+            <div class="ob-mock-remaining"><div class="ob-mock-progress"><div class="ob-mock-progress-fill" style="width:60%;background:#5C6BC0"></div></div><span>۱۲ روز مانده</span></div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Section 5: Dashboard & Analytics -->
-    <div class="onboard-section" data-section="4">
-      <div class="onboard-bg onboard-bg-analytics"></div>
-      <div class="onboard-content">
-        <div class="onboard-feature-icon onboard-float">
-          <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#AB47BC" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
-        </div>
-        <h2 class="onboard-title">آنالیز هوشمند مالی</h2>
-        <p class="onboard-desc">نمودارهای خطی، دونات و میله‌ای. مقایسه درآمد و خرج ماهانه با یه نگاه.</p>
-        <div class="onboard-chart-mock">
-          <div class="chart-bar" style="height:40%;--bar-color:#4CAF50"><span>دی</span></div>
-          <div class="chart-bar" style="height:65%;--bar-color:#4CAF50"><span>به</span></div>
-          <div class="chart-bar" style="height:30%;--bar-color:#FF5252"><span>اس</span></div>
-          <div class="chart-bar" style="height:85%;--bar-color:#4CAF50"><span>آد</span></div>
-          <div class="chart-bar" style="height:50%;--bar-color:#FF5252"><span>خُر</span></div>
-          <div class="chart-bar" style="height:70%;--bar-color:#4CAF50"><span>مهر</span></div>
-          <div class="chart-bar active" style="height:95%;--bar-color:#163F3C"><span>شهر</span></div>
+    <!-- Feature 4: Analytics -->
+    <div class="ob-section ob-feature" data-idx="4">
+      <div class="ob-feature-bg" style="background:radial-gradient(ellipse at 60% 35%,rgba(171,71,188,0.3) 0%,transparent 70%)"></div>
+      <div class="ob-feat-inner">
+        <span class="ob-feat-label">آنالیز</span>
+        <h2 class="ob-feat-title">آنالیز<br/><span class="ob-feat-highlight" style="color:#CE93D8">هوشمند مالی</span></h2>
+        <p class="ob-feat-desc">نمودارهای خطی، میله‌ای و دونات — مقایسه ماهانه با یه نگاه</p>
+        <div class="ob-chart-row">
+          <div class="ob-bar" style="--bh:35%;--bc:#7E57C2"><span>دی</span></div>
+          <div class="ob-bar" style="--bh:58%;--bc:#AB47BC"><span>به</span></div>
+          <div class="ob-bar" style="--bh:25%;--bc:#CE93D8"><span>اس</span></div>
+          <div class="ob-bar" style="--bh:78%;--bc:#AB47BC"><span>آد</span></div>
+          <div class="ob-bar" style="--bh:45%;--bc:#CE93D8"><span>خُر</span></div>
+          <div class="ob-bar" style="--bh:65%;--bc:#7E57C2"><span>مهر</span></div>
+          <div class="ob-bar ob-bar-now" style="--bh:92%;--bc:#CE93D8"><span>شهر</span></div>
         </div>
       </div>
     </div>
 
-    <!-- Section 6: Budget -->
-    <div class="onboard-section" data-section="5">
-      <div class="onboard-bg onboard-bg-budget"></div>
-      <div class="onboard-content">
-        <div class="onboard-feature-icon onboard-float">
-          <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#EC407A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-        </div>
-        <h2 class="onboard-title">بودجه هر دسته رو تنظیم کن</h2>
-        <p class="onboard-desc">برای هر دسته بودجه تعیین کن و ببین چقدر خرج کردی. نوار پیشرفت رنگی وضعیت رو نشون میده.</p>
-        <div class="onboard-budget-mock">
-          <div class="budget-mock-row">
-            <span>🍽 خوراک</span>
-            <div class="budget-mock-bar"><div class="budget-mock-fill" style="width:65%;background:#FF5252"></div></div>
-            <span class="budget-mock-pct">۶۵٪</span>
-          </div>
-          <div class="budget-mock-row">
-            <span>📱 اینترنت</span>
-            <div class="budget-mock-bar"><div class="budget-mock-fill" style="width:30%;background:#4CAF50"></div></div>
-            <span class="budget-mock-pct">۳۰٪</span>
-          </div>
+    <!-- Feature 5: Budget -->
+    <div class="ob-section ob-feature" data-idx="5">
+      <div class="ob-feature-bg" style="background:radial-gradient(ellipse at 50% 55%,rgba(236,64,122,0.3) 0%,transparent 70%)"></div>
+      <div class="ob-feat-inner">
+        <span class="ob-feat-label">بودجه</span>
+        <h2 class="ob-feat-title">بودجه رو<br/><span class="ob-feat-highlight" style="color:#F06292">کنترل کن</span></h2>
+        <p class="ob-feat-desc">برای هر دسته بودجه تعیین کن و وضعیت رو رصد کن</p>
+        <div class="ob-budget-mock">
+          <div class="ob-budget-row"><span>🍽 خوراک</span><div class="ob-budget-track"><div class="ob-budget-fill" style="--bw:72%;--bc:#FF5252"></div></div><span class="ob-budget-pct">۷۲٪</span></div>
+          <div class="ob-budget-row"><span>📱 اینترنت</span><div class="ob-budget-track"><div class="ob-budget-fill" style="--bw:35%;--bc:#4CAF50"></div></div><span class="ob-budget-pct">۳۵٪</span></div>
+          <div class="ob-budget-row"><span>🏠 اجاره</span><div class="ob-budget-track"><div class="ob-budget-fill" style="--bw:90%;--bc:#FF9100"></div></div><span class="ob-budget-pct">۹۰٪</span></div>
         </div>
       </div>
     </div>
 
-    <!-- Section 7: Get Started -->
-    <div class="onboard-section" data-section="6">
-      <div class="onboard-bg onboard-bg-start"></div>
-      <div class="onboard-content">
-        <div class="onboard-icon-wrap onboard-pulse">
-          <img src="icons/icon-192.png" alt="" class="onboard-app-icon large" />
+    <!-- CTA -->
+    <div class="ob-section ob-cta" data-idx="6">
+      <div class="ob-orb ob-orb-1"></div>
+      <div class="ob-orb ob-orb-4"></div>
+      <div class="ob-cta-inner">
+        <div class="ob-app-badge ob-app-badge-lg">
+          <img src="icons/icon-192.png" alt="" class="ob-app-img" />
         </div>
-        <h2 class="onboard-title">آماده‌ای؟</h2>
-        <p class="onboard-desc">مدیریت مالی شخصی رو شروع کن. همه‌چیز رایگان و خصوصیه.</p>
-        <button type="button" id="onboardStartBtn" class="onboard-cta-btn">
-          شروع کنید ✨
-        </button>
-        <div class="onboard-privacy">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-          <span>داده‌های شما کاملاً خصوصی و محلی ذخیره می‌شوند</span>
+        <h2 class="ob-cta-title">آماده‌ای؟</h2>
+        <p class="ob-cta-desc">مدیریت مالی شخصی رو شروع کن.<br/>رایگان و کاملاً خصوصی.</p>
+        <button type="button" id="onboardStartBtn" class="ob-cta-btn">شروع کنید ✨</button>
+        <div class="ob-privacy">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+          <span>داده‌های شما محلی ذخیره می‌شوند</span>
         </div>
       </div>
     </div>
 
   </div>
+n  <!-- Progress -->
+  <div class="ob-progress" id="obProgress"><div class="ob-progress-fill" id="obProgressFill"></div></div>
 
-  <!-- Progress dots -->
-  <div class="onboard-dots" id="onboardDots">
-    <span class="onboard-dot active"></span>
-    <span class="onboard-dot"></span>
-    <span class="onboard-dot"></span>
-    <span class="onboard-dot"></span>
-    <span class="onboard-dot"></span>
-    <span class="onboard-dot"></span>
-    <span class="onboard-dot"></span>
-  </div>
-
-  <!-- Skip button -->
-  <button type="button" id="onboardSkipBtn" class="onboard-skip-btn">رد شدن</button>
+  <!-- Skip -->
+  <button type="button" id="onboardSkipBtn" class="ob-skip">رد شدن</button>
 </div>
 <!-- ═══════════════ END ONBOARDING ═══════════════ -->
 
