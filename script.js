@@ -591,8 +591,12 @@ function switchTab(tab, opts = {}) {
 
   const headerEl = document.querySelector(".app-header");
   if (headerEl) {
+    // Instant toggle — no animation on tab switch for snappy feel
+    headerEl.style.transition = 'none';
     if (tab === "dashboard") headerEl.classList.remove("is-compact");
     else headerEl.classList.add("is-compact");
+    // Re-enable transition after a frame for scroll-based animation
+    requestAnimationFrame(() => { headerEl.style.transition = ''; });
   }
 
   const scrollRoot = document.getElementById("appScroll");

@@ -261,7 +261,7 @@ h2 {
 }
 
 .app-header {
-  transition: padding .5s cubic-bezier(.22,1,.36,1);
+  transition: padding .3s ease;
 }
 .header-inner {
   display: flex;
@@ -275,7 +275,7 @@ h2 {
   box-shadow: 0 8px 20px rgba(22,63,60,0.28), inset 0 1px 0 rgba(255,255,255,0.2);
   will-change: transform;
   contain: layout style;
-  transition: padding .4s cubic-bezier(.4,0,.2,1), border-radius .4s cubic-bezier(.4,0,.2,1), box-shadow .4s ease;
+  transition: padding .2s ease, border-radius .2s ease, box-shadow .2s ease;
 }
 
 
@@ -305,7 +305,7 @@ h2 {
   justify-content: center;
   flex-shrink: 0;
   overflow: hidden;
-  transition: width .4s cubic-bezier(.4,0,.2,1), height .4s cubic-bezier(.4,0,.2,1);
+  transition: width .15s ease, height .15s ease;
 }
 .brand-text {
   font-weight: 800;
@@ -337,7 +337,7 @@ h2 {
   height: 22px;
   width: auto;
   opacity: 0.9;
-  transition: height .4s cubic-bezier(.4,0,.2,1), opacity .4s ease;
+  transition: height .15s ease, opacity .15s ease;
 }
 .header-side {
   display: flex;
@@ -361,8 +361,8 @@ h2 {
   cursor: pointer;
   overflow: hidden;
   flex-shrink: 0;
-  transition: width .35s cubic-bezier(.4,0,.2,1), height .35s cubic-bezier(.4,0,.2,1),
-              opacity .3s ease, transform .35s cubic-bezier(.4,0,.2,1), margin .35s ease;
+  transition: width .15s ease, height .15s ease,
+              opacity .15s ease, transform .15s ease, margin .15s ease;
 }
 .header-settings-btn:active { background: rgba(251,247,240,0.3); }
 
@@ -371,11 +371,11 @@ h2 {
   padding: 8px 16px;
   border-radius: 22px;
   box-shadow: 0 8px 18px rgba(22,63,60,0.26), inset 0 1px 0 rgba(255,255,255,0.22);
-  transition: padding .35s cubic-bezier(.22,1,.36,1), border-radius .35s cubic-bezier(.22,1,.36,1), box-shadow .35s ease;
+  transition: padding .2s ease, border-radius .2s ease, box-shadow .2s ease;
 }
-.app-header.is-compact .brand-badge { width: 30px; height: 30px; border-radius: 9px; }
+.app-header.is-compact .brand-badge { width: 30px; height: 30px; border-radius: 9px; transition: none; }
 .app-header.is-compact .brand-text { font-size: 15.5px; }
-.app-header.is-compact .watermark { height: 16px; opacity: 0.75; }
+.app-header.is-compact .watermark { height: 16px; opacity: 0.75; transition: none; }
 .app-header.is-compact .header-side { gap: 0; }
 .app-header.is-compact .header-settings-btn {
   width: 0;
@@ -384,6 +384,7 @@ h2 {
   transform: scale(0.4);
   margin: 0;
   pointer-events: none;
+  transition: none;
 }
 
 .sync-pill-inline {
