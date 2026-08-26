@@ -3074,7 +3074,17 @@ document.getElementById("budgetCategoryList").addEventListener("blur", (e) => {
       }
     });
   }, { threshold: 0.5 });
-  sections.forEach(s => observer.observe(s));
+  sections.forEach(s => {
+    observer.observe(s);
+    // Add scroll hint to all sections except the last one (CTA)
+    const idx = parseInt(s.dataset.idx);
+    if (idx < total - 1) {
+      const hint = document.createElement("div");
+      hint.className = "ob-scroll-cue-bottom";
+      hint.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg>`;
+      s.appendChild(hint);
+    }
+  });
   sections[0].classList.add("in-view");
 
   // Scroll progress bar
