@@ -3118,3 +3118,60 @@ document.getElementById("budgetCategoryList").addEventListener("blur", (e) => {
   const skipBtn = document.getElementById("onboardSkipBtn");
   if (skipBtn) skipBtn.addEventListener("click", dismiss);
 })();
+
+// ═══════════════════════════════════════════════════
+// SWIPE GESTURES — switch tabs by swiping left/right
+// ═══════════════════════════════════════════════════
+(function initSwipeGestures() {
+  const appScroll = document.getElementById("appScroll");
+  if (!appScroll) return;
+
+  const navTabs = ["budget", "entry", "dashboard", "analysis", "installments"];
+  let touchStartX = 0;
+  let touchStartY = 0;
+  let touchStartTime = 0;
+  let isSwiping = false;
+  const MIN_SWIPE = 60;   // minimum px to count as swipe
+  const MAX_TIME = 400;   // max ms for a swipe gesture
+  const MAX_Y_DEVIATION = 80; // max vertical movement allowed
+
+  appScroll.addEventListener("touchstart", (e) => {
+    const t = e.touches[0];
+    touchStartX = t.clientX;
+    touchStartY = t.clientY;
+    touchStartTime = Date.now();
+    isSwiping = true;
+  }, { passive: true });
+
+  appScroll.addEventListener("touchend", (e) => {
+    if (!isSwiping) return;
+    isSwiping = false;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - touchStartX;
+    const dy = Math.abs(t.clientY - touchStartY);
+    const dt = Date.now() - touchStartTime;
+
+    if (dt > MAX_TIME || Math.abs(dx) < MIN_SWIPE || dy > MAX_Y_DEVIATION) return;
+
+    // Find current active tab
+    const activeBtn = document.querySelector(".nav-btn.active");
+    if (!activeBtn) return;
+    const currentTab = activeBtn.dataset.tab;
+    const idx = navTabs.indexOf(currentTab);
+    if (idx === -1) return;
+
+    // RTL: swipe left = previous tab, swipe right = next tab
+    let nextIdx;
+    if (dx > 0) {
+      // Swiped right → next tab (RTL visual: left)
+      nextIdx = idx + 1;
+    } else {
+      // Swiped left → previous tab (RTL visual: right)
+      nextIdx = idx - 1;
+    }
+
+    if (nextIdx >= 0 && nextIdx < navTabs.length) {
+      switchTab(navTabs[nextIdx]);
+    }
+  }, { passive: true });
+})();
