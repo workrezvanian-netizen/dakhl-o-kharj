@@ -43,14 +43,14 @@ const CATEGORY_COLOR_CHOICES = [
   "#495057", "#868E96"
 ];
 const CARD_PALETTE = [
-  { bg: "#FBEED9", icon: "#E8A83C" },
-  { bg: "#DCEBFB", icon: "#3B82C4" },
-  { bg: "#FBE4D8", icon: "#E0793A" },
-  { bg: "#EDE1F7", icon: "#9B6FC9" },
-  { bg: "#FBDCE0", icon: "#D9534F" },
-  { bg: "#E3F1EF", icon: "#4FA89E" },
-  { bg: "#E4EFE0", icon: "#6B8E5A" },
-  { bg: "#E7E7EF", icon: "#6B6FA0" }
+  { bg: "#FDDCAE", icon: "#D48806" },
+  { bg: "#BADAFF", icon: "#1D6ABF" },
+  { bg: "#FDCCA8", icon: "#D2611B" },
+  { bg: "#DCC8F5", icon: "#7B3FC2" },
+  { bg: "#FDC4CC", icon: "#C42D3D" },
+  { bg: "#B8E8E0", icon: "#2A8C7A" },
+  { bg: "#C5E0B4", icon: "#4A7A2F" },
+  { bg: "#C8C8E2", icon: "#4A4EA0" }
 ];
 const INCOME_CARD_PALETTE = [
   { bg: "#E3F1EF", icon: "#2F7A72" },
@@ -527,7 +527,7 @@ document.querySelectorAll('#tab-settings .settings-group').forEach((details) => 
 document.querySelectorAll(".nav-btn").forEach((btn) => {
   btn.addEventListener("click", () => switchTab(btn.dataset.tab));
 });
-const _tabOrder = ["entry", "analysis", "dashboard", "installments", "budget", "settings"];
+const _tabOrder = ["budget", "entry", "dashboard", "analysis", "installments", "settings"];
 function switchTab(tab, opts = {}) {
   const prevTab = document.querySelector(".tab.active");
   const prevTabId = prevTab ? prevTab.id.replace("tab-", "") : null;
@@ -560,10 +560,10 @@ function switchTab(tab, opts = {}) {
     // Reset numbers to 0 so animateNumber plays from scratch
     const incomeChip = document.getElementById("dashIncomeChip");
     const expenseChip = document.getElementById("dashExpenseChip");
-    const balanceAmount = document.querySelector(".month-balance-amount");
+    const balanceAmountEl = document.getElementById("dashBalanceAmount");
     if (incomeChip) incomeChip.textContent = "۰";
     if (expenseChip) expenseChip.textContent = "۰";
-    if (balanceAmount) balanceAmount.innerHTML = `+۰ <span class="month-balance-unit">تومان</span>`;
+    if (balanceAmountEl) balanceAmountEl.textContent = "۰";
     // Small delay to ensure DOM updates before animation starts
     requestAnimationFrame(() => renderDashboard());
   }
@@ -589,6 +589,51 @@ function switchTab(tab, opts = {}) {
 }
 
 document.getElementById("dashSettingsBtn").addEventListener("click", () => switchTab("settings"));
+
+// ---------- Balance eye toggle ----------
+let _balanceVisible = true;
+(function setupBalanceEye() {
+  const eyeBtn = document.getElementById("balanceEyeBtn");
+  if (!eyeBtn) return;
+  eyeBtn.addEventListener("click", () => {
+    _balanceVisible = !_balanceVisible;
+    const card = document.getElementById("dashBalanceCard");
+    const amountEl = document.getElementById("dashBalanceAmount");
+    const eyeOpen = eyeBtn.querySelector(".eye-open");
+    const eyeClosed = eyeBtn.querySelector(".eye-closed");
+    if (_balanceVisible) {
+      card.classList.remove("is-hidden");
+      eyeOpen.style.display = "";
+      eyeClosed.style.display = "none";
+      // Re-animate the number
+      const balance = computeCumulativeBalance(viewedMonth.jy, viewedMonth.jm);
+      amountEl.textContent = "۰";
+      requestAnimationFrame(() => animateNumber(amountEl, Math.abs(balance), 600));
+    } else {
+      card.classList.add("is-hidden");
+      eyeOpen.style.display = "none";
+      eyeClosed.style.display = "";
+      amountEl.textContent = "*" .repeat(String(Math.abs(computeCumulativeBalance(viewedMonth.jy, viewedMonth.jm))).length);
+    }
+  });
+})();
+
+// ---------- 000 shortcut buttons ----------
+document.querySelectorAll(".amount-inline-shortcut").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const target = document.getElementById(btn.dataset.target);
+    if (!target) return;
+    const current = normalizeDigits(target.value).replace(/[^\d]/g, "");
+    const newVal = current + "000";
+    target.value = Number(newVal).toLocaleString("en-US");
+    target.focus();
+  });
+});
+
+// ---------- Dismiss keyboard on submit ----------
+function dismissKeyboard() {
+  if (document.activeElement) document.activeElement.blur();
+}
 
 // ---------- Entry mode toggle (income/expense merged tab) ----------
 document.querySelectorAll("#entryModeToggle .entry-mode-btn").forEach((btn) => {
@@ -780,6 +825,7 @@ document.getElementById("incomeForm").addEventListener("submit", (e) => {
   setDatePickerToToday("income");
   resetDateQuickPicker("income");
   saveState();
+  dismissKeyboard();
 });
 
 // ---------- Expense form ----------
@@ -801,6 +847,7 @@ document.getElementById("expenseForm").addEventListener("submit", (e) => {
   setDatePickerToToday("expense");
   resetDateQuickPicker("expense");
   saveState();
+  dismissKeyboard();
 });
 
 // ---------- Installment payment → add expense under "اقساط" category ----------
@@ -1074,7 +1121,8 @@ function updateMonthLabel() {
   const balanceAmountEl = document.getElementById("dashBalanceAmount");
   if (balanceCard && balanceAmountEl) {
     const isPositive = balance >= 0;
-    balanceCard.className = `balance-hero-card ${isPositive ? "positive" : "negative"}`;
+    const hiddenClass = !_balanceVisible ? " is-hidden" : "";
+    balanceCard.className = `balance-hero-card ${isPositive ? "positive" : "negative"}${hiddenClass}`;
     animateNumber(balanceAmountEl, Math.abs(balance), 800);
   }
 
@@ -1369,7 +1417,7 @@ function renderDashboard() {
       const color = catColor(c.name);
       const amt = byCat[c.name] || 0;
       return `
-        <button type="button" class="quick-cat-card" style="background:linear-gradient(135deg, ${color}22 0%, ${color}11 100%)" onclick="quickAddExpense('${c.name.replace(/'/g, "\\'")}')">
+        <button type="button" class="quick-cat-card" style="background:linear-gradient(135deg, ${color}44 0%, ${color}22 100%)" onclick="quickAddExpense('${c.name.replace(/'/g, "\\'")}')">
           <span class="quick-cat-bubble" style="background:${color}">${iconSpanHTML(c.icon, "color:#fff")}</span>
           <span class="quick-cat-name">${c.name}</span>
           <span class="quick-cat-amount">${fmtAmount(amt)}</span>
@@ -1387,7 +1435,7 @@ function renderDashboard() {
     const iconKey = INCOME_SOURCE_ICON[source] || "wallet";
     return `
       <button type="button" class="quick-cat-card" style="background:${palette.bg}" onclick="quickAddIncome('${source.replace(/'/g, "\\'")}')">
-        <span class="quick-cat-bubble" style="background:${palette.icon}22">${iconSpanHTML(iconKey, `color:${palette.icon}`)}</span>
+        <span class="quick-cat-bubble" style="background:${palette.icon}33">${iconSpanHTML(iconKey, `color:${palette.icon}`)}</span>
         <span class="quick-cat-name">${source}</span>
         <span class="quick-cat-amount">${fmtAmount(amt)}</span>
       </button>`;

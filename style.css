@@ -600,74 +600,181 @@ h2 {
 }
 .month-nav-btn:active { background: var(--green-soft); transform: scale(0.92); box-shadow: 0 1px 2px rgba(22,63,60,0.1); }
 
-/* ---------- باکس موجودی کل — مینیمال با آیکون کیف پول ---------- */
+/* ---------- باکس موجودی کل — شیشه‌ای مینیمال با آیکون کیف پول و چشم ---------- */
 .balance-hero-card {
-  margin: 0 auto 12px;
-  padding: 10px 14px;
-  border-radius: 12px;
-  background: rgba(255,255,255,0.45);
-  backdrop-filter: blur(10px) saturate(1.5);
-  -webkit-backdrop-filter: blur(10px) saturate(1.5);
-  border: 1px solid rgba(255,255,255,0.65);
-  box-shadow: 0 1px 0 rgba(255,255,255,0.7) inset, 0 2px 8px rgba(16,70,43,0.04);
+  margin: 0 auto 14px;
+  padding: 14px 20px;
+  min-height: 56px;
+  border-radius: 14px;
+  background: linear-gradient(145deg, rgba(255,255,255,0.85) 0%, rgba(22,63,60,0.06) 100%);
+  backdrop-filter: blur(24px) saturate(2.2);
+  -webkit-backdrop-filter: blur(24px) saturate(2.2);
+  border: 1px solid rgba(255,255,255,0.9);
+  box-shadow:
+    0 8px 32px rgba(16,70,43,0.10),
+    0 4px 12px rgba(16,70,43,0.06),
+    0 2px 4px rgba(0,0,0,0.04),
+    0 1px 0 rgba(255,255,255,0.95) inset,
+    0 -1px 0 rgba(0,0,0,0.03) inset;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 10px;
+  transition: all .3s cubic-bezier(.4,0,.2,1);
+  position: relative;
+  overflow: hidden;
+  /* 3D depth effect */
+  transform: perspective(600px) rotateX(1deg);
+  transform-origin: center top;
+}
+.balance-hero-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  border-radius: 18px 18px 0 0;
+  background: linear-gradient(180deg, rgba(255,255,255,0.5) 0%, transparent 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+.balance-hero-card:hover {
+  box-shadow:
+    0 12px 40px rgba(16,70,43,0.14),
+    0 6px 16px rgba(16,70,43,0.08),
+    0 2px 4px rgba(0,0,0,0.05),
+    0 1px 0 rgba(255,255,255,0.95) inset,
+    0 -1px 0 rgba(0,0,0,0.03) inset;
+  transform: perspective(600px) rotateX(0deg) translateY(-3px);
 }
 .balance-hero-card.negative {
-  border-color: rgba(194,74,46,0.12);
-  background: rgba(255,240,238,0.45);
+  border-color: rgba(194,74,46,0.18);
+  background: linear-gradient(145deg, rgba(194,74,46,0.06) 0%, rgba(255,245,243,0.7) 40%, rgba(194,74,46,0.03) 100%);
+  box-shadow:
+    0 2px 16px rgba(194,74,46,0.1),
+    0 1px 3px rgba(194,74,46,0.05),
+    0 1px 0 rgba(255,255,255,0.9) inset;
+}
+.balance-hero-card.negative::before {
+  background: radial-gradient(circle, rgba(194,74,46,0.05) 0%, transparent 70%);
 }
 .balance-hero-wallet {
-  width: 32px;
-  height: 32px;
-  border-radius: 10px;
-  background: var(--green-soft);
+  width: 36px;
+  height: 36px;
+  border-radius: 11px;
+  background: linear-gradient(145deg, #e8f5e9 0%, #c8e6c9 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  box-shadow: 0 3px 10px rgba(76,175,80,0.18), 0 1px 3px rgba(76,175,80,0.12), 0 1px 0 rgba(255,255,255,0.8) inset;
+  transition: transform .25s ease, box-shadow .25s ease;
+  border: 1px solid rgba(76,175,80,0.18);
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
 }
-.balance-hero-card.negative .balance-hero-wallet {
-  background: rgba(194,74,46,0.1);
+.balance-hero-card:hover .balance-hero-wallet {
+  transform: translateY(-50%) scale(1.08);
+  box-shadow: 0 5px 16px rgba(76,175,80,0.22), 0 2px 4px rgba(76,175,80,0.14), 0 1px 0 rgba(255,255,255,0.8) inset;
 }
-.balance-hero-wallet img {
+.balance-hero-wallet svg {
   width: 18px;
   height: 18px;
-  filter: brightness(0.4) saturate(2);
+  color: #2E7D32;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.06));
 }
-.balance-hero-card.negative .balance-hero-wallet img {
-  filter: brightness(0.6) saturate(2) hue-rotate(340deg);
+.balance-hero-card.negative .balance-hero-wallet {
+  background: linear-gradient(145deg, #fce4ec 0%, #f8bbd0 100%);
+  box-shadow: 0 3px 10px rgba(244,67,54,0.14), 0 1px 3px rgba(244,67,54,0.10), 0 1px 0 rgba(255,255,255,0.8) inset;
+  border-color: rgba(244,67,54,0.14);
 }
-.balance-hero-label {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-mute);
+.balance-hero-card.negative .balance-hero-wallet svg {
+  color: #C62828;
 }
-.balance-hero-right {
-  margin-right: auto;
+.balance-hero-center {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 1px;
+  z-index: 1;
+}
+.balance-hero-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-mute);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  opacity: 0.7;
 }
 .balance-hero-amount {
-  font-size: 15px;
+  font-size: 18px;
   font-weight: 800;
   color: var(--green-deep);
   direction: ltr;
-  text-align: left;
+  text-align: center;
   line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+  transition: all .3s ease;
+  text-shadow: 0 1px 2px rgba(16,70,43,0.08);
 }
 .balance-hero-card.negative .balance-hero-amount {
   color: var(--expense);
+  text-shadow: 0 1px 2px rgba(194,74,46,0.08);
 }
 .balance-hero-amount #dashBalanceAmount {
   font-variant-numeric: tabular-nums;
 }
-.balance-hero-unit {
-  font-size: 10px;
-  font-weight: 500;
+/* Eye toggle button */
+.balance-eye-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: none;
+  background: rgba(22,63,60,0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all .2s ease;
+  padding: 0;
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+}
+.balance-eye-btn:hover {
+  background: rgba(22,63,60,0.12);
+  transform: scale(1.08);
+}
+.balance-eye-btn:active {
+  transform: scale(0.95);
+}
+.balance-eye-btn svg {
+  width: 14px;
+  height: 14px;
   color: var(--text-mute);
+}
+.balance-hero-card.is-hidden .balance-hero-amount {
+  opacity: 1;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text-mute);
+  letter-spacing: 2px;
+  transition: opacity .2s ease;
+}
+.balance-hero-card.is-hidden .balance-hero-unit {
+  opacity: 0;
+  transition: opacity .2s ease;
 }
 
 /* ---------- بلوک «دخل» — کوچک، مینیمال، شیشه‌ای ---------- */
@@ -1107,6 +1214,7 @@ h2 {
   color: var(--text);
 }
 #incomeAmount, #expenseAmount { margin-top: 0; }
+.amount-field-with-shortcut input { padding-left: 40px; }
 .entry-note-field { opacity: 0.6; }
 .entry-note-field input { background: transparent; border-style: dashed; }
 .entry-note-field:focus-within { opacity: 1; }
@@ -1118,6 +1226,38 @@ h2 {
 }
 .amount-row .amount-field { flex: 1; margin-bottom: 0; }
 .amount-row .amount-field input { margin-top: 0; height: 100%; }
+.amount-field-with-shortcut {
+  position: relative;
+}
+.amount-inline-shortcut {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(0,0,0,0.08);
+  background: rgba(0,0,0,0.03);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(0,0,0,0.18);
+  cursor: pointer;
+  transition: all .15s ease;
+  line-height: 1;
+  letter-spacing: 1px;
+  pointer-events: auto;
+}
+.amount-inline-shortcut:hover {
+  color: rgba(0,0,0,0.35);
+  background: rgba(0,0,0,0.06);
+  border-color: rgba(0,0,0,0.12);
+}
+.amount-inline-shortcut:active {
+  transform: translateY(-50%) scale(0.92);
+  color: var(--green-deep);
+  background: var(--green-soft);
+}
 .amount-submit-btn {
   flex-shrink: 0;
   white-space: nowrap;
@@ -1875,8 +2015,9 @@ input:focus, select:focus {
     inset 0 1px 0 rgba(255,255,255,0.95),
     inset 0 -1.5px 3px rgba(16,70,43,0.08);
 }
-.nav-btn.active svg { stroke: var(--green-deep); }
-.nav-btn.active span { font-weight: 700; }
+.nav-btn.active svg { stroke: var(--green-deep); transform: scale(1.18); }
+.nav-btn.active span { font-weight: 700; font-size: 11px; }
+.nav-btn.active { padding-bottom: 9px; }
 
 @media (min-width: 560px) {
   .bottom-nav { max-width: 480px; margin: 0 auto; left: 50%; transform: translateX(-50%); right: auto; width: calc(100% - 28px); }
