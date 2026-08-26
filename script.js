@@ -573,7 +573,11 @@ function switchTab(tab, opts = {}) {
     const expEl = document.getElementById("expenseChartTotal");
     if (incEl) incEl.textContent = "۰";
     if (expEl) expEl.textContent = "۰";
-    requestAnimationFrame(() => renderAnalysis());
+    requestAnimationFrame(() => {
+      renderAnalysis();
+      // Re-measure and reset the AI card collapse so it starts fresh
+      if (typeof window._aiCollapseReset === "function") window._aiCollapseReset();
+    });
   }
   if (tab === "installments" && typeof window.refreshInstallments === "function") {
     // Reset numbers to 0 so animation plays from scratch
@@ -2500,8 +2504,6 @@ function setupAiCardScrollCollapse(cardId, starId, btnId, resultId) {
   const FINAL_SCALE = 0.14;
   let dx = 0, dy = 0, collapseDistance = 160;
 
-  // Measures exactly where the star sits relative to where the shrunk card
-  // would otherwise end up, so the collapse can glide precisely onto it.
   function measureTarget() {
     const prevTransform = card.style.transform;
     card.style.transform = "none";
@@ -2514,8 +2516,6 @@ function setupAiCardScrollCollapse(cardId, starId, btnId, resultId) {
     const starCenterY = starRect.top + starRect.height / 2;
     dx = starCenterX - shrunkCenterX;
     dy = starCenterY - shrunkCenterY;
-    // Fully collapsed well before the card would have scrolled entirely out of
-    // view, so the animation is always visible even with little content below it.
     collapseDistance = Math.max(cardRect.height * 0.8, 90);
   }
   measureTarget();
@@ -2524,9 +2524,9 @@ function setupAiCardScrollCollapse(cardId, starId, btnId, resultId) {
   const applyCollapse = (collapse) => {
     collapse = Math.min(Math.max(collapse, 0), 1);
     const scale = 1 - collapse * (1 - FINAL_SCALE);
-    const radius = 22 + collapse * 30; // 22px -> 52px, increasingly circular as it shrinks
-    const fade = Math.max(0, (collapse - 0.55) / 0.45); // only fade during the last part of the shrink
-    const pull = Math.pow(collapse, 1.7); // gather toward the star only as it nears the end, so the top edge holds still at first
+    const radius = 22 + collapse * 30;
+    const fade = Math.max(0, (collapse - 0.55) / 0.45);
+    const pull = Math.pow(collapse, 1.7);
     card.style.opacity = String(1 - fade);
     card.style.transform = `translate(${(dx * pull).toFixed(1)}px, ${(dy * pull).toFixed(1)}px) scale(${scale.toFixed(3)})`;
     card.style.borderRadius = `${radius.toFixed(1)}px`;
@@ -2552,6 +2552,12 @@ function setupAiCardScrollCollapse(cardId, starId, btnId, resultId) {
     scrollRoot.scrollTo({ top: 0, behavior: "smooth" });
     if (btn && result && result.style.display === "none") btn.click();
   });
+
+  // Expose for tab switch reset
+  window._aiCollapseReset = () => {
+    measureTarget();
+    applyCollapse(0);
+  };
 }
 setupAiCardScrollCollapse("aiAnalysisCard", "aiFloatingStar", "btnAiAnalyze", "aiAnalysisResult");
 
@@ -3130,58 +3136,4 @@ document.getElementById("budgetCategoryList").addEventListener("blur", (e) => {
 })();
 
 // ═══════════════════════════════════════════════════
-// SWIPE GESTURES — switch tabs by swiping left/right
-// ═══════════════════════════════════════════════════
-(function initSwipeGestures() {
-  const appScroll = document.getElementById("appScroll");
-  if (!appScroll) return;
 
-  const navTabs = ["budget", "entry", "dashboard", "analysis", "installments"];
-  let touchStartX = 0;
-  let touchStartY = 0;
-  let touchStartTime = 0;
-  let isSwiping = false;
-  const MIN_SWIPE = 60;   // minimum px to count as swipe
-  const MAX_TIME = 400;   // max ms for a swipe gesture
-  const MAX_Y_DEVIATION = 80; // max vertical movement allowed
-
-  appScroll.addEventListener("touchstart", (e) => {
-    const t = e.touches[0];
-    touchStartX = t.clientX;
-    touchStartY = t.clientY;
-    touchStartTime = Date.now();
-    isSwiping = true;
-  }, { passive: true });
-
-  appScroll.addEventListener("touchend", (e) => {
-    if (!isSwiping) return;
-    isSwiping = false;
-    const t = e.changedTouches[0];
-    const dx = t.clientX - touchStartX;
-    const dy = Math.abs(t.clientY - touchStartY);
-    const dt = Date.now() - touchStartTime;
-
-    if (dt > MAX_TIME || Math.abs(dx) < MIN_SWIPE || dy > MAX_Y_DEVIATION) return;
-
-    // Find current active tab
-    const activeBtn = document.querySelector(".nav-btn.active");
-    if (!activeBtn) return;
-    const currentTab = activeBtn.dataset.tab;
-    const idx = navTabs.indexOf(currentTab);
-    if (idx === -1) return;
-
-    // RTL: swipe left = previous tab, swipe right = next tab
-    let nextIdx;
-    if (dx > 0) {
-      // Swiped right → next tab (RTL visual: left)
-      nextIdx = idx + 1;
-    } else {
-      // Swiped left → previous tab (RTL visual: right)
-      nextIdx = idx - 1;
-    }
-
-    if (nextIdx >= 0 && nextIdx < navTabs.length) {
-      switchTab(navTabs[nextIdx]);
-    }
-  }, { passive: true });
-})();

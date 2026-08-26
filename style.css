@@ -55,7 +55,7 @@ body::after {
   left: 0;
   right: 0;
   bottom: -40px;
-  height: calc(40px + env(safe-area-inset-bottom));
+  height: calc(40px + max(env(safe-area-inset-bottom, 0px), 8px));
   background: var(--cream);
   z-index: 5;
   pointer-events: none;
@@ -68,6 +68,8 @@ body::after {
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
   padding-bottom: 100px;
+  contain: layout style;
+  will-change: scroll-position;
 }
 
 h2 {
@@ -369,6 +371,7 @@ h2 {
   padding: 8px 16px;
   border-radius: 22px;
   box-shadow: 0 8px 18px rgba(22,63,60,0.26), inset 0 1px 0 rgba(255,255,255,0.22);
+  transition: padding .35s cubic-bezier(.22,1,.36,1), border-radius .35s cubic-bezier(.22,1,.36,1), box-shadow .35s ease;
 }
 .app-header.is-compact .brand-badge { width: 30px; height: 30px; border-radius: 9px; }
 .app-header.is-compact .brand-text { font-size: 15.5px; }
@@ -629,7 +632,6 @@ h2 {
 }
 .balance-hero-card:hover {
   box-shadow: 0 10px 28px rgba(16,70,43,0.14), 0 3px 8px rgba(0,0,0,0.05);
-  transform: translateY(-2px);
 }
 .balance-hero-card.negative {
   border-color: rgba(194,74,46,0.18);
@@ -1712,12 +1714,11 @@ input:focus, select:focus {
   cursor: pointer;
   font-family: inherit;
   text-align: center;
-  transition: transform .2s cubic-bezier(.22,1,.36,1), box-shadow .2s ease, filter .2s ease, border-color .2s ease;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04), inset 0 1px 2px rgba(255,255,255,0.9);
+  transition: transform .15s ease, box-shadow .15s ease;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
   position: relative;
-  overflow: hidden;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  will-change: transform;
+  contain: layout style;
 }
 .quick-cat-card:hover { filter: brightness(1.06); box-shadow: 0 6px 20px rgba(0,0,0,0.08), inset 0 1px 2px rgba(255,255,255,0.9); transform: translateY(-2px); }
 .quick-cat-card:active { transform: scale(0.95) translateY(0); box-shadow: 0 1px 3px rgba(0,0,0,0.05), inset 0 1px 2px rgba(255,255,255,0.9); }
@@ -1725,9 +1726,10 @@ input:focus, select:focus {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.1) 60%, rgba(255,255,255,0) 100%);
+  background: linear-gradient(180deg, rgba(255,255,255,0.35) 0%, transparent 60%);
   pointer-events: none;
   border-radius: inherit;
+  will-change: opacity;
 }
 .quick-cat-bubble {
   width: 32px;
@@ -1936,7 +1938,8 @@ input:focus, select:focus {
   box-shadow:
     0 10px 26px rgba(16,70,43,0.12),
     0 1px 0 rgba(255,255,255,0.6) inset;
-  padding: 7px 7px calc(7px + env(safe-area-inset-bottom));
+  padding: 7px 7px calc(7px + env(safe-area-inset-bottom, 20px));
+  padding-bottom: calc(7px + max(env(safe-area-inset-bottom, 0px), 8px));
 }
 .bottom-nav::after {
   content: "";
