@@ -3119,7 +3119,8 @@ input:checked + .toggle-slider:before {
   transition: opacity .15s ease;
 }
 .budget-input-btn:active { opacity: .7; }
-}/* ═══════════════════════════════════════════════════
+
+/* ═══════════════════════════════════════════════════
    ONBOARDING — Apple-style scroll-driven
    ═══════════════════════════════════════════════════ */
 .onboarding {
