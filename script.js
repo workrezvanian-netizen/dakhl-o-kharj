@@ -527,7 +527,7 @@ document.querySelectorAll('#tab-settings .settings-group').forEach((details) => 
 document.querySelectorAll(".nav-btn").forEach((btn) => {
   btn.addEventListener("click", () => switchTab(btn.dataset.tab));
 });
-const _tabOrder = ["budget", "entry", "dashboard", "analysis", "installments", "settings"];
+const _tabOrder = ["budget", "entry", "dashboard", "installments", "analysis", "settings"];
 function switchTab(tab, opts = {}) {
   const prevTab = document.querySelector(".tab.active");
   const prevTabId = prevTab ? prevTab.id.replace("tab-", "") : null;
