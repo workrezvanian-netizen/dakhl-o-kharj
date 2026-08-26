@@ -3000,13 +3000,30 @@ function renderBudget() {
   expenses.forEach((x) => { spentByCat[x.category] = (spentByCat[x.category] || 0) + x.amount; });
   const totalSpent = expenses.reduce((s, x) => s + x.amount, 0);
 
-  // Update total card
-  document.getElementById("budgetTotalSpent").textContent = fmtAmount(totalSpent);
-  document.getElementById("budgetTotalLimit").textContent = fmtAmount(total);
+  // Animate numbers
+  const spentEl = document.getElementById("budgetTotalSpent");
+  const limitEl = document.getElementById("budgetTotalLimit");
+  if (spentEl) { spentEl.textContent = "۰"; requestAnimationFrame(() => animateNumber(spentEl, totalSpent, 600)); }
+  if (limitEl) { limitEl.textContent = "۰"; requestAnimationFrame(() => animateNumber(limitEl, total, 600)); }
+
+  // Progress bar
   const pct = total > 0 ? Math.min((totalSpent / total) * 100, 100) : 0;
   const fillEl = document.getElementById("budgetProgressFill");
-  fillEl.style.width = pct + "%";
-  fillEl.className = "budget-progress-fill" + (pct > 80 ? " danger" : pct > 60 ? " warning" : "");
+  if (fillEl) {
+    fillEl.style.width = pct + "%";
+    fillEl.className = "budget-hero-bar-fill" + (pct > 80 ? " danger" : pct > 60 ? " warning" : "");
+  }
+
+  // Stats
+  const pctStat = document.getElementById("budgetPercentStat");
+  const remainStat = document.getElementById("budgetRemainStat");
+  const remain = Math.max(total - totalSpent, 0);
+  if (pctStat) pctStat.textContent = Math.round(pct) + "% مصرف شده";
+  if (remainStat) remainStat.textContent = "مانده: " + fmtAmount(remain);
+
+  // Category count
+  const catCountEl = document.getElementById("budgetCatCount");
+  if (catCountEl) catCountEl.textContent = state.categories.length + " دسته";
 
   // Render category rows
   const listEl = document.getElementById("budgetCategoryList");
@@ -3018,7 +3035,7 @@ function renderBudget() {
     return `
       <div class="budget-cat-row">
         <div class="budget-cat-head">
-          <span class="budget-cat-icon" style="background:${color}">${iconSpanHTML(c.icon, "color:#fff;width:13px;height:13px")}</span>
+          <span class="budget-cat-icon" style="background:${color}">${iconSpanHTML(c.icon, "color:#fff;width:14px;height:14px")}</span>
           <span class="budget-cat-name">${c.name}</span>
           <span class="budget-cat-amounts">${fmtAmount(spent)}<small> / ${fmtAmount(budget)}</small></span>
         </div>

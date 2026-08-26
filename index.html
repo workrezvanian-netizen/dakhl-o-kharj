@@ -425,21 +425,45 @@
 
   <!-- BUDGET -->
   <section id="tab-budget" class="tab">
-    <h2 style="margin-bottom:14px;">بودجه ماهانه</h2>
-    <div class="budget-total-card" id="budgetTotalCard">
-      <span class="budget-total-label">بودجه کل این ماه</span>
-      <div class="budget-total-row">
-        <span class="budget-total-amount"><span id="budgetTotalSpent">۰</span> <small>از</small> <span id="budgetTotalLimit">۰</span></span>
-        <span class="budget-total-unit">تومان</span>
+    <!-- Top summary card -->
+    <div class="budget-hero" id="budgetTotalCard">
+      <div class="budget-hero-bg"></div>
+      <div class="budget-hero-content">
+        <div class="budget-hero-top">
+          <span class="budget-hero-label">بودجه این ماه</span>
+          <span class="budget-hero-month"></span>
+        </div>
+        <div class="budget-hero-amount-row">
+          <span class="budget-hero-spent"><span id="budgetTotalSpent">۰</span></span>
+          <span class="budget-hero-sep">از</span>
+          <span class="budget-hero-limit"><span id="budgetTotalLimit">۰</span></span>
+        </div>
+        <div class="budget-hero-bar">
+          <div class="budget-hero-bar-fill" id="budgetProgressFill"></div>
+        </div>
+        <div class="budget-hero-stats">
+          <span class="budget-hero-stat" id="budgetPercentStat">۰٪ مصرف شده</span>
+          <span class="budget-hero-stat" id="budgetRemainStat">مانده: ۰</span>
+        </div>
       </div>
-      <div class="budget-progress-bar"><div class="budget-progress-fill" id="budgetProgressFill"></div></div>
+    </div>
+    <!-- Category list -->
+    <div class="budget-section-header">
+      <span class="budget-section-title">دسته‌بندی‌ها</span>
+      <span class="budget-section-count" id="budgetCatCount">۰ دسته</span>
     </div>
     <div id="budgetCategoryList" class="budget-cat-list"></div>
-    <div class="budget-add-row">
-      <label style="font-size:12px;font-weight:600;color:var(--text-mute);">بودجه کل ماه (تومان)</label>
-      <div class="budget-add-input-row">
-        <input type="text" id="budgetTotalInput" inputmode="numeric" placeholder="مثلاً ۵۰٬۰۰۰٬۰۰۰" style="flex:1;padding:8px 12px;border-radius:10px;border:1px solid var(--border);font-family:inherit;font-size:13px;background:var(--cream);direction:ltr;text-align:right;">
-        <button type="button" id="budgetSaveTotalBtn" class="btn btn-neutral" style="font-size:12px;">ذخیره</button>
+    <!-- Total budget input -->
+    <div class="budget-input-card">
+      <div class="budget-input-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+      </div>
+      <div class="budget-input-body">
+        <label class="budget-input-label">بودجه کل ماه</label>
+        <div class="budget-input-row">
+          <input type="text" id="budgetTotalInput" inputmode="numeric" placeholder="مثلاً ۵۰٬۰۰۰٬۰۰۰" class="budget-input-field">
+          <button type="button" id="budgetSaveTotalBtn" class="budget-input-btn">ذخیره</button>
+        </div>
       </div>
     </div>
   </section>
