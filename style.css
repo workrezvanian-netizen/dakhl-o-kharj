@@ -1139,6 +1139,8 @@ h2 {
     0 3px 8px rgba(16,70,43,0.06);
 }
 .settings-card { padding: 18px; margin-bottom: 10px; transition: box-shadow .2s ease; }
+#tab-analysis .settings-card { padding: 24px 18px; margin-bottom: 16px; }
+#tab-analysis .settings-card h2 { margin-bottom: 18px; }
 .settings-card:hover { box-shadow: 0 2px 0 rgba(255,255,255,0.8) inset, 0 -8px 18px rgba(255,255,255,0.12) inset, 0 18px 32px rgba(16,70,43,0.12), 0 4px 10px rgba(16,70,43,0.08); }
 .settings-group {
   margin-bottom: 12px;
@@ -2750,7 +2752,7 @@ input:checked + .toggle-slider:before {
 .daily-chart-total.income-color { color: var(--green-deep); }
 .daily-chart-total.expense-color { color: var(--expense); }
 
-.daily-chart-svg { width: 100%; height: 138px; display: block; touch-action: pan-y; }
+.daily-chart-svg { width: 100%; height: 180px; display: block; touch-action: pan-y; }
 
 /* ---------- Line chart stroke-draw animation ---------- */
 @keyframes line-draw {
@@ -2783,7 +2785,7 @@ input:checked + .toggle-slider:before {
   direction: ltr;
   margin: 0 -2px;
 }
-.daily-chart-scroll .daily-chart-svg { width: 100%; height: 160px; display: block; }
+.daily-chart-scroll .daily-chart-svg { width: 100%; height: 200px; display: block; }
 
 .top-tx-list { display: flex; flex-direction: column; gap: 10px; }
 .top-tx-row {
@@ -3051,8 +3053,9 @@ input:checked + .toggle-slider:before {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 18px;
+  gap: 24px;
   padding: 0 32px;
+  padding-bottom: 60px;
 }
 .ob-app-badge {
   width: 80px;
@@ -3066,45 +3069,50 @@ input:checked + .toggle-slider:before {
 .ob-app-img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .ob-hero-title {
   font-family: 'Samim', 'Vazirmatn', sans-serif;
-  font-size: 40px;
+  font-size: 36px;
   font-weight: 800;
   color: #fff;
   margin: 0;
   letter-spacing: -0.5px;
-  line-height: 1.2;
+  line-height: 1.35;
   will-change: transform, opacity;
+  word-spacing: 2px;
 }
 .ob-hero-sub {
-  font-size: 16px;
+  font-size: 15px;
   color: rgba(255,255,255,0.6);
   margin: 0;
-  line-height: 1.7;
+  line-height: 1.8;
   will-change: transform, opacity;
+  max-width: 280px;
 }
 .ob-scroll-cue,
 .ob-scroll-cue-bottom {
   position: absolute;
-  bottom: 48px;
+  bottom: 18px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  color: rgba(255,255,255,0.35);
+  gap: 4px;
+  color: rgba(255,255,255,0.55);
   font-size: 11px;
   letter-spacing: 0.5px;
   opacity: 0;
-  animation: obScrollFadeIn .6s ease 1.5s forwards;
+  animation: obScrollFadeIn .6s ease 1.2s forwards;
 }
 @keyframes obScrollFadeIn {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
 }
 .ob-scroll-arrow {
-  animation: obBounce 1.8s ease-in-out infinite;
+  width: 24px;
+  height: 24px;
+  stroke-width: 2.5;
+  animation: obBounce 1.5s ease-in-out infinite;
 }
 @keyframes obBounce {
-  0%,100% { transform: translateY(0); opacity: .35; }
-  50% { transform: translateY(8px); opacity: .8; }
+  0%,100% { transform: translateY(0); opacity: .45; }
+  50% { transform: translateY(8px); opacity: .9; }
 }
 /* ---- Features ---- */
 .ob-feature { background: #000; }

@@ -1846,7 +1846,7 @@ function renderCombinedDailyChart(containerId, incomeTotalElId, expenseTotalElId
   const maxIncome = Math.max(...pool.map((p) => p.income)) || 1;
   const maxExpense = Math.max(...pool.map((p) => p.expense)) || 1;
 
-  const H = 160, PAD_TOP = 40, PAD_BOTTOM = 28, PAD_X = 18;
+  const H = 200, PAD_TOP = 40, PAD_BOTTOM = 28, PAD_X = 18;
   const chartH = H - PAD_TOP - PAD_BOTTOM;
   const W = Math.max((scrollWrap && scrollWrap.clientWidth) || 320, 280);
   const stepX = (W - PAD_X * 2) / (n - 1 || 1);
