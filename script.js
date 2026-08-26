@@ -3040,3 +3040,69 @@ document.getElementById("budgetCategoryList").addEventListener("blur", (e) => {
     saveState();
   }
 }, true);
+
+// ═══════════════════════════════════════════════════
+// ONBOARDING (scroll-driven intro)
+// ═══════════════════════════════════════════════════
+(function initOnboarding() {
+  const KEY = "onboarding_done";
+  const overlay = document.getElementById("onboarding");
+  if (!overlay || localStorage.getItem(KEY)) return;
+
+  overlay.hidden = false;
+  const snap = document.getElementById("onboardingSnap");
+  const dots = document.querySelectorAll(".onboard-dot");
+  const sections = overlay.querySelectorAll(".onboard-section");
+  let currentSection = 0;
+
+  // Intersection Observer to detect which section is in view
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const idx = parseInt(entry.target.dataset.section);
+        currentSection = idx;
+        // Add in-view class for animations
+        sections.forEach(s => s.classList.remove("in-view"));
+        entry.target.classList.add("in-view");
+        // Update dots
+        dots.forEach((d, i) => d.classList.toggle("active", i === idx));
+      }
+    });
+  }, { threshold: 0.55 });
+
+  sections.forEach(s => observer.observe(s));
+
+  // Make first section in-view immediately
+  sections[0].classList.add("in-view");
+
+  // Animate chart bars' inline heights when they become visible
+  const chartBars = overlay.querySelectorAll(".chart-bar");
+  chartBars.forEach(bar => {
+    const h = bar.style.height;
+    bar.style.setProperty("--h", h);
+  });
+  const budgetFills = overlay.querySelectorAll(".budget-mock-fill");
+  budgetFills.forEach(fill => {
+    const w = fill.style.width;
+    fill.style.setProperty("--w", w);
+  });
+
+  // Dismiss function
+  function dismissOnboarding() {
+    overlay.style.opacity = "0";
+    overlay.style.transition = "opacity .4s ease";
+    setTimeout(() => {
+      overlay.hidden = true;
+      localStorage.setItem(KEY, "1");
+      observer.disconnect();
+    }, 400);
+  }
+
+  // Start button
+  const startBtn = document.getElementById("onboardStartBtn");
+  if (startBtn) startBtn.addEventListener("click", dismissOnboarding);
+
+  // Skip button
+  const skipBtn = document.getElementById("onboardSkipBtn");
+  if (skipBtn) skipBtn.addEventListener("click", dismissOnboarding);
+})();
