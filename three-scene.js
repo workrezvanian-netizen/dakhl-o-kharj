@@ -8,16 +8,15 @@
 
   const SELECTOR = [
     ".settings-card",
-    ".balance-card",
-    ".month-remaining",
+    ".balance-hero-card",
     ".week-cal-card",
-    ".dash-week-card",
-    ".ai-card",
     ".summary-card",
-    ".chart-carousel-page.stack-front",
   ].join(",");
 
   const maxTilt = 5; // درجه
+  // این‌ها خودشون تعامل کشیدنیِ مختص خودشون رو دارن (مثل ورق‌زدن کارت‌ها یا اسلایدر بودجه)
+  // پس اگه اشاره‌گر داخل اون‌هاست، نباید بلوک بیرونی هم کج بشه.
+  const NO_TILT_INSIDE = ".chart-carousel-page, .budget-cat-slider, input[type=range]";
 
   function bindTilt(el) {
     if (el.dataset.tiltBound === "1") return;
@@ -25,6 +24,11 @@
 
     let raf = 0;
     function onMove(e) {
+      if (e.target.closest && e.target.closest(NO_TILT_INSIDE)) {
+        cancelAnimationFrame(raf);
+        el.style.transform = "";
+        return;
+      }
       const rect = el.getBoundingClientRect();
       const x = (e.clientX - rect.left) / rect.width;
       const y = (e.clientY - rect.top) / rect.height;

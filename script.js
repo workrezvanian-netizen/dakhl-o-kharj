@@ -1136,23 +1136,6 @@ function updateMonthLabel() {
     balanceCard.className = `balance-hero-card ${isPositive ? "positive" : "negative"}${hiddenClass}`;
     animateNumber(balanceAmountEl, Math.abs(balance), 800);
   }
-
-  const remainEl = document.getElementById("monthRemaining");
-  if (remainEl) {
-    const cls = balance >= 0 ? "is-positive" : "is-negative";
-    const sign = balance >= 0 ? "+" : "−";
-    const icon = balance >= 0 ? "wallet" : "trending-down";
-    remainEl.className = `month-remaining ${cls}`;
-    remainEl.innerHTML = `
-      <span class="month-balance-icon-badge">${iconSpanHTML(icon, "width:15px;height:15px")}</span>
-      <span class="month-balance-label">دخل</span>
-      <strong class="month-balance-amount">${sign}۰ <span class="month-balance-unit">تومان</span></strong>`;
-    const balanceEl = remainEl.querySelector(".month-balance-amount");
-    if (balanceEl) {
-      const signSpan = `${sign}`;
-      animateNumberWithSign(balanceEl, balance, 800, sign);
-    }
-  }
 }
 
 // Every tab (dashboard, entry list, analysis) follows the same viewed month,
