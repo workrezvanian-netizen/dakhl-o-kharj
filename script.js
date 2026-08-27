@@ -591,9 +591,8 @@ function switchTab(tab, opts = {}) {
 
   const headerEl = document.querySelector(".app-header");
   if (headerEl) {
-    // Toggle compact state — let CSS transform handle the animation
-    if (tab === "dashboard") headerEl.classList.remove("is-compact");
-    else headerEl.classList.add("is-compact");
+    // Toggle compact state via JS-driven transform
+    setHeaderCompact(tab !== "dashboard");
   }
 
   const scrollRoot = document.getElementById("appScroll");
@@ -2689,6 +2688,21 @@ const appHeader = document.querySelector(".app-header");
 let lastScrollTop = 0;
 let headerCollapseTimer = null;
 
+// JS-driven header-inner transform (avoids CSS specificity issues)
+function setHeaderCompact(compact) {
+  const inner = appHeader?.querySelector(".header-inner");
+  if (!inner) return;
+  if (compact) {
+    appHeader.classList.add("is-compact");
+    inner.style.transform = "scaleY(0.65)";
+    inner.style.transformOrigin = "center top";
+  } else {
+    appHeader.classList.remove("is-compact");
+    inner.style.transform = "";
+    inner.style.transformOrigin = "";
+  }
+}
+
 if (appScroll) {
   appScroll.addEventListener("scroll", () => {
     const activeTab = document.querySelector(".nav-btn.active")?.dataset.tab || "dashboard";
@@ -2697,11 +2711,9 @@ if (appScroll) {
     clearTimeout(headerCollapseTimer);
     
     if (scrollTop > 12) {
-      if (!appHeader.classList.contains("is-compact")) {
-        appHeader.classList.add("is-compact");
-      }
+      setHeaderCompact(true);
     } else {
-      appHeader.classList.remove("is-compact");
+      setHeaderCompact(false);
     }
     lastScrollTop = scrollTop;
   }, { passive: true });
@@ -3030,26 +3042,55 @@ function renderBudget() {
   const catCountEl = document.getElementById("budgetCatCount");
   if (catCountEl) catCountEl.textContent = state.categories.length + " دسته";
 
-  // Render category rows
+  // Render category rows with mini donut + gauge slider
+  const CAT_CIRC = 126; // 2 * PI * 20
   const listEl = document.getElementById("budgetCategoryList");
-  listEl.innerHTML = state.categories.map((c) => {
+  listEl.innerHTML = state.categories.map((c, i) => {
     const budget = catBudgets[c.name] || 0;
     const spent = spentByCat[c.name] || 0;
     const catPct = budget > 0 ? Math.min((spent / budget) * 100, 100) : 0;
     const color = catColor(c.name);
+    const dashLen = (catPct / 100) * CAT_CIRC;
+    const statusClass = catPct > 80 ? 'cat-danger' : catPct > 60 ? 'cat-warning' : 'cat-ok';
     return `
-      <div class="budget-cat-row">
-        <div class="budget-cat-head">
-          <span class="budget-cat-icon" style="background:${color}">${iconSpanHTML(c.icon, "color:#fff;width:14px;height:14px")}</span>
-          <span class="budget-cat-name">${c.name}</span>
-          <span class="budget-cat-amounts">${fmtAmount(spent)}<small> / ${fmtAmount(budget)}</small></span>
+      <div class="budget-cat-row" data-cat-idx="${i}">
+        <div class="budget-cat-top">
+          <div class="budget-cat-mini-donut">
+            <svg viewBox="0 0 48 48">
+              <circle cx="24" cy="24" r="20" fill="none" stroke="rgba(0,0,0,0.06)" stroke-width="5"/>
+              <circle cx="24" cy="24" r="20" fill="none" stroke="${color}" stroke-width="5" stroke-linecap="round" stroke-dasharray="${dashLen} ${CAT_CIRC}" transform="rotate(-90 24 24)" style="transition: stroke-dasharray .6s cubic-bezier(.4,0,.2,1)"/>
+            </svg>
+            <span class="budget-cat-pct ${statusClass}">${Math.round(catPct)}</span>
+          </div>
+          <div class="budget-cat-info">
+            <div class="budget-cat-head">
+              <span class="budget-cat-icon" style="background:${color}">${iconSpanHTML(c.icon, "color:#fff;width:14px;height:14px")}</span>
+              <span class="budget-cat-name">${c.name}</span>
+            </div>
+            <div class="budget-cat-amounts">${fmtAmount(spent)}<small> / ${fmtAmount(budget)}</small></div>
+          </div>
         </div>
-        <div class="budget-cat-bar"><div class="budget-cat-fill" style="width:${catPct}%;background:${color}"></div></div>
-        <div class="budget-cat-input-row">
-          <input type="text" inputmode="numeric" class="budget-cat-input" data-cat="${c.name}" value="${budget || ""}" placeholder="بدون محدودیت">
+        <div class="budget-cat-slider-row">
+          <span class="budget-cat-slider-label">بودجه:</span>
+          <input type="range" class="budget-cat-slider" data-cat="${c.name}" min="0" max="100000000" step="100000" value="${budget || 0}" style="--cat-color:${color}">
+          <span class="budget-cat-slider-val" id="sliderVal_${i}">${budget ? fmtAmount(budget) : '−'}</span>
         </div>
       </div>`;
   }).join("");
+  // Attach slider listeners
+  listEl.querySelectorAll('.budget-cat-slider').forEach((slider, idx) => {
+    slider.addEventListener('input', () => {
+      const catName = slider.dataset.cat;
+      const val = parseInt(slider.value) || 0;
+      state.budget.categories[catName] = val;
+      const valEl = document.getElementById('sliderVal_' + idx);
+      if (valEl) valEl.textContent = val > 0 ? fmtAmount(val) : '−';
+    });
+    slider.addEventListener('change', () => {
+      saveState();
+      renderBudget();
+    });
+  });
 
   // Set total input
   document.getElementById("budgetTotalInput").value = total || "";

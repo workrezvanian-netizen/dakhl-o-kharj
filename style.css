@@ -273,7 +273,6 @@ h2 {
   position: relative;
   overflow: hidden;
   box-shadow: 0 8px 20px rgba(22,63,60,0.28), inset 0 1px 0 rgba(255,255,255,0.2);
-  contain: layout style;
   transition: transform .35s cubic-bezier(.22,1,.36,1);
 }
 
@@ -367,14 +366,8 @@ h2 {
 .header-settings-btn:active { background: rgba(251,247,240,0.3); }
 
 /* ---------- Compact header (shrinks smoothly on scroll) ---------- */
-/* Compact mode: only transform + opacity (GPU-accelerated, no layout) */
-.app-header.is-compact .header-inner {
-  transform: scaleY(0.65);
-  transform-origin: center top;
-  border-radius: 22px;
-  box-shadow: 0 6px 16px rgba(22,63,60,0.22);
-}
-.app-header.is-compact .brand-badge { transform: scale(0.58); border-radius: 9px; }
+/* Compact mode: badge+text use CSS transform, header-inner uses JS */
+.app-header.is-compact .brand-badge { transform: scale(0.6); border-radius: 9px; background: rgba(255,255,255,0.2); }
 .app-header.is-compact .brand-text { transform: scaleX(0.72); transform-origin: right center; opacity: 1; font-size: 17px; }
 .app-header.is-compact .watermark { transform: scaleY(0.7); opacity: 0.7; }
 .app-header.is-compact .header-side { gap: 0; }
@@ -3060,6 +3053,84 @@ input:checked + .toggle-slider:before {
   outline: none;
   border-color: var(--green);
   box-shadow: 0 0 0 3px rgba(22,63,60,0.08);
+}
+/* ─── Mini Donut + Top Row ─── */
+.budget-cat-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.budget-cat-mini-donut {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+}
+.budget-cat-mini-donut svg {
+  width: 100%; height: 100%;
+}
+.budget-cat-pct {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--text);
+}
+.budget-cat-pct.cat-ok { color: #2E7D32; }
+.budget-cat-pct.cat-warning { color: #E65100; }
+.budget-cat-pct.cat-danger { color: #C62828; }
+.budget-cat-info { flex: 1; }
+/* ─── Gauge Slider ─── */
+.budget-cat-slider-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.budget-cat-slider-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-mute);
+  flex-shrink: 0;
+}
+.budget-cat-slider {
+  flex: 1;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--border);
+  outline: none;
+}
+.budget-cat-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--cat-color, var(--green));
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  cursor: pointer;
+  border: 2px solid #fff;
+}
+.budget-cat-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--cat-color, var(--green));
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  cursor: pointer;
+  border: 2px solid #fff;
+}
+.budget-cat-slider-val {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+  min-width: 60px;
+  text-align: left;
+  direction: ltr;
 }
 /* ─── Budget Input Card ─── */
 .budget-input-card {
