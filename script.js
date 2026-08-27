@@ -1312,10 +1312,12 @@ document.getElementById("calTodayBtn").addEventListener("click", () => {
 function openCalMonthPopup() {
   viewedMonth = todayJalali();
   applyViewedMonthState();
-  document.getElementById("calMonthOverlay").hidden = false;
+  const ov = document.getElementById("calMonthOverlay");
+  ov.classList.add("cal-visible");
 }
 function closeCalMonthPopup() {
-  document.getElementById("calMonthOverlay").hidden = true;
+  const ov = document.getElementById("calMonthOverlay");
+  ov.classList.remove("cal-visible");
 }
 document.getElementById("weekCalExpandBtn").addEventListener("click", openCalMonthPopup);
 document.getElementById("calMonthCloseBtn").addEventListener("click", closeCalMonthPopup);
