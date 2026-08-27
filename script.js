@@ -591,12 +591,9 @@ function switchTab(tab, opts = {}) {
 
   const headerEl = document.querySelector(".app-header");
   if (headerEl) {
-    // Instant toggle — no animation on tab switch for snappy feel
-    headerEl.style.transition = 'none';
+    // Toggle compact state — let CSS transform handle the animation
     if (tab === "dashboard") headerEl.classList.remove("is-compact");
     else headerEl.classList.add("is-compact");
-    // Re-enable transition after a frame for scroll-based animation
-    requestAnimationFrame(() => { headerEl.style.transition = ''; });
   }
 
   const scrollRoot = document.getElementById("appScroll");
@@ -2505,7 +2502,7 @@ function setupAiCardScrollCollapse(cardId, starId, btnId, resultId) {
   const scrollRoot = document.querySelector(".app-scroll");
   if (!card || !star || !scrollRoot) return;
 
-  const FINAL_SCALE = 0.14;
+  const FINAL_SCALE = 0.12;
   let dx = 0, dy = 0, collapseDistance = 160;
 
   function measureTarget() {
@@ -2520,24 +2517,27 @@ function setupAiCardScrollCollapse(cardId, starId, btnId, resultId) {
     const starCenterY = starRect.top + starRect.height / 2;
     dx = starCenterX - shrunkCenterX;
     dy = starCenterY - shrunkCenterY;
-    collapseDistance = Math.max(cardRect.height * 0.8, 90);
+    collapseDistance = Math.max(cardRect.height * 0.75, 80);
   }
   measureTarget();
   window.addEventListener("resize", measureTarget);
 
-  const applyCollapse = (collapse) => {
-    collapse = Math.min(Math.max(collapse, 0), 1);
+  // Smooth easing for collapse
+  function easeInOutCubic(t) { return t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2; }
+
+  const applyCollapse = (rawCollapse) => {
+    const collapse = easeInOutCubic(Math.min(Math.max(rawCollapse, 0), 1));
     const scale = 1 - collapse * (1 - FINAL_SCALE);
     const radius = 22 + collapse * 30;
-    const fade = Math.max(0, (collapse - 0.55) / 0.45);
-    const pull = Math.pow(collapse, 1.7);
-    card.style.opacity = String(1 - fade);
+    const fade = Math.max(0, (collapse - 0.5) / 0.5);
+    const pull = Math.pow(collapse, 1.5);
+    card.style.opacity = String(Math.max(0, 1 - fade));
     card.style.transform = `translate(${(dx * pull).toFixed(1)}px, ${(dy * pull).toFixed(1)}px) scale(${scale.toFixed(3)})`;
     card.style.borderRadius = `${radius.toFixed(1)}px`;
     card.style.pointerEvents = collapse > 0.6 ? "none" : "";
-    star.style.opacity = String(collapse * 0.92);
-    star.style.transform = `scale(${(0.5 + collapse * 0.5).toFixed(3)}) translateY(${((1 - collapse) * -6).toFixed(1)}px)`;
-    star.style.pointerEvents = collapse > 0.6 ? "auto" : "none";
+    star.style.opacity = String(Math.min(collapse * 1.2, 0.95));
+    star.style.transform = `scale(${(0.4 + collapse * 0.6).toFixed(3)}) translateY(${((1 - collapse) * -8).toFixed(1)}px)`;
+    star.style.pointerEvents = collapse > 0.5 ? "auto" : "none";
   };
 
   let ticking = false;
@@ -2999,27 +2999,32 @@ function renderBudget() {
   const spentByCat = {};
   expenses.forEach((x) => { spentByCat[x.category] = (spentByCat[x.category] || 0) + x.amount; });
   const totalSpent = expenses.reduce((s, x) => s + x.amount, 0);
+  const remain = Math.max(total - totalSpent, 0);
+  const pct = total > 0 ? Math.min((totalSpent / total) * 100, 100) : 0;
 
   // Animate numbers
   const spentEl = document.getElementById("budgetTotalSpent");
   const limitEl = document.getElementById("budgetTotalLimit");
-  if (spentEl) { spentEl.textContent = "۰"; requestAnimationFrame(() => animateNumber(spentEl, totalSpent, 600)); }
-  if (limitEl) { limitEl.textContent = "۰"; requestAnimationFrame(() => animateNumber(limitEl, total, 600)); }
+  const remainEl = document.getElementById("budgetRemainStat");
+  if (spentEl) { spentEl.textContent = "\u06F0"; requestAnimationFrame(() => animateNumber(spentEl, totalSpent, 600)); }
+  if (limitEl) { limitEl.textContent = "\u06F0"; requestAnimationFrame(() => animateNumber(limitEl, total, 600)); }
+  if (remainEl) { remainEl.textContent = "\u06F0"; requestAnimationFrame(() => animateNumber(remainEl, remain, 600)); }
 
-  // Progress bar
-  const pct = total > 0 ? Math.min((totalSpent / total) * 100, 100) : 0;
-  const fillEl = document.getElementById("budgetProgressFill");
-  if (fillEl) {
-    fillEl.style.width = pct + "%";
-    fillEl.className = "budget-hero-bar-fill" + (pct > 80 ? " danger" : pct > 60 ? " warning" : "");
+  // Donut chart
+  const CIRCUMFERENCE = 314; // 2 * PI * 50
+  const donutFill = document.getElementById("budgetDonutFill");
+  if (donutFill) {
+    const dashLen = (pct / 100) * CIRCUMFERENCE;
+    donutFill.style.strokeDasharray = `${dashLen} ${CIRCUMFERENCE}`;
+    // Color: green → orange → red based on pct
+    if (pct > 80) donutFill.setAttribute("stroke", "url(#budgetGradDanger)");
+    else if (pct > 60) donutFill.setAttribute("stroke", "url(#budgetGradWarn)");
+    else donutFill.setAttribute("stroke", "url(#budgetGrad)");
   }
 
-  // Stats
+  // Percentage in donut center
   const pctStat = document.getElementById("budgetPercentStat");
-  const remainStat = document.getElementById("budgetRemainStat");
-  const remain = Math.max(total - totalSpent, 0);
-  if (pctStat) pctStat.textContent = Math.round(pct) + "% مصرف شده";
-  if (remainStat) remainStat.textContent = "مانده: " + fmtAmount(remain);
+  if (pctStat) pctStat.textContent = Math.round(pct) + "%";
 
   // Category count
   const catCountEl = document.getElementById("budgetCatCount");

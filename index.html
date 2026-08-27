@@ -425,7 +425,7 @@
 
   <!-- BUDGET -->
   <section id="tab-budget" class="tab">
-    <!-- Top summary card -->
+    <!-- Donut chart summary -->
     <div class="budget-hero" id="budgetTotalCard">
       <div class="budget-hero-bg"></div>
       <div class="budget-hero-content">
@@ -433,26 +433,48 @@
           <span class="budget-hero-label">بودجه این ماه</span>
           <span class="budget-hero-month"></span>
         </div>
-        <div class="budget-hero-amount-row">
-          <span class="budget-hero-spent"><span id="budgetTotalSpent">۰</span></span>
-          <span class="budget-hero-sep">از</span>
-          <span class="budget-hero-limit"><span id="budgetTotalLimit">۰</span></span>
+        <div class="budget-donut-wrap">
+          <svg class="budget-donut" viewBox="0 0 120 120">
+            <circle cx="60" cy="60" r="50" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="10"/>
+            <circle id="budgetDonutFill" cx="60" cy="60" r="50" fill="none" stroke="url(#budgetGrad)" stroke-width="10" stroke-linecap="round" stroke-dasharray="0 314" transform="rotate(-90 60 60)" style="transition: stroke-dasharray .8s cubic-bezier(.4,0,.2,1)"/>
+            <defs>
+              <linearGradient id="budgetGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#81C784"/>
+                <stop offset="100%" stop-color="#4CAF50"/>
+              </linearGradient>
+              <linearGradient id="budgetGradWarn" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#FFB74D"/>
+                <stop offset="100%" stop-color="#FFA726"/>
+              </linearGradient>
+              <linearGradient id="budgetGradDanger" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#E57373"/>
+                <stop offset="100%" stop-color="#EF5350"/>
+              </linearGradient>
+            </defs>
+          </svg>
+          <div class="budget-donut-center">
+            <span class="budget-donut-pct" id="budgetPercentStat">۰٪</span>
+            <span class="budget-donut-label">مصرف</span>
+          </div>
         </div>
-        <div class="budget-hero-bar">
-          <div class="budget-hero-bar-fill" id="budgetProgressFill"></div>
-        </div>
-        <div class="budget-hero-stats">
-          <span class="budget-hero-stat" id="budgetPercentStat">۰٪ مصرف شده</span>
-          <span class="budget-hero-stat" id="budgetRemainStat">مانده: ۰</span>
+        <div class="budget-hero-amounts">
+          <div class="budget-amt-item">
+            <span class="budget-amt-val"><span id="budgetTotalSpent">۰</span></span>
+            <span class="budget-amt-lbl">مصرف شده</span>
+          </div>
+          <div class="budget-amt-divider"></div>
+          <div class="budget-amt-item">
+            <span class="budget-amt-val"><span id="budgetTotalLimit">۰</span></span>
+            <span class="budget-amt-lbl">بودجه کل</span>
+          </div>
+          <div class="budget-amt-divider"></div>
+          <div class="budget-amt-item">
+            <span class="budget-amt-val budget-amt-green" id="budgetRemainStat">۰</span>
+            <span class="budget-amt-lbl">مانده</span>
+          </div>
         </div>
       </div>
     </div>
-    <!-- Category list -->
-    <div class="budget-section-header">
-      <span class="budget-section-title">دسته‌بندی‌ها</span>
-      <span class="budget-section-count" id="budgetCatCount">۰ دسته</span>
-    </div>
-    <div id="budgetCategoryList" class="budget-cat-list"></div>
     <!-- Total budget input -->
     <div class="budget-input-card">
       <div class="budget-input-icon">
@@ -466,6 +488,12 @@
         </div>
       </div>
     </div>
+    <!-- Category list -->
+    <div class="budget-section-header">
+      <span class="budget-section-title">بودجه هر دسته</span>
+      <span class="budget-section-count" id="budgetCatCount">۰ دسته</span>
+    </div>
+    <div id="budgetCategoryList" class="budget-cat-list"></div>
   </section>
 
   <!-- SETTINGS -->
