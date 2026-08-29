@@ -371,6 +371,7 @@ h2 {
 .app-header.is-compact .header-inner { padding: 8px 18px; }
 .app-header.is-compact .brand-badge { transform: scale(0.68); border-radius: 11px; background: rgba(255,255,255,0.2); }
 .app-header.is-compact .brand-text { transform: scaleX(0.78); transform-origin: right center; opacity: 1; font-size: 18px; }
+.app-header.is-compact .header-side { position: static; }
 .app-header.is-compact .watermark {
   position: absolute;
   left: 50%;
