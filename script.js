@@ -1143,6 +1143,8 @@ function updateMonthLabel() {
 // so it's obvious you're not looking at the current month.
 function applyViewedMonthState() {
   document.body.classList.toggle("viewing-past-month", !isViewingCurrentMonth());
+  const goBtn = document.getElementById("goCurrentMonthBtn");
+  if (goBtn) goBtn.style.display = isViewingCurrentMonth() ? "none" : "inline-flex";
   renderDashboard();
   renderIncomeList();
   renderExpenseList();
@@ -1360,6 +1362,11 @@ document.getElementById("prevMonthBtn").addEventListener("click", () => {
 document.getElementById("nextMonthBtn").addEventListener("click", () => {
   dashboardMode = "month";
   viewedMonth = addMonthsJalali(viewedMonth.jy, viewedMonth.jm, 1);
+  applyViewedMonthState();
+});
+document.getElementById("goCurrentMonthBtn").addEventListener("click", () => {
+  dashboardMode = "month";
+  viewedMonth = todayJalali();
   applyViewedMonthState();
 });
 
@@ -2679,12 +2686,8 @@ function setHeaderCompact(compact) {
   if (!inner) return;
   if (compact) {
     appHeader.classList.add("is-compact");
-    inner.style.transform = "scaleY(0.65)";
-    inner.style.transformOrigin = "center top";
   } else {
     appHeader.classList.remove("is-compact");
-    inner.style.transform = "";
-    inner.style.transformOrigin = "";
   }
 }
 

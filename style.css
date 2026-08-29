@@ -819,13 +819,38 @@ h2 {
   font-weight: 500;
   color: var(--text-mute);
 }
-.month-nav-label {
+.month-nav-center {
   flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.month-nav-label {
   text-align: center;
   font-weight: 800;
   font-size: 20px;
   color: var(--green-deep);
 }
+.month-nav-go {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  border: none;
+  background: rgba(22,63,60,0.08);
+  color: var(--green-deep);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 999px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background .15s ease;
+  margin-left: 4px;
+  white-space: nowrap;
+}
+.month-nav-go:active { background: var(--green-soft); }
 .alltime-toggle {
   border: 1px solid var(--border);
   background: var(--surface);
@@ -1191,7 +1216,7 @@ h2 {
   color: var(--text);
 }
 #incomeAmount, #expenseAmount { margin-top: 0; }
-.amount-field-with-shortcut input { padding-left: 40px; }
+.amount-field-with-shortcut input { padding-right: 40px; padding-left: 12px; text-align: center; }
 .entry-note-field { opacity: 0.6; }
 .entry-note-field input { background: transparent; border-style: dashed; }
 .entry-note-field:focus-within { opacity: 1; }
@@ -1208,7 +1233,7 @@ h2 {
 }
 .amount-inline-shortcut {
   position: absolute;
-  left: 10px;
+  right: 10px;
   top: 50%;
   transform: translateY(-50%);
   padding: 3px 8px;
@@ -1694,9 +1719,10 @@ input:focus, select:focus {
   gap: 6px;
 }
 .quick-cat-card {
-  border: 1px solid rgba(255,255,255,0.6);
-  border-radius: 18px;
-  padding: 14px 6px 12px;
+  border: 1px solid rgba(255,255,255,0.5);
+  border-radius: 20px;
+  padding: 16px 6px 14px;
+  background: rgba(255,255,255,0.15);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1722,16 +1748,16 @@ input:focus, select:focus {
   will-change: opacity;
 }
 .quick-cat-bubble {
-  width: 32px;
-  height: 32px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1), inset 0 1px 1px rgba(255,255,255,0.6);
-  border: 1px solid rgba(255,255,255,0.4);
+  box-shadow: 0 3px 10px rgba(0,0,0,0.08), inset 0 1px 1px rgba(255,255,255,0.6);
+  border: 1px solid rgba(255,255,255,0.25);
 }
-.quick-cat-bubble .icon-mask { width: 13px; height: 13px; }
+.quick-cat-bubble .icon-mask { width: 22px; height: 22px; }
 .quick-cat-name {
   font-size: 10.5px;
   font-weight: 700;
