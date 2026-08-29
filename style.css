@@ -1761,7 +1761,7 @@ input:focus, select:focus {
   box-shadow: 0 2px 10px rgba(0,0,0,0.1), inset 0 1px 1px rgba(255,255,255,0.6);
   border: 1px solid rgba(255,255,255,0.4);
 }
-.quick-cat-bubble .icon-mask { width: 22px; height: 22px; }
+.quick-cat-bubble .icon-mask { width: 26px; height: 26px; opacity: 0.7; }
 .quick-cat-name {
   font-size: 10.5px;
   font-weight: 700;
