@@ -336,12 +336,7 @@ h2 {
   height: 24px;
   width: auto;
   opacity: 1;
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
   pointer-events: none;
-  z-index: 1;
 }
 .header-side {
   display: flex;
@@ -376,7 +371,15 @@ h2 {
 .app-header.is-compact .header-inner { padding: 8px 18px; }
 .app-header.is-compact .brand-badge { transform: scale(0.68); border-radius: 11px; background: rgba(255,255,255,0.2); }
 .app-header.is-compact .brand-text { transform: scaleX(0.78); transform-origin: right center; opacity: 1; font-size: 18px; }
-.app-header.is-compact .watermark { opacity: 0.9; height: 20px; }
+.app-header.is-compact .watermark {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  height: 20px;
+  opacity: 0.9;
+  z-index: 1;
+}
 .app-header.is-compact .header-side { gap: 4px; }
 .app-header.is-compact .header-settings-btn {
   transform: scale(0);
@@ -3287,9 +3290,14 @@ input:checked + .toggle-slider:before {
   opacity: 0.45;
   will-change: transform;
 }
-.ob-orb-1 { width: 320px; height: 320px; background: #163F3C; top: -80px; right: -60px; }
-.ob-orb-2 { width: 200px; height: 200px; background: #2E7D32; bottom: 20%; left: -40px; }
-.ob-orb-3 { width: 160px; height: 160px; background: #1a5c56; bottom: -40px; right: 20%; }
+.ob-orb-1 { width: 380px; height: 380px; background: linear-gradient(135deg, #163F3C, #2E7D32); top: -100px; right: -80px; animation: obOrbFloat 8s ease-in-out infinite; }
+.ob-orb-2 { width: 240px; height: 240px; background: linear-gradient(135deg, #2E7D32, #4CAF50); bottom: 20%; left: -60px; animation: obOrbFloat 6s ease-in-out infinite reverse; }
+.ob-orb-3 { width: 180px; height: 180px; background: linear-gradient(135deg, #1a5c56, #163F3C); bottom: -50px; right: 15%; animation: obOrbFloat 7s ease-in-out infinite; }
+@keyframes obOrbFloat {
+  0%,100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(15px, -10px) scale(1.05); }
+  66% { transform: translate(-10px, 10px) scale(0.95); }
+}
 .ob-orb-4 { width: 250px; height: 250px; background: #4CAF50; top: 10%; left: -60px; }
 .ob-hero-inner {
   position: relative;
@@ -3303,18 +3311,23 @@ input:checked + .toggle-slider:before {
   padding-bottom: 60px;
 }
 .ob-app-badge {
-  width: 80px;
-  height: 80px;
-  border-radius: 22px;
+  width: 96px;
+  height: 96px;
+  border-radius: 26px;
   overflow: hidden;
-  box-shadow: 0 12px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.08);
+  box-shadow: 0 16px 50px rgba(22,63,60,0.6), 0 0 0 1px rgba(255,255,255,0.1), 0 0 60px rgba(22,63,60,0.3);
   will-change: transform;
+  animation: obBadgePulse 3s ease-in-out infinite;
+}
+@keyframes obBadgePulse {
+  0%,100% { transform: scale(1); box-shadow: 0 16px 50px rgba(22,63,60,0.6), 0 0 0 1px rgba(255,255,255,0.1), 0 0 60px rgba(22,63,60,0.3); }
+  50% { transform: scale(1.03); box-shadow: 0 20px 60px rgba(22,63,60,0.7), 0 0 0 1px rgba(255,255,255,0.15), 0 0 80px rgba(22,63,60,0.4); }
 }
 .ob-app-badge-lg { width: 96px; height: 96px; border-radius: 26px; }
 .ob-app-img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .ob-hero-title {
   font-family: 'Samim', 'Vazirmatn', sans-serif;
-  font-size: 36px;
+  font-size: 40px;
   font-weight: 800;
   color: #fff;
   margin: 0;
@@ -3322,14 +3335,19 @@ input:checked + .toggle-slider:before {
   line-height: 1.35;
   will-change: transform, opacity;
   word-spacing: 2px;
+  background: linear-gradient(180deg, #fff 30%, rgba(255,255,255,0.7) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 .ob-hero-sub {
   font-size: 15px;
-  color: rgba(255,255,255,0.6);
+  color: rgba(255,255,255,0.5);
   margin: 0;
-  line-height: 1.8;
+  line-height: 1.9;
   will-change: transform, opacity;
   max-width: 280px;
+  font-weight: 300;
 }
 .ob-scroll-cue,
 .ob-scroll-cue-bottom {
@@ -3632,19 +3650,23 @@ input:checked + .toggle-slider:before {
 /* ---- Skip ---- */
 .ob-skip {
   position: fixed;
-  top: 14px;
-  left: 14px;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 100000;
-  background: rgba(255,255,255,0.1);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255,255,255,0.12);
-  color: rgba(255,255,255,0.65);
+  background: rgba(255,255,255,0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: rgba(255,255,255,0.55);
   font-family: 'Vazirmatn', sans-serif;
-  font-size: 12px;
-  padding: 6px 14px;
-  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 8px 28px;
+  border-radius: 24px;
   cursor: pointer;
-  transition: all .2s ease;
+  transition: all .3s ease;
+  letter-spacing: 0.3px;
 }
 .ob-skip:hover { background: rgba(255,255,255,0.18); color: #fff; }
 /* ---- Scroll-driven reveal animations ---- */
