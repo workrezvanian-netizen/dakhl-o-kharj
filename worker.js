@@ -52,8 +52,9 @@ function buildAnalysisPrompt(body) {
 }
 
 async function handleAnalyze(request, env) {
-  const apiKey = env.OPENAI_API_KEY || env.OPENROUTER_API_KEY || env.AI_API_KEY || env.GROQ_API_KEY;
-  if (!apiKey) {
+  const apiKey = env.OPENROUTER_API_KEY || env.AI_API_KEY || env.GROQ_API_KEY;
+  const openaiKey = env.OPENAI_API_KEY;
+  if (!apiKey && !openaiKey) {
     return jsonResponse({ error: "no_api_key" }, 500);
   }
   let body;
@@ -64,9 +65,9 @@ async function handleAnalyze(request, env) {
   }
 
   const prompt = buildAnalysisPrompt(body);
-  const AI_MODEL = "gpt-4o-mini";
-  const isOpenAI = !!(env.OPENAI_API_KEY);
-  const baseUrl = isOpenAI ? "https://api.openai.com/v1" : "https://openrouter.ai/api/v1";
+  const useOpenAI = !!openaiKey && !apiKey;
+  const AI_MODEL = useOpenAI ? "gpt-4o-mini" : "deepseek/deepseek-chat-v3-0324:free";
+  const baseUrl = useOpenAI ? "https://api.openai.com/v1" : "https://openrouter.ai/api/v1";
 
   let aiRes;
   try {
@@ -74,7 +75,7 @@ async function handleAnalyze(request, env) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`
+        "Authorization": `Bearer ${useOpenAI ? openaiKey : apiKey}`
       },
       body: JSON.stringify({
         model: AI_MODEL,
