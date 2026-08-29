@@ -2426,12 +2426,10 @@ input:checked + .toggle-slider:before {
   inset: 0;
   z-index: 9999;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
-  padding: 20px 16px;
-  background: rgba(22, 42, 40, 0.55);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  padding: 0 0 0 0;
+  background: rgba(22, 42, 40, 0.35);
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
@@ -2445,18 +2443,19 @@ input:checked + .toggle-slider:before {
 .cal-app-popup {
   margin: 0 !important;
   width: 100%;
-  max-width: 420px;
-  max-height: 85vh;
+  max-width: 480px;
+  max-height: 80vh;
   overflow-y: auto;
-  border-radius: 26px;
-  transform: scale(0.92) translateY(20px);
+  border-radius: 26px 26px 0 0;
+  transform: translateY(100%);
   opacity: 0;
-  transition: transform .3s cubic-bezier(.22,1,.36,1), opacity .25s ease;
+  transition: transform .35s cubic-bezier(.22,1,.36,1), opacity .3s ease;
   background: var(--cream);
-  box-shadow: 0 20px 60px rgba(16,70,43,0.18), 0 4px 16px rgba(16,70,43,0.08);
+  box-shadow: 0 -4px 24px rgba(16,70,43,0.12);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 .cal-month-overlay.cal-visible .cal-app-popup {
-  transform: scale(1) translateY(0);
+  transform: translateY(0);
   opacity: 1;
 }
 .cal-close-btn { color: var(--expense); margin-right: 2px; }

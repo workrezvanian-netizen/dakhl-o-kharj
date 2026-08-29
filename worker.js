@@ -1,9 +1,10 @@
 // Cloudflare Worker — بک‌اند همگام‌سازی «دخل و خرج»
 // نیازمند یک KV Namespace با نام DNK_KV که به این Worker باند شده باشه.
-// تحلیل هوش مصنوعی با Groq API کار می‌کنه (رایگان، بدون کارت بانکی، سازگار با فرمت OpenAI).
-// باید یک Secret به اسم GROQ_API_KEY به این Worker اضافه بشه:
-//   wrangler secret put GROQ_API_KEY
-// کلید API رو از https://console.groq.com/keys می‌تونی رایگان بسازی.
+// تحلیل هوش مصنوعی با OpenRouter API کار می‌کنه (رایگان، سازگار با OpenAI).
+// باید یک Secret به اسم AI_API_KEY به این Worker اضافه بشه:
+//   wrangler secret put AI_API_KEY
+// کلید API رو از https://openrouter.ai/keys می‌تونی رایگان بسازی.
+// مدل پیشنهادی: meta-llama/llama-3.1-8b-instruct:free
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -52,8 +53,8 @@ function buildAnalysisPrompt(body) {
 }
 
 async function handleAnalyze(request, env) {
-  if (!env.GROQ_API_KEY) {
-    return jsonResponse({ error: "no_groq_key" }, 500);
+  if (!env.AI_API_KEY) {
+    return jsonResponse({ error: "no_ai_key" }, 500);
   }
   let body;
   try {
@@ -63,18 +64,19 @@ async function handleAnalyze(request, env) {
   }
 
   const prompt = buildAnalysisPrompt(body);
-  const GROQ_MODEL = "openai/gpt-oss-120b";
+  // OpenRouter — مدل‌های رایگان: meta-llama/llama-3.1-8b-instruct یا mistralai/mistral-7b-instruct
+  const AI_MODEL = "meta-llama/llama-3.1-8b-instruct:free";
 
   let aiRes;
   try {
-    aiRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    aiRes = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${env.GROQ_API_KEY}`
+        "Authorization": `Bearer ${env.AI_API_KEY}`
       },
       body: JSON.stringify({
-        model: GROQ_MODEL,
+        model: AI_MODEL,
         messages: [{ role: "user", content: prompt }],
         temperature: 0.8
       })
