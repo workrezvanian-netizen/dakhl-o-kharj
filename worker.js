@@ -52,7 +52,7 @@ function buildAnalysisPrompt(body) {
 }
 
 async function handleAnalyze(request, env) {
-  const apiKey = env.OPENROUTER_API_KEY || env.AI_API_KEY || env.GROQ_API_KEY;
+  const apiKey = env.OPENAI_API_KEY || env.OPENROUTER_API_KEY || env.AI_API_KEY || env.GROQ_API_KEY;
   if (!apiKey) {
     return jsonResponse({ error: "no_api_key" }, 500);
   }
@@ -64,11 +64,13 @@ async function handleAnalyze(request, env) {
   }
 
   const prompt = buildAnalysisPrompt(body);
-  const AI_MODEL = "deepseek/deepseek-chat-v3-0324:free";
+  const AI_MODEL = "gpt-4o-mini";
+  const isOpenAI = !!(env.OPENAI_API_KEY);
+  const baseUrl = isOpenAI ? "https://api.openai.com/v1" : "https://openrouter.ai/api/v1";
 
   let aiRes;
   try {
-    aiRes = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    aiRes = await fetch(`${baseUrl}/chat/completions`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
