@@ -1422,7 +1422,7 @@ function renderDashboard() {
       const amt = byCat[c.name] || 0;
       return `
         <button type="button" class="quick-cat-card" style="background:linear-gradient(135deg, ${color}55 0%, ${color}30 100%)" onclick="quickAddExpense('${c.name.replace(/'/g, "\\'")}')">
-          <span class="quick-cat-bubble" style="background:${color}">${iconSpanHTML(c.icon, "color:#fff")}</span>
+          <span class="quick-cat-bubble">${iconSpanHTML(c.icon, `color:${color}`)}</span>
           <span class="quick-cat-name">${c.name}</span>
           <span class="quick-cat-amount">${fmtAmount(amt)}</span>
         </button>`;
