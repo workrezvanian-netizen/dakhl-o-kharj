@@ -357,69 +357,6 @@
     <button id="fab" class="fab" aria-label="افزودن قسط">+</button>
 
     <!-- شیت افزودن/ویرایش قسط -->
-    <div id="sheetOverlay" class="sheet-overlay" hidden>
-      <div class="sheet" role="dialog" aria-labelledby="sheetTitle">
-        <div class="sheet-handle"></div>
-        <h2 id="sheetTitle">قسط جدید</h2>
-
-        <form id="addForm">
-          <label class="field">
-            <span>عنوان</span>
-            <input type="text" id="fTitle" placeholder="مثلا: قسط وام بانک" required maxlength="60">
-          </label>
-
-          <label class="field">
-            <span>مبلغ (تومان)</span>
-            <input type="text" id="fAmount" placeholder="2,500,000" inputmode="numeric" required>
-          </label>
-
-          <div class="field">
-            <span>نوع قسط</span>
-            <div class="segmented" id="typeSegment">
-              <button type="button" class="seg-btn active" data-type="monthly">🔁 ماهانه</button>
-              <button type="button" class="seg-btn" data-type="once">📆 یک‌باره</button>
-            </div>
-          </div>
-
-          <label class="field" id="monthlyField">
-            <span>چندم هر ماه شمسی سررسیده؟ (۱ تا ۲۹)</span>
-            <input type="number" id="fDueDay" min="1" max="29" placeholder="15" required>
-          </label>
-
-          <label class="field" id="onceField" hidden>
-            <span>تاریخ سررسید (شمسی — YYYY-MM-DD)</span>
-            <input type="text" id="fDueDate" placeholder="1405-05-24" pattern="[0-9]{4}-[0-9]{1,2}-[0-9]{1,2}">
-          </label>
-
-          <label class="field field-checkbox">
-            <input type="checkbox" id="fCustomCount">
-            <span>شماره‌ی قسط رو دستی تنظیم کنم (پیش‌فرض: از قسط اول شروع می‌شه)</span>
-          </label>
-
-          <label class="field" id="paidCountField" hidden>
-            <span>این قسط از کجا شروع بشه؟ (مثلاً اگه می‌خوای بعدی «قسط پنجم» باشه، بنویس 4)</span>
-            <input type="number" id="fPaidCount" placeholder="0" inputmode="numeric" min="0">
-          </label>
-
-          <label class="field field-checkbox">
-            <input type="checkbox" id="fCustomHour">
-            <span>ساعت یادآوری رو دستی تنظیم کنم (پیش‌فرض: ۹ صبح)</span>
-          </label>
-
-          <label class="field" id="reminderHourField" hidden>
-            <span>یادآوری ساعت چند ارسال بشه؟ (۰ تا ۲۳، به‌وقت ایران)</span>
-            <input type="number" id="fReminderHour" placeholder="9" inputmode="numeric" min="0" max="23">
-          </label>
-
-          <p class="field-error" id="formError" hidden></p>
-
-          <div class="sheet-actions">
-            <button type="button" class="inst-btn inst-btn-ghost" id="cancelBtn">انصراف</button>
-            <button type="submit" class="inst-btn inst-btn-primary" id="submitBtn">ثبت قسط</button>
-          </div>
-        </form>
-      </div>
-    </div>
 
   </section>
 
@@ -631,11 +568,83 @@
       </div>
     </details>
 
-    <p class="app-version">نسخه‌ی ۱.۵۵</p>
+    <p class="app-version">نسخه‌ی ۱.۵۶</p>
 
   </section>
 
-  <!-- CALENDAR -->
+
+</main>
+
+
+
+</div>
+
+<!-- شیت افزودن/ویرایش قسط (اقساط) -->
+    <div id="sheetOverlay" class="sheet-overlay" hidden>
+      <div class="sheet" role="dialog" aria-labelledby="sheetTitle">
+        <div class="sheet-handle"></div>
+        <h2 id="sheetTitle">قسط جدید</h2>
+
+        <form id="addForm">
+          <label class="field">
+            <span>عنوان</span>
+            <input type="text" id="fTitle" placeholder="مثلا: قسط وام بانک" required maxlength="60">
+          </label>
+
+          <label class="field">
+            <span>مبلغ (تومان)</span>
+            <input type="text" id="fAmount" placeholder="2,500,000" inputmode="numeric" required>
+          </label>
+
+          <div class="field">
+            <span>نوع قسط</span>
+            <div class="segmented" id="typeSegment">
+              <button type="button" class="seg-btn active" data-type="monthly">🔁 ماهانه</button>
+              <button type="button" class="seg-btn" data-type="once">📆 یک‌باره</button>
+            </div>
+          </div>
+
+          <label class="field" id="monthlyField">
+            <span>چندم هر ماه شمسی سررسیده؟ (۱ تا ۲۹)</span>
+            <input type="number" id="fDueDay" min="1" max="29" placeholder="15" required>
+          </label>
+
+          <label class="field" id="onceField" hidden>
+            <span>تاریخ سررسید (شمسی — YYYY-MM-DD)</span>
+            <input type="text" id="fDueDate" placeholder="1405-05-24" pattern="[0-9]{4}-[0-9]{1,2}-[0-9]{1,2}">
+          </label>
+
+          <label class="field field-checkbox">
+            <input type="checkbox" id="fCustomCount">
+            <span>شماره‌ی قسط رو دستی تنظیم کنم (پیش‌فرض: از قسط اول شروع می‌شه)</span>
+          </label>
+
+          <label class="field" id="paidCountField" hidden>
+            <span>این قسط از کجا شروع بشه؟ (مثلاً اگه می‌خوای بعدی «قسط پنجم» باشه، بنویس 4)</span>
+            <input type="number" id="fPaidCount" placeholder="0" inputmode="numeric" min="0">
+          </label>
+
+          <label class="field field-checkbox">
+            <input type="checkbox" id="fCustomHour">
+            <span>ساعت یادآوری رو دستی تنظیم کنم (پیش‌فرض: ۹ صبح)</span>
+          </label>
+
+          <label class="field" id="reminderHourField" hidden>
+            <span>یادآوری ساعت چند ارسال بشه؟ (۰ تا ۲۳، به‌وقت ایران)</span>
+            <input type="number" id="fReminderHour" placeholder="9" inputmode="numeric" min="0" max="23">
+          </label>
+
+          <p class="field-error" id="formError" hidden></p>
+
+          <div class="sheet-actions">
+            <button type="button" class="inst-btn inst-btn-ghost" id="cancelBtn">انصراف</button>
+            <button type="submit" class="inst-btn inst-btn-primary" id="submitBtn">ثبت قسط</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+<!-- تقویم — پاپ‌آپ ماه -->
   <div id="calMonthOverlay" class="cal-month-overlay">
     <div class="cal-app cal-app-popup">
       <div class="cal-head">
@@ -668,10 +677,6 @@
       </div>
     </div>
   </div>
-
-</main>
-
-</div>
 
 <nav class="bottom-nav">
   <button class="nav-btn" data-tab="budget">
@@ -845,7 +850,8 @@
     </div>
 
   </div>
-n  <!-- Progress -->
+
+n  <!-- Progress -->
   <div class="ob-progress" id="obProgress"><div class="ob-progress-fill" id="obProgressFill"></div></div>
 
   <!-- Skip -->
