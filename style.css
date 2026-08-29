@@ -293,8 +293,8 @@ h2 {
   z-index: 1;
 }
 .brand-badge {
-  width: 52px;
-  height: 52px;
+  width: 56px;
+  height: 56px;
   border-radius: 16px;
   background: rgba(255,255,255,0.14);
   box-shadow: inset 0 0 0 1px rgba(255,255,255,0.2), 0 2px 6px rgba(0,0,0,0.15);
@@ -333,9 +333,9 @@ h2 {
 .sync-dot.linked { background: var(--gold); }
 
 .watermark {
-  height: 22px;
+  height: 24px;
   width: auto;
-  opacity: 0.9;
+  opacity: 1;
   transition: transform .35s cubic-bezier(.22,1,.36,1), opacity .35s ease;
   transform-origin: right center;
 }
@@ -369,11 +369,11 @@ h2 {
 /* Compact mode: badge+text+watermark shrink via their own CSS transform;
    header-inner itself shrinks via real padding (not a transform) so nothing
    gets doubly/unevenly squashed. */
-.app-header.is-compact .header-inner { padding: 8px 20px; }
-.app-header.is-compact .brand-badge { transform: scale(0.6); border-radius: 9px; background: rgba(255,255,255,0.2); }
-.app-header.is-compact .brand-text { transform: scaleX(0.72); transform-origin: right center; opacity: 1; font-size: 17px; }
-.app-header.is-compact .watermark { transform: scaleY(0.7); opacity: 0.7; }
-.app-header.is-compact .header-side { gap: 0; }
+.app-header.is-compact .header-inner { padding: 8px 18px; }
+.app-header.is-compact .brand-badge { transform: scale(0.68); border-radius: 11px; background: rgba(255,255,255,0.2); }
+.app-header.is-compact .brand-text { transform: scaleX(0.78); transform-origin: right center; opacity: 1; font-size: 18px; }
+.app-header.is-compact .watermark { opacity: 0.9; height: 24px; transform: none; }
+.app-header.is-compact .header-side { gap: 4px; }
 .app-header.is-compact .header-settings-btn {
   transform: scale(0);
   opacity: 0;
@@ -1214,7 +1214,7 @@ h2 {
   color: var(--text);
 }
 #incomeAmount, #expenseAmount { margin-top: 0; }
-.amount-field-with-shortcut input { padding-left: 40px; }
+.amount-field-with-shortcut input { padding-right: 40px; padding-left: 12px; text-align: center; }
 .entry-note-field { opacity: 0.6; }
 .entry-note-field input { background: transparent; border-style: dashed; }
 .entry-note-field:focus-within { opacity: 1; }
@@ -1231,7 +1231,7 @@ h2 {
 }
 .amount-inline-shortcut {
   position: absolute;
-  left: 10px;
+  right: 10px;
   top: 50%;
   transform: translateY(-50%);
   padding: 3px 8px;
