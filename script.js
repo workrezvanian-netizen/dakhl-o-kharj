@@ -1126,6 +1126,9 @@ function updateMonthLabel() {
   const label = document.getElementById("monthLabel");
   label.textContent = JALALI_MONTHS[viewedMonth.jm - 1];
 
+  const jumpTodayBtn = document.getElementById("jumpTodayBtn");
+  if (jumpTodayBtn) jumpTodayBtn.hidden = isViewingCurrentMonth();
+
   // Update balance hero card with wallet icon
   const balance = computeCumulativeBalance(viewedMonth.jy, viewedMonth.jm);
   const balanceCard = document.getElementById("dashBalanceCard");
@@ -1143,8 +1146,6 @@ function updateMonthLabel() {
 // so it's obvious you're not looking at the current month.
 function applyViewedMonthState() {
   document.body.classList.toggle("viewing-past-month", !isViewingCurrentMonth());
-  const goBtn = document.getElementById("goCurrentMonthBtn");
-  if (goBtn) goBtn.style.display = isViewingCurrentMonth() ? "none" : "inline-flex";
   renderDashboard();
   renderIncomeList();
   renderExpenseList();
@@ -1364,7 +1365,7 @@ document.getElementById("nextMonthBtn").addEventListener("click", () => {
   viewedMonth = addMonthsJalali(viewedMonth.jy, viewedMonth.jm, 1);
   applyViewedMonthState();
 });
-document.getElementById("goCurrentMonthBtn").addEventListener("click", () => {
+document.getElementById("jumpTodayBtn").addEventListener("click", () => {
   dashboardMode = "month";
   viewedMonth = todayJalali();
   applyViewedMonthState();

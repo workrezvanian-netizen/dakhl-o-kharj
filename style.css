@@ -273,7 +273,7 @@ h2 {
   position: relative;
   overflow: hidden;
   box-shadow: 0 8px 20px rgba(22,63,60,0.28), inset 0 1px 0 rgba(255,255,255,0.2);
-  transition: transform .35s cubic-bezier(.22,1,.36,1);
+  transition: padding .35s cubic-bezier(.22,1,.36,1);
 }
 
 
@@ -366,7 +366,10 @@ h2 {
 .header-settings-btn:active { background: rgba(251,247,240,0.3); }
 
 /* ---------- Compact header (shrinks smoothly on scroll) ---------- */
-/* Compact mode: badge+text use CSS transform, header-inner uses JS */
+/* Compact mode: badge+text+watermark shrink via their own CSS transform;
+   header-inner itself shrinks via real padding (not a transform) so nothing
+   gets doubly/unevenly squashed. */
+.app-header.is-compact .header-inner { padding: 8px 20px; }
 .app-header.is-compact .brand-badge { transform: scale(0.6); border-radius: 9px; background: rgba(255,255,255,0.2); }
 .app-header.is-compact .brand-text { transform: scaleX(0.72); transform-origin: right center; opacity: 1; font-size: 17px; }
 .app-header.is-compact .watermark { transform: scaleY(0.7); opacity: 0.7; }
@@ -589,6 +592,26 @@ h2 {
   transition: transform .15s ease, background .15s ease, box-shadow .15s ease;
 }
 .month-nav-btn:active { background: var(--green-soft); transform: scale(0.92); box-shadow: 0 1px 2px rgba(22,63,60,0.1); }
+.month-nav-today-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  border: none;
+  background: var(--green-soft);
+  color: var(--green-deep);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 8px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: transform .15s ease, background .15s ease;
+}
+.month-nav-today-btn:active { transform: scale(0.94); background: var(--green); color: #fff; }
+.month-nav-today-btn:active .icon-mask { background: #fff; }
+.month-nav-today-btn[hidden] { display: none; }
 
 /* ---------- باکس موجودی کل — شیشه‌ای مینیمال با آیکون کیف پول و چشم ---------- */
 .balance-hero-card {
@@ -819,38 +842,13 @@ h2 {
   font-weight: 500;
   color: var(--text-mute);
 }
-.month-nav-center {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-}
 .month-nav-label {
+  flex: 1;
   text-align: center;
   font-weight: 800;
   font-size: 20px;
   color: var(--green-deep);
 }
-.month-nav-go {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  border: none;
-  background: rgba(22,63,60,0.08);
-  color: var(--green-deep);
-  font-family: inherit;
-  font-size: 11px;
-  font-weight: 700;
-  padding: 3px 8px;
-  border-radius: 999px;
-  cursor: pointer;
-  flex-shrink: 0;
-  transition: background .15s ease;
-  margin-left: 4px;
-  white-space: nowrap;
-}
-.month-nav-go:active { background: var(--green-soft); }
 .alltime-toggle {
   border: 1px solid var(--border);
   background: var(--surface);
@@ -1216,7 +1214,7 @@ h2 {
   color: var(--text);
 }
 #incomeAmount, #expenseAmount { margin-top: 0; }
-.amount-field-with-shortcut input { padding-right: 40px; padding-left: 12px; text-align: center; }
+.amount-field-with-shortcut input { padding-left: 40px; }
 .entry-note-field { opacity: 0.6; }
 .entry-note-field input { background: transparent; border-style: dashed; }
 .entry-note-field:focus-within { opacity: 1; }
@@ -1233,7 +1231,7 @@ h2 {
 }
 .amount-inline-shortcut {
   position: absolute;
-  right: 10px;
+  left: 10px;
   top: 50%;
   transform: translateY(-50%);
   padding: 3px 8px;
@@ -1719,10 +1717,9 @@ input:focus, select:focus {
   gap: 6px;
 }
 .quick-cat-card {
-  border: 1px solid rgba(255,255,255,0.5);
-  border-radius: 20px;
-  padding: 16px 6px 14px;
-  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.6);
+  border-radius: 18px;
+  padding: 14px 6px 12px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1748,16 +1745,16 @@ input:focus, select:focus {
   will-change: opacity;
 }
 .quick-cat-bubble {
-  width: 48px;
-  height: 48px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 3px 10px rgba(0,0,0,0.08), inset 0 1px 1px rgba(255,255,255,0.6);
-  border: 1px solid rgba(255,255,255,0.25);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1), inset 0 1px 1px rgba(255,255,255,0.6);
+  border: 1px solid rgba(255,255,255,0.4);
 }
-.quick-cat-bubble .icon-mask { width: 22px; height: 22px; }
+.quick-cat-bubble .icon-mask { width: 13px; height: 13px; }
 .quick-cat-name {
   font-size: 10.5px;
   font-weight: 700;
@@ -2452,10 +2449,12 @@ input:checked + .toggle-slider:before {
   inset: 0;
   z-index: 9999;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: center;
-  padding: 0 0 0 0;
-  background: rgba(22, 42, 40, 0.35);
+  padding: 20px 16px;
+  background: rgba(22, 42, 40, 0.55);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
@@ -2469,19 +2468,18 @@ input:checked + .toggle-slider:before {
 .cal-app-popup {
   margin: 0 !important;
   width: 100%;
-  max-width: 480px;
-  max-height: 80vh;
+  max-width: 420px;
+  max-height: 85vh;
   overflow-y: auto;
-  border-radius: 26px 26px 0 0;
-  transform: translateY(100%);
+  border-radius: 26px;
+  transform: scale(0.92) translateY(20px);
   opacity: 0;
-  transition: transform .35s cubic-bezier(.22,1,.36,1), opacity .3s ease;
+  transition: transform .3s cubic-bezier(.22,1,.36,1), opacity .25s ease;
   background: var(--cream);
-  box-shadow: 0 -4px 24px rgba(16,70,43,0.12);
-  padding-bottom: env(safe-area-inset-bottom, 0px);
+  box-shadow: 0 20px 60px rgba(16,70,43,0.18), 0 4px 16px rgba(16,70,43,0.08);
 }
 .cal-month-overlay.cal-visible .cal-app-popup {
-  transform: translateY(0);
+  transform: scale(1) translateY(0);
   opacity: 1;
 }
 .cal-close-btn { color: var(--expense); margin-right: 2px; }
