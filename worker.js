@@ -64,7 +64,7 @@ async function handleAnalyze(request, env) {
   }
 
   const prompt = buildAnalysisPrompt(body);
-  const AI_MODEL = "meta-llama/llama-3.1-8b-instruct:free";
+  const AI_MODEL = "deepseek/deepseek-chat-v3-0324:free";
 
   let aiRes;
   try {
