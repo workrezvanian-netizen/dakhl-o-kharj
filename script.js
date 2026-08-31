@@ -2612,7 +2612,7 @@ async function initSync() {
 // ---------- Service worker ----------
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js?v=82").catch(() => {});
+    navigator.serviceWorker.register("sw.js?v=83").catch(() => {});
   });
 }
 
