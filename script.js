@@ -2311,10 +2311,21 @@ function setupAiAnalyzeButton(btnId, resultId) {
         const code = data && data.error;
         let msg = "متأسفانه الان نشد تحلیل کنم، یه‌بار دیگه امتحان کن.";
         if (code === "no_api_key" || code === "no_groq_key") {
-          msg = "کلید API روی Worker تنظیم نشده. از پوشه پروژه بزن:<br><code style=\"font-size:11px\">wrangler secret put OPENROUTER_API_KEY</code><br>بعد <code style=\"font-size:11px\">wrangler deploy</code>";
+          msg = "کلید ChatGPT روی Worker تنظیم نشده.<br>از پوشه پروژه بزن:<br><code style=\"font-size:11px\">wrangler secret put OPENAI_API_KEY</code><br>بعد <code style=\"font-size:11px\">wrangler deploy</code><br><small>کلید: platform.openai.com/api-keys</small>";
         } else if (code === "ai_request_failed") {
-          msg = "سرور هوش مصنوعی جواب درستی نداد. یه‌بار دیگه امتحان کن.";
-          if (data && data.detail) msg += `<br><small style="opacity:.75;word-break:break-word">جزئیات: ${String(data.detail).slice(0, 280)}</small>`;
+          const det = data && data.detail ? String(data.detail) : "";
+          if (/401|Incorrect API key|invalid_api_key/i.test(det)) {
+            msg = "کلید OpenAI نامعتبر است. یک کلید جدید بساز و دوباره:<br><code style=\"font-size:11px\">wrangler secret put OPENAI_API_KEY</code>";
+          } else if (/403|security policy|Access denied|country|region|unsupported/i.test(det)) {
+            msg = "دسترسی به ChatGPT از این سرور محدود شده. VPN روی شبکه یا billing حساب OpenAI را چک کن.";
+          } else if (/429|rate_limit/i.test(det)) {
+            msg = "محدودیت تعداد درخواست ChatGPT. کمی صبر کن و دوباره امتحان کن.";
+          } else if (/insufficient_quota|billing|payment/i.test(det)) {
+            msg = "اعتبار حساب OpenAI کافی نیست. در platform.openai.com بخش Billing را شارژ کن.";
+          } else {
+            msg = "سرور ChatGPT جواب درستی نداد. یه‌بار دیگه امتحان کن.";
+          }
+          if (det) msg += `<br><small style="opacity:.75;word-break:break-word">جزئیات: ${det.slice(0, 220)}</small>`;
         } else if (code === "empty_response" || code === "no summary") {
           msg = "جواب خالی برگشت، یه‌بار دیگه امتحان کن.";
         } else if (res.status === 404) {
@@ -2485,7 +2496,7 @@ async function initSync() {
 // ---------- Service worker ----------
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js?v=73").catch(() => {});
+    navigator.serviceWorker.register("sw.js?v=75").catch(() => {});
   });
 }
 

@@ -64,3 +64,18 @@ wrangler deploy
 
 کلید رایگان: https://openrouter.ai/keys
 مدل پیش‌فرض: deepseek/deepseek-chat-v3-0324:free
+
+
+## تحلیل هوشمند (Workers AI)
+
+در `wrangler.toml` بایندینگ `[ai]` فعال است. بعد از تغییر:
+
+```bash
+cd dakhl-o-kharj
+wrangler deploy
+```
+
+اختیاری برای پشتیبان قوی‌تر:
+```bash
+wrangler secret put GROQ_API_KEY
+```

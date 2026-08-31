@@ -1,12 +1,11 @@
-// Cloudflare Worker — بک‌اند همگام‌سازی «دخل و خرج»
-// تحلیل هوش مصنوعی با OpenRouter (رایگان) / Groq / OpenAI
+// Cloudflare Worker — بک‌اند «دخل و خرج»
+// تحلیل هوشمند: ChatGPT (OpenAI) — مسیر اصلی
 //
-// Secrets:
-//   wrangler secret put OPENROUTER_API_KEY   ← پیشنهادی (رایگان)
-//   wrangler secret put GROQ_API_KEY         ← اختیاری
-//   wrangler secret put OPENAI_API_KEY       ← اختیاری
+// الزامی:
+//   wrangler secret put OPENAI_API_KEY
+//   wrangler deploy
 //
-// کلید OpenRouter: https://openrouter.ai/keys
+// کلید: https://platform.openai.com/api-keys
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -33,10 +32,10 @@ function buildAnalysisPrompt(body) {
     .join("، ");
 
   return `تو یک مشاور مالی خودمونی و دقیق برای اپلیکیشن «دخل و خرج» هستی.
-با لحن دوستانه و کوتاه (۴ تا ۷ جمله) وضعیت مالی کاربر رو تحلیل کن.
+با لحن دوستانه و کوتاه (۴ تا ۷ جمله) وضعیت مالی کاربر را تحلیل کن.
 قواعد:
 - فقط فارسی بنویس.
-- عددها رو با تومان بیان کن.
+- عددها را با تومان بیان کن.
 - یک نکته‌ی عملی و قابل‌اجرا برای ماه بعد بگو.
 - بدون مقدمه یا عنوان اضافه.
 
@@ -51,22 +50,29 @@ function buildAnalysisPrompt(body) {
 - مخارج: ${fmtToman(lm.totalExpense)}`;
 }
 
-async function callChatCompletions(baseUrl, apiKey, model, prompt, extraHeaders) {
-  const res = await fetch(`${baseUrl}/chat/completions`, {
+function extractContent(data) {
+  if (!data || !data.choices || !data.choices[0] || !data.choices[0].message) return "";
+  return String(data.choices[0].message.content || "").trim();
+}
+
+async function callOpenAI(apiKey, model, prompt) {
+  const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${apiKey}`,
-      ...(extraHeaders || {})
+      "Authorization": `Bearer ${apiKey}`
     },
     body: JSON.stringify({
       model,
       messages: [
-        { role: "system", content: "You are a helpful Persian financial assistant. Always reply in Persian only." },
+        {
+          role: "system",
+          content: "You are a helpful Persian financial assistant for the app «دخل و خرج». Always reply in Persian only. Be concise and practical."
+        },
         { role: "user", content: prompt }
       ],
       temperature: 0.7,
-      max_tokens: 700
+      max_tokens: 800
     })
   });
   const text = await res.text().catch(() => "");
@@ -75,22 +81,12 @@ async function callChatCompletions(baseUrl, apiKey, model, prompt, extraHeaders)
   return { ok: res.ok, status: res.status, data, raw: text.slice(0, 400) };
 }
 
-function extractContent(data) {
-  if (!data || !data.choices || !data.choices[0]) return "";
-  const msg = data.choices[0].message;
-  if (!msg) return "";
-  return String(msg.content || "").trim();
-}
-
 async function handleAnalyze(request, env) {
-  const openrouterKey = env.OPENROUTER_API_KEY || env.AI_API_KEY;
-  const groqKey = env.GROQ_API_KEY;
   const openaiKey = env.OPENAI_API_KEY;
-
-  if (!openrouterKey && !groqKey && !openaiKey) {
+  if (!openaiKey) {
     return jsonResponse({
       error: "no_api_key",
-      detail: "هیچ کلید API تنظیم نشده. wrangler secret put OPENROUTER_API_KEY"
+      detail: "OPENAI_API_KEY تنظیم نشده. دستور: wrangler secret put OPENAI_API_KEY"
     }, 500);
   }
 
@@ -102,86 +98,31 @@ async function handleAnalyze(request, env) {
   }
 
   const prompt = buildAnalysisPrompt(body);
+  // مدل‌های ChatGPT — از ارزان/سریع به قوی‌تر
+  const models = ["gpt-4o-mini", "gpt-4o", "gpt-4.1-mini"];
   const attempts = [];
 
-  // 1) OpenRouter — روتر رایگان + چند مدل رایگان پشتیبان
-  if (openrouterKey) {
-    const models = [
-      "openrouter/free",
-      "meta-llama/llama-3.3-70b-instruct:free",
-      "google/gemma-3-27b-it:free",
-      "qwen/qwen3-14b:free",
-      "mistralai/mistral-small-3.1-24b-instruct:free"
-    ];
-    for (const model of models) {
-      try {
-        const r = await callChatCompletions(
-          "https://openrouter.ai/api/v1",
-          openrouterKey,
-          model,
-          prompt,
-          {
-            "HTTP-Referer": "https://dakhl-o-kharj.work-rezvanian.workers.dev",
-            "X-Title": "Dakhl-o-Kharj"
-          }
-        );
-        const content = extractContent(r.data);
-        if (r.ok && content) {
-          return jsonResponse({ summary: content, model });
-        }
-        attempts.push({ provider: "openrouter", model, status: r.status, detail: r.raw });
-      } catch (e) {
-        attempts.push({ provider: "openrouter", model, detail: String((e && e.message) || e) });
-      }
-    }
-  }
-
-  // 2) Groq
-  if (groqKey) {
-    const models = ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"];
-    for (const model of models) {
-      try {
-        const r = await callChatCompletions(
-          "https://api.groq.com/openai/v1",
-          groqKey,
-          model,
-          prompt
-        );
-        const content = extractContent(r.data);
-        if (r.ok && content) {
-          return jsonResponse({ summary: content, model });
-        }
-        attempts.push({ provider: "groq", model, status: r.status, detail: r.raw });
-      } catch (e) {
-        attempts.push({ provider: "groq", model, detail: String((e && e.message) || e) });
-      }
-    }
-  }
-
-  // 3) OpenAI
-  if (openaiKey) {
+  for (const model of models) {
     try {
-      const r = await callChatCompletions(
-        "https://api.openai.com/v1",
-        openaiKey,
-        "gpt-4o-mini",
-        prompt
-      );
+      const r = await callOpenAI(openaiKey, model, prompt);
       const content = extractContent(r.data);
       if (r.ok && content) {
-        return jsonResponse({ summary: content, model: "gpt-4o-mini" });
+        return jsonResponse({ summary: content, model, provider: "openai" });
       }
-      attempts.push({ provider: "openai", model: "gpt-4o-mini", status: r.status, detail: r.raw });
+      // اگر مدل وجود نداشت (404) مدل بعدی را امتحان کن
+      attempts.push({ model, status: r.status, detail: r.raw });
+      if (r.status === 401 || r.status === 403) {
+        // کلید نامعتبر — ادامه‌ندادن
+        break;
+      }
     } catch (e) {
-      attempts.push({ provider: "openai", detail: String((e && e.message) || e) });
+      attempts.push({ model, detail: String((e && e.message) || e) });
     }
   }
 
   return jsonResponse({
     error: "ai_request_failed",
-    detail: attempts.length
-      ? attempts.map((a) => `${a.provider}/${a.model || "?"}: ${a.status || ""} ${a.detail || ""}`).join(" | ").slice(0, 500)
-      : "no_provider_responded"
+    detail: attempts.map((a) => `${a.model}: ${a.status || ""} ${a.detail || ""}`).join(" | ").slice(0, 500)
   }, 502);
 }
 
