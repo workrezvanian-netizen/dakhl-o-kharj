@@ -2313,18 +2313,30 @@ function enrichMonthCategories(monthObj, jy, jm) {
 function buildAnalysisPrompt(thisMonth, lastMonth) {
   const tm = thisMonth || {};
   const lm = lastMonth || {};
-  const cats = (tm.categories || []).slice(0, 5)
+  const cats = (tm.categories || []).slice(0, 6)
     .map((c) => `${c.name}: ${fmtAiToman(c.amount)}`)
     .join("، ");
-  return `تو مشاور مالی خودمونی اپ «دخل و خرج» هستی.
-فقط فارسی، ۴ تا ۷ جمله کوتاه، یک نکته عملی برای ماه بعد، بدون مقدمه.
+  return `تو یک مشاور مالی خودمونی، شوخ و صادق برای اپ «دخل و خرج» هستی.
+لحن: دوستانه + کمی طنز سبک (بدون توهین و بدون اغراق آزاردهنده).
+خروجی: ۵ تا ۸ جمله فارسی، کوتاه و خوانا.
+حتماً این‌ها را پوشش بده:
+1) جمع‌بندی وضعیت این ماه (مانده مثبت/منفی)
+2) مقایسه با ماه قبل اگر معنی‌دار است
+3) اشاره به ۱–۲ دستهٔ پرخرج
+4) یک پیشنهاد عملی و واقعی برای ماه بعد
+5) یک جملهٔ طنزآمیز مرتبط با خرج/پس‌انداز
+بدون عنوان، بدون بولت، بدون اموجی زیاد.
 
-این ماه:
+داده این ماه:
 درآمد ${fmtAiToman(tm.totalIncome)}، مخارج ${fmtAiToman(tm.totalExpense)}، مانده ${fmtAiToman((tm.totalIncome || 0) - (tm.totalExpense || 0))}
 دسته‌ها: ${cats || "ثبت نشده"}
 
 ماه قبل:
 درآمد ${fmtAiToman(lm.totalIncome)}، مخارج ${fmtAiToman(lm.totalExpense)}`;
+}
+
+function pick(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
 }
 
 function buildLocalAnalysis(thisMonth, lastMonth) {
@@ -2333,40 +2345,127 @@ function buildLocalAnalysis(thisMonth, lastMonth) {
   const bal = inc - exp;
   const lInc = Number(lastMonth.totalIncome) || 0;
   const lExp = Number(lastMonth.totalExpense) || 0;
+  const lBal = lInc - lExp;
   const cats = Array.isArray(thisMonth.categories)
     ? [...thisMonth.categories].sort((a, b) => (b.amount || 0) - (a.amount || 0))
     : [];
   const top = cats[0];
+  const top2 = cats[1];
   const topShare = exp > 0 && top ? Math.round((top.amount / exp) * 100) : 0;
-  const expCh = pctChange(exp, lExp);
+  const expCh = (lExp > 0) ? ((exp - lExp) / Math.abs(lExp)) * 100 : null;
+  const incCh = (lInc > 0) ? ((inc - lInc) / Math.abs(lInc)) * 100 : null;
+  const ratio = inc > 0 ? exp / inc : null;
   const lines = [];
 
   if (inc === 0 && exp === 0) {
-    return "برای این ماه هنوز درآمد یا هزینه‌ای ثبت نشده. با ثبت چند تراکنش، تحلیل دقیق‌تری می‌گیری.";
+    return pick([
+      "این ماه هنوز صفحه‌ات مثل یخچال بعد از مهمونی خالیه! چند تا دخل و خرج ثبت کن تا بتونم برات تحلیل خودمونی بدم.",
+      "داده‌ای برای تحلیل نیست. اول تراکنش‌ها رو بنویس، بعد برمی‌گردم با گزارش مخصوص خودت."
+    ]);
   }
-  if (bal > 0) lines.push(`این ماه حدود ${fmtAiToman(bal)} مانده‌ی مثبت داری.`);
-  else if (bal < 0) lines.push(`این ماه حدود ${fmtAiToman(Math.abs(bal))} کسری داری.`);
-  else lines.push("این ماه دخل و خرج تقریباً سر به سر بوده.");
 
-  if (lExp > 0 && expCh !== null) {
-    const abs = Math.abs(Math.round(expCh));
-    if (expCh > 12) lines.push(`مخارج نسبت به ماه قبل حدود ${abs}٪ بیشتر شده.`);
-    else if (expCh < -12) lines.push(`مخارج نسبت به ماه قبل حدود ${abs}٪ کمتر شده.`);
-  }
-  if (top && topShare >= 35) {
-    lines.push(`بیشترین سهم مخارج مربوط به «${top.name}» است (حدود ${topShare}٪).`);
-  } else if (top) {
-    lines.push(`بزرگ‌ترین دسته هزینه «${top.name}» با حدود ${fmtAiToman(top.amount)} بوده.`);
-  }
-  if (bal < 0 && top) {
-    lines.push(`پیشنهاد: ماه بعد از دسته «${top.name}» کمی کم کن تا به تعادل نزدیک شوی.`);
-  } else if (bal > 0) {
-    lines.push("پیشنهاد: بخشی از مانده را به‌عنوان پس‌انداز کنار بگذار.");
+  // وضعیت کلی با طنز ملایم
+  if (bal > 0) {
+    lines.push(pick([
+      `خبر خوب: این ماه حدود ${fmtAiToman(bal)} توی جیب‌ت مونده — انگار یه دور از خرج‌های الکی جان سالم به در بردی.`,
+      `مانده‌ات حدود ${fmtAiToman(bal)} مثبته. کیف پولت این ماه نفس راحتی کشید.`,
+      `این ماه ${fmtAiToman(bal)} جلو هستی. نادره، ولی قشنگه؛ مراقب باش ماه بعد جبرانش نکنی!`
+    ]));
+  } else if (bal < 0) {
+    lines.push(pick([
+      `این ماه حدود ${fmtAiToman(Math.abs(bal))} کسری آوردی — دخل دویده، خرج پرواز کرده.`,
+      `متأسفانه تراز این ماه منفیه: حدود ${fmtAiToman(Math.abs(bal))} بیشتر از درآمدت خرج شده.`,
+      `حساب‌کتاب می‌گه حدود ${fmtAiToman(Math.abs(bal))} از دخل جلو زدی. نگران نباش، قابل ترمیمه.`
+    ]));
   } else {
-    lines.push("پیشنهاد: ثبت منظم تراکنش‌ها را ادامه بده.");
+    lines.push("این ماه دخل و خرج تقریباً سر به سر بودن؛ نه جشن، نه عزا.");
   }
+
+  // درآمد و هزینه خام
+  if (inc > 0 || exp > 0) {
+    lines.push(`جمع درآمد ${fmtAiToman(inc)} و جمع مخارج ${fmtAiToman(exp)} بوده.`);
+  }
+
+  // نسبت خرج به درآمد
+  if (ratio !== null) {
+    if (ratio > 1.05) {
+      lines.push(pick([
+        "بیشتر از چیزی که اومده خرج شده؛ ماه بعد بهتره قبل از خریدِ ناگهانی یک نفس عمیق بکشی.",
+        "نسبت خرج به درآمد بالاست. یعنی دخل هنوز حرف اول را نمی‌زند."
+      ]));
+    } else if (ratio > 0.85) {
+      lines.push("بخش زیادی از درآمدت صرف هزینه‌ها شده؛ فضای پس‌انداز کمی تنگ شده.");
+    } else if (ratio < 0.55) {
+      lines.push(pick([
+        "آفرین — بخش خوبی از درآمدت خرج نشده. این همون جاییه که پس‌انداز شکل می‌گیره.",
+        "مخارج نسبت به درآمدت کنترل‌شده‌ست؛ دستت درد نکنه!"
+      ]));
+    }
+  }
+
+  // مقایسه با ماه قبل
+  if (expCh !== null) {
+    const abs = Math.abs(Math.round(expCh));
+    if (expCh > 15) {
+      lines.push(pick([
+        `مخارج نسبت به ماه قبل حدود ${abs}٪ بیشتر شده؛ انگار این ماه فروشگاه‌ها تخفیف ویژه فقط برای تو داشتن.`,
+        `خرج‌ها حدود ${abs}٪ از ماه قبل بالاتر رفته. بد نیست بدونی پول کجا پریده.`
+      ]));
+    } else if (expCh < -15) {
+      lines.push(pick([
+        `خبر شیرین: مخارج حدود ${abs}٪ کمتر از ماه قبله. داری رو فرم می‌ای!`,
+        `حدود ${abs}٪ کمتر خرج کردی نسبت به ماه قبل. این روند رو نگه دار.`
+      ]));
+    }
+  }
+  if (incCh !== null) {
+    const abs = Math.abs(Math.round(incCh));
+    if (incCh > 15) lines.push(`درآمدت هم حدود ${abs}٪ نسبت به ماه قبل رشد داشته.`);
+    else if (incCh < -15) lines.push(`درآمد نسبت به ماه قبل حدود ${abs}٪ کمتر شده؛ اگر موقتی نیست، روی منبع درآمد وقت بذار.`);
+  }
+
+  // دسته‌ها
+  if (top && topShare >= 40) {
+    lines.push(pick([
+      `قهرمان بی‌رقیب هزینه‌ها «${top.name}» بوده با حدود ${topShare}٪ از کل مخارج (${fmtAiToman(top.amount)}). اینجا باید ذره‌بین بذاری.`,
+      `تقریباً ${topShare}٪ خرج‌ها رفته سمت «${top.name}». اگه قراره جایی کم کنی، از همین‌جا شروع کن.`
+    ]));
+  } else if (top) {
+    let catLine = `بزرگ‌ترین هزینه مربوط به «${top.name}» با حدود ${fmtAiToman(top.amount)} بوده`;
+    if (top2) catLine += ` و بعدش «${top2.name}»`;
+    catLine += ".";
+    lines.push(catLine);
+  }
+
+  // پیشنهاد عملی
+  if (bal < 0) {
+    if (top) {
+      const cut = Math.max(50000, Math.round(Math.min(top.amount * 0.12, Math.abs(bal)) / 10000) * 10000);
+      lines.push(`پیشنهاد خودمونی: ماه بعد از «${top.name}» حدود ${fmtAiToman(cut)} کم کن؛ هم تراز بهتر می‌شه، هم عذاب وجدان کمتر.`);
+    } else {
+      lines.push("پیشنهاد: برای هزینه‌های غیراضطراری یک سقف هفتگی بذار و بهش پایبند بمون.");
+    }
+  } else if (bal > 0) {
+    const save = Math.max(50000, Math.round(bal * 0.25 / 10000) * 10000);
+    lines.push(pick([
+      `پیشنهاد: از این مانده حدود ${fmtAiToman(save)} را «لمس‌نکردنی» کنار بذار — قبل از اینکه وسوسه بشه بره.`,
+      `ایده خوب: ${fmtAiToman(save)} از مانده را به پس‌انداز یا پرداخت بدهی اختصاص بده، نه خرید هیجانی.`
+    ]));
+  } else {
+    lines.push("پیشنهاد: ماه بعد یک هدف کوچک عددی برای پس‌انداز تعیین کن تا از حالت سر‌به‌سر بیای بیرون.");
+  }
+
+  // جمله پایانی طنز
+  lines.push(pick([
+    "یادت باشه: پول مثل جوک می‌مونه؛ اگه نتونی نگهش داری، زود تموم می‌شه.",
+    "جمع‌بندی با لبخند: دخل را جدی بگیر، خرج را هوشمند، و رسیدها را فراموش نکن.",
+    "و حرف آخر: ثبت کردن تراکنش‌ها نصف راه کنترله؛ نصف دیگه‌ش نه گفتن به خریدهای «فقط این یکی» است.",
+    "اگر این ماه سخت گذشت، ماه بعد با یک سقف مشخص برای تفریح و خوراک بیرون معمولاً آرام‌تر می‌شه."
+  ]));
+
   return lines.join(" ");
 }
+
 
 function fetchWithTimeout(url, options, ms) {
   const controller = new AbortController();
@@ -2385,7 +2484,7 @@ async function analyzeViaLlm7(prompt) {
         body: JSON.stringify({
           model,
           messages: [
-            { role: "system", content: "Reply only in Persian. Be concise." },
+            { role: "system", content: "You are a witty, friendly Persian financial coach. Reply only in Persian. Be concise, practical, and lightly humorous without being rude." },
             { role: "user", content: prompt }
           ],
           max_tokens: 400,
@@ -2648,7 +2747,7 @@ async function initSync() {
 // ---------- Service worker ----------
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js?v=85").catch(() => {});
+    navigator.serviceWorker.register("sw.js?v=86").catch(() => {});
   });
 }
 
