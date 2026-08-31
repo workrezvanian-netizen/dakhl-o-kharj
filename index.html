@@ -14,7 +14,7 @@
 <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css">
 <link href="https://cdn.jsdelivr.net/gh/rastikerdar/kamran@v1.0.0/dist/font-face.css" rel="stylesheet" type="text/css">
 <link href="https://cdn.jsdelivr.net/gh/rastikerdar/samim-font@v4.0.5/dist/font-face.css" rel="stylesheet" type="text/css">
-<link rel="stylesheet" href="style.css?v=70">
+<link rel="stylesheet" href="style.css?v=71">
 </head>
 <body>
 
@@ -612,20 +612,28 @@
             <input type="text" id="fDueDate" placeholder="1405-05-24" pattern="[0-9]{4}-[0-9]{1,2}-[0-9]{1,2}">
           </label>
 
-          <label class="field field-checkbox">
-            <input type="checkbox" id="fCustomCount">
-            <span>شماره‌ی قسط رو دستی تنظیم کنم (پیش‌فرض: از قسط اول شروع می‌شه)</span>
-          </label>
+          <div class="field field-toggle-row">
+            <span>شماره‌ی قسط رو دستی تنظیم کنم</span>
+            <label class="toggle-switch">
+              <input type="checkbox" id="fCustomCount">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <p class="field-toggle-hint">پیش‌فرض: از قسط اول شروع می‌شه</p>
 
           <label class="field" id="paidCountField" hidden>
             <span>این قسط از کجا شروع بشه؟ (مثلاً اگه می‌خوای بعدی «قسط پنجم» باشه، بنویس 4)</span>
             <input type="number" id="fPaidCount" placeholder="0" inputmode="numeric" min="0">
           </label>
 
-          <label class="field field-checkbox">
-            <input type="checkbox" id="fCustomHour">
-            <span>ساعت یادآوری رو دستی تنظیم کنم (پیش‌فرض: ۹ صبح)</span>
-          </label>
+          <div class="field field-toggle-row">
+            <span>ساعت یادآوری رو دستی تنظیم کنم</span>
+            <label class="toggle-switch">
+              <input type="checkbox" id="fCustomHour">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <p class="field-toggle-hint">پیش‌فرض: ۹ صبح</p>
 
           <label class="field" id="reminderHourField" hidden>
             <span>یادآوری ساعت چند ارسال بشه؟ (۰ تا ۲۳، به‌وقت ایران)</span>
@@ -863,8 +871,8 @@ n  <!-- Progress -->
 </div>
 <!-- ═══════════════ END ONBOARDING ═══════════════ -->
 
-<script src="script.js?v=70"></script>
-<script src="installments.js?v=70"></script>
-<script src="three-scene.js?v=70"></script>
+<script src="script.js?v=71"></script>
+<script src="installments.js?v=71"></script>
+<script src="three-scene.js?v=71"></script>
 </body>
 </html>

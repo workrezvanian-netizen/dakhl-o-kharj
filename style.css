@@ -280,7 +280,9 @@ h2 {
   justify-content: space-between;
   padding: 12px 14px 12px 18px;
   min-height: 72px;
-  background: linear-gradient(180deg, #4AADA0 0%, #3D9B8F 40%, #2F8A80 100%);
+  background: linear-gradient(-45deg, #4FA89E, #163F3C, #2F7A72, #3D9B8F, #4FA89E);
+  background-size: 320% 320%;
+  animation: headerGradient 10s ease infinite;
   border-radius: 40px;
   position: relative;
   overflow: hidden;
@@ -291,17 +293,29 @@ h2 {
     inset 0 -5px 12px rgba(0,0,0,0.12);
   transition: padding .35s cubic-bezier(.22,1,.36,1);
 }
+@keyframes headerGradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
 .header-inner::after {
   content: "";
   position: absolute;
-  left: 12%;
-  right: 12%;
-  top: 2px;
-  height: 36%;
+  left: 10%;
+  right: 10%;
+  top: 1px;
+  height: 40%;
   border-radius: 50%;
-  background: linear-gradient(180deg, rgba(255,255,255,0.28) 0%, rgba(255,255,255,0) 100%);
+  background: linear-gradient(180deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 100%);
   pointer-events: none;
   filter: blur(1px);
+}
+@media (prefers-reduced-motion: reduce) {
+  .header-inner {
+    animation: none;
+    background: linear-gradient(180deg, #4AADA0 0%, #2F8A80 100%);
+    background-size: auto;
+  }
 }
 .brand {
   display: flex;
@@ -362,19 +376,23 @@ h2 {
 .sync-dot.linked { background: var(--gold); }
 
 .watermark {
-  height: 24px;
+  height: 22px;
   width: auto;
-  opacity: 1;
+  opacity: 0.95;
   pointer-events: none;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.15));
+  transition: height .3s ease, opacity .3s ease, filter .3s ease;
 }
 .header-side {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  gap: 6px;
   position: relative;
   z-index: 1;
-  transition: gap .35s cubic-bezier(.4,0,.2,1);
+  flex-shrink: 0;
+  transition: gap .3s ease, flex-direction .3s ease;
 }
 .header-settings-btn {
   width: 30px;
@@ -389,31 +407,47 @@ h2 {
   cursor: pointer;
   overflow: hidden;
   flex-shrink: 0;
-  transition: transform .3s cubic-bezier(.22,1,.36,1), opacity .3s ease;
+  transition: transform .3s cubic-bezier(.22,1,.36,1), opacity .3s ease, width .3s ease, height .3s ease;
 }
 .header-settings-btn:active { background: rgba(251,247,240,0.3); }
 
-/* ---------- Compact header (shrinks smoothly on scroll) ---------- */
-/* Compact mode: badge+text+watermark shrink via their own CSS transform;
-   header-inner itself shrinks via real padding (not a transform) so nothing
-   gets doubly/unevenly squashed. */
-.app-header.is-compact .header-inner { padding: 5px 16px; }
-.app-header.is-compact .brand-badge { transform: scale(0.62); border-radius: 11px; background: rgba(255,255,255,0.2); }
-.app-header.is-compact .brand-text { transform: scaleX(0.75); transform-origin: right center; opacity: 1; font-size: 16px; }
-.app-header.is-compact .watermark {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  height: 20px;
-  opacity: 0.9;
-  z-index: 1;
+/* ---------- Compact header ---------- */
+.app-header.is-compact .header-inner {
+  padding: 6px 14px;
+  min-height: 48px;
+  border-radius: 26px;
 }
-.app-header.is-compact .header-side { gap: 4px; }
+.app-header.is-compact .brand-badge {
+  transform: scale(0.72);
+  border-radius: 11px;
+}
+.app-header.is-compact .brand-text {
+  font-size: 15px;
+  opacity: 0.98;
+}
+/* واترمارک در حالت فشرده: کنار چپ، کوچک و تمیز — نه وسط هدر */
+.app-header.is-compact .header-side {
+  flex-direction: row;
+  align-items: center;
+  gap: 0;
+  min-width: 0;
+}
+.app-header.is-compact .watermark {
+  position: static;
+  transform: none;
+  height: 13px;
+  opacity: 0.72;
+  filter: brightness(1.1) drop-shadow(0 1px 1px rgba(0,0,0,0.12));
+}
 .app-header.is-compact .header-settings-btn {
-  transform: scale(0);
+  width: 0;
+  height: 0;
   opacity: 0;
+  transform: scale(0);
+  margin: 0;
+  padding: 0;
   pointer-events: none;
+  overflow: hidden;
 }
 
 .sync-pill-inline {
@@ -2056,48 +2090,82 @@ input:focus, select:focus {
   .bottom-nav { max-width: 480px; margin: 0 auto; left: 50%; transform: translateX(-50%); right: auto; width: calc(100% - 28px); }
 }
 
-/* ---------- Toggle switch ---------- */
+/* ---------- Toggle switch — مدل iOS ---------- */
 .toggle-switch {
   position: relative;
   display: inline-flex;
-  width: 52px;
-  height: 30px;
+  flex-shrink: 0;
+  width: 51px;
+  height: 31px;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 .toggle-switch input {
   opacity: 0;
   width: 0;
   height: 0;
+  position: absolute;
 }
 .toggle-slider {
   position: absolute;
   cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: var(--cream);
-  border-radius: 20px;
-  transition: .3s;
-  box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+  inset: 0;
+  background: #E9E9EB;
+  border-radius: 31px;
+  transition: background 0.28s ease;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.04);
 }
 .toggle-slider:before {
   content: "";
   position: absolute;
-  height: 24px;
-  width: 24px;
-  left: 3px;
-  bottom: 3px;
-  background-color: white;
+  height: 27px;
+  width: 27px;
+  left: 2px;
+  top: 2px;
+  background: #fff;
   border-radius: 50%;
-  transition: .3s;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+  transition: transform 0.28s cubic-bezier(0.4, 0.0, 0.2, 1);
+  box-shadow:
+    0 3px 8px rgba(0,0,0,0.15),
+    0 1px 1px rgba(0,0,0,0.06);
 }
-input:checked + .toggle-slider {
-  background-color: var(--green-deep);
+.toggle-switch input:checked + .toggle-slider {
+  background: #34C759; /* سبز iOS */
 }
-input:checked + .toggle-slider:before {
-  transform: translateX(22px);
+.toggle-switch input:checked + .toggle-slider:before {
+  transform: translateX(20px);
+}
+.toggle-switch input:active + .toggle-slider:before {
+  width: 30px;
+}
+.toggle-switch input:checked:active + .toggle-slider:before {
+  transform: translateX(17px);
+}
+.toggle-switch input:focus-visible + .toggle-slider {
+  outline: 2px solid rgba(52, 199, 89, 0.45);
+  outline-offset: 2px;
+}
+
+/* ردیف‌های تیک iOS داخل پاپ‌آپ اقساط و تنظیمات */
+.field-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+  padding: 4px 0;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text, #26302E);
+  text-align: right;
+}
+.field-toggle-hint {
+  margin: 0 0 14px;
+  font-size: 11.5px;
+  color: var(--text-mute);
+  font-weight: 400;
+  opacity: 0.85;
+  text-align: right;
 }
 
 /* AI Card Button Style */
@@ -2551,6 +2619,15 @@ input:checked + .toggle-slider:before {
   color: var(--green-deep, #163F3C);
 }
 
+
+#sheetOverlay .field-toggle-row,
+.sheet-overlay .field-toggle-row {
+  margin-bottom: 4px;
+}
+#sheetOverlay .field-toggle-hint,
+.sheet-overlay .field-toggle-hint {
+  margin: 0 0 12px;
+}
 @media (prefers-reduced-motion: reduce) {
   #sheetOverlay .sheet,
   .sheet-overlay .sheet {
