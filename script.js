@@ -2280,16 +2280,136 @@ function renderAnalysis() {
 }
 
 // ---------- AI analysis ----------
+const AI_KEY_STORAGE = "dnk_ai_api_key";
+const AI_PROVIDER_STORAGE = "dnk_ai_provider";
+
+function getLocalAiConfig() {
+  return {
+    provider: localStorage.getItem(AI_PROVIDER_STORAGE) || "groq",
+    key: (localStorage.getItem(AI_KEY_STORAGE) || "").trim()
+  };
+}
+
+function fmtAiToman(n) {
+  return Math.round(Math.abs(n || 0)).toLocaleString("en-US") + " تومان";
+}
+
+function buildClientAnalysisPrompt(thisMonth, lastMonth) {
+  const tm = thisMonth || {};
+  const lm = lastMonth || {};
+  const cats = (tm.categories || []).slice(0, 5)
+    .map((c) => `${c.name}: ${fmtAiToman(c.amount)}`)
+    .join("، ");
+  return `تو یک مشاور مالی خودمونی و دقیق برای اپلیکیشن «دخل و خرج» هستی.
+با لحن دوستانه و کوتاه (۴ تا ۷ جمله) وضعیت مالی کاربر را تحلیل کن.
+فقط فارسی بنویس. عددها با تومان. یک نکته عملی برای ماه بعد بگو. بدون مقدمه اضافه.
+
+این ماه:
+- درآمد: ${fmtAiToman(tm.totalIncome)}
+- مخارج: ${fmtAiToman(tm.totalExpense)}
+- مانده: ${fmtAiToman((tm.totalIncome || 0) - (tm.totalExpense || 0))}
+- دسته‌ها: ${cats || "ثبت نشده"}
+
+ماه قبل:
+- درآمد: ${fmtAiToman(lm.totalIncome)}
+- مخارج: ${fmtAiToman(lm.totalExpense)}`;
+}
+
+async function analyzeViaClientKey(thisMonth, lastMonth) {
+  const cfg = getLocalAiConfig();
+  if (!cfg.key) return null;
+
+  const prompt = buildClientAnalysisPrompt(thisMonth, lastMonth);
+  const isOpenAI = cfg.provider === "openai";
+  const url = isOpenAI
+    ? "https://api.openai.com/v1/chat/completions"
+    : "https://api.groq.com/openai/v1/chat/completions";
+  const model = isOpenAI ? "gpt-4o-mini" : "llama-3.3-70b-versatile";
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${cfg.key}`
+    },
+    body: JSON.stringify({
+      model,
+      messages: [
+        { role: "system", content: "You are a helpful Persian financial assistant. Always reply in Persian only." },
+        { role: "user", content: prompt }
+      ],
+      temperature: 0.7,
+      max_tokens: 700
+    })
+  });
+
+  const raw = await res.text().catch(() => "");
+  let data = null;
+  try { data = raw ? JSON.parse(raw) : null; } catch (_) {}
+
+  if (!res.ok) {
+    const errMsg = (data && data.error && (data.error.message || data.error)) || raw || ("HTTP " + res.status);
+    const err = new Error(String(errMsg).slice(0, 280));
+    err.status = res.status;
+    err.via = "client";
+    throw err;
+  }
+
+  const text = data && data.choices && data.choices[0] && data.choices[0].message
+    ? String(data.choices[0].message.content || "").trim()
+    : "";
+  if (!text) {
+    const err = new Error("empty_response");
+    err.via = "client";
+    throw err;
+  }
+  return { summary: text, provider: cfg.provider, model };
+}
+
+function setupAiKeySettings() {
+  const providerEl = document.getElementById("aiProviderSelect");
+  const keyEl = document.getElementById("aiApiKeyInput");
+  const msg = document.getElementById("aiKeyMsg");
+  const btnSave = document.getElementById("btnSaveAiKey");
+  const btnClear = document.getElementById("btnClearAiKey");
+  if (!providerEl || !keyEl || !btnSave) return;
+
+  const cfg = getLocalAiConfig();
+  providerEl.value = cfg.provider === "openai" ? "openai" : "groq";
+  if (cfg.key) {
+    keyEl.placeholder = "••••••••  (کلید ذخیره شده — برای تغییر، کلید جدید بنویس)";
+  }
+
+  btnSave.addEventListener("click", () => {
+    const key = keyEl.value.trim();
+    if (!key || key.length < 10) {
+      if (msg) msg.textContent = "کلید معتبر وارد کن.";
+      return;
+    }
+    localStorage.setItem(AI_KEY_STORAGE, key);
+    localStorage.setItem(AI_PROVIDER_STORAGE, providerEl.value === "openai" ? "openai" : "groq");
+    keyEl.value = "";
+    keyEl.placeholder = "••••••••  (کلید ذخیره شد)";
+    if (msg) msg.textContent = "کلید ذخیره شد. الان می‌تونی از تب تحلیل استفاده کنی.";
+  });
+
+  if (btnClear) {
+    btnClear.addEventListener("click", () => {
+      localStorage.removeItem(AI_KEY_STORAGE);
+      keyEl.value = "";
+      keyEl.placeholder = "کلید را اینجا بچسبان";
+      if (msg) msg.textContent = "کلید پاک شد.";
+    });
+  }
+}
+
 function setupAiAnalyzeButton(btnId, resultId) {
   const btn = document.getElementById(btnId);
   const resultBox = document.getElementById(resultId);
   if (!btn || !resultBox) return;
   let cooldownUntil = 0;
+
   btn.addEventListener("click", async () => {
-    if (CONFIG.WORKER_URL.includes("YOUR-SUBDOMAIN")) {
-      resultBox.innerHTML = `<div class="ai-result-error">😅 هنوز آدرس سرور تنظیم نشده.</div>`;
-      return;
-    }
     const now = Date.now();
     if (now < cooldownUntil) {
       const sec = Math.ceil((cooldownUntil - now) / 1000);
@@ -2297,9 +2417,9 @@ function setupAiAnalyzeButton(btnId, resultId) {
       return;
     }
     btn.disabled = true;
+    resultBox.style.display = "";
     resultBox.innerHTML = `<div class="ai-result-loading"><span class="ai-spin"></span>در حال تحلیل این ماه...</div>`;
 
-    // ماه انتخاب‌شده در داشبورد (یا ماه جاری)
     const base = (typeof viewedMonth === "object" && viewedMonth && viewedMonth.jy)
       ? viewedMonth
       : todayJalali();
@@ -2307,7 +2427,50 @@ function setupAiAnalyzeButton(btnId, resultId) {
     const thisMonth = computeMonthTotals(base.jy, base.jm);
     const lastMonth = computeMonthTotals(lastM.jy, lastM.jm);
 
+    // enrich categories if missing
+    if (!thisMonth.categories && typeof state !== "undefined") {
+      const byCat = {};
+      (state.entries || []).forEach((e) => {
+        if (e.type !== "expense") return;
+        if (e.jy !== base.jy || e.jm !== base.jm) return;
+        byCat[e.category] = (byCat[e.category] || 0) + (e.amount || 0);
+      });
+      thisMonth.categories = Object.entries(byCat)
+        .sort((a, b) => b[1] - a[1])
+        .map(([name, amount]) => ({ name, amount }));
+    }
+
     try {
+      // 1) کلید محلی روی گوشی (دور زدن بلاک IP کلودفلر)
+      const local = getLocalAiConfig();
+      if (local.key) {
+        try {
+          const out = await analyzeViaClientKey(thisMonth, lastMonth);
+          resultBox.innerHTML = `<div class="ai-result-text">${out.summary.replace(/\n/g, "<br>")}</div>`;
+          cooldownUntil = Date.now() + 15000;
+          return;
+        } catch (clientErr) {
+          const st = clientErr && clientErr.status;
+          let msg = "کلید محلی جواب نداد.";
+          if (st === 401) msg = "کلید API نامعتبر است. از تنظیمات یک کلید جدید ذخیره کن.";
+          else if (st === 403) msg = "دسترسی Forbidden — کلید یا حساب محدود شده. کلید جدید بساز یا سرویس را عوض کن (Groq/OpenAI).";
+          else if (st === 429) {
+            msg = "محدودیت تعداد درخواست. کمی صبر کن.";
+            cooldownUntil = Date.now() + 60000;
+          } else if (clientErr && clientErr.message) {
+            msg += `<br><small style="opacity:.75;word-break:break-word">${String(clientErr.message).slice(0, 200)}</small>`;
+          }
+          // اگر کلید محلی بود و شکست خورد، به Worker هم شانس بده
+          resultBox.innerHTML = `<div class="ai-result-loading"><span class="ai-spin"></span>تلاش از مسیر سرور...</div>`;
+        }
+      }
+
+      // 2) Worker (Workers AI / secrets)
+      if (CONFIG.WORKER_URL.includes("YOUR-SUBDOMAIN")) {
+        resultBox.innerHTML = `<div class="ai-result-error">آدرس سرور تنظیم نشده. از تنظیمات یک کلید Groq ذخیره کن.</div>`;
+        return;
+      }
+
       const res = await fetch(`${CONFIG.WORKER_URL}/analyze`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -2316,48 +2479,33 @@ function setupAiAnalyzeButton(btnId, resultId) {
       const data = await res.json().catch(() => null);
       if (!res.ok || !data || !data.summary) {
         const code = data && data.error;
-        let msg = "متأسفانه الان نشد تحلیل کنم، یه‌بار دیگه امتحان کن.";
-        if (code === "no_api_key" || code === "no_groq_key") {
-          msg = "سرویس تحلیل آماده نیست.<br>پیشنهاد (رایگان و پایدار):<br><code style=\"font-size:11px\">wrangler secret put GROQ_API_KEY</code><br>بعد <code style=\"font-size:11px\">wrangler deploy</code><br><small>کلید: console.groq.com/keys</small>";
-        } else if (code === "openai_blocked") {
-          msg = "ChatGPT از سرور کلودفلر مسدود است.<br>راه حل: کلید رایگان Groq بگذار:<br><code style=\"font-size:11px\">wrangler secret put GROQ_API_KEY</code><br>بعد <code style=\"font-size:11px\">wrangler deploy</code>";
+        let msg = "تحلیل انجام نشد.";
+        if (!getLocalAiConfig().key) {
+          msg = "برای تحلیل، یک کلید رایگان در تنظیمات ذخیره کن:<br>تنظیمات → تحلیل هوشمند (AI) → Groq<br><small>console.groq.com/keys</small>";
         } else if (code === "rate_limited" || res.status === 429) {
-          msg = "محدودیت تعداد درخواست فعال است. ۱–۲ دقیقه صبر کن.<br><small>با Groq این مشکل کمتر پیش می‌آید: wrangler secret put GROQ_API_KEY</small>";
-        } else if (code === "ai_request_failed") {
-          const det = data && data.detail ? String(data.detail) : "";
-          if (/401|Incorrect API key|invalid_api_key/i.test(det)) {
-            msg = "کلید API نامعتبر است. کلید Groq یا OpenAI را دوباره تنظیم کن.";
-          } else if (/403|security policy|Access denied|country|region|unsupported|openai_blocked/i.test(det)) {
-            msg = "دسترسی به ChatGPT از این سرور محدود است.<br>از Groq استفاده کن (رایگان):<br><code style=\"font-size:11px\">wrangler secret put GROQ_API_KEY && wrangler deploy</code>";
-          } else if (/429|rate_limit/i.test(det)) {
-            msg = "محدودیت تعداد درخواست. کمی صبر کن و دوباره امتحان کن.";
-          } else if (/insufficient_quota|billing|payment/i.test(det)) {
-            msg = "اعتبار حساب AI کافی نیست. Billing را چک کن یا از Groq رایگان استفاده کن.";
-          } else {
-            msg = "سرور هوش مصنوعی جواب نداد. یه‌بار دیگه امتحان کن.";
-          }
-          if (det) msg += `<br><small style="opacity:.75;word-break:break-word">جزئیات: ${det.slice(0, 220)}</small>`;
-        } else if (code === "empty_response" || code === "no summary") {
-          msg = "جواب خالی برگشت، یه‌بار دیگه امتحان کن.";
-        } else if (res.status === 404) {
-          msg = "این قابلیت هنوز روی Worker آپلود نشده. worker.js جدید را با wrangler deploy بفرست.";
+          msg = "محدودیت تعداد درخواست. کمی صبر کن.";
+          cooldownUntil = Date.now() + 60000;
+        } else if (data && data.detail) {
+          msg += `<br><small style="opacity:.75;word-break:break-word">${String(data.detail).slice(0, 200)}</small>`;
         }
         resultBox.innerHTML = `<div class="ai-result-error">${msg}</div>`;
-        if (code === "rate_limited" || res.status === 429) {
-          cooldownUntil = Date.now() + 60000; // 60s cooldown
-        }
         return;
       }
       resultBox.innerHTML = `<div class="ai-result-text">${data.summary.replace(/\n/g, "<br>")}</div>`;
-      cooldownUntil = Date.now() + 15000; // جلوگیری از کلیک پشت‌سرهم
+      cooldownUntil = Date.now() + 15000;
     } catch (e) {
-      resultBox.innerHTML = `<div class="ai-result-error">اتصال به سرور برقرار نشد. اینترنتت رو چک کن و دوباره امتحان کن.</div>`;
+      const hasKey = !!getLocalAiConfig().key;
+      resultBox.innerHTML = hasKey
+        ? `<div class="ai-result-error">اتصال برقرار نشد. اگر از OpenAI استفاده می‌کنی فیلترشکن را روشن کن؛ برای Groq معمولاً لازم نیست.</div>`
+        : `<div class="ai-result-error">اتصال برقرار نشد. از تنظیمات کلید Groq را ذخیره کن.</div>`;
     } finally {
       btn.disabled = false;
     }
   });
 }
 setupAiAnalyzeButton("btnAiAnalyze", "aiAnalysisResult");
+setupAiKeySettings();
+
 
 // ---------- Sync ----------
 function genCode() { return String(Math.floor(100000 + Math.random() * 900000)); }
@@ -2511,7 +2659,7 @@ async function initSync() {
 // ---------- Service worker ----------
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js?v=77").catch(() => {});
+    navigator.serviceWorker.register("sw.js?v=78").catch(() => {});
   });
 }
 
