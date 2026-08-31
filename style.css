@@ -368,9 +368,9 @@ h2 {
 /* Compact mode: badge+text+watermark shrink via their own CSS transform;
    header-inner itself shrinks via real padding (not a transform) so nothing
    gets doubly/unevenly squashed. */
-.app-header.is-compact .header-inner { padding: 8px 18px; }
-.app-header.is-compact .brand-badge { transform: scale(0.68); border-radius: 11px; background: rgba(255,255,255,0.2); }
-.app-header.is-compact .brand-text { transform: scaleX(0.78); transform-origin: right center; opacity: 1; font-size: 18px; }
+.app-header.is-compact .header-inner { padding: 5px 16px; }
+.app-header.is-compact .brand-badge { transform: scale(0.62); border-radius: 11px; background: rgba(255,255,255,0.2); }
+.app-header.is-compact .brand-text { transform: scaleX(0.75); transform-origin: right center; opacity: 1; font-size: 16px; }
 .app-header.is-compact .watermark {
   position: absolute;
   left: 50%;
@@ -1342,6 +1342,7 @@ input:focus, select:focus {
   position: fixed;
   top: calc(84px + env(safe-area-inset-top));
   right: 16px;
+  left: auto;
   width: 56px;
   height: 56px;
   border-radius: 50%;
@@ -1355,8 +1356,8 @@ input:focus, select:focus {
   opacity: 0;
   transform: scale(0.5) translateY(-6px);
   pointer-events: none;
-  cursor: pointer;
-  transition: opacity .25s cubic-bezier(.22,1,.36,1), transform .25s cubic-bezier(.22,1,.36,1);
+  visibility: hidden;
+  transition: opacity .25s cubic-bezier(.22,1,.36,1), transform .25s cubic-bezier(.22,1,.36,1), visibility .25s;
 }
 .ai-floating-star:active { transform: scale(0.88) !important; }
 .ai-card-head {
@@ -2869,11 +2870,6 @@ input:checked + .toggle-slider:before {
 #tab-analysis .ai-card {
   background: linear-gradient(150deg, var(--analysis-navy) 0%, var(--analysis-navy-2) 70%, var(--analysis-navy-3) 130%);
   box-shadow: 0 10px 26px rgba(29,43,79,0.24);
-}
-#tab-analysis .ai-floating-star {
-  background: linear-gradient(150deg, rgba(29,43,79,0.65) 0%, rgba(51,68,122,0.65) 70%, rgba(90,111,176,0.65) 130%);
-  box-shadow: 0 8px 24px rgba(29,43,79,0.3), 0 2px 8px rgba(0,0,0,0.1);
-  border-color: rgba(255,255,255,0.3);
 }
 #tab-analysis .daily-chart-tooltip-bg { fill: var(--analysis-navy); }
 

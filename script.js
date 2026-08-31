@@ -595,6 +595,19 @@ function switchTab(tab, opts = {}) {
     setHeaderCompact(tab !== "dashboard");
   }
 
+  // Show/hide AI floating star (only on analysis tab)
+  const aiStar = document.getElementById("aiFloatingStar");
+  if (aiStar) {
+    if (tab === "analysis") {
+      aiStar.style.visibility = "visible";
+      aiStar.style.pointerEvents = "auto";
+    } else {
+      aiStar.style.opacity = "0";
+      aiStar.style.visibility = "hidden";
+      aiStar.style.pointerEvents = "none";
+    }
+  }
+
   const scrollRoot = document.getElementById("appScroll");
   if (scrollRoot) scrollRoot.scrollTop = 0;
 }

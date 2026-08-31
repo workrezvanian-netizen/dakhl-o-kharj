@@ -14,7 +14,7 @@
 <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css">
 <link href="https://cdn.jsdelivr.net/gh/rastikerdar/kamran@v1.0.0/dist/font-face.css" rel="stylesheet" type="text/css">
 <link href="https://cdn.jsdelivr.net/gh/rastikerdar/samim-font@v4.0.5/dist/font-face.css" rel="stylesheet" type="text/css">
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v=2">
 </head>
 <body>
 
@@ -227,10 +227,6 @@
 
   <!-- ANALYSIS -->
   <section id="tab-analysis" class="tab">
-    <button type="button" id="aiFloatingStar" class="ai-floating-star" aria-label="تحلیل هوشمند">
-      <span class="icon-mask" data-icon="sparkles" style="width:22px;height:22px;color:#fff"></span>
-    </button>
-
     <div class="ai-card" id="aiAnalysisCard">
       <button type="button" id="btnAiAnalyze" class="ai-card-button">
         <svg class="ai-card-watermark" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -682,6 +678,11 @@
     </div>
   </div>
 
+<!-- Floating AI star (outside tabs so position:fixed works) -->
+<button type="button" id="aiFloatingStar" class="ai-floating-star" aria-label="تحلیل هوشمند">
+  <span class="icon-mask" data-icon="sparkles" style="width:22px;height:22px;color:#fff"></span>
+</button>
+
 <nav class="bottom-nav">
   <button class="nav-btn" data-tab="budget">
     <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="18" rx="3"/><path d="M2 9h20"/><path d="M12 14v3"/><circle cx="8" cy="15.5" r="1" fill="currentColor"/><circle cx="16" cy="15.5" r="1" fill="currentColor"/></svg>
@@ -863,7 +864,7 @@ n  <!-- Progress -->
 </div>
 <!-- ═══════════════ END ONBOARDING ═══════════════ -->
 
-<script src="script.js"></script>
+<script src="script.js?v=2"></script>
 <script src="installments.js"></script>
 <script src="three-scene.js"></script>
 </body>
