@@ -682,6 +682,7 @@ function openAddSheet() {
   setCustomHourVisible(false);
   document.getElementById("formError").hidden = true;
   sheetOverlay.hidden = false;
+  document.body.classList.add("sheet-open");
 }
 
 function openEditSheet(item) {
@@ -708,10 +709,12 @@ function openEditSheet(item) {
 
   document.getElementById("formError").hidden = true;
   sheetOverlay.hidden = false;
+  document.body.classList.add("sheet-open");
 }
 
 function closeSheet() {
   sheetOverlay.hidden = true;
+  document.body.classList.remove("sheet-open");
   editingId = null;
 }
 

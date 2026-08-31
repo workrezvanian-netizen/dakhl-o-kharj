@@ -36,6 +36,17 @@ body.viewing-past-month::after {
 /* Body is locked to the viewport (not scrollable) so the fixed bottom nav
    never jitters from iOS rubber-band/bounce scrolling. All real scrolling
    happens inside .app-scroll instead. */
+body.sheet-open #appScroll {
+  overflow: hidden !important;
+  pointer-events: none;
+}
+body.sheet-open .bottom-nav,
+body.sheet-open #fab,
+body.sheet-open .ai-floating-star {
+  pointer-events: none;
+  opacity: 0.35;
+}
+
 html, body {
   height: 100%;
   height: 100dvh;
@@ -2342,90 +2353,177 @@ input:checked + .toggle-slider:before {
   padding-bottom: calc(100px + env(safe-area-inset-bottom));
 }
 
-/* ---------------------------- شیت افزودن/تنظیمات ---------------------------- */
+/* ---------------------------- پاپ‌آپ افزودن/ویرایش قسط (مودال + بلور) ---------------------------- */
 
-#tab-installments .sheet-overlay {
+#sheetOverlay.sheet-overlay,
+.sheet-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(20, 33, 58, 0.45);
+  z-index: 80;
   display: flex;
-  align-items: flex-end;
-  z-index: 50;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  padding-top: max(16px, env(safe-area-inset-top));
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
+  box-sizing: border-box;
+  background: rgba(20, 28, 40, 0.42);
+  backdrop-filter: blur(14px) saturate(1.2);
+  -webkit-backdrop-filter: blur(14px) saturate(1.2);
+  -webkit-overflow-scrolling: touch;
 }
-#tab-installments .sheet-overlay[hidden] { display: none; }
 
-#tab-installments .sheet {
-  background: var(--inst-cream);
+#sheetOverlay.sheet-overlay[hidden],
+.sheet-overlay[hidden] {
+  display: none !important;
+}
+
+#sheetOverlay .sheet,
+.sheet-overlay .sheet {
+  position: relative;
+  background: linear-gradient(165deg, #FBF7F0 0%, #F3EDE4 100%);
   width: 100%;
-  max-width: 480px;
-  margin: 0 auto;
-  border-radius: 24px 24px 0 0;
-  padding: 10px 22px calc(24px + env(safe-area-inset-bottom));
-  max-height: 88vh;
+  max-width: 420px;
+  max-height: min(88vh, 720px);
   overflow-y: auto;
-  animation: inst-sheet-up 0.22s ease-out;
+  margin: 0 auto;
+  border-radius: 24px;
+  padding: 12px 20px 20px;
+  box-shadow:
+    0 24px 48px rgba(16, 30, 50, 0.28),
+    0 8px 16px rgba(16, 30, 50, 0.12),
+    inset 0 1px 0 rgba(255,255,255,0.9);
+  animation: inst-sheet-pop 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+  -webkit-overflow-scrolling: touch;
 }
-@keyframes inst-sheet-up {
-  from { transform: translateY(30px); opacity: 0.4; }
-  to { transform: translateY(0); opacity: 1; }
-}
-#tab-installments .sheet-handle { width: 40px; height: 4px; background: var(--inst-paper-line); border-radius: 2px; margin: 8px auto 14px; }
-#tab-installments .sheet h2 { font-size: 19px; font-weight: 800; color: var(--inst-navy); margin: 0 0 16px; }
 
-#tab-installments .settings-section {
-  border: 1px solid var(--inst-paper-line);
-  border-radius: var(--inst-radius-md);
-  padding: 14px;
-  margin-bottom: 14px;
+@keyframes inst-sheet-pop {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+#sheetOverlay .sheet-handle,
+.sheet-overlay .sheet-handle {
+  width: 40px;
+  height: 4px;
+  background: var(--border, #E8E1D3);
+  border-radius: 2px;
+  margin: 4px auto 12px;
+}
+
+#sheetOverlay .sheet h2,
+.sheet-overlay .sheet h2 {
+  font-size: 19px;
+  font-weight: 800;
+  color: var(--green-deep, #163F3C);
+  margin: 0 0 16px;
+  text-align: right;
+}
+
+#sheetOverlay .field,
+.sheet-overlay .field {
   display: flex;
   flex-direction: column;
-  align-items: stretch;
+  gap: 6px;
+  margin-bottom: 14px;
+  font-size: 13px;
+  color: var(--text-mute, #7A8582);
+  font-weight: 500;
 }
-#tab-installments .settings-subtitle { font-size: 13px; font-weight: 700; color: var(--inst-navy); margin-bottom: 4px; }
-
-#tab-installments .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; font-size: 13px; color: var(--inst-ink-soft); font-weight: 500; }
-#tab-installments .field[hidden] { display: none; }
-#tab-installments .field input {
+#sheetOverlay .field[hidden],
+.sheet-overlay .field[hidden] {
+  display: none !important;
+}
+#sheetOverlay .field input,
+.sheet-overlay .field input {
   font-family: inherit;
   font-size: 15px;
   padding: 12px 14px;
   border-radius: 12px;
-  border: 1px solid var(--inst-paper-line);
+  border: 1px solid var(--border, #E8E1D3);
   background: #fff;
-  color: var(--inst-navy-ink);
+  color: var(--text, #26302E);
   direction: ltr;
   text-align: right;
 }
-#tab-installments .field input:focus { outline: 2px solid var(--inst-brass); outline-offset: 1px; }
-#tab-installments .field-checkbox { flex-direction: row-reverse; align-items: center; justify-content: flex-end; gap: 10px; }
-#tab-installments .field-checkbox input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--inst-navy); flex-shrink: 0; }
-#tab-installments .field-checkbox span { font-size: 13.5px; }
-#tab-installments #paidCountField span,
-#tab-installments #reminderHourField span {
-  color: var(--inst-ink-soft);
-  opacity: 0.62;
+#sheetOverlay .field input:focus,
+.sheet-overlay .field input:focus {
+  outline: 2px solid var(--green, #2F7A72);
+  outline-offset: 1px;
+}
+#sheetOverlay .field-checkbox,
+.sheet-overlay .field-checkbox {
+  flex-direction: row-reverse;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+#sheetOverlay .field-checkbox input[type="checkbox"],
+.sheet-overlay .field-checkbox input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--green-deep, #163F3C);
+  flex-shrink: 0;
+}
+#sheetOverlay .field-checkbox span,
+.sheet-overlay .field-checkbox span {
+  font-size: 13.5px;
+}
+#sheetOverlay #paidCountField span,
+#sheetOverlay #reminderHourField span {
+  color: var(--text-mute);
+  opacity: 0.7;
   font-size: 12px;
   font-weight: 400;
 }
 
-#tab-installments .segmented { display: flex; border: 1px solid var(--inst-paper-line); border-radius: 12px; overflow: hidden; }
-#tab-installments .seg-btn {
+#sheetOverlay .segmented,
+.sheet-overlay .segmented {
+  display: flex;
+  border: 1px solid var(--border, #E8E1D3);
+  border-radius: 12px;
+  overflow: hidden;
+}
+#sheetOverlay .seg-btn,
+.sheet-overlay .seg-btn {
   flex: 1;
   border: none;
   background: #fff;
-  color: var(--inst-ink-soft);
+  color: var(--text-mute);
   padding: 10px 8px;
   font-family: inherit;
   font-size: 13.5px;
   font-weight: 600;
   cursor: pointer;
 }
-#tab-installments .seg-btn.active { background: var(--inst-navy); color: var(--inst-cream); }
+#sheetOverlay .seg-btn.active,
+.sheet-overlay .seg-btn.active {
+  background: var(--green-deep, #163F3C);
+  color: #FBF7F0;
+}
 
-#tab-installments .field-error { color: var(--inst-red); font-size: 12.5px; margin: -6px 0 12px; }
-#tab-installments .sheet-actions { display: flex; gap: 10px; margin-top: 6px; }
+#sheetOverlay .field-error,
+.sheet-overlay .field-error {
+  color: var(--expense, #C24A2E);
+  font-size: 12.5px;
+  margin: -6px 0 12px;
+}
 
-#tab-installments .inst-btn {
+#sheetOverlay .sheet-actions,
+.sheet-overlay .sheet-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+#sheetOverlay .inst-btn,
+.sheet-overlay .inst-btn {
   flex: 1;
   padding: 14px;
   border-radius: 14px;
@@ -2436,12 +2534,28 @@ input:checked + .toggle-slider:before {
   cursor: pointer;
   transition: opacity .12s ease, transform .12s ease;
 }
-#tab-installments .inst-btn:active { transform: scale(0.97); opacity: 0.85; }
-#tab-installments .inst-btn-primary { background: var(--inst-navy); color: var(--inst-cream); font-weight: 700; }
-#tab-installments .inst-btn-ghost { background: rgba(27, 42, 74, 0.08); color: var(--inst-navy); }
+#sheetOverlay .inst-btn:active,
+.sheet-overlay .inst-btn:active {
+  transform: scale(0.97);
+  opacity: 0.85;
+}
+#sheetOverlay .inst-btn-primary,
+.sheet-overlay .inst-btn-primary {
+  background: var(--green-deep, #163F3C);
+  color: #FBF7F0;
+  font-weight: 700;
+}
+#sheetOverlay .inst-btn-ghost,
+.sheet-overlay .inst-btn-ghost {
+  background: rgba(22, 63, 60, 0.08);
+  color: var(--green-deep, #163F3C);
+}
 
 @media (prefers-reduced-motion: reduce) {
-  #tab-installments .sheet { animation: none; }
+  #sheetOverlay .sheet,
+  .sheet-overlay .sheet {
+    animation: none;
+  }
 }
 
 /* ---------------------------- توست عمومی (بیرون از تب اقساط) ---------------------------- */
