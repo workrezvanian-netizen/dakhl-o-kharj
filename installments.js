@@ -672,14 +672,14 @@ function setCustomHourVisible(visible) {
 
 
 // ---------------------------------------------------------------------
-// انتخابگر روز iOS (۱ تا ۳۱)
+// انتخابگر روز iOS — باکس + باز شدن با کلیک
 // ---------------------------------------------------------------------
 const DUE_DAY_ITEM_H = 36;
+let dueDayChosen = false;
 
 function buildDueDayPicker() {
   const wheel = document.getElementById("dueDayWheel");
-  const hidden = document.getElementById("fDueDay");
-  if (!wheel || !hidden || wheel.dataset.ready === "1") return;
+  if (!wheel || wheel.dataset.ready === "1") return;
 
   for (let d = 1; d <= 31; d++) {
     const el = document.createElement("div");
@@ -694,10 +694,7 @@ function buildDueDayPicker() {
   const syncSelected = () => {
     const idx = Math.round(wheel.scrollTop / DUE_DAY_ITEM_H);
     const day = Math.min(31, Math.max(1, idx + 1));
-    hidden.value = String(day);
-    wheel.querySelectorAll(".ios-day-option").forEach((opt) => {
-      opt.classList.toggle("is-selected", Number(opt.dataset.day) === day);
-    });
+    applyDueDayValue(day, true);
   };
 
   wheel.addEventListener("scroll", () => {
@@ -715,25 +712,77 @@ function buildDueDayPicker() {
     const opt = e.target.closest(".ios-day-option");
     if (!opt) return;
     const day = Number(opt.dataset.day);
-    setDueDayPickerValue(day);
+    setDueDayPickerValue(day, true);
   });
 }
 
-function setDueDayPickerValue(day) {
-  const wheel = document.getElementById("dueDayWheel");
+function applyDueDayValue(day, markChosen) {
   const hidden = document.getElementById("fDueDay");
-  if (!wheel || !hidden) return;
-  buildDueDayPicker();
-  const d = Math.min(31, Math.max(1, Number(day) || 15));
+  const textEl = document.getElementById("dueDayBoxText");
+  if (!hidden || !textEl) return;
+  const d = Math.min(31, Math.max(1, Number(day) || 0));
+  if (!d) return;
   hidden.value = String(d);
-  requestAnimationFrame(() => {
-    wheel.scrollTop = (d - 1) * DUE_DAY_ITEM_H;
+  textEl.textContent = String(d);
+  textEl.classList.remove("is-placeholder");
+  if (markChosen) dueDayChosen = true;
+  const wheel = document.getElementById("dueDayWheel");
+  if (wheel) {
     wheel.querySelectorAll(".ios-day-option").forEach((opt) => {
       opt.classList.toggle("is-selected", Number(opt.dataset.day) === d);
     });
-  });
+  }
 }
 
+function setDueDayPickerValue(day, markChosen) {
+  buildDueDayPicker();
+  const d = Math.min(31, Math.max(1, Number(day) || 15));
+  applyDueDayValue(d, markChosen);
+  const wheel = document.getElementById("dueDayWheel");
+  if (wheel) {
+    requestAnimationFrame(() => {
+      wheel.scrollTop = (d - 1) * DUE_DAY_ITEM_H;
+    });
+  }
+}
+
+function resetDueDayPicker() {
+  dueDayChosen = false;
+  const hidden = document.getElementById("fDueDay");
+  const textEl = document.getElementById("dueDayBoxText");
+  const picker = document.getElementById("dueDayPicker");
+  const box = document.getElementById("dueDayBox");
+  if (hidden) hidden.value = "";
+  if (textEl) {
+    textEl.textContent = "روز";
+    textEl.classList.add("is-placeholder");
+  }
+  if (picker) picker.hidden = true;
+  if (box) box.classList.remove("is-open");
+}
+
+function toggleDueDayPicker(forceOpen) {
+  const picker = document.getElementById("dueDayPicker");
+  const box = document.getElementById("dueDayBox");
+  if (!picker || !box) return;
+  const open = forceOpen === true ? true : forceOpen === false ? false : picker.hidden;
+  if (open) {
+    buildDueDayPicker();
+    picker.hidden = false;
+    box.classList.add("is-open");
+    const current = parseInt(document.getElementById("fDueDay").value, 10);
+    setDueDayPickerValue(current || 15, !!current && dueDayChosen);
+  } else {
+    picker.hidden = true;
+    box.classList.remove("is-open");
+  }
+}
+
+(function setupDueDayBox() {
+  const box = document.getElementById("dueDayBox");
+  if (!box) return;
+  box.addEventListener("click", () => toggleDueDayPicker());
+})();
 
 function openAddSheet() {
   addForm.reset();
@@ -747,7 +796,7 @@ function openAddSheet() {
   document.getElementById("fReminderHour").value = 9;
   setCustomHourVisible(false);
   document.getElementById("formError").hidden = true;
-  setDueDayPickerValue(15);
+  resetDueDayPicker();
   sheetOverlay.hidden = false;
   document.body.classList.add("sheet-open");
 }
@@ -763,7 +812,9 @@ function openEditSheet(item) {
   setType(item.due_type);
 
   if (item.due_type === "monthly") {
-    setDueDayPickerValue(item.due_value);
+    dueDayChosen = true;
+    setDueDayPickerValue(item.due_value, true);
+    toggleDueDayPicker(false);
   } else {
     document.getElementById("fDueDate").value = item.due_jalali.replace(/\//g, "-");
   }
@@ -783,6 +834,7 @@ function closeSheet() {
   sheetOverlay.hidden = true;
   document.body.classList.remove("sheet-open");
   editingId = null;
+  toggleDueDayPicker(false);
 }
 
 document.getElementById("fab").addEventListener("click", openAddSheet);
@@ -823,10 +875,23 @@ addForm.addEventListener("submit", (e) => {
 
   const title = document.getElementById("fTitle").value.trim();
   const amount = toEnglishDigits(document.getElementById("fAmount").value).replace(/[^\d]/g, "");
-  const dueValue =
+  let dueValue =
     currentType === "monthly"
       ? document.getElementById("fDueDay").value.trim()
       : document.getElementById("fDueDate").value.trim();
+
+  if (currentType === "monthly" && (!dueDayChosen || !dueValue)) {
+    errEl.textContent = "لطفاً روز سررسید را تنظیم کن";
+    errEl.hidden = false;
+    toggleDueDayPicker(true);
+    document.getElementById("dueDayBox")?.classList.add("is-open");
+    return;
+  }
+  if (currentType === "once" && !dueValue) {
+    errEl.textContent = "لطفاً تاریخ سررسید را وارد کن";
+    errEl.hidden = false;
+    return;
+  }
   const paidCount = document.getElementById("fCustomCount").checked
     ? (parseInt(document.getElementById("fPaidCount").value.trim(), 10) || 0)
     : 0;

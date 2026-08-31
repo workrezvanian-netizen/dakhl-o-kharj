@@ -4023,9 +4023,51 @@ input:focus, select:focus {
 
 
 /* ---------- iOS-style day picker (اقساط) ---------- */
+.due-day-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 0;
+}
+.due-day-label {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text, #26302E);
+}
+.due-day-box {
+  min-width: 72px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border, #E8E1D3);
+  background: #fff;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: center;
+  direction: ltr;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.03);
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+.due-day-box:active {
+  transform: scale(0.97);
+}
+.due-day-box.is-open {
+  border-color: var(--green, #2F7A72);
+  box-shadow: 0 0 0 3px rgba(47, 122, 114, 0.15);
+}
+.due-day-box-text.is-placeholder {
+  color: rgba(122, 133, 130, 0.45);
+  font-weight: 600;
+}
+.due-day-box-text:not(.is-placeholder) {
+  color: var(--green-deep, #163F3C);
+}
 .ios-day-picker {
   position: relative;
   height: 132px;
+  margin-top: 10px;
   border-radius: 14px;
   background: rgba(22, 63, 60, 0.05);
   overflow: hidden;
@@ -4034,6 +4076,14 @@ input:focus, select:focus {
   touch-action: pan-y;
   user-select: none;
   -webkit-user-select: none;
+  animation: duePickerIn .22s ease;
+}
+.ios-day-picker[hidden] {
+  display: none !important;
+}
+@keyframes duePickerIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: none; }
 }
 .ios-day-picker-highlight {
   position: absolute;
@@ -4077,3 +4127,4 @@ input:focus, select:focus {
   font-weight: 800;
   transform: scale(1.06);
 }
+
