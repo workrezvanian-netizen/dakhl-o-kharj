@@ -14,7 +14,7 @@
 <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css">
 <link href="https://cdn.jsdelivr.net/gh/rastikerdar/kamran@v1.0.0/dist/font-face.css" rel="stylesheet" type="text/css">
 <link href="https://cdn.jsdelivr.net/gh/rastikerdar/samim-font@v4.0.5/dist/font-face.css" rel="stylesheet" type="text/css">
-<link rel="stylesheet" href="style.css?v=2">
+<link rel="stylesheet" href="style.css?v=69">
 </head>
 <body>
 
@@ -676,10 +676,8 @@
     </div>
   </div>
 
-<!-- Floating FAB for installments (outside tabs so position:fixed works) -->
-<button id="fab" class="fab" aria-label="افزودن قسط">+</button>
-
-<!-- Floating AI star (outside tabs so position:fixed works) -->
+<!-- دکمه‌های شناور بیرون از تب‌ها تا position:fixed درست کار کند -->
+<button type="button" id="fab" class="fab fab-installments" aria-label="افزودن قسط" hidden>+</button>
 <button type="button" id="aiFloatingStar" class="ai-floating-star" aria-label="تحلیل هوشمند">
   <span class="icon-mask" data-icon="sparkles" style="width:22px;height:22px;color:#fff"></span>
 </button>
@@ -865,8 +863,8 @@ n  <!-- Progress -->
 </div>
 <!-- ═══════════════ END ONBOARDING ═══════════════ -->
 
-<script src="script.js?v=2"></script>
-<script src="installments.js"></script>
-<script src="three-scene.js"></script>
+<script src="script.js?v=69"></script>
+<script src="installments.js?v=69"></script>
+<script src="three-scene.js?v=69"></script>
 </body>
 </html>

@@ -267,43 +267,61 @@ h2 {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 15px 20px;
-  background: linear-gradient(135deg, #163F3C 0%, #2F7A72 50%, #4FA89E 100%);
-  border-radius: 34px;
+  padding: 12px 14px 12px 18px;
+  min-height: 72px;
+  background: linear-gradient(180deg, #4AADA0 0%, #3D9B8F 40%, #2F8A80 100%);
+  border-radius: 40px;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 8px 20px rgba(22,63,60,0.28), inset 0 1px 0 rgba(255,255,255,0.2);
+  box-shadow:
+    0 14px 32px rgba(30, 90, 82, 0.28),
+    0 4px 10px rgba(30, 90, 82, 0.12),
+    inset 0 2px 4px rgba(255,255,255,0.25),
+    inset 0 -5px 12px rgba(0,0,0,0.12);
   transition: padding .35s cubic-bezier(.22,1,.36,1);
 }
-
-
 .header-inner::after {
   content: "";
   position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0) 45%);
+  left: 12%;
+  right: 12%;
+  top: 2px;
+  height: 36%;
+  border-radius: 50%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.28) 0%, rgba(255,255,255,0) 100%);
   pointer-events: none;
+  filter: blur(1px);
 }
 .brand {
   display: flex;
   align-items: center;
   gap: 10px;
-  color: var(--cream);
+  color: #F4F7F5;
   position: relative;
   z-index: 1;
 }
 .brand-badge {
-  width: 56px;
-  height: 56px;
-  border-radius: 16px;
-  background: rgba(255,255,255,0.14);
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.2), 0 2px 6px rgba(0,0,0,0.15);
+  width: 54px;
+  height: 54px;
+  border-radius: 15px;
+  background: linear-gradient(160deg, #F7F2EA, #E8E0D4);
+  box-shadow:
+    0 6px 14px rgba(0,0,0,0.18),
+    inset 0 1px 2px rgba(255,255,255,0.95),
+    inset 0 -2px 4px rgba(0,0,0,0.08);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   overflow: hidden;
+  padding: 4px;
   transition: transform .35s cubic-bezier(.22,1,.36,1);
+}
+.brand-badge img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 11px;
 }
 .brand-text {
   font-weight: 800;
@@ -579,7 +597,7 @@ h2 {
   align-items: center;
   gap: 6px;
   margin: 4px 0 6px;
-  background: var(--surface);
+  background: #F4EFE6;
   border-radius: 999px;
   padding: 8px;
   box-shadow: 0 3px 10px rgba(22,63,60,0.08), inset 0 -2px 4px rgba(22,63,60,0.03), inset 0 2px 3px rgba(255,255,255,0.9);
@@ -1340,19 +1358,24 @@ input:focus, select:focus {
 }
 .ai-floating-star {
   position: fixed;
-  top: calc(140px + env(safe-area-inset-top));
+  /* کمی پایین‌تر از قبل تا با هدر تداخل نکند */
+  top: calc(128px + env(safe-area-inset-top));
   right: 16px;
   left: auto;
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  border: 1.5px solid rgba(255,255,255,0.35);
-  background: linear-gradient(150deg, rgba(45,100,200,0.85) 0%, rgba(70,130,220,0.85) 70%, rgba(100,160,240,0.85) 130%);
-  box-shadow: 0 8px 24px rgba(45,100,200,0.35), 0 2px 8px rgba(0,0,0,0.1);
+  border: 1.5px solid rgba(255,255,255,0.4);
+  /* آبی */
+  background: linear-gradient(150deg, #3B82F6 0%, #2563EB 55%, #1D4ED8 100%);
+  box-shadow:
+    0 10px 28px rgba(37, 99, 235, 0.38),
+    0 3px 8px rgba(29, 78, 216, 0.22),
+    inset 0 1px 2px rgba(255,255,255,0.35);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 25;
+  z-index: 28;
   opacity: 0;
   transform: scale(0.5) translateY(-6px);
   pointer-events: none;
@@ -1941,56 +1964,47 @@ input:focus, select:focus {
 .sync-msg.error { color: var(--expense); }
 .danger-zone h2 { color: var(--expense); }
 
-/* ---------- Bottom nav (iOS "liquid glass" — flat minimal pill) ---------- */
+/* ---------- Bottom nav — جمع‌وجور برای ۵ تب ---------- */
 .bottom-nav {
   position: fixed;
-  bottom: 0;
-  right: 14px;
-  left: 14px;
+  bottom: max(8px, env(safe-area-inset-bottom, 8px));
+  right: 10px;
+  left: 10px;
   z-index: 20;
   display: flex;
   align-items: center;
   isolation: isolate;
   overflow: hidden;
-  background: rgba(255,255,255,0.22);
-  backdrop-filter: blur(34px) saturate(2);
-  -webkit-backdrop-filter: blur(34px) saturate(2);
-  border: 1px solid rgba(255,255,255,0.45);
-  border-radius: 30px 30px 0 0;
+  background: linear-gradient(165deg, rgba(255,255,255,0.92) 0%, rgba(247,242,234,0.88) 100%);
+  backdrop-filter: blur(28px) saturate(1.6);
+  -webkit-backdrop-filter: blur(28px) saturate(1.6);
+  border: none;
+  border-radius: 26px;
   box-shadow:
-    0 10px 26px rgba(16,70,43,0.12),
-    0 1px 0 rgba(255,255,255,0.6) inset;
-  padding: 7px 7px calc(7px + env(safe-area-inset-bottom, 20px));
-  padding-bottom: calc(7px + max(env(safe-area-inset-bottom, 0px), 8px));
+    0 12px 28px rgba(40, 50, 40, 0.14),
+    0 2px 6px rgba(40, 50, 40, 0.06),
+    inset 0 1px 2px rgba(255,255,255,0.9);
+  padding: 5px 4px;
 }
-.bottom-nav::after {
-  content: "";
-  position: absolute;
-  left: 12%;
-  right: 12%;
-  top: 0;
-  height: 1px;
-  background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.95) 50%, rgba(255,255,255,0) 100%);
-  pointer-events: none;
-  z-index: 0;
-}
+.bottom-nav::after { display: none; }
 .nav-btn {
   position: relative;
   z-index: 1;
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 3px;
+  gap: 2px;
   background: none;
   border: none;
-  border-radius: 18px;
-  padding: 9px 2px;
-  margin: 0 2px;
+  border-radius: 16px;
+  padding: 7px 1px;
+  margin: 0 1px;
   color: var(--text-mute);
   font-family: inherit;
-  font-size: 10.5px;
+  font-size: 9.5px;
   cursor: pointer;
   transition: transform .2s cubic-bezier(.4,0,.2,1), color .2s ease, background .2s ease, box-shadow .2s ease;
 }
@@ -1999,12 +2013,13 @@ input:focus, select:focus {
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 100%;
+  font-size: 9.5px;
 }
 .nav-btn:active {
   transform: scale(0.92);
 }
 .nav-btn svg {
-  width: 21px; height: 21px;
+  width: 19px; height: 19px;
   fill: none;
   stroke: currentColor;
   stroke-width: 1.8;
@@ -2014,18 +2029,17 @@ input:focus, select:focus {
 }
 .nav-btn.active {
   color: var(--green-deep);
-  background: linear-gradient(180deg, rgba(255,255,255,0.85) 0%, rgba(255,255,255,0.5) 100%);
-  backdrop-filter: blur(14px) saturate(160%);
-  -webkit-backdrop-filter: blur(14px) saturate(160%);
-  border: 1px solid rgba(255,255,255,0.75);
+  background: linear-gradient(180deg, #E8F4F1 0%, #D4EBE5 100%);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: none;
   box-shadow:
-    0 4px 12px rgba(16,70,43,0.16),
-    inset 0 1px 0 rgba(255,255,255,0.95),
-    inset 0 -1.5px 3px rgba(16,70,43,0.08);
+    0 3px 10px rgba(16,70,43,0.12),
+    inset 0 1px 0 rgba(255,255,255,0.95);
 }
-.nav-btn.active svg { stroke: var(--green-deep); transform: scale(1.18); }
-.nav-btn.active span { font-weight: 700; font-size: 11px; }
-.nav-btn.active { padding-bottom: 9px; }
+.nav-btn.active svg { stroke: var(--green-deep); transform: scale(1.1); }
+.nav-btn.active span { font-weight: 700; font-size: 10px; }
+.nav-btn.active { padding-bottom: 7px; }
 
 @media (min-width: 560px) {
   .bottom-nav { max-width: 480px; margin: 0 auto; left: 50%; transform: translateX(-50%); right: auto; width: calc(100% - 28px); }
@@ -2285,32 +2299,48 @@ input:checked + .toggle-slider:before {
 #tab-installments .empty-icon { font-size: 40px; margin-bottom: 10px; }
 #tab-installments .empty-sub { font-size: 13px; opacity: 0.8; }
 
-/* ---------------------------- دکمه‌ی شناور ---------------------------- */
-/* از مرکزِ پایین (که دکمه‌ی شناورِ داشبورد اونجاست) فاصله می‌گیره تا روش قرار نگیره */
-
-.fab {
+/* ---------------------------- دکمه‌ی شناور افزودن قسط ---------------------------- */
+/* بیرون از تب قرار گرفته تا position:fixed با انیمیشن تب خراب نشود */
+.fab,
+.fab-installments,
+#fab {
   position: fixed;
-  bottom: calc(96px + env(safe-area-inset-bottom));
+  bottom: calc(88px + max(env(safe-area-inset-bottom), 8px));
   left: 18px;
   right: auto;
-  width: 56px;
-  height: 56px;
+  width: 58px;
+  height: 58px;
   border-radius: 50%;
-  background: linear-gradient(155deg, var(--inst-navy-2) 0%, var(--inst-navy) 78%);
-  color: var(--inst-brass-light);
-  font-size: 26px;
+  background: linear-gradient(155deg, #3A5A9A 0%, #1B2A4A 78%);
+  color: #E8D5A3;
+  font-size: 30px;
+  font-weight: 400;
   border: none;
-  box-shadow: 0 12px 24px rgba(27, 42, 74, 0.35), inset 0 2px 3px rgba(255,255,255,0.18);
+  box-shadow:
+    0 12px 28px rgba(27, 42, 74, 0.4),
+    0 4px 10px rgba(27, 42, 74, 0.2),
+    inset 0 2px 3px rgba(255,255,255,0.2);
   cursor: pointer;
-  z-index: 30;
+  z-index: 35;
   line-height: 1;
-  transition: transform .15s cubic-bezier(.4,0,.2,1), opacity .25s ease, visibility .25s;
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: transform .15s cubic-bezier(.4,0,.2,1), opacity .2s ease;
 }
-.fab.visible { opacity: 1; visibility: visible; pointer-events: auto; }
-.fab:active { transform: scale(0.94); }
+.fab:active,
+#fab:active { transform: scale(0.92); }
+.fab[hidden],
+#fab[hidden] {
+  display: none !important;
+}
+
+/* فضای کافی پایین لیست اقساط تا زیر FAB نرود */
+#tab-installments .inst-app,
+#tab-installments .ledger {
+  padding-bottom: calc(100px + env(safe-area-inset-bottom));
+}
 
 /* ---------------------------- شیت افزودن/تنظیمات ---------------------------- */
 

@@ -51,3 +51,16 @@ https://dakhl-o-kharj.work-rezvanian.workers.dev
 2. دکمه‌ی «ساخت کد جدید» رو بزن.
 3. اگه بالای صفحه نوشت «متصل» (نه «محلی»)، یعنی همگام‌سازی با Worker برقراره.
 4. اگه بازم نوشت «محلی» یا خطا داد، اسکرین‌شات بفرست تا بررسی کنیم.
+
+
+## AI (OpenRouter)
+
+```bash
+wrangler secret put OPENROUTER_API_KEY
+# اختیاری:
+# wrangler secret put OPENAI_API_KEY
+wrangler deploy
+```
+
+کلید رایگان: https://openrouter.ai/keys
+مدل پیش‌فرض: deepseek/deepseek-chat-v3-0324:free

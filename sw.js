@@ -1,13 +1,15 @@
-const CACHE_NAME = "dakhl-o-kharj-v119";
+const CACHE_NAME = "dakhl-o-kharj-v69";
 const APP_SHELL = [
   "./",
   "./index.html",
   "./style.css",
-  "./style.css?v=2",
+  "./style.css?v=69",
   "./script.js",
-  "./script.js?v=2",
+  "./script.js?v=69",
   "./installments.js",
+  "./installments.js?v=69",
   "./three-scene.js",
+  "./three-scene.js?v=69",
   "./manifest.json",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
@@ -17,7 +19,7 @@ const APP_SHELL = [
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL))
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL).catch(() => {}))
   );
   self.skipWaiting();
 });
@@ -34,7 +36,14 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
 
-  if (url.pathname.startsWith("/data") || url.hostname.includes("workers.dev") || url.hostname.includes("jsdelivr.net") || url.hostname.includes("cdn.")) {
+  if (
+    url.pathname.startsWith("/data") ||
+    url.pathname.startsWith("/analyze") ||
+    url.hostname.includes("workers.dev") ||
+    url.hostname.includes("jsdelivr.net") ||
+    url.hostname.includes("cdn.") ||
+    url.hostname.includes("openrouter.ai")
+  ) {
     return;
   }
 

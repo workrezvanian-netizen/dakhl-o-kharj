@@ -608,10 +608,16 @@ function switchTab(tab, opts = {}) {
     }
   }
 
-  // Show/hide FAB (only on installments tab)
+  // دکمه شناور + اقساط فقط در تب اقساط
   const fab = document.getElementById("fab");
   if (fab) {
-    fab.classList.toggle("visible", tab === "installments");
+    if (tab === "installments") {
+      fab.hidden = false;
+      fab.setAttribute("aria-hidden", "false");
+    } else {
+      fab.hidden = true;
+      fab.setAttribute("aria-hidden", "true");
+    }
   }
 
   const scrollRoot = document.getElementById("appScroll");
@@ -2476,7 +2482,7 @@ async function initSync() {
 // ---------- Service worker ----------
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js").catch(() => {});
+    navigator.serviceWorker.register("sw.js?v=69").catch(() => {});
   });
 }
 
