@@ -1,11 +1,12 @@
 // Cloudflare Worker — بک‌اند «دخل و خرج»
-// تحلیل هوشمند: ChatGPT (OpenAI) — مسیر اصلی
+// تحلیل هوشمند:
+//   1) Cloudflare Workers AI  (بدون کلید خارجی)
+//   2) Groq                   (رایگان — پیشنهادی)
+//   3) OpenAI ChatGPT         (اغلب از IP کلودفلر 403 می‌شود)
 //
-// الزامی:
-//   wrangler secret put OPENAI_API_KEY
+//   wrangler secret put GROQ_API_KEY      ← پیشنهادی
+//   wrangler secret put OPENAI_API_KEY    ← اختیاری
 //   wrangler deploy
-//
-// کلید: https://platform.openai.com/api-keys
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -50,13 +51,19 @@ function buildAnalysisPrompt(body) {
 - مخارج: ${fmtToman(lm.totalExpense)}`;
 }
 
-function extractContent(data) {
-  if (!data || !data.choices || !data.choices[0] || !data.choices[0].message) return "";
-  return String(data.choices[0].message.content || "").trim();
+function extractChatContent(data) {
+  if (!data) return "";
+  if (typeof data === "string") return data.trim();
+  if (data.response && typeof data.response === "string") return data.response.trim();
+  if (data.result && typeof data.result === "string") return data.result.trim();
+  if (data.choices && data.choices[0] && data.choices[0].message) {
+    return String(data.choices[0].message.content || "").trim();
+  }
+  return "";
 }
 
-async function callOpenAI(apiKey, model, prompt) {
-  const res = await fetch("https://api.openai.com/v1/chat/completions", {
+async function callOpenAICompatible(baseUrl, apiKey, model, prompt) {
+  const res = await fetch(`${baseUrl}/chat/completions`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -72,24 +79,16 @@ async function callOpenAI(apiKey, model, prompt) {
         { role: "user", content: prompt }
       ],
       temperature: 0.7,
-      max_tokens: 800
+      max_tokens: 700
     })
   });
   const text = await res.text().catch(() => "");
   let data = null;
   try { data = text ? JSON.parse(text) : null; } catch (_) {}
-  return { ok: res.ok, status: res.status, data, raw: text.slice(0, 400) };
+  return { ok: res.ok, status: res.status, data, raw: text.slice(0, 300) };
 }
 
 async function handleAnalyze(request, env) {
-  const openaiKey = env.OPENAI_API_KEY;
-  if (!openaiKey) {
-    return jsonResponse({
-      error: "no_api_key",
-      detail: "OPENAI_API_KEY تنظیم نشده. دستور: wrangler secret put OPENAI_API_KEY"
-    }, 500);
-  }
-
   let body;
   try {
     body = await request.json();
@@ -98,31 +97,106 @@ async function handleAnalyze(request, env) {
   }
 
   const prompt = buildAnalysisPrompt(body);
-  // مدل‌های ChatGPT — از ارزان/سریع به قوی‌تر
-  const models = ["gpt-4o-mini", "gpt-4o", "gpt-4.1-mini"];
   const attempts = [];
+  const groqKey = env.GROQ_API_KEY;
+  const openaiKey = env.OPENAI_API_KEY;
 
-  for (const model of models) {
-    try {
-      const r = await callOpenAI(openaiKey, model, prompt);
-      const content = extractContent(r.data);
-      if (r.ok && content) {
-        return jsonResponse({ summary: content, model, provider: "openai" });
+  // ── 1) Cloudflare Workers AI (از داخل Worker، بدون بلاک IP) ──
+  if (env.AI) {
+    const models = [
+      "@cf/meta/llama-3.1-8b-instruct",
+      "@cf/meta/llama-3.2-3b-instruct",
+      "@cf/qwen/qwen1.5-7b-chat-awq"
+    ];
+    for (const model of models) {
+      try {
+        const result = await env.AI.run(model, {
+          messages: [
+            {
+              role: "system",
+              content: "You are a helpful Persian financial assistant. Always reply in Persian only. Be concise."
+            },
+            { role: "user", content: prompt }
+          ],
+          max_tokens: 700,
+          temperature: 0.7
+        });
+        const content = extractChatContent(result);
+        if (content) {
+          return jsonResponse({ summary: content, model, provider: "cloudflare-ai" });
+        }
+        attempts.push({ provider: "cloudflare-ai", model, detail: "empty_response" });
+      } catch (e) {
+        attempts.push({
+          provider: "cloudflare-ai",
+          model,
+          detail: String((e && e.message) || e).slice(0, 140)
+        });
       }
-      // اگر مدل وجود نداشت (404) مدل بعدی را امتحان کن
-      attempts.push({ model, status: r.status, detail: r.raw });
-      if (r.status === 401 || r.status === 403) {
-        // کلید نامعتبر — ادامه‌ندادن
-        break;
+    }
+  } else {
+    attempts.push({ provider: "cloudflare-ai", detail: "AI binding not configured" });
+  }
+
+  // ── 2) Groq (رایگان، معمولاً از Worker کار می‌کند) ──
+  if (groqKey) {
+    for (const model of ["llama-3.3-70b-versatile", "llama-3.1-8b-instant", "gemma2-9b-it"]) {
+      try {
+        const r = await callOpenAICompatible(
+          "https://api.groq.com/openai/v1",
+          groqKey,
+          model,
+          prompt
+        );
+        const content = extractChatContent(r.data);
+        if (r.ok && content) {
+          return jsonResponse({ summary: content, model, provider: "groq" });
+        }
+        attempts.push({ provider: "groq", model, status: r.status, detail: r.raw });
+      } catch (e) {
+        attempts.push({ provider: "groq", model, detail: String((e && e.message) || e) });
       }
-    } catch (e) {
-      attempts.push({ model, detail: String((e && e.message) || e) });
     }
   }
 
+  // ── 3) OpenAI — آخرین تلاش (اغلب از IP کلودفلر 403 می‌شود) ──
+  if (openaiKey) {
+    try {
+      const r = await callOpenAICompatible(
+        "https://api.openai.com/v1",
+        openaiKey,
+        "gpt-4o-mini",
+        prompt
+      );
+      const content = extractChatContent(r.data);
+      if (r.ok && content) {
+        return jsonResponse({ summary: content, model: "gpt-4o-mini", provider: "openai" });
+      }
+      attempts.push({ provider: "openai", model: "gpt-4o-mini", status: r.status, detail: r.raw });
+    } catch (e) {
+      attempts.push({ provider: "openai", detail: String((e && e.message) || e) });
+    }
+  }
+
+  const hasAnyKey = !!(groqKey || openaiKey || env.AI);
+  if (!hasAnyKey) {
+    return jsonResponse({
+      error: "no_api_key",
+      detail: "هیچ سرویس AI فعالی نیست. wrangler secret put GROQ_API_KEY و wrangler deploy"
+    }, 500);
+  }
+
+  // اگر فقط OpenAI 403 داده و Groq نیست
+  const onlyOpenAIBlocked =
+    !groqKey &&
+    attempts.some((a) => a.provider === "openai" && (a.status === 403 || /unsupported|unsupported_country|blocked/i.test(String(a.detail || ""))));
+
   return jsonResponse({
-    error: "ai_request_failed",
-    detail: attempts.map((a) => `${a.model}: ${a.status || ""} ${a.detail || ""}`).join(" | ").slice(0, 500)
+    error: onlyOpenAIBlocked ? "openai_blocked" : "ai_request_failed",
+    detail: attempts
+      .map((a) => `${a.provider}${a.model ? "/" + a.model : ""}: ${a.status || ""} ${a.detail || ""}`)
+      .join(" | ")
+      .slice(0, 550)
   }, 502);
 }
 

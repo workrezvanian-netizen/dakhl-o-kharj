@@ -2284,9 +2284,16 @@ function setupAiAnalyzeButton(btnId, resultId) {
   const btn = document.getElementById(btnId);
   const resultBox = document.getElementById(resultId);
   if (!btn || !resultBox) return;
+  let cooldownUntil = 0;
   btn.addEventListener("click", async () => {
     if (CONFIG.WORKER_URL.includes("YOUR-SUBDOMAIN")) {
       resultBox.innerHTML = `<div class="ai-result-error">😅 هنوز آدرس سرور تنظیم نشده.</div>`;
+      return;
+    }
+    const now = Date.now();
+    if (now < cooldownUntil) {
+      const sec = Math.ceil((cooldownUntil - now) / 1000);
+      resultBox.innerHTML = `<div class="ai-result-error">لطفاً ${sec} ثانیه صبر کن و دوباره امتحان کن.</div>`;
       return;
     }
     btn.disabled = true;
@@ -2311,19 +2318,23 @@ function setupAiAnalyzeButton(btnId, resultId) {
         const code = data && data.error;
         let msg = "متأسفانه الان نشد تحلیل کنم، یه‌بار دیگه امتحان کن.";
         if (code === "no_api_key" || code === "no_groq_key") {
-          msg = "کلید ChatGPT روی Worker تنظیم نشده.<br>از پوشه پروژه بزن:<br><code style=\"font-size:11px\">wrangler secret put OPENAI_API_KEY</code><br>بعد <code style=\"font-size:11px\">wrangler deploy</code><br><small>کلید: platform.openai.com/api-keys</small>";
+          msg = "سرویس تحلیل آماده نیست.<br>پیشنهاد (رایگان و پایدار):<br><code style=\"font-size:11px\">wrangler secret put GROQ_API_KEY</code><br>بعد <code style=\"font-size:11px\">wrangler deploy</code><br><small>کلید: console.groq.com/keys</small>";
+        } else if (code === "openai_blocked") {
+          msg = "ChatGPT از سرور کلودفلر مسدود است.<br>راه حل: کلید رایگان Groq بگذار:<br><code style=\"font-size:11px\">wrangler secret put GROQ_API_KEY</code><br>بعد <code style=\"font-size:11px\">wrangler deploy</code>";
+        } else if (code === "rate_limited" || res.status === 429) {
+          msg = "محدودیت تعداد درخواست فعال است. ۱–۲ دقیقه صبر کن.<br><small>با Groq این مشکل کمتر پیش می‌آید: wrangler secret put GROQ_API_KEY</small>";
         } else if (code === "ai_request_failed") {
           const det = data && data.detail ? String(data.detail) : "";
           if (/401|Incorrect API key|invalid_api_key/i.test(det)) {
-            msg = "کلید OpenAI نامعتبر است. یک کلید جدید بساز و دوباره:<br><code style=\"font-size:11px\">wrangler secret put OPENAI_API_KEY</code>";
-          } else if (/403|security policy|Access denied|country|region|unsupported/i.test(det)) {
-            msg = "دسترسی به ChatGPT از این سرور محدود شده. VPN روی شبکه یا billing حساب OpenAI را چک کن.";
+            msg = "کلید API نامعتبر است. کلید Groq یا OpenAI را دوباره تنظیم کن.";
+          } else if (/403|security policy|Access denied|country|region|unsupported|openai_blocked/i.test(det)) {
+            msg = "دسترسی به ChatGPT از این سرور محدود است.<br>از Groq استفاده کن (رایگان):<br><code style=\"font-size:11px\">wrangler secret put GROQ_API_KEY && wrangler deploy</code>";
           } else if (/429|rate_limit/i.test(det)) {
-            msg = "محدودیت تعداد درخواست ChatGPT. کمی صبر کن و دوباره امتحان کن.";
+            msg = "محدودیت تعداد درخواست. کمی صبر کن و دوباره امتحان کن.";
           } else if (/insufficient_quota|billing|payment/i.test(det)) {
-            msg = "اعتبار حساب OpenAI کافی نیست. در platform.openai.com بخش Billing را شارژ کن.";
+            msg = "اعتبار حساب AI کافی نیست. Billing را چک کن یا از Groq رایگان استفاده کن.";
           } else {
-            msg = "سرور ChatGPT جواب درستی نداد. یه‌بار دیگه امتحان کن.";
+            msg = "سرور هوش مصنوعی جواب نداد. یه‌بار دیگه امتحان کن.";
           }
           if (det) msg += `<br><small style="opacity:.75;word-break:break-word">جزئیات: ${det.slice(0, 220)}</small>`;
         } else if (code === "empty_response" || code === "no summary") {
@@ -2332,9 +2343,13 @@ function setupAiAnalyzeButton(btnId, resultId) {
           msg = "این قابلیت هنوز روی Worker آپلود نشده. worker.js جدید را با wrangler deploy بفرست.";
         }
         resultBox.innerHTML = `<div class="ai-result-error">${msg}</div>`;
+        if (code === "rate_limited" || res.status === 429) {
+          cooldownUntil = Date.now() + 60000; // 60s cooldown
+        }
         return;
       }
       resultBox.innerHTML = `<div class="ai-result-text">${data.summary.replace(/\n/g, "<br>")}</div>`;
+      cooldownUntil = Date.now() + 15000; // جلوگیری از کلیک پشت‌سرهم
     } catch (e) {
       resultBox.innerHTML = `<div class="ai-result-error">اتصال به سرور برقرار نشد. اینترنتت رو چک کن و دوباره امتحان کن.</div>`;
     } finally {
@@ -2496,7 +2511,7 @@ async function initSync() {
 // ---------- Service worker ----------
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js?v=75").catch(() => {});
+    navigator.serviceWorker.register("sw.js?v=77").catch(() => {});
   });
 }
 

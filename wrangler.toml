@@ -7,7 +7,14 @@ compatibility_flags = ["nodejs_compat"]
 binding = "DNK_KV"
 id = "2b57ef8f39c4483db71ec44b98bdc3e6"
 
-# تحلیل هوشمند = ChatGPT (OpenAI)
-#   wrangler secret put OPENAI_API_KEY
+# هوش مصنوعی داخلی کلودفلر (بدون کلید)
+[ai]
+binding = "AI"
+
+# پشتیبان قوی و رایگان (پیشنهادی — چون ChatGPT از Worker اغلب 403 می‌دهد):
+#   wrangler secret put GROQ_API_KEY
 #   wrangler deploy
-# کلید: https://platform.openai.com/api-keys
+# کلید: https://console.groq.com/keys
+#
+# ChatGPT اختیاری (ممکن است از IP کلودفلر کار نکند):
+#   wrangler secret put OPENAI_API_KEY
