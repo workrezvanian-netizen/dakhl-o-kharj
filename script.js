@@ -2368,13 +2368,18 @@ function buildLocalAnalysis(thisMonth, lastMonth) {
   return lines.join(" ");
 }
 
+function fetchWithTimeout(url, options, ms) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), ms);
+  const opts = Object.assign({}, options || {}, { signal: controller.signal });
+  return fetch(url, opts).finally(() => clearTimeout(timer));
+}
+
 async function analyzeViaLlm7(prompt) {
-  // مدل‌های رایگان/بدون کلید که روی llm7 تست شده‌اند
-  const models = ["gpt-oss", "codestral-latest", "minimax-m2.7", "mistral-Nemo-Instruct-2407"];
-  let lastErr = null;
+  const models = ["gpt-oss", "codestral-latest"];
   for (const model of models) {
     try {
-      const res = await fetch("https://api.llm7.io/v1/chat/completions", {
+      const res = await fetchWithTimeout("https://api.llm7.io/v1/chat/completions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -2383,49 +2388,34 @@ async function analyzeViaLlm7(prompt) {
             { role: "system", content: "Reply only in Persian. Be concise." },
             { role: "user", content: prompt }
           ],
-          max_tokens: 500,
+          max_tokens: 400,
           temperature: 0.7
         })
-      });
-      if (res.status === 429) {
-        lastErr = new Error("rate_limit");
-        await new Promise((r) => setTimeout(r, 1200));
-        continue;
-      }
-      if (!res.ok) {
-        lastErr = new Error("http_" + res.status);
-        continue;
-      }
+      }, 6000);
+      if (!res.ok) continue;
       const data = await res.json().catch(() => null);
       const text = data && data.choices && data.choices[0] && data.choices[0].message
         ? String(data.choices[0].message.content || "").trim()
         : "";
       if (text) return { summary: text, model, provider: "llm7" };
-    } catch (e) {
-      lastErr = e;
-    }
+    } catch (_) {}
   }
-  throw lastErr || new Error("llm7_failed");
+  return null;
 }
 
 async function analyzeViaWorker(thisMonth, lastMonth) {
   if (!CONFIG.WORKER_URL || CONFIG.WORKER_URL.includes("YOUR-SUBDOMAIN")) return null;
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 10000);
   try {
-    const res = await fetch(`${CONFIG.WORKER_URL}/analyze`, {
+    const res = await fetchWithTimeout(`${CONFIG.WORKER_URL}/analyze`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ thisMonth, lastMonth }),
-      signal: controller.signal
-    });
+      body: JSON.stringify({ thisMonth, lastMonth })
+    }, 8000);
     const data = await res.json().catch(() => null);
     if (res.ok && data && data.summary) {
       return { summary: String(data.summary).trim(), provider: data.provider || "worker" };
     }
-  } finally {
-    clearTimeout(timer);
-  }
+  } catch (_) {}
   return null;
 }
 
@@ -2434,17 +2424,26 @@ function setupAiAnalyzeButton(btnId, resultId) {
   const resultBox = document.getElementById(resultId);
   if (!btn || !resultBox) return;
   let cooldownUntil = 0;
+  let running = false;
 
-  btn.addEventListener("click", async () => {
+  async function runAnalyze() {
+    if (running) return;
     const now = Date.now();
     if (now < cooldownUntil) {
       const sec = Math.ceil((cooldownUntil - now) / 1000);
+      resultBox.style.display = "";
       resultBox.innerHTML = `<div class="ai-result-error">لطفاً ${sec} ثانیه صبر کن.</div>`;
       return;
     }
+    running = true;
     btn.disabled = true;
     resultBox.style.display = "";
     resultBox.innerHTML = `<div class="ai-result-loading"><span class="ai-spin"></span>در حال تحلیل این ماه...</div>`;
+
+    // اطمینان از دیده شدن نتیجه
+    try {
+      resultBox.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    } catch (_) {}
 
     try {
       const base = (typeof viewedMonth === "object" && viewedMonth && viewedMonth.jy)
@@ -2457,33 +2456,43 @@ function setupAiAnalyzeButton(btnId, resultId) {
       lastMonth = enrichMonthCategories(lastMonth, lastM.jy, lastM.jm);
       const prompt = buildAnalysisPrompt(thisMonth, lastMonth);
 
-      let out = null;
+      // اول محلی فوری، بعد اگر LLM جواب داد جایگزین می‌شود
+      const localSummary = buildLocalAnalysis(thisMonth, lastMonth);
+      resultBox.innerHTML = `<div class="ai-result-text">${localSummary.replace(/\n/g, "<br>")}</div>`;
 
-      // 1) llm7 — رایگان، بدون کلید، معمولاً از ایران در دسترس
+      let out = null;
+      try { out = await analyzeViaLlm7(prompt); } catch (_) {}
+      if (!out) {
+        try { out = await analyzeViaWorker(thisMonth, lastMonth); } catch (_) {}
+      }
+      if (out && out.summary) {
+        resultBox.innerHTML = `<div class="ai-result-text">${out.summary.replace(/\n/g, "<br>")}</div>`;
+      }
+
+      // insights زیر نتیجه
       try {
-        out = await analyzeViaLlm7(prompt);
+        if (typeof renderAnalysis === "function") renderAnalysis();
       } catch (_) {}
 
-      // 2) Worker / Workers AI
-      if (!out) {
-        try {
-          out = await analyzeViaWorker(thisMonth, lastMonth);
-        } catch (_) {}
-      }
-
-      // 3) محلی
-      if (!out || !out.summary) {
-        out = { summary: buildLocalAnalysis(thisMonth, lastMonth), provider: "local" };
-      }
-
-      resultBox.innerHTML = `<div class="ai-result-text">${out.summary.replace(/\n/g, "<br>")}</div>`;
-      cooldownUntil = Date.now() + 5000;
+      cooldownUntil = Date.now() + 4000;
     } catch (e) {
       resultBox.innerHTML = `<div class="ai-result-error">تحلیل انجام نشد. دوباره امتحان کن.</div>`;
     } finally {
+      running = false;
       btn.disabled = false;
+      // دکمه را مخفی نکن — همیشه قابل کلیک بماند
+      btn.style.display = "";
     }
+  }
+
+  btn.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    runAnalyze();
   });
+
+  // اکسپوز برای ستاره شناور
+  window._runAiAnalyze = runAnalyze;
 }
 setupAiAnalyzeButton("btnAiAnalyze", "aiAnalysisResult");
 
@@ -2639,33 +2648,17 @@ async function initSync() {
 // ---------- Service worker ----------
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js?v=84").catch(() => {});
+    navigator.serviceWorker.register("sw.js?v=85").catch(() => {});
   });
 }
 
 // ---------- AI Analysis Button (toggle + scroll collapse, shared by dashboard & analysis cards) ----------
 function setupAiCardToggle(btnId, resultId, insightsId) {
-  const btn = document.getElementById(btnId);
-  const result = document.getElementById(resultId);
-  if (!btn || !result) return;
-  btn.addEventListener("click", () => {
-    if (result.style.display === "none") {
-      // Show analysis
-      if (insightsId) renderAnalysis();
-      btn.style.display = "none";
-      result.style.display = "";
-    } else {
-      // Hide analysis
-      btn.style.display = "";
-      result.style.display = "none";
-      if (insightsId) {
-        const insightsEl = document.getElementById(insightsId);
-        if (insightsEl) insightsEl.innerHTML = "";
-      }
-    }
-  });
+  // غیرفعال — تحلیل توسط setupAiAnalyzeButton انجام می‌شود
+  // قبلاً دکمه را مخفی می‌کرد و کلیک را بی‌اثر می‌ساخت
 }
-setupAiCardToggle("btnAiAnalyze", "aiAnalysisResult", "smartInsights");
+// setupAiCardToggle disabled
+
 
 // ---------- AI card scroll collapse (نرم و پیوسته با اسکرول، شبیه هدر) ----------
 function setupAiCardScrollCollapse(cardId, starId, btnId, resultId) {
@@ -2728,7 +2721,11 @@ function setupAiCardScrollCollapse(cardId, starId, btnId, resultId) {
 
   star.addEventListener("click", () => {
     scrollRoot.scrollTo({ top: 0, behavior: "smooth" });
-    if (btn && result && result.style.display === "none") btn.click();
+    if (typeof window._runAiAnalyze === "function") {
+      setTimeout(() => window._runAiAnalyze(), 280);
+    } else if (btn) {
+      btn.click();
+    }
   });
 
   // Expose for tab switch reset
