@@ -608,6 +608,12 @@ function switchTab(tab, opts = {}) {
     }
   }
 
+  // Show/hide FAB (only on installments tab)
+  const fab = document.getElementById("fab");
+  if (fab) {
+    fab.classList.toggle("visible", tab === "installments");
+  }
+
   const scrollRoot = document.getElementById("appScroll");
   if (scrollRoot) scrollRoot.scrollTop = 0;
 }

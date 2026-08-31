@@ -1340,15 +1340,15 @@ input:focus, select:focus {
 }
 .ai-floating-star {
   position: fixed;
-  top: calc(84px + env(safe-area-inset-top));
+  top: calc(140px + env(safe-area-inset-top));
   right: 16px;
   left: auto;
   width: 56px;
   height: 56px;
   border-radius: 50%;
   border: 1.5px solid rgba(255,255,255,0.35);
-  background: linear-gradient(150deg, rgba(22,63,60,0.6) 0%, rgba(47,122,114,0.6) 70%, rgba(79,168,158,0.6) 130%);
-  box-shadow: 0 8px 24px rgba(16,70,43,0.25), 0 2px 8px rgba(0,0,0,0.1);
+  background: linear-gradient(150deg, rgba(45,100,200,0.85) 0%, rgba(70,130,220,0.85) 70%, rgba(100,160,240,0.85) 130%);
+  box-shadow: 0 8px 24px rgba(45,100,200,0.35), 0 2px 8px rgba(0,0,0,0.1);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2288,7 +2288,7 @@ input:checked + .toggle-slider:before {
 /* ---------------------------- دکمه‌ی شناور ---------------------------- */
 /* از مرکزِ پایین (که دکمه‌ی شناورِ داشبورد اونجاست) فاصله می‌گیره تا روش قرار نگیره */
 
-#tab-installments .fab {
+.fab {
   position: fixed;
   bottom: calc(96px + env(safe-area-inset-bottom));
   left: 18px;
@@ -2304,9 +2304,13 @@ input:checked + .toggle-slider:before {
   cursor: pointer;
   z-index: 30;
   line-height: 1;
-  transition: transform .15s cubic-bezier(.4,0,.2,1);
+  transition: transform .15s cubic-bezier(.4,0,.2,1), opacity .25s ease, visibility .25s;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
 }
-#tab-installments .fab:active { transform: scale(0.94); }
+.fab.visible { opacity: 1; visibility: visible; pointer-events: auto; }
+.fab:active { transform: scale(0.94); }
 
 /* ---------------------------- شیت افزودن/تنظیمات ---------------------------- */
 
