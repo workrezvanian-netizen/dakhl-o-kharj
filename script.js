@@ -2292,9 +2292,12 @@ function setupAiAnalyzeButton(btnId, resultId) {
     btn.disabled = true;
     resultBox.innerHTML = `<div class="ai-result-loading"><span class="ai-spin"></span>در حال تحلیل این ماه...</div>`;
 
-    const t = todayJalali();
-    const lastM = addMonthsJalali(t.jy, t.jm, -1);
-    const thisMonth = computeMonthTotals(t.jy, t.jm);
+    // ماه انتخاب‌شده در داشبورد (یا ماه جاری)
+    const base = (typeof viewedMonth === "object" && viewedMonth && viewedMonth.jy)
+      ? viewedMonth
+      : todayJalali();
+    const lastM = addMonthsJalali(base.jy, base.jm, -1);
+    const thisMonth = computeMonthTotals(base.jy, base.jm);
     const lastMonth = computeMonthTotals(lastM.jy, lastM.jm);
 
     try {
@@ -2307,15 +2310,15 @@ function setupAiAnalyzeButton(btnId, resultId) {
       if (!res.ok || !data || !data.summary) {
         const code = data && data.error;
         let msg = "متأسفانه الان نشد تحلیل کنم، یه‌بار دیگه امتحان کن.";
-        if (code === "no_groq_key") {
-          msg = "😅 هنوز کلید Groq API به این Worker وصل نشده. باید با دستور wrangler secret put GROQ_API_KEY کلیدت رو اضافه کنی و دوباره دیپلوی کنی.";
+        if (code === "no_api_key" || code === "no_groq_key") {
+          msg = "کلید API روی Worker تنظیم نشده. از پوشه پروژه بزن:<br><code style=\"font-size:11px\">wrangler secret put OPENROUTER_API_KEY</code><br>بعد <code style=\"font-size:11px\">wrangler deploy</code>";
         } else if (code === "ai_request_failed") {
           msg = "سرور هوش مصنوعی جواب درستی نداد. یه‌بار دیگه امتحان کن.";
-          if (data && data.detail) msg += `<br><small style="opacity:.75">جزئیات: ${data.detail}</small>`;
+          if (data && data.detail) msg += `<br><small style="opacity:.75;word-break:break-word">جزئیات: ${String(data.detail).slice(0, 280)}</small>`;
         } else if (code === "empty_response" || code === "no summary") {
           msg = "جواب خالی برگشت، یه‌بار دیگه امتحان کن.";
         } else if (res.status === 404) {
-          msg = "این قابلیت هنوز روی Worker آپلود نشده. مطمئن شو worker.js جدید رو آپلود کردی.";
+          msg = "این قابلیت هنوز روی Worker آپلود نشده. worker.js جدید را با wrangler deploy بفرست.";
         }
         resultBox.innerHTML = `<div class="ai-result-error">${msg}</div>`;
         return;
@@ -2482,7 +2485,7 @@ async function initSync() {
 // ---------- Service worker ----------
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js?v=72").catch(() => {});
+    navigator.serviceWorker.register("sw.js?v=73").catch(() => {});
   });
 }
 
