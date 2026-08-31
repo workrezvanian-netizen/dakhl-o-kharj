@@ -1,15 +1,15 @@
-const CACHE_NAME = "dakhl-o-kharj-v79";
+const CACHE_NAME = "dakhl-o-kharj-v80";
 const APP_SHELL = [
   "./",
   "./index.html",
   "./style.css",
-  "./style.css?v=79",
+  "./style.css?v=80",
   "./script.js",
-  "./script.js?v=79",
+  "./script.js?v=80",
   "./installments.js",
-  "./installments.js?v=79",
+  "./installments.js?v=80",
   "./three-scene.js",
-  "./three-scene.js?v=79",
+  "./three-scene.js?v=80",
   "./manifest.json",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
