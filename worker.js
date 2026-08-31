@@ -1,4 +1,4 @@
-// Cloudflare Worker — همگام‌سازی + تحلیل اختیاری با Workers AI
+// Cloudflare Worker — همگام‌سازی + تحلیل (llm7 رایگان + Workers AI)
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
@@ -36,16 +36,35 @@ function extract(data) {
   return "";
 }
 
-async function handleAnalyze(request, env) {
-  let body;
-  try { body = await request.json(); } catch { return jsonResponse({ error: "invalid json" }, 400); }
-  if (!env.AI) return jsonResponse({ error: "no_ai_binding" }, 501);
+async function viaLlm7(prompt) {
+  const models = ["gpt-oss", "codestral-latest", "minimax-m2.7"];
+  for (const model of models) {
+    try {
+      const res = await fetch("https://api.llm7.io/v1/chat/completions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model,
+          messages: [
+            { role: "system", content: "Reply only in Persian. Be concise." },
+            { role: "user", content: prompt }
+          ],
+          max_tokens: 500,
+          temperature: 0.7
+        })
+      });
+      if (!res.ok) continue;
+      const data = await res.json().catch(() => null);
+      const text = extract(data);
+      if (text) return { summary: text, model, provider: "llm7" };
+    } catch (_) {}
+  }
+  return null;
+}
 
-  const prompt = buildPrompt(body);
-  const models = [
-    "@cf/meta/llama-3.1-8b-instruct",
-    "@cf/meta/llama-3.2-3b-instruct"
-  ];
+async function viaWorkersAI(env, prompt) {
+  if (!env.AI) return null;
+  const models = ["@cf/meta/llama-3.1-8b-instruct", "@cf/meta/llama-3.2-3b-instruct"];
   for (const model of models) {
     try {
       const result = await env.AI.run(model, {
@@ -56,9 +75,23 @@ async function handleAnalyze(request, env) {
         max_tokens: 600
       });
       const text = extract(result);
-      if (text) return jsonResponse({ summary: text, model });
+      if (text) return { summary: text, model, provider: "cloudflare-ai" };
     } catch (_) {}
   }
+  return null;
+}
+
+async function handleAnalyze(request, env) {
+  let body;
+  try { body = await request.json(); } catch { return jsonResponse({ error: "invalid json" }, 400); }
+  const prompt = buildPrompt(body);
+
+  const a = await viaLlm7(prompt);
+  if (a) return jsonResponse(a);
+
+  const b = await viaWorkersAI(env, prompt);
+  if (b) return jsonResponse(b);
+
   return jsonResponse({ error: "ai_request_failed" }, 502);
 }
 

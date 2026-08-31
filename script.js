@@ -2279,7 +2279,11 @@ function renderAnalysis() {
   renderPieChart("expenseDiversityChart", expenseSegments, "expense");
 }
 
-// ---------- AI analysis (محلی — بدون کلید و بدون وابستگی به سرور خارجی) ----------
+// ---------- AI analysis ----------
+// مسیرها: 1) llm7.io رایگان بدون کلید (در دسترس از ایران)
+//         2) Worker / Workers AI
+//         3) تحلیل محلی
+
 function fmtAiToman(n) {
   const v = Math.round(Math.abs(n || 0));
   return v.toLocaleString("fa-IR") + " تومان";
@@ -2288,93 +2292,6 @@ function fmtAiToman(n) {
 function pctChange(curr, prev) {
   if (!prev || prev === 0) return null;
   return ((curr - prev) / Math.abs(prev)) * 100;
-}
-
-function buildLocalAnalysis(thisMonth, lastMonth) {
-  const inc = Number(thisMonth.totalIncome) || 0;
-  const exp = Number(thisMonth.totalExpense) || 0;
-  const bal = inc - exp;
-  const lInc = Number(lastMonth.totalIncome) || 0;
-  const lExp = Number(lastMonth.totalExpense) || 0;
-  const lBal = lInc - lExp;
-
-  const cats = Array.isArray(thisMonth.categories)
-    ? [...thisMonth.categories].sort((a, b) => (b.amount || 0) - (a.amount || 0))
-    : [];
-  const top = cats[0];
-  const top2 = cats[1];
-  const topShare = exp > 0 && top ? Math.round((top.amount / exp) * 100) : 0;
-
-  const expCh = pctChange(exp, lExp);
-  const incCh = pctChange(inc, lInc);
-  const lines = [];
-
-  // وضعیت کلی
-  if (inc === 0 && exp === 0) {
-    return "برای این ماه هنوز درآمد یا هزینه‌ای ثبت نشده. با ثبت چند تراکنش، تحلیل دقیق‌تری می‌گیری.";
-  }
-
-  if (bal > 0) {
-    lines.push(`این ماه حدود ${fmtAiToman(bal)} مانده‌ی مثبت داری؛ یعنی دخلت از خرجت بیشتر بوده.`);
-  } else if (bal < 0) {
-    lines.push(`این ماه حدود ${fmtAiToman(bal)} کسری داری؛ خرج از درآمد جلو زده.`);
-  } else {
-    lines.push("این ماه دخل و خرج تقریباً سر به سر بوده.");
-  }
-
-  // مقایسه با ماه قبل
-  if (lExp > 0 && expCh !== null) {
-    const abs = Math.abs(Math.round(expCh));
-    if (expCh > 12) {
-      lines.push(`نسبت به ماه قبل مخارج حدود ${abs}٪ بیشتر شده.`);
-    } else if (expCh < -12) {
-      lines.push(`خبر خوب: مخارج نسبت به ماه قبل حدود ${abs}٪ کمتر شده.`);
-    } else {
-      lines.push("سطح مخارج نسبت به ماه قبل تقریباً ثابت مانده.");
-    }
-  }
-
-  if (lInc > 0 && incCh !== null) {
-    const abs = Math.abs(Math.round(incCh));
-    if (incCh > 12) {
-      lines.push(`درآمدت نسبت به ماه قبل حدود ${abs}٪ رشد داشته.`);
-    } else if (incCh < -12) {
-      lines.push(`درآمد نسبت به ماه قبل حدود ${abs}٪ کمتر شده؛ اگر موقتی نیست، روی منبع درآمد متمرکز شو.`);
-    }
-  }
-
-  // تمرکز هزینه
-  if (top && topShare >= 35) {
-    lines.push(`بیشترین سهم مخارج مربوط به «${top.name}» است (حدود ${topShare}٪). همین دسته را اول بررسی کن.`);
-  } else if (top) {
-    lines.push(`بزرگ‌ترین دسته هزینه «${top.name}» با حدود ${fmtAiToman(top.amount)} بوده.`);
-    if (top2) {
-      lines.push(`بعد از آن «${top2.name}» قرار دارد.`);
-    }
-  }
-
-  // توصیه عملی
-  if (bal < 0) {
-    const cut = Math.ceil(Math.abs(bal) / 1000) * 1000;
-    if (top) {
-      lines.push(`پیشنهاد: برای ماه بعد سعی کن از دسته «${top.name}» حدود ${fmtAiToman(Math.min(top.amount * 0.15, Math.abs(bal)))} کم کنی تا به تعادل نزدیک شوی.`);
-    } else {
-      lines.push(`پیشنهاد: ماه بعد حدود ${fmtAiToman(cut)} از مخارج غیرضروری کم کن تا کسری جبران شود.`);
-    }
-  } else if (bal > 0 && exp > 0) {
-    const save = Math.round(bal * 0.3 / 1000) * 1000;
-    if (save > 0) {
-      lines.push(`پیشنهاد: از مانده‌ی این ماه حدود ${fmtAiToman(save)} را به‌عنوان پس‌انداز کنار بگذار.`);
-    } else {
-      lines.push("پیشنهاد: همین روند را نگه دار و برای هزینه‌های بزرگ یک سقف ماهانه مشخص کن.");
-    }
-  } else if (inc > 0 && exp / inc > 0.85) {
-    lines.push("پیشنهاد: نسبت خرج به درآمد بالاست؛ یک سقف هفتگی برای هزینه‌های روزمره تعیین کن.");
-  } else {
-    lines.push("پیشنهاد: ثبت منظم تراکنش‌ها را ادامه بده تا الگوی خرج مشخص‌تر شود.");
-  }
-
-  return lines.join(" ");
 }
 
 function enrichMonthCategories(monthObj, jy, jm) {
@@ -2391,6 +2308,125 @@ function enrichMonthCategories(monthObj, jy, jm) {
     .sort((a, b) => b[1] - a[1])
     .map(([name, amount]) => ({ name, amount }));
   return monthObj;
+}
+
+function buildAnalysisPrompt(thisMonth, lastMonth) {
+  const tm = thisMonth || {};
+  const lm = lastMonth || {};
+  const cats = (tm.categories || []).slice(0, 5)
+    .map((c) => `${c.name}: ${fmtAiToman(c.amount)}`)
+    .join("، ");
+  return `تو مشاور مالی خودمونی اپ «دخل و خرج» هستی.
+فقط فارسی، ۴ تا ۷ جمله کوتاه، یک نکته عملی برای ماه بعد، بدون مقدمه.
+
+این ماه:
+درآمد ${fmtAiToman(tm.totalIncome)}، مخارج ${fmtAiToman(tm.totalExpense)}، مانده ${fmtAiToman((tm.totalIncome || 0) - (tm.totalExpense || 0))}
+دسته‌ها: ${cats || "ثبت نشده"}
+
+ماه قبل:
+درآمد ${fmtAiToman(lm.totalIncome)}، مخارج ${fmtAiToman(lm.totalExpense)}`;
+}
+
+function buildLocalAnalysis(thisMonth, lastMonth) {
+  const inc = Number(thisMonth.totalIncome) || 0;
+  const exp = Number(thisMonth.totalExpense) || 0;
+  const bal = inc - exp;
+  const lInc = Number(lastMonth.totalIncome) || 0;
+  const lExp = Number(lastMonth.totalExpense) || 0;
+  const cats = Array.isArray(thisMonth.categories)
+    ? [...thisMonth.categories].sort((a, b) => (b.amount || 0) - (a.amount || 0))
+    : [];
+  const top = cats[0];
+  const topShare = exp > 0 && top ? Math.round((top.amount / exp) * 100) : 0;
+  const expCh = pctChange(exp, lExp);
+  const lines = [];
+
+  if (inc === 0 && exp === 0) {
+    return "برای این ماه هنوز درآمد یا هزینه‌ای ثبت نشده. با ثبت چند تراکنش، تحلیل دقیق‌تری می‌گیری.";
+  }
+  if (bal > 0) lines.push(`این ماه حدود ${fmtAiToman(bal)} مانده‌ی مثبت داری.`);
+  else if (bal < 0) lines.push(`این ماه حدود ${fmtAiToman(Math.abs(bal))} کسری داری.`);
+  else lines.push("این ماه دخل و خرج تقریباً سر به سر بوده.");
+
+  if (lExp > 0 && expCh !== null) {
+    const abs = Math.abs(Math.round(expCh));
+    if (expCh > 12) lines.push(`مخارج نسبت به ماه قبل حدود ${abs}٪ بیشتر شده.`);
+    else if (expCh < -12) lines.push(`مخارج نسبت به ماه قبل حدود ${abs}٪ کمتر شده.`);
+  }
+  if (top && topShare >= 35) {
+    lines.push(`بیشترین سهم مخارج مربوط به «${top.name}» است (حدود ${topShare}٪).`);
+  } else if (top) {
+    lines.push(`بزرگ‌ترین دسته هزینه «${top.name}» با حدود ${fmtAiToman(top.amount)} بوده.`);
+  }
+  if (bal < 0 && top) {
+    lines.push(`پیشنهاد: ماه بعد از دسته «${top.name}» کمی کم کن تا به تعادل نزدیک شوی.`);
+  } else if (bal > 0) {
+    lines.push("پیشنهاد: بخشی از مانده را به‌عنوان پس‌انداز کنار بگذار.");
+  } else {
+    lines.push("پیشنهاد: ثبت منظم تراکنش‌ها را ادامه بده.");
+  }
+  return lines.join(" ");
+}
+
+async function analyzeViaLlm7(prompt) {
+  // مدل‌های رایگان/بدون کلید که روی llm7 تست شده‌اند
+  const models = ["gpt-oss", "codestral-latest", "minimax-m2.7", "mistral-Nemo-Instruct-2407"];
+  let lastErr = null;
+  for (const model of models) {
+    try {
+      const res = await fetch("https://api.llm7.io/v1/chat/completions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model,
+          messages: [
+            { role: "system", content: "Reply only in Persian. Be concise." },
+            { role: "user", content: prompt }
+          ],
+          max_tokens: 500,
+          temperature: 0.7
+        })
+      });
+      if (res.status === 429) {
+        lastErr = new Error("rate_limit");
+        await new Promise((r) => setTimeout(r, 1200));
+        continue;
+      }
+      if (!res.ok) {
+        lastErr = new Error("http_" + res.status);
+        continue;
+      }
+      const data = await res.json().catch(() => null);
+      const text = data && data.choices && data.choices[0] && data.choices[0].message
+        ? String(data.choices[0].message.content || "").trim()
+        : "";
+      if (text) return { summary: text, model, provider: "llm7" };
+    } catch (e) {
+      lastErr = e;
+    }
+  }
+  throw lastErr || new Error("llm7_failed");
+}
+
+async function analyzeViaWorker(thisMonth, lastMonth) {
+  if (!CONFIG.WORKER_URL || CONFIG.WORKER_URL.includes("YOUR-SUBDOMAIN")) return null;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 10000);
+  try {
+    const res = await fetch(`${CONFIG.WORKER_URL}/analyze`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ thisMonth, lastMonth }),
+      signal: controller.signal
+    });
+    const data = await res.json().catch(() => null);
+    if (res.ok && data && data.summary) {
+      return { summary: String(data.summary).trim(), provider: data.provider || "worker" };
+    }
+  } finally {
+    clearTimeout(timer);
+  }
+  return null;
 }
 
 function setupAiAnalyzeButton(btnId, resultId) {
@@ -2419,38 +2455,29 @@ function setupAiAnalyzeButton(btnId, resultId) {
       let lastMonth = computeMonthTotals(lastM.jy, lastM.jm);
       thisMonth = enrichMonthCategories(thisMonth, base.jy, base.jm);
       lastMonth = enrichMonthCategories(lastMonth, lastM.jy, lastM.jm);
+      const prompt = buildAnalysisPrompt(thisMonth, lastMonth);
 
-      // انیمیشن کوتاه برای حس «تحلیل»
-      await new Promise((r) => setTimeout(r, 450));
+      let out = null;
 
-      // تلاش اختیاری از Worker (Workers AI) — اگر جواب داد بهتر؛ وگرنه محلی
-      let summary = null;
-      if (CONFIG.WORKER_URL && !CONFIG.WORKER_URL.includes("YOUR-SUBDOMAIN")) {
+      // 1) llm7 — رایگان، بدون کلید، معمولاً از ایران در دسترس
+      try {
+        out = await analyzeViaLlm7(prompt);
+      } catch (_) {}
+
+      // 2) Worker / Workers AI
+      if (!out) {
         try {
-          const controller = new AbortController();
-          const timer = setTimeout(() => controller.abort(), 8000);
-          const res = await fetch(`${CONFIG.WORKER_URL}/analyze`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ thisMonth, lastMonth }),
-            signal: controller.signal
-          });
-          clearTimeout(timer);
-          const data = await res.json().catch(() => null);
-          if (res.ok && data && data.summary) {
-            summary = String(data.summary).trim();
-          }
-        } catch (_) {
-          /* نادیده — تحلیل محلی جایگزین می‌شود */
-        }
+          out = await analyzeViaWorker(thisMonth, lastMonth);
+        } catch (_) {}
       }
 
-      if (!summary) {
-        summary = buildLocalAnalysis(thisMonth, lastMonth);
+      // 3) محلی
+      if (!out || !out.summary) {
+        out = { summary: buildLocalAnalysis(thisMonth, lastMonth), provider: "local" };
       }
 
-      resultBox.innerHTML = `<div class="ai-result-text">${summary.replace(/\n/g, "<br>")}</div>`;
-      cooldownUntil = Date.now() + 4000;
+      resultBox.innerHTML = `<div class="ai-result-text">${out.summary.replace(/\n/g, "<br>")}</div>`;
+      cooldownUntil = Date.now() + 5000;
     } catch (e) {
       resultBox.innerHTML = `<div class="ai-result-error">تحلیل انجام نشد. دوباره امتحان کن.</div>`;
     } finally {
@@ -2612,7 +2639,7 @@ async function initSync() {
 // ---------- Service worker ----------
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js?v=83").catch(() => {});
+    navigator.serviceWorker.register("sw.js?v=84").catch(() => {});
   });
 }
 
