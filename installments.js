@@ -289,8 +289,8 @@ function validateInput(data) {
     }
   } else {
     const day = parseInt(rawDueValue, 10);
-    if (!rawDueValue.match(/^\d+$/) || day < 1 || day > 29) {
-      throw new Error("روز باید بین ۱ تا ۲۹ باشه");
+    if (!rawDueValue.match(/^\d+$/) || day < 1 || day > 31) {
+      throw new Error("روز باید بین ۱ تا ۳۱ باشه");
     }
     dueValue = rawDueValue;
   }
@@ -669,6 +669,72 @@ function setCustomHourVisible(visible) {
   document.getElementById("reminderHourField").hidden = !visible;
 }
 
+
+
+// ---------------------------------------------------------------------
+// انتخابگر روز iOS (۱ تا ۳۱)
+// ---------------------------------------------------------------------
+const DUE_DAY_ITEM_H = 36;
+
+function buildDueDayPicker() {
+  const wheel = document.getElementById("dueDayWheel");
+  const hidden = document.getElementById("fDueDay");
+  if (!wheel || !hidden || wheel.dataset.ready === "1") return;
+
+  for (let d = 1; d <= 31; d++) {
+    const el = document.createElement("div");
+    el.className = "ios-day-option";
+    el.dataset.day = String(d);
+    el.textContent = String(d);
+    wheel.appendChild(el);
+  }
+  wheel.dataset.ready = "1";
+
+  let snapTimer = null;
+  const syncSelected = () => {
+    const idx = Math.round(wheel.scrollTop / DUE_DAY_ITEM_H);
+    const day = Math.min(31, Math.max(1, idx + 1));
+    hidden.value = String(day);
+    wheel.querySelectorAll(".ios-day-option").forEach((opt) => {
+      opt.classList.toggle("is-selected", Number(opt.dataset.day) === day);
+    });
+  };
+
+  wheel.addEventListener("scroll", () => {
+    syncSelected();
+    clearTimeout(snapTimer);
+    snapTimer = setTimeout(() => {
+      const idx = Math.round(wheel.scrollTop / DUE_DAY_ITEM_H);
+      const clamped = Math.min(30, Math.max(0, idx));
+      wheel.scrollTo({ top: clamped * DUE_DAY_ITEM_H, behavior: "smooth" });
+      syncSelected();
+    }, 80);
+  }, { passive: true });
+
+  wheel.addEventListener("click", (e) => {
+    const opt = e.target.closest(".ios-day-option");
+    if (!opt) return;
+    const day = Number(opt.dataset.day);
+    setDueDayPickerValue(day);
+  });
+}
+
+function setDueDayPickerValue(day) {
+  const wheel = document.getElementById("dueDayWheel");
+  const hidden = document.getElementById("fDueDay");
+  if (!wheel || !hidden) return;
+  buildDueDayPicker();
+  const d = Math.min(31, Math.max(1, Number(day) || 15));
+  hidden.value = String(d);
+  requestAnimationFrame(() => {
+    wheel.scrollTop = (d - 1) * DUE_DAY_ITEM_H;
+    wheel.querySelectorAll(".ios-day-option").forEach((opt) => {
+      opt.classList.toggle("is-selected", Number(opt.dataset.day) === d);
+    });
+  });
+}
+
+
 function openAddSheet() {
   addForm.reset();
   editingId = null;
@@ -681,6 +747,7 @@ function openAddSheet() {
   document.getElementById("fReminderHour").value = 9;
   setCustomHourVisible(false);
   document.getElementById("formError").hidden = true;
+  setDueDayPickerValue(15);
   sheetOverlay.hidden = false;
   document.body.classList.add("sheet-open");
 }
@@ -696,7 +763,7 @@ function openEditSheet(item) {
   setType(item.due_type);
 
   if (item.due_type === "monthly") {
-    document.getElementById("fDueDay").value = item.due_value;
+    setDueDayPickerValue(item.due_value);
   } else {
     document.getElementById("fDueDate").value = item.due_jalali.replace(/\//g, "-");
   }

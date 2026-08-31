@@ -14,7 +14,7 @@
 <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css">
 <link href="https://cdn.jsdelivr.net/gh/rastikerdar/kamran@v1.0.0/dist/font-face.css" rel="stylesheet" type="text/css">
 <link href="https://cdn.jsdelivr.net/gh/rastikerdar/samim-font@v4.0.5/dist/font-face.css" rel="stylesheet" type="text/css">
-<link rel="stylesheet" href="style.css?v=86">
+<link rel="stylesheet" href="style.css?v=87">
 </head>
 <body>
 
@@ -599,10 +599,17 @@
             </div>
           </div>
 
-          <label class="field" id="monthlyField">
-            <span>چندم هر ماه شمسی سررسیده؟ (۱ تا ۲۹)</span>
-            <input type="number" id="fDueDay" min="1" max="29" placeholder="15" required>
-          </label>
+          <div class="field" id="monthlyField">
+            <span>روز سررسید هر ماه شمسی</span>
+            <input type="hidden" id="fDueDay" value="15" required>
+            <div class="ios-day-picker" id="dueDayPicker" aria-label="انتخاب روز سررسید">
+              <div class="ios-day-picker-mask ios-day-picker-mask-top" aria-hidden="true"></div>
+              <div class="ios-day-picker-mask ios-day-picker-mask-bottom" aria-hidden="true"></div>
+              <div class="ios-day-picker-highlight" aria-hidden="true"></div>
+              <div class="ios-day-picker-wheel" id="dueDayWheel"></div>
+            </div>
+            <p class="field-toggle-hint" style="margin-top:8px;">از ۱ تا ۳۱ — در ماه‌های کوتاه‌تر، همان آخر ماه محاسبه می‌شود</p>
+          </div>
 
           <label class="field" id="onceField" hidden>
             <span>تاریخ سررسید (شمسی — YYYY-MM-DD)</span>
@@ -868,8 +875,8 @@ n  <!-- Progress -->
 </div>
 <!-- ═══════════════ END ONBOARDING ═══════════════ -->
 
-<script src="script.js?v=86"></script>
-<script src="installments.js?v=86"></script>
-<script src="three-scene.js?v=86"></script>
+<script src="script.js?v=87"></script>
+<script src="installments.js?v=87"></script>
+<script src="three-scene.js?v=87"></script>
 </body>
 </html>

@@ -4020,3 +4020,60 @@ input:focus, select:focus {
 .ob-section.in-view .ob-cat-pill:nth-child(4) { transition-delay: .54s; }
 .ob-section.in-view .ob-cat-pill:nth-child(5) { transition-delay: .62s; }
 .ob-section.in-view .ob-cat-pill:nth-child(6) { transition-delay: .7s; }
+
+
+/* ---------- iOS-style day picker (اقساط) ---------- */
+.ios-day-picker {
+  position: relative;
+  height: 132px;
+  border-radius: 14px;
+  background: rgba(22, 63, 60, 0.05);
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 18%, #000 82%, transparent 100%);
+  mask-image: linear-gradient(180deg, transparent 0%, #000 18%, #000 82%, transparent 100%);
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.ios-day-picker-highlight {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  top: 50%;
+  height: 36px;
+  margin-top: -18px;
+  border-radius: 10px;
+  background: rgba(47, 122, 114, 0.12);
+  border: 1px solid rgba(47, 122, 114, 0.18);
+  pointer-events: none;
+  z-index: 1;
+}
+.ios-day-picker-wheel {
+  position: relative;
+  z-index: 2;
+  height: 100%;
+  overflow-y: auto;
+  scroll-snap-type: y mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding: 48px 0;
+  text-align: center;
+}
+.ios-day-picker-wheel::-webkit-scrollbar { display: none; }
+.ios-day-option {
+  height: 36px;
+  line-height: 36px;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text-mute, #7A8582);
+  scroll-snap-align: center;
+  scroll-snap-stop: always;
+  transition: color .15s ease, transform .15s ease, font-size .15s ease;
+  direction: ltr;
+}
+.ios-day-option.is-selected {
+  color: var(--green-deep, #163F3C);
+  font-size: 20px;
+  font-weight: 800;
+  transform: scale(1.06);
+}
