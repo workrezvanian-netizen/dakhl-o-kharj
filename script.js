@@ -2714,7 +2714,7 @@ async function initSync() {
 // ---------- Service worker ----------
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js?v=94").catch(() => {});
+    navigator.serviceWorker.register("sw.js?v=95").catch(() => {});
   });
 }
 
@@ -3307,25 +3307,28 @@ function piJalaliDate() {
   return new Date().toLocaleDateString("fa-IR");
 }
 
-function renderTodo() {
+function renderTodo(opts) {
   ensureTodoState();
+  const animate = opts && opts.animate;
   const dateEl = document.getElementById("piDate");
   if (dateEl) dateEl.textContent = piJalaliDate();
   const stack = document.getElementById("piStack");
   if (!stack) return;
 
   const openId = state.todo.openId;
+  const prevOpen = stack.dataset.openId || "";
+
   stack.innerHTML = state.todo.lists.map((folder, idx) => {
     const open = folder.id === openId;
     const color = PI_COLORS[folder.colorIdx % PI_COLORS.length];
     const openCount = folder.tasks.filter((t) => !t.done).length;
     const total = folder.tasks.length;
-    const countLabel = total ? (openCount ? `${openCount} باز · ${total}` : `${total} tasks`) : "خالی";
+    const countLabel = total ? (openCount ? `${openCount} باز · ${total}` : `${total} کار`) : "خالی";
 
     let body = "";
     if (open) {
       const tasksHtml = folder.tasks.map((t, ti) => `
-        <div class="pi-task ${t.done ? "done" : ""}" data-tid="${t.id}" style="animation-delay:${ti * 0.04}s">
+        <div class="pi-task ${t.done ? "done" : ""}" data-tid="${t.id}" style="animation-delay:${0.05 + ti * 0.045}s">
           <button type="button" class="pi-cb" aria-label="انجام">${t.done ? "✓" : ""}</button>
           <div class="pi-task-text">${piEsc(t.title)}</div>
           ${t.tag ? `<span class="pi-tag" style="${piTagStyle(t.tag)}">${piEsc(t.tag)}</span>` : ""}
@@ -3333,14 +3336,17 @@ function renderTodo() {
         </div>
       `).join("");
       body = `<div class="pi-folder-body">
-        ${tasksHtml || '<p style="text-align:center;color:#9AA3A0;font-size:13px;padding:16px 0">هنوز کاری نیست</p>'}
+        ${tasksHtml || '<p style="text-align:center;color:#94A3B8;font-size:13px;padding:18px 0">هنوز کاری نیست</p>'}
         <button type="button" class="pi-add-task" data-add="${folder.id}">＋ کار جدید</button>
       </div>`;
     }
 
-    return `<div class="pi-folder ${open ? "is-expanded" : "is-collapsed"}" data-fid="${folder.id}"
+    const animClass = animate
+      ? (open ? " is-entering" : (folder.id === prevOpen ? " is-leaving" : ""))
+      : "";
+
+    return `<div class="pi-folder ${open ? "is-expanded" : "is-collapsed"}${animClass}" data-fid="${folder.id}"
       style="background:${color.bg};z-index:${open ? 20 : 10 - idx}">
-      <span class="pi-tab">پوشه‌ها</span>
       <div class="pi-folder-head" data-toggle="${folder.id}">
         <h3 class="pi-folder-title">${piEsc(folder.name)}</h3>
         <span class="pi-folder-count">${countLabel}</span>
@@ -3349,17 +3355,23 @@ function renderTodo() {
     </div>`;
   }).join("");
 
-  // events
+  stack.dataset.openId = openId || "";
+
+  // clear anim classes after transition
+  if (animate) {
+    setTimeout(() => {
+      stack.querySelectorAll(".is-entering, .is-leaving").forEach((el) => {
+        el.classList.remove("is-entering", "is-leaving");
+      });
+    }, 480);
+  }
+
   stack.querySelectorAll("[data-toggle]").forEach((head) => {
     head.addEventListener("click", () => {
       const id = head.dataset.toggle;
-      // accordion: open this, collapse others — with animation
-      if (state.todo.openId === id) {
-        // keep open (or optionally collapse all)
-        return;
-      }
+      if (state.todo.openId === id) return;
       state.todo.openId = id;
-      renderTodo();
+      renderTodo({ animate: true });
     });
   });
 
@@ -3382,66 +3394,6 @@ function renderTodo() {
       piOpenTaskSheet(btn.dataset.add);
     });
   });
-}
-
-function piToggle(fid, tid) {
-  const folder = state.todo.lists.find((l) => l.id === fid);
-  const t = folder?.tasks.find((x) => x.id === tid);
-  if (!t) return;
-  t.done = !t.done;
-  saveState();
-  renderTodo();
-}
-
-function piDelete(fid, tid) {
-  const folder = state.todo.lists.find((l) => l.id === fid);
-  if (!folder) return;
-  folder.tasks = folder.tasks.filter((t) => t.id !== tid);
-  saveState();
-  renderTodo();
-}
-
-function piOpenTaskSheet(folderId) {
-  state.todo.pendingFolderId = folderId;
-  const sheet = document.getElementById("piTaskSheet");
-  const input = document.getElementById("piTaskTitle");
-  if (sheet) sheet.hidden = false;
-  if (input) { input.value = ""; setTimeout(() => input.focus(), 50); }
-}
-
-function piCloseTaskSheet() {
-  const sheet = document.getElementById("piTaskSheet");
-  if (sheet) sheet.hidden = true;
-  state.todo.pendingFolderId = null;
-}
-
-function piSaveTask() {
-  const title = (document.getElementById("piTaskTitle")?.value || "").trim();
-  if (!title) return;
-  const fid = state.todo.pendingFolderId || state.todo.openId;
-  const folder = state.todo.lists.find((l) => l.id === fid);
-  if (!folder) return;
-  folder.tasks.push({ id: piUid(), title, done: false, tag: null });
-  state.todo.openId = fid;
-  saveState();
-  piCloseTaskSheet();
-  renderTodo();
-}
-
-function piAddFolder() {
-  ensureTodoState();
-  const name = prompt("نام پوشه جدید؟", "");
-  if (!name || !name.trim()) return;
-  const folder = {
-    id: piUid(),
-    name: name.trim(),
-    colorIdx: state.todo.lists.length % PI_COLORS.length,
-    tasks: []
-  };
-  state.todo.lists.push(folder);
-  state.todo.openId = folder.id;
-  saveState();
-  renderTodo();
 }
 
 function setupTodoUI() {
