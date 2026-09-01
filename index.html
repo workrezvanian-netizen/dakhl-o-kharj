@@ -14,7 +14,7 @@
 <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css">
 <link href="https://cdn.jsdelivr.net/gh/rastikerdar/kamran@v1.0.0/dist/font-face.css" rel="stylesheet" type="text/css">
 <link href="https://cdn.jsdelivr.net/gh/rastikerdar/samim-font@v4.0.5/dist/font-face.css" rel="stylesheet" type="text/css">
-<link rel="stylesheet" href="style.css?v=93">
+<link rel="stylesheet" href="style.css?v=94">
 </head>
 <body>
 
@@ -358,68 +358,34 @@
 
   </section>
 
-  <!-- TODO / کارها — طراحی الهام‌گرفته از Todoist + Things 3 + Microsoft To Do -->
+  <!-- TODO — پوشه‌های لایه‌ای الهام از PlanIt -->
   <section id="tab-todo" class="tab">
-    <div class="td-app">
-      <!-- هدر -->
-      <div class="td-header">
-        <div class="td-header-text">
-          <h2>کارها</h2>
-          <p id="tdSubtitle">امروز چه کارهایی داری؟</p>
+    <div class="pi-app">
+      <div class="pi-header">
+        <div>
+          <h2 class="pi-title">لیست کارها</h2>
+          <p class="pi-date" id="piDate">—</p>
         </div>
-        <button type="button" id="tdNewListBtn" class="td-btn-ghost" aria-label="پروژه جدید">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>
+        <button type="button" id="piAddFolder" class="pi-fab" aria-label="پوشه جدید">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>
+          <span>افزودن</span>
         </button>
       </div>
 
-      <!-- نماهای هوشمند (مثل Todoist / Things) -->
-      <div class="td-smart" id="tdSmart">
-        <button type="button" class="td-smart-card active" data-view="inbox">
-          <span class="td-smart-icon" style="background:#E8F5E9;color:#2E7D32">📥</span>
-          <span class="td-smart-label">صندوق</span>
-          <span class="td-smart-count" id="tdCountInbox">۰</span>
-        </button>
-        <button type="button" class="td-smart-card" data-view="today">
-          <span class="td-smart-icon" style="background:#E3F2FD;color:#1565C0">☀️</span>
-          <span class="td-smart-label">امروز</span>
-          <span class="td-smart-count" id="tdCountToday">۰</span>
-        </button>
-        <button type="button" class="td-smart-card" data-view="important">
-          <span class="td-smart-icon" style="background:#FFF3E0;color:#E65100">⭐</span>
-          <span class="td-smart-label">مهم</span>
-          <span class="td-smart-count" id="tdCountImportant">۰</span>
-        </button>
-        <button type="button" class="td-smart-card" data-view="done">
-          <span class="td-smart-icon" style="background:#F3E5F5;color:#7B1FA2">✓</span>
-          <span class="td-smart-label">انجام‌شده</span>
-          <span class="td-smart-count" id="tdCountDone">۰</span>
-        </button>
-      </div>
+      <div class="pi-stack" id="piStack"></div>
 
-      <!-- افزودن سریع کار (مثل Todoist Quick Add) -->
-      <div class="td-quick">
-        <button type="button" class="td-check-ghost" tabindex="-1" aria-hidden="true"></button>
-        <input type="text" id="tdQuickInput" placeholder="کار جدید… مثلاً خرید نان" maxlength="160" autocomplete="off">
-        <button type="button" id="tdQuickAdd" class="td-quick-add">افزودن</button>
-      </div>
-
-      <!-- لیست پروژه‌ها / پوشه‌ها -->
-      <div class="td-section-label">پروژه‌ها</div>
-      <div id="tdProjects" class="td-projects"></div>
-
-      <!-- پنل کارهای یک پروژه یا نمای هوشمند -->
-      <div id="tdDetail" class="td-detail" hidden>
-        <div class="td-detail-bar">
-          <button type="button" id="tdBack" class="td-btn-ghost" aria-label="بازگشت">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 18l-6-6 6-6"/></svg>
-          </button>
-          <h3 id="tdDetailTitle">—</h3>
-          <button type="button" id="tdRename" class="td-btn-ghost" aria-label="ویرایش" hidden>
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-          </button>
+      <!-- شیت کار جدید -->
+      <div id="piTaskSheet" class="pi-sheet" hidden>
+        <div class="pi-sheet-backdrop" id="piSheetBackdrop"></div>
+        <div class="pi-sheet-panel">
+          <div class="pi-sheet-handle"></div>
+          <h3>کار جدید</h3>
+          <input type="text" id="piTaskTitle" placeholder="عنوان کار..." maxlength="160" autocomplete="off">
+          <div class="pi-sheet-actions">
+            <button type="button" id="piTaskCancel" class="pi-btn-secondary">انصراف</button>
+            <button type="button" id="piTaskSave" class="pi-btn-primary">ذخیره</button>
+          </div>
         </div>
-        <div id="tdTaskList" class="td-task-list"></div>
-        <p id="tdEmpty" class="td-empty" hidden>هیچ کاری اینجا نیست ✨</p>
       </div>
     </div>
   </section>
@@ -870,8 +836,8 @@ n  <!-- Progress -->
 </div>
 <!-- ═══════════════ END ONBOARDING ═══════════════ -->
 
-<script src="script.js?v=93"></script>
-<script src="installments.js?v=93"></script>
-<script src="three-scene.js?v=93"></script>
+<script src="script.js?v=94"></script>
+<script src="installments.js?v=94"></script>
+<script src="three-scene.js?v=94"></script>
 </body>
 </html>

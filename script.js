@@ -2714,7 +2714,7 @@ async function initSync() {
 // ---------- Service worker ----------
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js?v=93").catch(() => {});
+    navigator.serviceWorker.register("sw.js?v=94").catch(() => {});
   });
 }
 
@@ -3236,314 +3236,221 @@ initSync();
 // ==================== Budget Tab ====================
 
 
-// ---------- Todo — Todoist / Things 3 / MS To Do inspired ----------
-const TD_COLORS = ["#E57373", "#FFB74D", "#81C784", "#64B5F6", "#BA68C8", "#4DB6AC", "#F06292", "#A1887F"];
+// ---------- Todo PlanIt stacked folders ----------
+const PI_COLORS = [
+  { bg: "linear-gradient(135deg,#3B82F6,#1D4ED8)", solid: "#2563EB" },
+  { bg: "linear-gradient(135deg,#F59E0B,#D97706)", solid: "#F59E0B" },
+  { bg: "linear-gradient(135deg,#10B981,#059669)", solid: "#10B981" },
+  { bg: "linear-gradient(135deg,#38BDF8,#0284C7)", solid: "#0EA5E9" },
+  { bg: "linear-gradient(135deg,#A78BFA,#7C3AED)", solid: "#8B5CF6" },
+  { bg: "linear-gradient(135deg,#F472B6,#DB2777)", solid: "#EC4899" },
+];
 
 function ensureTodoState() {
-  if (!state.todo || !Array.isArray(state.todo.lists)) {
+  if (!state.todo || !Array.isArray(state.todo.lists) || !state.todo.lists.length) {
     state.todo = {
       lists: [
-        { id: "inbox", name: "صندوق ورودی", color: "#2F7A72", tasks: [], isInbox: true },
-        { id: "l_work", name: "کار", color: "#5C6BC0", tasks: [] },
-        { id: "l_home", name: "خانه", color: "#66BB6A", tasks: [] },
-        { id: "l_shop", name: "خرید", color: "#FFA726", tasks: [] }
+        { id: "f1", name: "کارهای امروز", colorIdx: 0, tasks: [
+          { id: "t1", title: "تکمیل طراحی رابط کاربری پروژه", done: true, tag: "پروژه" },
+          { id: "t2", title: "ارسال فایل‌های نهایی به تیم", done: false, tag: "مهم" },
+          { id: "t3", title: "شرکت در جلسه آنلاین با مشتری", done: false, tag: "شغل" },
+          { id: "t4", title: "برنامه‌ریزی محتوا برای فردا", done: false, tag: null },
+          { id: "t5", title: "خرید شخصی", done: false, tag: "شخصی" },
+        ]},
+        { id: "f2", name: "پروژه آپولو", colorIdx: 1, tasks: [] },
+        { id: "f3", name: "وظایف شخصی", colorIdx: 2, tasks: [] },
+        { id: "f4", name: "مطالعه و توسعه", colorIdx: 3, tasks: [] },
+        { id: "f5", name: "یادداشت‌ها", colorIdx: 4, tasks: [] },
       ],
-      view: "inbox", // inbox | today | important | done | project:<id>
+      openId: "f1",
+      pendingFolderId: null,
     };
   }
-  if (!state.todo.view) state.todo.view = "inbox";
-  // migrate old shape
+  if (!state.todo.openId) state.todo.openId = state.todo.lists[0]?.id || null;
   state.todo.lists.forEach((l, i) => {
-    if (!l.color) l.color = TD_COLORS[i % TD_COLORS.length];
+    if (l.colorIdx == null) l.colorIdx = i % PI_COLORS.length;
     if (!Array.isArray(l.tasks)) l.tasks = [];
-    l.tasks.forEach((t) => {
-      if (t.priority == null) t.priority = 4;
-      if (t.starred == null) t.starred = false;
-    });
   });
 }
 
-function tdUid() {
-  return "t" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+function piUid() {
+  return "p" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 }
 
-function tdTodayStr() {
-  const d = new Date();
-  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+function piEsc(s) {
+  return String(s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 }
 
-function tdAllTasks() {
-  ensureTodoState();
-  const out = [];
-  state.todo.lists.forEach((l) => {
-    (l.tasks || []).forEach((t) => out.push({ ...t, listId: l.id, listName: l.name, listColor: l.color }));
-  });
-  return out;
+function piTagStyle(tag) {
+  if (!tag) return "";
+  const map = {
+    "مهم": "background:#FEE2E2;color:#B91C1C",
+    "شغل": "background:#FCE7F3;color:#BE185D",
+    "شخصی": "background:#FEF3C7;color:#B45309",
+    "پروژه": "background:#D1FAE5;color:#047857",
+  };
+  return map[tag] || "background:#E5E7EB;color:#4B5563";
 }
 
-function tdGetTasksForView() {
-  const view = state.todo.view || "inbox";
-  const today = tdTodayStr();
-  const all = tdAllTasks();
-  if (view === "today") return all.filter((t) => !t.done && (t.due === today || t.starred));
-  if (view === "important") return all.filter((t) => !t.done && (t.starred || t.priority <= 2));
-  if (view === "done") return all.filter((t) => t.done).slice(0, 50);
-  if (view.startsWith("project:")) {
-    const id = view.slice(8);
-    const list = state.todo.lists.find((l) => l.id === id);
-    return (list?.tasks || []).map((t) => ({ ...t, listId: list.id, listName: list.name, listColor: list.color }));
-  }
-  // inbox = inbox list open tasks + unassigned feel
-  const inbox = state.todo.lists.find((l) => l.isInbox) || state.todo.lists[0];
-  return (inbox?.tasks || []).filter((t) => !t.done).map((t) => ({ ...t, listId: inbox.id, listName: inbox.name, listColor: inbox.color }));
-}
-
-function tdUpdateCounts() {
-  const all = tdAllTasks();
-  const today = tdTodayStr();
-  const set = (id, n) => { const el = document.getElementById(id); if (el) el.textContent = String(n); };
-  const inbox = state.todo.lists.find((l) => l.isInbox) || state.todo.lists[0];
-  set("tdCountInbox", (inbox?.tasks || []).filter((t) => !t.done).length);
-  set("tdCountToday", all.filter((t) => !t.done && (t.due === today || t.starred)).length);
-  set("tdCountImportant", all.filter((t) => !t.done && (t.starred || t.priority <= 2)).length);
-  set("tdCountDone", all.filter((t) => t.done).length);
-}
-
-function tdEsc(s) {
-  return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-}
-
-function renderTodoProjects() {
-  const el = document.getElementById("tdProjects");
-  if (!el) return;
-  ensureTodoState();
-  const projects = state.todo.lists.filter((l) => !l.isInbox);
-  el.innerHTML = projects.map((l) => {
-    const open = (l.tasks || []).filter((t) => !t.done).length;
-    return `<div class="td-project" data-id="${l.id}" style="--p-color:${l.color}">
-      <span class="td-project-dot"></span>
-      <div class="td-project-meta">
-        <div class="td-project-name">${tdEsc(l.name)}</div>
-        <div class="td-project-sub">${open ? open + " کار باز" : "بدون کار باز"}</div>
-      </div>
-      <span class="td-project-badge">${open}</span>
-    </div>`;
-  }).join("");
-  el.querySelectorAll(".td-project").forEach((row) => {
-    row.addEventListener("click", () => {
-      state.todo.view = "project:" + row.dataset.id;
-      renderTodo();
-    });
-  });
-}
-
-function renderTodoTasks() {
-  const listEl = document.getElementById("tdTaskList");
-  const emptyEl = document.getElementById("tdEmpty");
-  const titleEl = document.getElementById("tdDetailTitle");
-  const renameBtn = document.getElementById("tdRename");
-  if (!listEl) return;
-  ensureTodoState();
-  const view = state.todo.view || "inbox";
-  let title = "صندوق";
-  if (view === "today") title = "امروز";
-  else if (view === "important") title = "مهم";
-  else if (view === "done") title = "انجام‌شده";
-  else if (view.startsWith("project:")) {
-    const l = state.todo.lists.find((x) => x.id === view.slice(8));
-    title = l ? l.name : "پروژه";
-    if (renameBtn) renameBtn.hidden = !l || l.isInbox;
-  } else if (renameBtn) renameBtn.hidden = true;
-  if (titleEl) titleEl.textContent = title;
-
-  const tasks = tdGetTasksForView();
-  // sort: open first, then priority, then date
-  tasks.sort((a, b) => {
-    if (!!a.done !== !!b.done) return a.done ? 1 : -1;
-    return (a.priority || 4) - (b.priority || 4);
-  });
-
-  if (!tasks.length) {
-    listEl.innerHTML = "";
-    if (emptyEl) emptyEl.hidden = false;
-    return;
-  }
-  if (emptyEl) emptyEl.hidden = true;
-
-  listEl.innerHTML = tasks.map((t) => {
-    const p = t.priority || 4;
-    const chips = [];
-    if (t.starred) chips.push('<span class="td-chip p2">⭐ مهم</span>');
-    if (p <= 3) chips.push(`<span class="td-chip p${p}">P${p}</span>`);
-    if (t.due) chips.push(`<span class="td-chip">${t.due}</span>`);
-    if (view !== "project:" + t.listId && t.listName) chips.push(`<span class="td-chip">${tdEsc(t.listName)}</span>`);
-    return `<div class="td-task ${t.done ? "done" : ""}" data-id="${t.id}" data-list="${t.listId}">
-      <button type="button" class="td-cb" aria-label="انجام">${t.done ? "✓" : ""}</button>
-      <div class="td-task-body">
-        <div class="td-task-title">${tdEsc(t.title)}</div>
-        ${chips.length ? `<div class="td-task-meta">${chips.join("")}</div>` : ""}
-      </div>
-      <div class="td-task-actions">
-        <button type="button" class="td-star" aria-label="مهم">${t.starred ? "★" : "☆"}</button>
-        <button type="button" class="td-pri" aria-label="اولویت">⚑</button>
-        <button type="button" class="td-del" aria-label="حذف">✕</button>
-      </div>
-    </div>`;
-  }).join("");
-
-  listEl.querySelectorAll(".td-task").forEach((row) => {
-    const id = row.dataset.id;
-    const listId = row.dataset.list;
-    row.querySelector(".td-cb").addEventListener("click", () => tdToggle(listId, id));
-    row.querySelector(".td-star").addEventListener("click", () => tdStar(listId, id));
-    row.querySelector(".td-pri").addEventListener("click", () => tdCyclePriority(listId, id));
-    row.querySelector(".td-del").addEventListener("click", () => tdDelete(listId, id));
-  });
-}
-
-function tdFindTask(listId, id) {
-  const list = state.todo.lists.find((l) => l.id === listId);
-  if (!list) return null;
-  return { list, task: list.tasks.find((t) => t.id === id) };
-}
-
-function tdToggle(listId, id) {
-  const f = tdFindTask(listId, id);
-  if (!f?.task) return;
-  f.task.done = !f.task.done;
-  saveState();
-  renderTodo();
-}
-
-function tdStar(listId, id) {
-  const f = tdFindTask(listId, id);
-  if (!f?.task) return;
-  f.task.starred = !f.task.starred;
-  saveState();
-  renderTodo();
-}
-
-function tdCyclePriority(listId, id) {
-  const f = tdFindTask(listId, id);
-  if (!f?.task) return;
-  const p = f.task.priority || 4;
-  f.task.priority = p <= 1 ? 4 : p - 1;
-  saveState();
-  renderTodo();
-}
-
-function tdDelete(listId, id) {
-  const list = state.todo.lists.find((l) => l.id === listId);
-  if (!list) return;
-  list.tasks = list.tasks.filter((t) => t.id !== id);
-  saveState();
-  renderTodo();
-}
-
-function tdAddTask(title) {
-  ensureTodoState();
-  const text = (title || "").trim();
-  if (!text) return;
-  let list;
-  const view = state.todo.view || "inbox";
-  if (view.startsWith("project:")) {
-    list = state.todo.lists.find((l) => l.id === view.slice(8));
-  }
-  if (!list) list = state.todo.lists.find((l) => l.isInbox) || state.todo.lists[0];
-  list.tasks.unshift({
-    id: tdUid(),
-    title: text,
-    done: false,
-    starred: view === "important",
-    priority: 4,
-    due: view === "today" ? tdTodayStr() : null,
-    createdAt: Date.now()
-  });
-  saveState();
-  renderTodo();
-}
-
-function tdAddProject() {
-  ensureTodoState();
-  const name = prompt("نام پروژه جدید؟", "");
-  if (!name || !name.trim()) return;
-  const color = TD_COLORS[state.todo.lists.length % TD_COLORS.length];
-  state.todo.lists.push({ id: tdUid(), name: name.trim(), color, tasks: [] });
-  saveState();
-  renderTodo();
-}
-
-function tdRenameProject() {
-  const view = state.todo.view || "";
-  if (!view.startsWith("project:")) return;
-  const list = state.todo.lists.find((l) => l.id === view.slice(8));
-  if (!list || list.isInbox) return;
-  const name = prompt("نام جدید؟", list.name);
-  if (!name || !name.trim()) return;
-  list.name = name.trim();
-  saveState();
-  renderTodo();
+function piJalaliDate() {
+  try {
+    const now = new Date();
+    // simple display — use existing toJalaali if available
+    if (typeof toJalaali === "function") {
+      const j = toJalaali(now.getFullYear(), now.getMonth() + 1, now.getDate());
+      const days = ["یکشنبه","دوشنبه","سه‌شنبه","چهارشنبه","پنجشنبه","جمعه","شنبه"];
+      const months = ["","فروردین","اردیبهشت","خرداد","تیر","مرداد","شهریور","مهر","آبان","آذر","دی","بهمن","اسفند"];
+      const wd = days[now.getDay()];
+      return `${wd}، ${j.jd} ${months[j.jm]}`;
+    }
+  } catch (_) {}
+  return new Date().toLocaleDateString("fa-IR");
 }
 
 function renderTodo() {
   ensureTodoState();
-  tdUpdateCounts();
-  const detail = document.getElementById("tdDetail");
-  const projects = document.getElementById("tdProjects");
-  const sectionLabel = document.querySelector(".td-section-label");
-  const smart = document.getElementById("tdSmart");
-  const view = state.todo.view || "inbox";
+  const dateEl = document.getElementById("piDate");
+  if (dateEl) dateEl.textContent = piJalaliDate();
+  const stack = document.getElementById("piStack");
+  if (!stack) return;
 
-  // smart cards active state
-  document.querySelectorAll("#tdSmart .td-smart-card").forEach((btn) => {
-    btn.classList.toggle("active", btn.dataset.view === view || (view.startsWith("project:") && false));
+  const openId = state.todo.openId;
+  stack.innerHTML = state.todo.lists.map((folder, idx) => {
+    const open = folder.id === openId;
+    const color = PI_COLORS[folder.colorIdx % PI_COLORS.length];
+    const openCount = folder.tasks.filter((t) => !t.done).length;
+    const total = folder.tasks.length;
+    const countLabel = total ? (openCount ? `${openCount} باز · ${total}` : `${total} tasks`) : "خالی";
+
+    let body = "";
+    if (open) {
+      const tasksHtml = folder.tasks.map((t, ti) => `
+        <div class="pi-task ${t.done ? "done" : ""}" data-tid="${t.id}" style="animation-delay:${ti * 0.04}s">
+          <button type="button" class="pi-cb" aria-label="انجام">${t.done ? "✓" : ""}</button>
+          <div class="pi-task-text">${piEsc(t.title)}</div>
+          ${t.tag ? `<span class="pi-tag" style="${piTagStyle(t.tag)}">${piEsc(t.tag)}</span>` : ""}
+          <button type="button" class="pi-task-del" aria-label="حذف">✕</button>
+        </div>
+      `).join("");
+      body = `<div class="pi-folder-body">
+        ${tasksHtml || '<p style="text-align:center;color:#9AA3A0;font-size:13px;padding:16px 0">هنوز کاری نیست</p>'}
+        <button type="button" class="pi-add-task" data-add="${folder.id}">＋ کار جدید</button>
+      </div>`;
+    }
+
+    return `<div class="pi-folder ${open ? "is-expanded" : "is-collapsed"}" data-fid="${folder.id}"
+      style="background:${color.bg};z-index:${open ? 20 : 10 - idx}">
+      <span class="pi-tab">پوشه‌ها</span>
+      <div class="pi-folder-head" data-toggle="${folder.id}">
+        <h3 class="pi-folder-title">${piEsc(folder.name)}</h3>
+        <span class="pi-folder-count">${countLabel}</span>
+      </div>
+      ${body}
+    </div>`;
+  }).join("");
+
+  // events
+  stack.querySelectorAll("[data-toggle]").forEach((head) => {
+    head.addEventListener("click", () => {
+      const id = head.dataset.toggle;
+      // accordion: open this, collapse others — with animation
+      if (state.todo.openId === id) {
+        // keep open (or optionally collapse all)
+        return;
+      }
+      state.todo.openId = id;
+      renderTodo();
+    });
   });
-  if (view.startsWith("project:")) {
-    document.querySelectorAll("#tdSmart .td-smart-card").forEach((b) => b.classList.remove("active"));
-  }
 
-  // always show tasks area for current view
-  if (detail) detail.hidden = false;
-  // hide project list when deep in a project? keep visible for todoist-like - hide when in project for cleaner mobile
-  if (view.startsWith("project:")) {
-    if (projects) projects.hidden = true;
-    if (sectionLabel) sectionLabel.hidden = true;
-    if (smart) smart.hidden = true;
-  } else {
-    if (projects) projects.hidden = false;
-    if (sectionLabel) sectionLabel.hidden = false;
-    if (smart) smart.hidden = false;
-    renderTodoProjects();
-  }
-  renderTodoTasks();
+  stack.querySelectorAll(".pi-task").forEach((row) => {
+    const fid = row.closest(".pi-folder")?.dataset.fid;
+    const tid = row.dataset.tid;
+    row.querySelector(".pi-cb")?.addEventListener("click", (e) => {
+      e.stopPropagation();
+      piToggle(fid, tid);
+    });
+    row.querySelector(".pi-task-del")?.addEventListener("click", (e) => {
+      e.stopPropagation();
+      piDelete(fid, tid);
+    });
+  });
 
-  const sub = document.getElementById("tdSubtitle");
-  if (sub) {
-    const n = tdAllTasks().filter((t) => !t.done).length;
-    sub.textContent = n ? `${n} کار باز` : "همه‌چیز مرتب است ✨";
-  }
+  stack.querySelectorAll("[data-add]").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      piOpenTaskSheet(btn.dataset.add);
+    });
+  });
+}
+
+function piToggle(fid, tid) {
+  const folder = state.todo.lists.find((l) => l.id === fid);
+  const t = folder?.tasks.find((x) => x.id === tid);
+  if (!t) return;
+  t.done = !t.done;
+  saveState();
+  renderTodo();
+}
+
+function piDelete(fid, tid) {
+  const folder = state.todo.lists.find((l) => l.id === fid);
+  if (!folder) return;
+  folder.tasks = folder.tasks.filter((t) => t.id !== tid);
+  saveState();
+  renderTodo();
+}
+
+function piOpenTaskSheet(folderId) {
+  state.todo.pendingFolderId = folderId;
+  const sheet = document.getElementById("piTaskSheet");
+  const input = document.getElementById("piTaskTitle");
+  if (sheet) sheet.hidden = false;
+  if (input) { input.value = ""; setTimeout(() => input.focus(), 50); }
+}
+
+function piCloseTaskSheet() {
+  const sheet = document.getElementById("piTaskSheet");
+  if (sheet) sheet.hidden = true;
+  state.todo.pendingFolderId = null;
+}
+
+function piSaveTask() {
+  const title = (document.getElementById("piTaskTitle")?.value || "").trim();
+  if (!title) return;
+  const fid = state.todo.pendingFolderId || state.todo.openId;
+  const folder = state.todo.lists.find((l) => l.id === fid);
+  if (!folder) return;
+  folder.tasks.push({ id: piUid(), title, done: false, tag: null });
+  state.todo.openId = fid;
+  saveState();
+  piCloseTaskSheet();
+  renderTodo();
+}
+
+function piAddFolder() {
+  ensureTodoState();
+  const name = prompt("نام پوشه جدید؟", "");
+  if (!name || !name.trim()) return;
+  const folder = {
+    id: piUid(),
+    name: name.trim(),
+    colorIdx: state.todo.lists.length % PI_COLORS.length,
+    tasks: []
+  };
+  state.todo.lists.push(folder);
+  state.todo.openId = folder.id;
+  saveState();
+  renderTodo();
 }
 
 function setupTodoUI() {
-  const quickIn = document.getElementById("tdQuickInput");
-  const quickBtn = document.getElementById("tdQuickAdd");
-  if (quickBtn && quickIn) {
-    const go = () => { tdAddTask(quickIn.value); quickIn.value = ""; quickIn.focus(); };
-    quickBtn.addEventListener("click", go);
-    quickIn.addEventListener("keydown", (e) => { if (e.key === "Enter") go(); });
-  }
-  document.getElementById("tdNewListBtn")?.addEventListener("click", tdAddProject);
-  document.getElementById("tdBack")?.addEventListener("click", () => {
-    state.todo.view = "inbox";
-    renderTodo();
-  });
-  document.getElementById("tdRename")?.addEventListener("click", tdRenameProject);
-  document.querySelectorAll("#tdSmart .td-smart-card").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      ensureTodoState();
-      state.todo.view = btn.dataset.view;
-      renderTodo();
-    });
+  document.getElementById("piAddFolder")?.addEventListener("click", piAddFolder);
+  document.getElementById("piSheetBackdrop")?.addEventListener("click", piCloseTaskSheet);
+  document.getElementById("piTaskCancel")?.addEventListener("click", piCloseTaskSheet);
+  document.getElementById("piTaskSave")?.addEventListener("click", piSaveTask);
+  document.getElementById("piTaskTitle")?.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") piSaveTask();
   });
 }
 setupTodoUI();
