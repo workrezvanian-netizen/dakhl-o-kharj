@@ -2714,7 +2714,7 @@ async function initSync() {
 // ---------- Service worker ----------
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js?v=95").catch(() => {});
+    navigator.serviceWorker.register("sw.js?v=96").catch(() => {});
   });
 }
 
@@ -3236,37 +3236,42 @@ initSync();
 // ==================== Budget Tab ====================
 
 
-// ---------- Todo PlanIt stacked folders ----------
+// ---------- Todo PlanIt folders (fixed) ----------
 const PI_COLORS = [
-  { bg: "linear-gradient(135deg,#3B82F6,#1D4ED8)", solid: "#2563EB" },
-  { bg: "linear-gradient(135deg,#F59E0B,#D97706)", solid: "#F59E0B" },
-  { bg: "linear-gradient(135deg,#10B981,#059669)", solid: "#10B981" },
-  { bg: "linear-gradient(135deg,#38BDF8,#0284C7)", solid: "#0EA5E9" },
-  { bg: "linear-gradient(135deg,#A78BFA,#7C3AED)", solid: "#8B5CF6" },
-  { bg: "linear-gradient(135deg,#F472B6,#DB2777)", solid: "#EC4899" },
+  { bg: "#3B6FA0", name: "آبی" },
+  { bg: "#E8A04A", name: "نارنجی" },
+  { bg: "#4CAF82", name: "سبز" },
+  { bg: "#4A9BC7", name: "آبی روشن" },
+  { bg: "#8B6BC7", name: "بنفش" },
+  { bg: "#E06B8A", name: "صورتی" },
 ];
+
+let _piPendingFolder = null;
+let _piPendingPriority = 3;
 
 function ensureTodoState() {
   if (!state.todo || !Array.isArray(state.todo.lists) || !state.todo.lists.length) {
     state.todo = {
       lists: [
-        { id: "f1", name: "کارهای امروز", colorIdx: 0, tasks: [
-          { id: "t1", title: "تکمیل طراحی رابط کاربری پروژه", done: true, tag: "پروژه" },
-          { id: "t2", title: "ارسال فایل‌های نهایی به تیم", done: false, tag: "مهم" },
-          { id: "t3", title: "شرکت در جلسه آنلاین با مشتری", done: false, tag: "شغل" },
-          { id: "t4", title: "برنامه‌ریزی محتوا برای فردا", done: false, tag: null },
-          { id: "t5", title: "خرید شخصی", done: false, tag: "شخصی" },
-        ]},
+        {
+          id: "f1", name: "کارهای امروز", colorIdx: 0,
+          tasks: [
+            { id: "t1", title: "تکمیل طراحی رابط کاربری پروژه", done: true, tag: "پروژه", priority: 2 },
+            { id: "t2", title: "ارسال فایل‌های نهایی به تیم", done: false, tag: "مهم", priority: 1 },
+            { id: "t3", title: "شرکت در جلسه آنلاین با مشتری", done: false, tag: "شغل", priority: 2 },
+            { id: "t4", title: "برنامه‌ریزی محتوا برای فردا", done: false, tag: null, priority: 3 },
+            { id: "t5", title: "خرید شخصی", done: false, tag: "شخصی", priority: 4 },
+          ]
+        },
         { id: "f2", name: "پروژه آپولو", colorIdx: 1, tasks: [] },
         { id: "f3", name: "وظایف شخصی", colorIdx: 2, tasks: [] },
         { id: "f4", name: "مطالعه و توسعه", colorIdx: 3, tasks: [] },
         { id: "f5", name: "یادداشت‌ها", colorIdx: 4, tasks: [] },
       ],
-      openId: "f1",
-      pendingFolderId: null,
+      openId: "f1"
     };
   }
-  if (!state.todo.openId) state.todo.openId = state.todo.lists[0]?.id || null;
+  if (!state.todo.openId) state.todo.openId = state.todo.lists[0].id;
   state.todo.lists.forEach((l, i) => {
     if (l.colorIdx == null) l.colorIdx = i % PI_COLORS.length;
     if (!Array.isArray(l.tasks)) l.tasks = [];
@@ -3276,32 +3281,29 @@ function ensureTodoState() {
 function piUid() {
   return "p" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 }
-
 function piEsc(s) {
   return String(s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 }
-
 function piTagStyle(tag) {
-  if (!tag) return "";
   const map = {
     "مهم": "background:#FEE2E2;color:#B91C1C",
     "شغل": "background:#FCE7F3;color:#BE185D",
     "شخصی": "background:#FEF3C7;color:#B45309",
     "پروژه": "background:#D1FAE5;color:#047857",
   };
-  return map[tag] || "background:#E5E7EB;color:#4B5563";
+  return map[tag] || "background:#E2E8F0;color:#475569";
 }
-
+function piPrioColor(p) {
+  return { 1: "#EF4444", 2: "#F97316", 3: "#3B82F6", 4: "#94A3B8" }[p] || "#94A3B8";
+}
 function piJalaliDate() {
   try {
-    const now = new Date();
-    // simple display — use existing toJalaali if available
     if (typeof toJalaali === "function") {
+      const now = new Date();
       const j = toJalaali(now.getFullYear(), now.getMonth() + 1, now.getDate());
       const days = ["یکشنبه","دوشنبه","سه‌شنبه","چهارشنبه","پنجشنبه","جمعه","شنبه"];
       const months = ["","فروردین","اردیبهشت","خرداد","تیر","مرداد","شهریور","مهر","آبان","آذر","دی","بهمن","اسفند"];
-      const wd = days[now.getDay()];
-      return `${wd}، ${j.jd} ${months[j.jm]}`;
+      return days[now.getDay()] + "، " + j.jd + " " + months[j.jm];
     }
   } catch (_) {}
   return new Date().toLocaleDateString("fa-IR");
@@ -3309,102 +3311,172 @@ function piJalaliDate() {
 
 function renderTodo(opts) {
   ensureTodoState();
-  const animate = opts && opts.animate;
   const dateEl = document.getElementById("piDate");
   if (dateEl) dateEl.textContent = piJalaliDate();
   const stack = document.getElementById("piStack");
   if (!stack) return;
 
   const openId = state.todo.openId;
-  const prevOpen = stack.dataset.openId || "";
+  const animate = opts && opts.animate;
 
   stack.innerHTML = state.todo.lists.map((folder, idx) => {
     const open = folder.id === openId;
     const color = PI_COLORS[folder.colorIdx % PI_COLORS.length];
-    const openCount = folder.tasks.filter((t) => !t.done).length;
     const total = folder.tasks.length;
-    const countLabel = total ? (openCount ? `${openCount} باز · ${total}` : `${total} کار`) : "خالی";
+    const openN = folder.tasks.filter((t) => !t.done).length;
+    const countLabel = total ? (open ? "" : total + " tasks") : (open ? "" : "خالی");
 
     let body = "";
     if (open) {
-      const tasksHtml = folder.tasks.map((t, ti) => `
-        <div class="pi-task ${t.done ? "done" : ""}" data-tid="${t.id}" style="animation-delay:${0.05 + ti * 0.045}s">
-          <button type="button" class="pi-cb" aria-label="انجام">${t.done ? "✓" : ""}</button>
+      const tasksHtml = folder.tasks.map((t, ti) => {
+        const p = t.priority || 3;
+        return `<div class="pi-task ${t.done ? "done" : ""}" data-fid="${folder.id}" data-tid="${t.id}" style="animation-delay:${ti * 0.04}s">
+          ${t.tag ? `<span class="pi-tag" style="${piTagStyle(t.tag)}">${piEsc(t.tag)}</span>` : `<span class="pi-prio-dot" style="background:${piPrioColor(p)}"></span>`}
           <div class="pi-task-text">${piEsc(t.title)}</div>
-          ${t.tag ? `<span class="pi-tag" style="${piTagStyle(t.tag)}">${piEsc(t.tag)}</span>` : ""}
-          <button type="button" class="pi-task-del" aria-label="حذف">✕</button>
-        </div>
-      `).join("");
+          <button type="button" class="pi-cb" data-action="toggle" aria-label="انجام">${t.done ? "✓" : ""}</button>
+        </div>`;
+      }).join("");
       body = `<div class="pi-folder-body">
-        ${tasksHtml || '<p style="text-align:center;color:#94A3B8;font-size:13px;padding:18px 0">هنوز کاری نیست</p>'}
-        <button type="button" class="pi-add-task" data-add="${folder.id}">＋ کار جدید</button>
+        ${tasksHtml || '<p style="text-align:center;color:#94a3b8;font-size:13px;padding:16px 0;margin:0">هنوز کاری نیست</p>'}
+        <div class="pi-add-task-row">
+          <button type="button" class="pi-add-task" data-action="add" data-fid="${folder.id}">＋ افزودن کار</button>
+        </div>
       </div>`;
     }
 
-    const animClass = animate
-      ? (open ? " is-entering" : (folder.id === prevOpen ? " is-leaving" : ""))
-      : "";
-
-    return `<div class="pi-folder ${open ? "is-expanded" : "is-collapsed"}${animClass}" data-fid="${folder.id}"
-      style="background:${color.bg};z-index:${open ? 20 : 10 - idx}">
-      <div class="pi-folder-head" data-toggle="${folder.id}">
-        <h3 class="pi-folder-title">${piEsc(folder.name)}</h3>
-        <span class="pi-folder-count">${countLabel}</span>
+    const anim = animate ? (open ? " is-switching-in" : "") : "";
+    return `<div class="pi-folder ${open ? "is-expanded" : "is-collapsed"}${anim}" data-fid="${folder.id}" style="background:${color.bg};z-index:${open ? 10 : 5 - idx}">
+      <div class="pi-folder-tab">پوشه‌ها</div>
+      <div class="pi-folder-inner">
+        <div class="pi-folder-head" data-action="open" data-fid="${folder.id}">
+          <h3 class="pi-folder-title">${piEsc(folder.name)}</h3>
+          ${countLabel ? `<span class="pi-folder-count">${countLabel}</span>` : ""}
+        </div>
+        ${body}
       </div>
-      ${body}
     </div>`;
   }).join("");
 
-  stack.dataset.openId = openId || "";
-
-  // clear anim classes after transition
   if (animate) {
     setTimeout(() => {
-      stack.querySelectorAll(".is-entering, .is-leaving").forEach((el) => {
-        el.classList.remove("is-entering", "is-leaving");
-      });
-    }, 480);
+      stack.querySelectorAll(".is-switching-in").forEach((el) => el.classList.remove("is-switching-in"));
+    }, 420);
   }
-
-  stack.querySelectorAll("[data-toggle]").forEach((head) => {
-    head.addEventListener("click", () => {
-      const id = head.dataset.toggle;
-      if (state.todo.openId === id) return;
-      state.todo.openId = id;
-      renderTodo({ animate: true });
-    });
-  });
-
-  stack.querySelectorAll(".pi-task").forEach((row) => {
-    const fid = row.closest(".pi-folder")?.dataset.fid;
-    const tid = row.dataset.tid;
-    row.querySelector(".pi-cb")?.addEventListener("click", (e) => {
-      e.stopPropagation();
-      piToggle(fid, tid);
-    });
-    row.querySelector(".pi-task-del")?.addEventListener("click", (e) => {
-      e.stopPropagation();
-      piDelete(fid, tid);
-    });
-  });
-
-  stack.querySelectorAll("[data-add]").forEach((btn) => {
-    btn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      piOpenTaskSheet(btn.dataset.add);
-    });
-  });
 }
 
+// Single delegated listener — fixes broken clicks
 function setupTodoUI() {
-  document.getElementById("piAddFolder")?.addEventListener("click", piAddFolder);
-  document.getElementById("piSheetBackdrop")?.addEventListener("click", piCloseTaskSheet);
-  document.getElementById("piTaskCancel")?.addEventListener("click", piCloseTaskSheet);
+  const stack = document.getElementById("piStack");
+  if (stack && !stack._piBound) {
+    stack._piBound = true;
+    stack.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-action]");
+      if (!btn) return;
+      const action = btn.dataset.action;
+      const fid = btn.dataset.fid || btn.closest("[data-fid]")?.dataset.fid;
+      const tid = btn.closest("[data-tid]")?.dataset.tid;
+
+      if (action === "open" && fid) {
+        if (state.todo.openId === fid) return;
+        state.todo.openId = fid;
+        renderTodo({ animate: true });
+        return;
+      }
+      if (action === "toggle" && fid && tid) {
+        e.preventDefault();
+        e.stopPropagation();
+        const folder = state.todo.lists.find((l) => l.id === fid);
+        const task = folder?.tasks.find((t) => t.id === tid);
+        if (!task) return;
+        task.done = !task.done;
+        saveState();
+        renderTodo();
+        return;
+      }
+      if (action === "add" && fid) {
+        e.preventDefault();
+        e.stopPropagation();
+        piOpenSheet(fid);
+        return;
+      }
+    });
+  }
+
+  document.getElementById("piAddFolder")?.addEventListener("click", () => {
+    ensureTodoState();
+    const name = prompt("نام پوشه جدید؟", "");
+    if (!name || !name.trim()) return;
+    const folder = {
+      id: piUid(),
+      name: name.trim(),
+      colorIdx: state.todo.lists.length % PI_COLORS.length,
+      tasks: []
+    };
+    state.todo.lists.push(folder);
+    state.todo.openId = folder.id;
+    saveState();
+    renderTodo({ animate: true });
+  });
+
+  document.getElementById("piSheetBackdrop")?.addEventListener("click", piCloseSheet);
+  document.getElementById("piTaskCancel")?.addEventListener("click", piCloseSheet);
   document.getElementById("piTaskSave")?.addEventListener("click", piSaveTask);
   document.getElementById("piTaskTitle")?.addEventListener("keydown", (e) => {
     if (e.key === "Enter") piSaveTask();
   });
+
+  document.getElementById("piPrioBtns")?.addEventListener("click", (e) => {
+    const b = e.target.closest(".pi-prio");
+    if (!b) return;
+    _piPendingPriority = parseInt(b.dataset.p, 10) || 3;
+    document.querySelectorAll("#piPrioBtns .pi-prio").forEach((x) => x.classList.toggle("active", x === b));
+  });
 }
+
+function piOpenSheet(folderId) {
+  _piPendingFolder = folderId;
+  _piPendingPriority = 3;
+  document.querySelectorAll("#piPrioBtns .pi-prio").forEach((x) => {
+    x.classList.toggle("active", x.dataset.p === "3");
+  });
+  const sheet = document.getElementById("piTaskSheet");
+  const input = document.getElementById("piTaskTitle");
+  if (sheet) sheet.hidden = false;
+  if (input) {
+    input.value = "";
+    setTimeout(() => input.focus(), 80);
+  }
+}
+
+function piCloseSheet() {
+  const sheet = document.getElementById("piTaskSheet");
+  if (sheet) sheet.hidden = true;
+  _piPendingFolder = null;
+}
+
+function piSaveTask() {
+  const title = (document.getElementById("piTaskTitle")?.value || "").trim();
+  if (!title) {
+    document.getElementById("piTaskTitle")?.focus();
+    return;
+  }
+  ensureTodoState();
+  const fid = _piPendingFolder || state.todo.openId;
+  const folder = state.todo.lists.find((l) => l.id === fid);
+  if (!folder) return;
+  folder.tasks.push({
+    id: piUid(),
+    title,
+    done: false,
+    tag: null,
+    priority: _piPendingPriority
+  });
+  state.todo.openId = fid;
+  saveState();
+  piCloseSheet();
+  renderTodo();
+}
+
 setupTodoUI();
 
 function renderBudget() {
