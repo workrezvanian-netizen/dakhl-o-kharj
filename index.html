@@ -358,77 +358,60 @@
 
   </section>
 
-  <!-- BUDGET -->
-  <section id="tab-budget" class="tab">
-    <!-- Donut chart summary -->
-    <div class="budget-hero" id="budgetTotalCard">
-      <div class="budget-hero-bg"></div>
-      <div class="budget-hero-content">
-        <div class="budget-hero-top">
-          <span class="budget-hero-label">بودجه این ماه</span>
-          <span class="budget-hero-month"></span>
+  <!-- TODO / کارها -->
+  <section id="tab-todo" class="tab">
+    <div class="todo-page">
+      <div class="todo-topbar">
+        <div>
+          <div class="todo-kicker">مدیریت کارها</div>
+          <h2 class="todo-title">کارهای من</h2>
         </div>
-        <div class="budget-donut-wrap">
-          <svg class="budget-donut" viewBox="0 0 120 120">
-            <circle cx="60" cy="60" r="50" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="10"/>
-            <circle id="budgetDonutFill" cx="60" cy="60" r="50" fill="none" stroke="url(#budgetGrad)" stroke-width="10" stroke-linecap="round" stroke-dasharray="0 314" transform="rotate(-90 60 60)" style="transition: stroke-dasharray .8s cubic-bezier(.4,0,.2,1)"/>
-            <defs>
-              <linearGradient id="budgetGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stop-color="#81C784"/>
-                <stop offset="100%" stop-color="#4CAF50"/>
-              </linearGradient>
-              <linearGradient id="budgetGradWarn" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stop-color="#FFB74D"/>
-                <stop offset="100%" stop-color="#FFA726"/>
-              </linearGradient>
-              <linearGradient id="budgetGradDanger" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stop-color="#E57373"/>
-                <stop offset="100%" stop-color="#EF5350"/>
-              </linearGradient>
-            </defs>
-          </svg>
-          <div class="budget-donut-center">
-            <span class="budget-donut-pct" id="budgetPercentStat">۰٪</span>
-            <span class="budget-donut-label">مصرف</span>
+        <button type="button" id="todoAddFolderBtn" class="todo-icon-btn" aria-label="پوشه جدید">
+          <span class="icon-mask" data-icon="folder-plus" style="width:20px;height:20px;color:currentColor"></span>
+        </button>
+      </div>
+
+      <div id="todoFolderStack" class="todo-folder-stack"></div>
+
+      <div id="todoWorkspace" class="todo-workspace" hidden>
+        <div class="todo-workspace-head">
+          <button type="button" id="todoBackBtn" class="todo-back-btn">
+            <span class="icon-mask" data-icon="chevron-right" style="width:18px;height:18px;color:currentColor"></span>
+            <span>پوشه‌ها</span>
+          </button>
+          <div class="todo-current-folder">
+            <span id="todoCurrentFolderIcon" class="todo-folder-icon">
+              <span class="icon-mask" data-icon="folder" style="width:18px;height:18px;color:currentColor"></span>
+            </span>
+            <strong id="todoCurrentFolderName">کارهای روزانه</strong>
           </div>
         </div>
-        <div class="budget-hero-amounts">
-          <div class="budget-amt-item">
-            <span class="budget-amt-val"><span id="budgetTotalSpent">۰</span></span>
-            <span class="budget-amt-lbl">مصرف شده</span>
-          </div>
-          <div class="budget-amt-divider"></div>
-          <div class="budget-amt-item">
-            <span class="budget-amt-val"><span id="budgetTotalLimit">۰</span></span>
-            <span class="budget-amt-lbl">بودجه کل</span>
-          </div>
-          <div class="budget-amt-divider"></div>
-          <div class="budget-amt-item">
-            <span class="budget-amt-val budget-amt-green" id="budgetRemainStat">۰</span>
-            <span class="budget-amt-lbl">مانده</span>
-          </div>
+
+        <div class="todo-filter-row">
+          <button class="todo-filter active" data-filter="all">همه</button>
+          <button class="todo-filter" data-filter="open">در انتظار</button>
+          <button class="todo-filter" data-filter="done">انجام‌شده</button>
         </div>
+
+        <div id="todoTaskList" class="todo-task-list"></div>
+
+        <form id="todoTaskForm" class="todo-add-card">
+          <div class="todo-add-icon">
+            <span class="icon-mask" data-icon="plus" style="width:19px;height:19px;color:currentColor"></span>
+          </div>
+          <input id="todoTaskInput" type="text" autocomplete="off" placeholder="یک کار جدید بنویس..." maxlength="120">
+          <button type="submit" class="todo-add-submit">افزودن</button>
+        </form>
+      </div>
+
+      <div id="todoEmptyState" class="todo-empty-state">
+        <div class="todo-empty-icon">
+          <span class="icon-mask" data-icon="check-check" style="width:30px;height:30px;color:currentColor"></span>
+        </div>
+        <strong>هنوز کاری ثبت نشده</strong>
+        <span>یک پوشه باز کن و کارهای خودت را داخلش قرار بده.</span>
       </div>
     </div>
-    <!-- Total budget input -->
-    <div class="budget-input-card">
-      <div class="budget-input-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
-      </div>
-      <div class="budget-input-body">
-        <label class="budget-input-label">بودجه کل ماه</label>
-        <div class="budget-input-row">
-          <input type="text" id="budgetTotalInput" inputmode="numeric" placeholder="مثلاً ۵۰٬۰۰۰٬۰۰۰" class="budget-input-field">
-          <button type="button" id="budgetSaveTotalBtn" class="budget-input-btn">ذخیره</button>
-        </div>
-      </div>
-    </div>
-    <!-- Category list -->
-    <div class="budget-section-header">
-      <span class="budget-section-title">بودجه هر دسته</span>
-      <span class="budget-section-count" id="budgetCatCount">۰ دسته</span>
-    </div>
-    <div id="budgetCategoryList" class="budget-cat-list"></div>
   </section>
 
   <!-- SETTINGS -->
@@ -697,9 +680,9 @@
 </button>
 
 <nav class="bottom-nav">
-  <button class="nav-btn" data-tab="budget">
-    <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="18" rx="3"/><path d="M2 9h20"/><path d="M12 14v3"/><circle cx="8" cy="15.5" r="1" fill="currentColor"/><circle cx="16" cy="15.5" r="1" fill="currentColor"/></svg>
-    <span>بودجه</span>
+  <button class="nav-btn" data-tab="todo">
+    <svg viewBox="0 0 24 24"><path d="M4 5h16v15H4z"/><path d="M8 3v4M16 3v4M8 11h8M8 15h5"/></svg>
+    <span>کارها</span>
   </button>
   <button class="nav-btn" data-tab="entry">
     <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>
@@ -836,15 +819,17 @@
 
     <!-- Feature 5: Budget -->
     <div class="ob-section ob-feature" data-idx="5">
-      <div class="ob-feature-bg" style="background:radial-gradient(ellipse at 50% 55%,rgba(236,64,122,0.3) 0%,transparent 70%)"></div>
+      <div class="ob-feature-bg" style="background:radial-gradient(ellipse at 50% 55%,rgba(236,64    <!-- Feature 5: To Do -->
+    <div class="ob-section ob-feature" data-idx="5">
+      <div class="ob-feature-bg" style="background:radial-gradient(ellipse at 50% 55%,rgba(79,168,158,0.3) 0%,transparent 70%)"></div>
       <div class="ob-feat-inner">
-        <span class="ob-feat-label">بودجه</span>
-        <h2 class="ob-feat-title">بودجه رو<br/><span class="ob-feat-highlight" style="color:#F06292">کنترل کن</span></h2>
-        <p class="ob-feat-desc">برای هر دسته بودجه تعیین کن و وضعیت رو رصد کن</p>
-        <div class="ob-budget-mock">
-          <div class="ob-budget-row"><span>🍽 خوراک</span><div class="ob-budget-track"><div class="ob-budget-fill" style="--bw:72%;--bc:#FF5252"></div></div><span class="ob-budget-pct">۷۲٪</span></div>
-          <div class="ob-budget-row"><span>📱 اینترنت</span><div class="ob-budget-track"><div class="ob-budget-fill" style="--bw:35%;--bc:#4CAF50"></div></div><span class="ob-budget-pct">۳۵٪</span></div>
-          <div class="ob-budget-row"><span>🏠 اجاره</span><div class="ob-budget-track"><div class="ob-budget-fill" style="--bw:90%;--bc:#FF9100"></div></div><span class="ob-budget-pct">۹۰٪</span></div>
+        <span class="ob-feat-label">کارها</span>
+        <h2 class="ob-feat-title">کارها رو<br/><span class="ob-feat-highlight" style="color:#4FA89E">مرتب کن</span></h2>
+        <p class="ob-feat-desc">کارها را داخل پوشه‌های مرتب قرار بده و یکی‌یکی انجامشان بده</p>
+        <div class="ob-budget-mock todo-onboarding-mock">
+          <div class="ob-budget-row"><span>📁 کارهای روزانه</span><b>۳ کار</b></div>
+          <div class="ob-budget-row"><span>📁 پروژه‌ها</span><b>۵ کار</b></div>
+          <div class="ob-budget-row"><span>✓ انجام‌شده</span><b>۱۲ کار</b></div>
         </div>
       </div>
     </div>

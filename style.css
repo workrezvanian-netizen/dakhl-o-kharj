@@ -4138,3 +4138,391 @@ input:focus, select:focus {
   font-weight: 800;
 }
 
+
+
+/* =========================================================
+   TO DO / کارها — folder stack UI
+   ========================================================= */
+#tab-todo .todo-page {
+  padding: 2px 0 18px;
+}
+.todo-topbar {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin: 2px 2px 18px;
+}
+.todo-kicker {
+  font-size:11px;
+  font-weight:800;
+  color:var(--text-mute);
+  margin-bottom:3px;
+}
+.todo-title {
+  margin:0;
+  font-size:25px;
+  font-weight:900;
+  letter-spacing:-.6px;
+  color:var(--text);
+}
+.todo-icon-btn {
+  width:42px;
+  height:42px;
+  border:1px solid var(--border);
+  border-radius:14px;
+  background:var(--card);
+  color:var(--green-deep);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  box-shadow:0 5px 14px rgba(0,0,0,.07);
+  cursor:pointer;
+}
+.todo-icon-btn:active { transform:scale(.94); }
+
+.todo-folder-stack {
+  position:relative;
+  min-height:330px;
+  padding: 12px 4px 0;
+}
+.todo-folder-card {
+  position:relative;
+  width:100%;
+  height:92px;
+  margin:0 0 -58px;
+  padding:0;
+  border:0;
+  background:transparent;
+  cursor:pointer;
+  text-align:right;
+  z-index:calc(20 - var(--folder-index));
+  transition:transform .28s cubic-bezier(.22,1,.36,1), filter .28s ease, opacity .25s ease;
+}
+.todo-folder-card:hover { transform:translateY(-5px); }
+.todo-folder-card:active { transform:translateY(-2px) scale(.985); }
+.todo-folder-card:nth-child(1) { --folder-color:#E8F3F0; --folder-accent:#2F7A72; }
+.todo-folder-card:nth-child(2) { --folder-color:#F4EAF8; --folder-accent:#8655A8; }
+.todo-folder-card:nth-child(3) { --folder-color:#EAF0F8; --folder-accent:#5277A8; }
+.todo-folder-card:nth-child(4) { --folder-color:#FFF1DF; --folder-accent:#B8782C; }
+.todo-folder-card:nth-child(5) { --folder-color:#FBE9E9; --folder-accent:#B55D62; }
+.todo-folder-card:nth-child(n+6) { --folder-color:#EEF0F2; --folder-accent:#59636B; }
+
+.todo-folder-tab {
+  position:absolute;
+  right:7%;
+  top:0;
+  width:86px;
+  height:24px;
+  border-radius:13px 13px 0 0;
+  background:var(--folder-color);
+  box-shadow: inset 0 1px rgba(255,255,255,.8);
+}
+.todo-folder-main {
+  position:absolute;
+  inset:13px 0 0;
+  border-radius:18px;
+  background:var(--folder-color);
+  border:1px solid rgba(0,0,0,.045);
+  box-shadow:0 13px 25px rgba(35,45,43,.12), inset 0 1px rgba(255,255,255,.7);
+  display:flex;
+  align-items:center;
+  gap:13px;
+  padding:13px 17px;
+  overflow:hidden;
+}
+.todo-folder-main::before {
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(110deg,rgba(255,255,255,.34),transparent 45%);
+  pointer-events:none;
+}
+.todo-folder-symbol {
+  width:48px;
+  height:48px;
+  border-radius:15px;
+  background:rgba(255,255,255,.58);
+  color:var(--folder-accent);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-shrink:0;
+}
+.todo-folder-copy {
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  flex:1;
+}
+.todo-folder-copy strong {
+  font-size:16px;
+  color:var(--text);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.todo-folder-copy small {
+  font-size:11px;
+  color:var(--text-mute);
+}
+.todo-folder-arrow {
+  width:32px;
+  height:32px;
+  border-radius:11px;
+  background:rgba(255,255,255,.5);
+  color:var(--folder-accent);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-shrink:0;
+}
+.todo-folder-stack.is-opening .todo-folder-card {
+  transform:translateY(-80px);
+  opacity:0;
+}
+.todo-empty-state {
+  min-height:240px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  color:var(--text-mute);
+  text-align:center;
+}
+.todo-empty-icon {
+  width:68px;
+  height:68px;
+  border-radius:22px;
+  background:var(--green-soft);
+  color:var(--green-deep);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  margin-bottom:4px;
+}
+.todo-empty-state strong { color:var(--text); font-size:15px; }
+.todo-empty-state span { font-size:12px; }
+
+.todo-workspace {
+  animation:todoWorkspaceIn .32s cubic-bezier(.22,1,.36,1) both;
+}
+@keyframes todoWorkspaceIn {
+  from { opacity:0; transform:translateY(35px) scale(.98); }
+  to { opacity:1; transform:none; }
+}
+.todo-workspace-head {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:15px;
+}
+.todo-back-btn {
+  border:0;
+  background:transparent;
+  color:var(--green-deep);
+  display:flex;
+  align-items:center;
+  gap:4px;
+  padding:6px 2px;
+  font-family:inherit;
+  font-weight:800;
+  cursor:pointer;
+}
+.todo-current-folder {
+  display:flex;
+  align-items:center;
+  gap:9px;
+  min-width:0;
+}
+.todo-current-folder strong {
+  font-size:17px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.todo-folder-icon {
+  width:38px;
+  height:38px;
+  border-radius:12px;
+  background:var(--green-soft);
+  color:var(--green-deep);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-shrink:0;
+}
+.todo-filter-row {
+  display:flex;
+  gap:7px;
+  padding:4px;
+  background:rgba(0,0,0,.035);
+  border-radius:14px;
+  margin-bottom:12px;
+}
+.todo-filter {
+  flex:1;
+  border:0;
+  background:transparent;
+  color:var(--text-mute);
+  padding:8px 5px;
+  border-radius:10px;
+  font:700 11px inherit;
+  cursor:pointer;
+}
+.todo-filter.active {
+  background:var(--card);
+  color:var(--green-deep);
+  box-shadow:0 3px 9px rgba(0,0,0,.07);
+}
+.todo-task-list {
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  min-height:180px;
+}
+.todo-task {
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:12px 11px;
+  border:1px solid var(--border);
+  border-radius:15px;
+  background:var(--card);
+  box-shadow:0 5px 13px rgba(0,0,0,.045);
+  animation:todoTaskIn .25s ease both;
+}
+@keyframes todoTaskIn {
+  from { opacity:0; transform:translateY(8px); }
+  to { opacity:1; transform:none; }
+}
+.todo-check {
+  width:23px;
+  height:23px;
+  border-radius:8px;
+  border:2px solid #B8C5C1;
+  background:transparent;
+  color:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:0;
+  flex-shrink:0;
+  cursor:pointer;
+}
+.todo-task.is-done .todo-check {
+  border-color:var(--green-deep);
+  background:var(--green-deep);
+}
+.todo-task-body {
+  min-width:0;
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.todo-task-title {
+  font-size:14px;
+  font-weight:700;
+  line-height:1.5;
+  color:var(--text);
+  overflow-wrap:anywhere;
+}
+.todo-task.is-done .todo-task-title {
+  text-decoration:line-through;
+  color:var(--text-mute);
+}
+.todo-task-meta {
+  min-height:13px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  color:var(--text-mute);
+  font-size:10px;
+}
+.todo-task-meta span {
+  display:inline-flex;
+  align-items:center;
+  gap:3px;
+}
+.todo-priority { color:#C27A2B; }
+.todo-delete {
+  width:31px;
+  height:31px;
+  border:0;
+  border-radius:10px;
+  background:transparent;
+  color:#A7B0AD;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+}
+.todo-delete:hover { background:rgba(200,70,70,.08); color:#B75B5B; }
+.todo-add-card {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-top:11px;
+  padding:8px;
+  border:1px solid var(--border);
+  border-radius:16px;
+  background:var(--card);
+  box-shadow:0 8px 18px rgba(0,0,0,.06);
+}
+.todo-add-icon {
+  width:35px;
+  height:35px;
+  border-radius:11px;
+  background:var(--green-soft);
+  color:var(--green-deep);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-shrink:0;
+}
+.todo-add-card input {
+  min-width:0;
+  flex:1;
+  border:0;
+  outline:0;
+  background:transparent;
+  color:var(--text);
+  font:500 13px inherit;
+  direction:rtl;
+}
+.todo-add-card input::placeholder { color:#A4ADA9; }
+.todo-add-submit {
+  border:0;
+  border-radius:11px;
+  padding:9px 13px;
+  background:var(--green-deep);
+  color:#fff;
+  font:800 11px inherit;
+  cursor:pointer;
+}
+.todo-no-tasks {
+  min-height:190px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  color:var(--text-mute);
+  text-align:center;
+}
+.todo-no-tasks strong { color:var(--text); font-size:14px; }
+.todo-no-tasks span:last-child { font-size:11px; }
+
+@media (max-width:420px) {
+  .todo-folder-stack { min-height:310px; }
+  .todo-folder-card { height:88px; margin-bottom:-56px; }
+  .todo-folder-main { padding:11px 13px; }
+  .todo-folder-symbol { width:44px; height:44px; }
+}
+
+.todo-onboarding-mock .ob-budget-row { display:flex; justify-content:space-between; align-items:center; }
+.todo-onboarding-mock .ob-budget-row b { font-size:11px; color:var(--green-deep); }
