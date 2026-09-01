@@ -1561,40 +1561,47 @@ input:focus, select:focus {
 .compare-gauge-legend span { display: flex; align-items: center; justify-content: center; gap: 5px; }
 .compare-gauge-legend i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex: none; }
 
-/* ---------- کاروسل کشویی — دسته‌کارت‌های روی‌هم که ورق می‌خورن ---------- */
+/* ---------- کاروسل نمودار — اسکرول افقی native (پایدار روی iOS) ---------- */
 .chart-carousel { position: relative; }
 .chart-carousel-track {
-  position: relative;
-  padding-top: 4px;
+  display: flex;
+  flex-direction: row;
+  gap: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+  touch-action: pan-x;
+  padding: 4px 0 2px;
 }
+.chart-carousel-track::-webkit-scrollbar { display: none; }
 .chart-carousel-page {
   position: relative;
+  flex: 0 0 100%;
   width: 100%;
+  max-width: 100%;
+  scroll-snap-align: center;
+  scroll-snap-stop: always;
   border-radius: 16px;
   background: var(--cream);
   padding: 12px 10px;
-  transition: transform .32s cubic-bezier(.4,0,.2,1), opacity .32s cubic-bezier(.4,0,.2,1), box-shadow .32s ease;
-  will-change: transform, opacity;
-  touch-action: pan-y;
   box-sizing: border-box;
+  box-shadow: 0 8px 18px rgba(16,70,43,0.08);
+  /* جلوگیری از فشرده شدن ارتفاع صفحه هنگام ورق */
+  min-height: 1px;
 }
-.chart-carousel-page.stack-front {
+.chart-carousel-page.stack-front,
+.chart-carousel-page.stack-back,
+.chart-carousel-page.stack-dragging {
+  /* کلاس‌های قدیمی بی‌اثر می‌مانند تا JS قدیمی نشکند */
   position: relative;
-  z-index: 3;
-  transform: translateY(0) scale(1) rotate(0deg);
-  opacity: 1;
-  box-shadow: 0 10px 22px rgba(16,70,43,0.1);
+  transform: none !important;
+  opacity: 1 !important;
+  pointer-events: auto;
+  inset: auto;
 }
-.chart-carousel-page.stack-back {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  transform: translateY(10px) scale(0.94) rotate(-1.4deg);
-  opacity: 0.55;
-  pointer-events: none;
-  box-shadow: 0 4px 10px rgba(16,70,43,0.08);
-}
-.chart-carousel-page.stack-dragging { transition: none; cursor: grabbing; }
 .chart-carousel-dots {
   display: flex;
   align-items: center;
@@ -4066,13 +4073,11 @@ input:focus, select:focus {
 }
 .ios-day-picker {
   position: relative;
-  height: 132px;
+  height: 144px;
   margin-top: 10px;
   border-radius: 14px;
   background: rgba(22, 63, 60, 0.05);
   overflow: hidden;
-  -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 18%, #000 82%, transparent 100%);
-  mask-image: linear-gradient(180deg, transparent 0%, #000 18%, #000 82%, transparent 100%);
   touch-action: pan-y;
   user-select: none;
   -webkit-user-select: none;
@@ -4103,10 +4108,12 @@ input:focus, select:focus {
   z-index: 2;
   height: 100%;
   overflow-y: auto;
+  overflow-x: hidden;
   scroll-snap-type: y mandatory;
-  -webkit-overflow-scrolling: touch;
+  -webkit-overflow-scrolling: touch; /* اسکرول بومی iOS */
+  overscroll-behavior: contain;
   scrollbar-width: none;
-  padding: 48px 0;
+  padding: 54px 0;
   text-align: center;
 }
 .ios-day-picker-wheel::-webkit-scrollbar { display: none; }
@@ -4118,13 +4125,11 @@ input:focus, select:focus {
   color: var(--text-mute, #7A8582);
   scroll-snap-align: center;
   scroll-snap-stop: always;
-  transition: color .15s ease, transform .15s ease, font-size .15s ease;
   direction: ltr;
 }
 .ios-day-option.is-selected {
   color: var(--green-deep, #163F3C);
   font-size: 20px;
   font-weight: 800;
-  transform: scale(1.06);
 }
 

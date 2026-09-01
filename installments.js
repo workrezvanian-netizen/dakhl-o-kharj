@@ -690,23 +690,22 @@ function buildDueDayPicker() {
   }
   wheel.dataset.ready = "1";
 
-  let snapTimer = null;
+  // فقط مقدار را از اسکرول بومی iOS می‌خوانیم — بدون scrollTo مصنوعی
+  let raf = 0;
   const syncSelected = () => {
     const idx = Math.round(wheel.scrollTop / DUE_DAY_ITEM_H);
     const day = Math.min(31, Math.max(1, idx + 1));
     applyDueDayValue(day, true);
   };
-
   wheel.addEventListener("scroll", () => {
-    syncSelected();
-    clearTimeout(snapTimer);
-    snapTimer = setTimeout(() => {
-      const idx = Math.round(wheel.scrollTop / DUE_DAY_ITEM_H);
-      const clamped = Math.min(30, Math.max(0, idx));
-      wheel.scrollTo({ top: clamped * DUE_DAY_ITEM_H, behavior: "smooth" });
+    if (raf) return;
+    raf = requestAnimationFrame(() => {
+      raf = 0;
       syncSelected();
-    }, 80);
+    });
   }, { passive: true });
+  // بعد از توقف کامل اسکرول (iOS)
+  wheel.addEventListener("scrollend", syncSelected);
 
   wheel.addEventListener("click", (e) => {
     const opt = e.target.closest(".ios-day-option");
@@ -740,6 +739,7 @@ function setDueDayPickerValue(day, markChosen) {
   applyDueDayValue(d, markChosen);
   const wheel = document.getElementById("dueDayWheel");
   if (wheel) {
+    // پرش مستقیم بدون smooth تا با momentum iOS تداخل نکند
     requestAnimationFrame(() => {
       wheel.scrollTop = (d - 1) * DUE_DAY_ITEM_H;
     });

@@ -2093,80 +2093,61 @@ function setupChartCarousel(trackId, dotsId, onShow) {
   if (!track || !dots) return;
   const pages = Array.from(track.children);
   const dotEls = Array.from(dots.children);
+  if (!pages.length) return;
   let activeIndex = 0;
+  let scrollTimer = null;
 
-  function applyState() {
-    pages.forEach((p, i) => {
-      p.style.transform = "";
-      p.classList.remove("stack-front", "stack-back");
-      p.classList.add(i === activeIndex ? "stack-front" : "stack-back");
-    });
+  function pageWidth() {
+    return track.clientWidth || 1;
+  }
+
+  function setActive(index, fromScroll) {
+    if (index < 0 || index >= pages.length) return;
+    const changed = index !== activeIndex;
+    activeIndex = index;
     dotEls.forEach((d, i) => d.classList.toggle("active", i === activeIndex));
+    pages.forEach((p, i) => {
+      p.classList.toggle("stack-front", i === activeIndex);
+      p.classList.toggle("stack-back", i !== activeIndex);
+    });
+    if (changed && onShow) onShow(activeIndex);
   }
 
   function goTo(index) {
-    if (index < 0 || index >= pages.length || index === activeIndex || pages.length < 2) return;
-    activeIndex = index;
-    applyState();
-    if (onShow) onShow(activeIndex); // نمودار صفحه‌ی جدید رو دوباره می‌سازه تا انیمیشن گرافیکیش پخش بشه
+    if (index < 0 || index >= pages.length) return;
+    track.scrollTo({ left: index * pageWidth(), behavior: "smooth" });
+    setActive(index, false);
   }
 
   dotEls.forEach((dot, i) => {
     dot.addEventListener("click", () => goTo(i));
   });
 
-  let startX = null, startY = null, dragging = false, moved = false;
+  track.addEventListener("scroll", () => {
+    clearTimeout(scrollTimer);
+    scrollTimer = setTimeout(() => {
+      const idx = Math.round(track.scrollLeft / pageWidth());
+      setActive(Math.min(pages.length - 1, Math.max(0, idx)), true);
+    }, 60);
+  }, { passive: true });
 
-  track.addEventListener("pointerdown", (e) => {
-    if (pages.length < 2) return;
-    const front = pages[activeIndex];
-    if (!front.contains(e.target)) return;
-    startX = e.clientX; startY = e.clientY; dragging = true; moved = false;
-    front.classList.add("stack-dragging");
+  // جلوگیری از اسکرول عمودی صفحه وقتی افقی ورق می‌زنیم
+  let lockY = null;
+  track.addEventListener("touchstart", (e) => {
+    if (e.touches[0]) lockY = e.touches[0].clientY;
+  }, { passive: true });
+  track.addEventListener("touchmove", (e) => {
+    if (!e.touches[0] || lockY == null) return;
+    // فقط اگر حرکت عمدتاً افقی باشد، از bubbling عمودی جلوگیری نمی‌کنیم
+    // touch-action: pan-x در CSS کافی است
+  }, { passive: true });
+
+  // هم‌تراز کردن عرض هنگام تغییر اندازه
+  window.addEventListener("resize", () => {
+    track.scrollLeft = activeIndex * pageWidth();
   });
 
-  track.addEventListener("pointermove", (e) => {
-    if (!dragging) return;
-    const dx = e.clientX - startX;
-    const dy = e.clientY - startY;
-    if (!moved && Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 8) {
-      dragging = false;
-      pages[activeIndex].classList.remove("stack-dragging");
-      pages[activeIndex].style.transform = "";
-      return;
-    }
-    if (Math.abs(dx) < 4) return;
-    moved = true;
-    const rot = dx / 22;
-    pages[activeIndex].style.transform = `translateX(${dx}px) rotate(${rot}deg)`;
-  });
-
-  function endDrag(e) {
-    if (!dragging) return;
-    dragging = false;
-    const front = pages[activeIndex];
-    front.classList.remove("stack-dragging");
-    const dx = (e.clientX || 0) - startX;
-    if (moved && Math.abs(dx) > 60) {
-      const dir = dx > 0 ? 1 : -1;
-      front.style.transition = "transform .28s ease-out, opacity .28s ease-out";
-      front.style.transform = `translateX(${dir * 380}px) rotate(${dir * 20}deg)`;
-      front.style.opacity = "0";
-      setTimeout(() => {
-        front.style.transition = "";
-        front.style.opacity = "";
-        front.style.transform = "";
-        goTo((activeIndex + 1) % pages.length);
-      }, 240);
-    } else {
-      front.style.transform = "";
-    }
-    moved = false;
-  }
-  track.addEventListener("pointerup", endDrag);
-  track.addEventListener("pointercancel", endDrag);
-
-  applyState();
+  setActive(0, false);
 }
 setupChartCarousel("dailyChartTrack", "dailyChartDots", () => {
   // هر دو صفحه رو دوباره می‌سازیم (نه فقط صفحه‌ی تازه‌نمایان‌شده) تا انیمیشن گرافیکی همیشه پخش بشه
@@ -2747,7 +2728,7 @@ async function initSync() {
 // ---------- Service worker ----------
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js?v=88").catch(() => {});
+    navigator.serviceWorker.register("sw.js?v=89").catch(() => {});
   });
 }
 
