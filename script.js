@@ -86,14 +86,14 @@ function loadState() {
         expenses: parsed.expenses || [],
         installments: parsed.installments || [],
         categories,
-        budget: parsed.budget || { total: 0, categories: {} },
+        budget: parsed.budget || { total: 0, categories: {} }, todo: parsed.todo || null,
         syncCode: parsed.syncCode || null,
         profile: parsed.profile || { name: null, avatar: null },
         updatedAt: parsed.updatedAt || Date.now()
       };
     }
   } catch (e) { /* ignore corrupt state */ }
-  return { incomes: [], expenses: [], installments: [], categories: DEFAULT_CATEGORIES.slice(), budget: { total: 0, categories: {} }, syncCode: null, profile: { name: null, avatar: null }, updatedAt: Date.now() };
+  return { incomes: [], expenses: [], installments: [], categories: DEFAULT_CATEGORIES.slice(), budget: { total: 0, categories: {} }, todo: null, syncCode: null, profile: { name: null, avatar: null }, updatedAt: Date.now() };
 }
 
 function saveState({ sync = true } = {}) {
@@ -527,7 +527,7 @@ document.querySelectorAll('#tab-settings .settings-group').forEach((details) => 
 document.querySelectorAll(".nav-btn").forEach((btn) => {
   btn.addEventListener("click", () => switchTab(btn.dataset.tab));
 });
-const _tabOrder = ["budget", "entry", "dashboard", "installments", "analysis", "settings"];
+const _tabOrder = ["todo", "entry", "dashboard", "installments", "analysis", "settings"];
 function switchTab(tab, opts = {}) {
   const prevTab = document.querySelector(".tab.active");
   const prevTabId = prevTab ? prevTab.id.replace("tab-", "") : null;
@@ -584,7 +584,7 @@ function switchTab(tab, opts = {}) {
     if (typeof window.resetInstallmentNumbers === "function") window.resetInstallmentNumbers();
     requestAnimationFrame(() => window.refreshInstallments());
   }
-  if (tab === "budget") renderBudget();
+  if (tab === "todo") renderTodo();
 
   // Settings accordions always start closed, whether we're leaving or entering the tab
   document.querySelectorAll("#tab-settings .settings-group").forEach((d) => { d.open = false; });
@@ -2714,7 +2714,7 @@ async function initSync() {
 // ---------- Service worker ----------
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js?v=90").catch(() => {});
+    navigator.serviceWorker.register("sw.js?v=92").catch(() => {});
   });
 }
 
@@ -3234,7 +3234,226 @@ initSync();
 })();
 
 // ==================== Budget Tab ====================
+
+
+// ---------- Todo / کارها ----------
+function ensureTodoState() {
+  if (!state.todo || !Array.isArray(state.todo.lists)) {
+    state.todo = {
+      lists: [
+        { id: "l1", name: "شخصی", icon: "🏠", tasks: [] },
+        { id: "l2", name: "کار", icon: "💼", tasks: [] },
+        { id: "l3", name: "خرید", icon: "🛒", tasks: [] }
+      ],
+      activeListId: null,
+      filter: "all"
+    };
+  }
+  if (!state.todo.filter) state.todo.filter = "all";
+}
+
+function todoUid() {
+  return "t" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
+
+function getActiveTodoList() {
+  ensureTodoState();
+  return state.todo.lists.find((l) => l.id === state.todo.activeListId) || null;
+}
+
+function filterTasks(tasks) {
+  const f = state.todo.filter || "all";
+  const today = new Date().toISOString().slice(0, 10);
+  if (f === "done") return tasks.filter((t) => t.done);
+  if (f === "open") return tasks.filter((t) => !t.done);
+  if (f === "today") return tasks.filter((t) => !t.done && (t.due === today || !t.due));
+  return tasks;
+}
+
+function renderTodoStack() {
+  const stack = document.getElementById("todoStack");
+  if (!stack) return;
+  ensureTodoState();
+  stack.innerHTML = state.todo.lists.map((list, idx) => {
+    const openCount = (list.tasks || []).filter((t) => !t.done).length;
+    const total = (list.tasks || []).length;
+    return `<div class="todo-folder" data-list-id="${list.id}" style="z-index:${10 - idx}">
+      <div class="todo-folder-row">
+        <div class="todo-folder-icon">${list.icon || "📁"}</div>
+        <div class="todo-folder-meta">
+          <div class="todo-folder-name">${list.name}</div>
+          <div class="todo-folder-count">${openCount} باز از ${total} کار</div>
+        </div>
+        <div class="todo-folder-arrow">‹</div>
+      </div>
+    </div>`;
+  }).join("");
+
+  stack.querySelectorAll(".todo-folder").forEach((el) => {
+    el.addEventListener("click", () => openTodoList(el.dataset.listId));
+  });
+}
+
+function openTodoList(listId) {
+  ensureTodoState();
+  state.todo.activeListId = listId;
+  const panel = document.getElementById("todoListPanel");
+  const stack = document.getElementById("todoStack");
+  if (stack) stack.hidden = true;
+  if (panel) panel.hidden = false;
+  renderTodoTasks();
+}
+
+function closeTodoList() {
+  ensureTodoState();
+  state.todo.activeListId = null;
+  const panel = document.getElementById("todoListPanel");
+  const stack = document.getElementById("todoStack");
+  if (panel) panel.hidden = true;
+  if (stack) stack.hidden = false;
+  renderTodoStack();
+}
+
+function renderTodoTasks() {
+  const list = getActiveTodoList();
+  const nameEl = document.getElementById("todoActiveListName");
+  const tasksEl = document.getElementById("todoTasks");
+  const emptyEl = document.getElementById("todoEmpty");
+  if (!list || !tasksEl) return;
+  if (nameEl) nameEl.textContent = list.name;
+  const tasks = filterTasks(list.tasks || []);
+  if (!tasks.length) {
+    tasksEl.innerHTML = "";
+    if (emptyEl) emptyEl.hidden = false;
+    return;
+  }
+  if (emptyEl) emptyEl.hidden = true;
+  tasksEl.innerHTML = tasks.map((t) => `
+    <div class="todo-task ${t.done ? "done" : ""}" data-task-id="${t.id}">
+      <button type="button" class="todo-check" aria-label="انجام شد">${t.done ? "✓" : ""}</button>
+      <div class="todo-task-title">${t.title.replace(/</g, "&lt;")}</div>
+      <button type="button" class="todo-task-del" aria-label="حذف">✕</button>
+    </div>
+  `).join("");
+
+  tasksEl.querySelectorAll(".todo-task").forEach((row) => {
+    const id = row.dataset.taskId;
+    row.querySelector(".todo-check").addEventListener("click", () => toggleTodoTask(id));
+    row.querySelector(".todo-task-del").addEventListener("click", () => deleteTodoTask(id));
+  });
+}
+
+function toggleTodoTask(id) {
+  const list = getActiveTodoList();
+  if (!list) return;
+  const t = list.tasks.find((x) => x.id === id);
+  if (!t) return;
+  t.done = !t.done;
+  saveState();
+  renderTodoTasks();
+  renderTodoStack();
+}
+
+function deleteTodoTask(id) {
+  const list = getActiveTodoList();
+  if (!list) return;
+  list.tasks = list.tasks.filter((x) => x.id !== id);
+  saveState();
+  renderTodoTasks();
+  renderTodoStack();
+}
+
+function addTodoTask(title) {
+  const list = getActiveTodoList();
+  if (!list) return;
+  const text = (title || "").trim();
+  if (!text) return;
+  list.tasks.unshift({ id: todoUid(), title: text, done: false, due: null, createdAt: Date.now() });
+  saveState();
+  renderTodoTasks();
+  renderTodoStack();
+}
+
+function addTodoList() {
+  ensureTodoState();
+  const name = prompt("نام پوشه جدید؟", "پوشه جدید");
+  if (!name || !name.trim()) return;
+  const icons = ["📁", "⭐", "📌", "🎯", "✨", "📝"];
+  state.todo.lists.push({
+    id: todoUid(),
+    name: name.trim(),
+    icon: icons[state.todo.lists.length % icons.length],
+    tasks: []
+  });
+  saveState();
+  renderTodoStack();
+}
+
+function renameActiveTodoList() {
+  const list = getActiveTodoList();
+  if (!list) return;
+  const name = prompt("نام جدید پوشه؟", list.name);
+  if (!name || !name.trim()) return;
+  list.name = name.trim();
+  saveState();
+  renderTodoTasks();
+  renderTodoStack();
+}
+
+function renderTodo() {
+  ensureTodoState();
+  const panel = document.getElementById("todoListPanel");
+  const stack = document.getElementById("todoStack");
+  if (state.todo.activeListId && getActiveTodoList()) {
+    if (stack) stack.hidden = true;
+    if (panel) panel.hidden = false;
+    renderTodoTasks();
+  } else {
+    if (panel) panel.hidden = true;
+    if (stack) stack.hidden = false;
+    renderTodoStack();
+  }
+  document.querySelectorAll("#todoFilters .todo-filter").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.filter === state.todo.filter);
+  });
+}
+
+function setupTodoUI() {
+  const addList = document.getElementById("todoAddListBtn");
+  if (addList) addList.addEventListener("click", addTodoList);
+  const back = document.getElementById("todoBackBtn");
+  if (back) back.addEventListener("click", closeTodoList);
+  const rename = document.getElementById("todoRenameListBtn");
+  if (rename) rename.addEventListener("click", renameActiveTodoList);
+  const addTask = document.getElementById("todoAddTaskBtn");
+  const input = document.getElementById("todoNewTaskInput");
+  if (addTask && input) {
+    addTask.addEventListener("click", () => {
+      addTodoTask(input.value);
+      input.value = "";
+      input.focus();
+    });
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        addTodoTask(input.value);
+        input.value = "";
+      }
+    });
+  }
+  document.querySelectorAll("#todoFilters .todo-filter").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      ensureTodoState();
+      state.todo.filter = btn.dataset.filter;
+      document.querySelectorAll("#todoFilters .todo-filter").forEach((b) => b.classList.toggle("active", b === btn));
+      if (state.todo.activeListId) renderTodoTasks();
+    });
+  });
+}
+setupTodoUI();
+
+
 function renderBudget() {
+  if (!document.getElementById("budgetCategoryList")) return;
   if (!state.budget) state.budget = { total: 0, categories: {} };
   const total = state.budget.total || 0;
   const catBudgets = state.budget.categories || {};

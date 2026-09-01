@@ -14,7 +14,7 @@
 <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css">
 <link href="https://cdn.jsdelivr.net/gh/rastikerdar/kamran@v1.0.0/dist/font-face.css" rel="stylesheet" type="text/css">
 <link href="https://cdn.jsdelivr.net/gh/rastikerdar/samim-font@v4.0.5/dist/font-face.css" rel="stylesheet" type="text/css">
-<link rel="stylesheet" href="style.css?v=90">
+<link rel="stylesheet" href="style.css?v=92">
 </head>
 <body>
 
@@ -360,56 +360,41 @@
 
   <!-- TODO / کارها -->
   <section id="tab-todo" class="tab">
-    <div class="todo-page">
+    <div class="todo-app">
       <div class="todo-topbar">
-        <div>
-          <div class="todo-kicker">مدیریت کارها</div>
-          <h2 class="todo-title">کارهای من</h2>
-        </div>
-        <button type="button" id="todoAddFolderBtn" class="todo-icon-btn" aria-label="پوشه جدید">
-          <span class="icon-mask" data-icon="folder-plus" style="width:20px;height:20px;color:currentColor"></span>
+        <h2 class="todo-title">کارها</h2>
+        <button type="button" id="todoAddListBtn" class="todo-icon-btn" aria-label="پوشه جدید">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
         </button>
       </div>
 
-      <div id="todoFolderStack" class="todo-folder-stack"></div>
-
-      <div id="todoWorkspace" class="todo-workspace" hidden>
-        <div class="todo-workspace-head">
-          <button type="button" id="todoBackBtn" class="todo-back-btn">
-            <span class="icon-mask" data-icon="chevron-right" style="width:18px;height:18px;color:currentColor"></span>
-            <span>پوشه‌ها</span>
-          </button>
-          <div class="todo-current-folder">
-            <span id="todoCurrentFolderIcon" class="todo-folder-icon">
-              <span class="icon-mask" data-icon="folder" style="width:18px;height:18px;color:currentColor"></span>
-            </span>
-            <strong id="todoCurrentFolderName">کارهای روزانه</strong>
-          </div>
-        </div>
-
-        <div class="todo-filter-row">
-          <button class="todo-filter active" data-filter="all">همه</button>
-          <button class="todo-filter" data-filter="open">در انتظار</button>
-          <button class="todo-filter" data-filter="done">انجام‌شده</button>
-        </div>
-
-        <div id="todoTaskList" class="todo-task-list"></div>
-
-        <form id="todoTaskForm" class="todo-add-card">
-          <div class="todo-add-icon">
-            <span class="icon-mask" data-icon="plus" style="width:19px;height:19px;color:currentColor"></span>
-          </div>
-          <input id="todoTaskInput" type="text" autocomplete="off" placeholder="یک کار جدید بنویس..." maxlength="120">
-          <button type="submit" class="todo-add-submit">افزودن</button>
-        </form>
+      <div class="todo-filters" id="todoFilters">
+        <button type="button" class="todo-filter active" data-filter="all">همه</button>
+        <button type="button" class="todo-filter" data-filter="today">امروز</button>
+        <button type="button" class="todo-filter" data-filter="open">باز</button>
+        <button type="button" class="todo-filter" data-filter="done">انجام‌شده</button>
       </div>
 
-      <div id="todoEmptyState" class="todo-empty-state">
-        <div class="todo-empty-icon">
-          <span class="icon-mask" data-icon="check-check" style="width:30px;height:30px;color:currentColor"></span>
+      <!-- پشته پوشه‌ها -->
+      <div class="todo-stack" id="todoStack"></div>
+
+      <!-- لیست کارهای پوشه فعال -->
+      <div class="todo-list-panel" id="todoListPanel" hidden>
+        <div class="todo-list-head">
+          <button type="button" id="todoBackBtn" class="todo-icon-btn" aria-label="بازگشت">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          <h3 id="todoActiveListName">—</h3>
+          <button type="button" id="todoRenameListBtn" class="todo-icon-btn" aria-label="ویرایش نام">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          </button>
         </div>
-        <strong>هنوز کاری ثبت نشده</strong>
-        <span>یک پوشه باز کن و کارهای خودت را داخلش قرار بده.</span>
+        <div class="todo-add-row">
+          <input type="text" id="todoNewTaskInput" placeholder="کار جدید..." maxlength="120" autocomplete="off">
+          <button type="button" id="todoAddTaskBtn" class="todo-add-task-btn">افزودن</button>
+        </div>
+        <div id="todoTasks" class="todo-tasks"></div>
+        <p class="todo-empty" id="todoEmpty" hidden>هنوز کاری ثبت نشده</p>
       </div>
     </div>
   </section>
@@ -681,7 +666,7 @@
 
 <nav class="bottom-nav">
   <button class="nav-btn" data-tab="todo">
-    <svg viewBox="0 0 24 24"><path d="M4 5h16v15H4z"/><path d="M8 3v4M16 3v4M8 11h8M8 15h5"/></svg>
+    <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
     <span>کارها</span>
   </button>
   <button class="nav-btn" data-tab="entry">
@@ -819,17 +804,15 @@
 
     <!-- Feature 5: Budget -->
     <div class="ob-section ob-feature" data-idx="5">
-      <div class="ob-feature-bg" style="background:radial-gradient(ellipse at 50% 55%,rgba(236,64    <!-- Feature 5: To Do -->
-    <div class="ob-section ob-feature" data-idx="5">
-      <div class="ob-feature-bg" style="background:radial-gradient(ellipse at 50% 55%,rgba(79,168,158,0.3) 0%,transparent 70%)"></div>
+      <div class="ob-feature-bg" style="background:radial-gradient(ellipse at 50% 55%,rgba(236,64,122,0.3) 0%,transparent 70%)"></div>
       <div class="ob-feat-inner">
-        <span class="ob-feat-label">کارها</span>
-        <h2 class="ob-feat-title">کارها رو<br/><span class="ob-feat-highlight" style="color:#4FA89E">مرتب کن</span></h2>
-        <p class="ob-feat-desc">کارها را داخل پوشه‌های مرتب قرار بده و یکی‌یکی انجامشان بده</p>
-        <div class="ob-budget-mock todo-onboarding-mock">
-          <div class="ob-budget-row"><span>📁 کارهای روزانه</span><b>۳ کار</b></div>
-          <div class="ob-budget-row"><span>📁 پروژه‌ها</span><b>۵ کار</b></div>
-          <div class="ob-budget-row"><span>✓ انجام‌شده</span><b>۱۲ کار</b></div>
+        <span class="ob-feat-label">بودجه</span>
+        <h2 class="ob-feat-title">بودجه رو<br/><span class="ob-feat-highlight" style="color:#F06292">کنترل کن</span></h2>
+        <p class="ob-feat-desc">برای هر دسته بودجه تعیین کن و وضعیت رو رصد کن</p>
+        <div class="ob-budget-mock">
+          <div class="ob-budget-row"><span>🍽 خوراک</span><div class="ob-budget-track"><div class="ob-budget-fill" style="--bw:72%;--bc:#FF5252"></div></div><span class="ob-budget-pct">۷۲٪</span></div>
+          <div class="ob-budget-row"><span>📱 اینترنت</span><div class="ob-budget-track"><div class="ob-budget-fill" style="--bw:35%;--bc:#4CAF50"></div></div><span class="ob-budget-pct">۳۵٪</span></div>
+          <div class="ob-budget-row"><span>🏠 اجاره</span><div class="ob-budget-track"><div class="ob-budget-fill" style="--bw:90%;--bc:#FF9100"></div></div><span class="ob-budget-pct">۹۰٪</span></div>
         </div>
       </div>
     </div>
@@ -862,8 +845,8 @@ n  <!-- Progress -->
 </div>
 <!-- ═══════════════ END ONBOARDING ═══════════════ -->
 
-<script src="script.js?v=90"></script>
-<script src="installments.js?v=90"></script>
-<script src="three-scene.js?v=90"></script>
+<script src="script.js?v=92"></script>
+<script src="installments.js?v=92"></script>
+<script src="three-scene.js?v=92"></script>
 </body>
 </html>
