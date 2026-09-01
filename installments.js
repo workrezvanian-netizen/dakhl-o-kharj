@@ -674,6 +674,31 @@ function setCustomHourVisible(visible) {
 // ---------------------------------------------------------------------
 // انتخابگر روز iOS — باکس + باز شدن با کلیک
 // ---------------------------------------------------------------------
+
+function playPickerTick() {
+  try {
+    if (navigator.vibrate) navigator.vibrate(8);
+  } catch (_) {}
+  try {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return;
+    if (!window._pickerAudioCtx) window._pickerAudioCtx = new Ctx();
+    const ctx = window._pickerAudioCtx;
+    if (ctx.state === "suspended") ctx.resume();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = "sine";
+    o.frequency.value = 880;
+    g.gain.value = 0.03;
+    o.connect(g);
+    g.connect(ctx.destination);
+    const t = ctx.currentTime;
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
+    o.start(t);
+    o.stop(t + 0.05);
+  } catch (_) {}
+}
+
 const DUE_DAY_ITEM_H = 36;
 let dueDayChosen = false;
 
@@ -721,10 +746,14 @@ function applyDueDayValue(day, markChosen) {
   if (!hidden || !textEl) return;
   const d = Math.min(31, Math.max(1, Number(day) || 0));
   if (!d) return;
+  const prev = hidden.value;
   hidden.value = String(d);
   textEl.textContent = String(d);
   textEl.classList.remove("is-placeholder");
   if (markChosen) dueDayChosen = true;
+  if (markChosen && prev && prev !== String(d) && typeof playPickerTick === "function") {
+    playPickerTick();
+  }
   const wheel = document.getElementById("dueDayWheel");
   if (wheel) {
     wheel.querySelectorAll(".ios-day-option").forEach((opt) => {

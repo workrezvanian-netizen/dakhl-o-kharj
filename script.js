@@ -2091,32 +2091,29 @@ function setupChartCarousel(trackId, dotsId, onShow) {
   const track = document.getElementById(trackId);
   const dots = document.getElementById(dotsId);
   if (!track || !dots) return;
-  const pages = Array.from(track.children);
+  const pages = Array.from(track.querySelectorAll(":scope > .chart-carousel-page"));
   const dotEls = Array.from(dots.children);
   if (!pages.length) return;
   let activeIndex = 0;
   let scrollTimer = null;
 
   function pageWidth() {
-    return track.clientWidth || 1;
+    return pages[0] ? pages[0].offsetWidth : (track.clientWidth || 1);
   }
 
-  function setActive(index, fromScroll) {
+  function setActive(index) {
     if (index < 0 || index >= pages.length) return;
     const changed = index !== activeIndex;
     activeIndex = index;
     dotEls.forEach((d, i) => d.classList.toggle("active", i === activeIndex));
-    pages.forEach((p, i) => {
-      p.classList.toggle("stack-front", i === activeIndex);
-      p.classList.toggle("stack-back", i !== activeIndex);
-    });
     if (changed && onShow) onShow(activeIndex);
   }
 
   function goTo(index) {
     if (index < 0 || index >= pages.length) return;
-    track.scrollTo({ left: index * pageWidth(), behavior: "smooth" });
-    setActive(index, false);
+    const left = pages[index].offsetLeft;
+    track.scrollTo({ left, behavior: "smooth" });
+    setActive(index);
   }
 
   dotEls.forEach((dot, i) => {
@@ -2126,28 +2123,17 @@ function setupChartCarousel(trackId, dotsId, onShow) {
   track.addEventListener("scroll", () => {
     clearTimeout(scrollTimer);
     scrollTimer = setTimeout(() => {
-      const idx = Math.round(track.scrollLeft / pageWidth());
-      setActive(Math.min(pages.length - 1, Math.max(0, idx)), true);
-    }, 60);
+      const w = pageWidth();
+      const idx = Math.round(track.scrollLeft / w);
+      setActive(Math.min(pages.length - 1, Math.max(0, idx)));
+    }, 50);
   }, { passive: true });
 
-  // جلوگیری از اسکرول عمودی صفحه وقتی افقی ورق می‌زنیم
-  let lockY = null;
-  track.addEventListener("touchstart", (e) => {
-    if (e.touches[0]) lockY = e.touches[0].clientY;
-  }, { passive: true });
-  track.addEventListener("touchmove", (e) => {
-    if (!e.touches[0] || lockY == null) return;
-    // فقط اگر حرکت عمدتاً افقی باشد، از bubbling عمودی جلوگیری نمی‌کنیم
-    // touch-action: pan-x در CSS کافی است
-  }, { passive: true });
-
-  // هم‌تراز کردن عرض هنگام تغییر اندازه
   window.addEventListener("resize", () => {
-    track.scrollLeft = activeIndex * pageWidth();
+    if (pages[activeIndex]) track.scrollLeft = pages[activeIndex].offsetLeft;
   });
 
-  setActive(0, false);
+  setActive(0);
 }
 setupChartCarousel("dailyChartTrack", "dailyChartDots", () => {
   // هر دو صفحه رو دوباره می‌سازیم (نه فقط صفحه‌ی تازه‌نمایان‌شده) تا انیمیشن گرافیکی همیشه پخش بشه
@@ -2728,7 +2714,7 @@ async function initSync() {
 // ---------- Service worker ----------
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js?v=89").catch(() => {});
+    navigator.serviceWorker.register("sw.js?v=90").catch(() => {});
   });
 }
 

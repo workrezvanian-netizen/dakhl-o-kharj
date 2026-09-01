@@ -1567,6 +1567,7 @@ input:focus, select:focus {
   display: flex;
   flex-direction: row;
   gap: 0;
+  width: 100%;
   overflow-x: auto;
   overflow-y: hidden;
   scroll-snap-type: x mandatory;
@@ -1575,12 +1576,15 @@ input:focus, select:focus {
   overscroll-behavior-x: contain;
   touch-action: pan-x;
   padding: 4px 0 2px;
+  /* در RTL اسکرول افقی مثل LTR رفتار کند تا ورق درست کار کند */
+  direction: ltr;
 }
 .chart-carousel-track::-webkit-scrollbar { display: none; }
 .chart-carousel-page {
   position: relative;
   flex: 0 0 100%;
   width: 100%;
+  min-width: 100%;
   max-width: 100%;
   scroll-snap-align: center;
   scroll-snap-stop: always;
@@ -1589,8 +1593,9 @@ input:focus, select:focus {
   padding: 12px 10px;
   box-sizing: border-box;
   box-shadow: 0 8px 18px rgba(16,70,43,0.08);
-  /* جلوگیری از فشرده شدن ارتفاع صفحه هنگام ورق */
   min-height: 1px;
+  /* محتوای داخل صفحه دوباره RTL */
+  direction: rtl;
 }
 .chart-carousel-page.stack-front,
 .chart-carousel-page.stack-back,
