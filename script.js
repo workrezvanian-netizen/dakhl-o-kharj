@@ -584,7 +584,14 @@ function switchTab(tab, opts = {}) {
     if (typeof window.resetInstallmentNumbers === "function") window.resetInstallmentNumbers();
     requestAnimationFrame(() => window.refreshInstallments());
   }
-  if (tab === "todo") renderTodo();
+  if (tab === "todo") {
+    renderTodo();
+    const piFab = document.getElementById("piFab");
+    if (piFab) piFab.hidden = false;
+  } else {
+    const piFab = document.getElementById("piFab");
+    if (piFab) piFab.hidden = true;
+  }
 
   // Settings accordions always start closed, whether we're leaving or entering the tab
   document.querySelectorAll("#tab-settings .settings-group").forEach((d) => { d.open = false; });
@@ -2714,7 +2721,7 @@ async function initSync() {
 // ---------- Service worker ----------
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js?v=96").catch(() => {});
+    navigator.serviceWorker.register("sw.js?v=97").catch(() => {});
   });
 }
 
@@ -3345,9 +3352,9 @@ function renderTodo(opts) {
     }
 
     const anim = animate ? (open ? " is-switching-in" : "") : "";
-    return `<div class="pi-folder ${open ? "is-expanded" : "is-collapsed"}${anim}" data-fid="${folder.id}" style="background:${color.bg};z-index:${open ? 10 : 5 - idx}">
-      <div class="pi-folder-tab">پوشه‌ها</div>
-      <div class="pi-folder-inner">
+    return `<div class="pi-folder ${open ? "is-expanded" : "is-collapsed"}${anim}" data-fid="${folder.id}" style="--folder-color:${color.bg};z-index:${open ? 10 : 5 - idx}">
+      <div class="pi-folder-tabshape" aria-hidden="true"></div>
+      <div class="pi-folder-inner" style="background:${color.bg}">
         <div class="pi-folder-head" data-action="open" data-fid="${folder.id}">
           <h3 class="pi-folder-title">${piEsc(folder.name)}</h3>
           ${countLabel ? `<span class="pi-folder-count">${countLabel}</span>` : ""}
@@ -3402,21 +3409,32 @@ function setupTodoUI() {
     });
   }
 
-  document.getElementById("piAddFolder")?.addEventListener("click", () => {
-    ensureTodoState();
-    const name = prompt("نام پوشه جدید؟", "");
-    if (!name || !name.trim()) return;
-    const folder = {
-      id: piUid(),
-      name: name.trim(),
-      colorIdx: state.todo.lists.length % PI_COLORS.length,
-      tasks: []
-    };
-    state.todo.lists.push(folder);
-    state.todo.openId = folder.id;
-    saveState();
-    renderTodo({ animate: true });
-  });
+  // FAB شناور — مثل اقساط: کار جدید در پوشه باز / یا پوشه جدید با long? ساده: منو
+  const fab = document.getElementById("piFab");
+  if (fab && !fab._piBound) {
+    fab._piBound = true;
+    fab.addEventListener("click", () => {
+      ensureTodoState();
+      // اگر پوشه‌ای باز است → افزودن کار؛ وگرنه پوشه جدید
+      const openId = state.todo.openId;
+      if (openId && state.todo.lists.some((l) => l.id === openId)) {
+        piOpenSheet(openId);
+      } else {
+        const name = prompt("نام پوشه جدید؟", "");
+        if (!name || !name.trim()) return;
+        const folder = {
+          id: piUid(),
+          name: name.trim(),
+          colorIdx: state.todo.lists.length % PI_COLORS.length,
+          tasks: []
+        };
+        state.todo.lists.push(folder);
+        state.todo.openId = folder.id;
+        saveState();
+        renderTodo({ animate: true });
+      }
+    });
+  }
 
   document.getElementById("piSheetBackdrop")?.addEventListener("click", piCloseSheet);
   document.getElementById("piTaskCancel")?.addEventListener("click", piCloseSheet);
