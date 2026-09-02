@@ -4145,14 +4145,14 @@ input:focus, select:focus {
 
 
 
-
-/* ---------- Todo = PlanIt screenshot exact ---------- */
-.pi-app { padding: 2px 2px 28px; }
+/* ---------- Todo Windows-style folders ---------- */
+.pi-app { padding: 2px 0 28px; }
 .pi-header {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 14px;
+  margin-bottom: 16px;
+  padding: 0 4px;
 }
 .pi-header-center { text-align: center; }
 .pi-title {
@@ -4160,7 +4160,6 @@ input:focus, select:focus {
   font-size: 22px;
   font-weight: 800;
   color: #1e293b;
-  letter-spacing: -0.02em;
 }
 .pi-date {
   margin: 3px 0 0;
@@ -4169,89 +4168,50 @@ input:focus, select:focus {
   font-weight: 500;
 }
 
+/* FAB مثل اقساط — فقط در تب کارها */
+.fab-todo {
+  /* همان استایل .fab */
+}
 #tab-todo { padding-bottom: calc(100px + env(safe-area-inset-bottom, 0px)); }
 
 .pi-stack {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 6px 0 8px;
+  gap: 14px;
+  padding: 10px 4px 8px;
 }
 
-/* کارت فولدر — مثل عکس */
+/* —— فولدر ویندوزی —— */
 .pi-folder {
   position: relative;
-  border-radius: 16px;
-  box-shadow:
-    0 8px 20px rgba(15, 23, 42, 0.12),
-    0 2px 6px rgba(15, 23, 42, 0.06);
+  margin-top: 12px;
+  border: none;
+  background: transparent;
   transition: transform .35s cubic-bezier(.22,1,.36,1),
               box-shadow .35s ease;
-  overflow: visible;
+  filter: drop-shadow(0 6px 12px rgba(15,23,42,0.14));
 }
-.pi-folder.is-expanded {
-  z-index: 6;
-  box-shadow:
-    0 14px 32px rgba(15, 23, 42, 0.16),
-    0 4px 10px rgba(15, 23, 42, 0.08);
-}
-.pi-folder.is-switching-in {
-  animation: piIn .4s cubic-bezier(.22,1,.36,1) forwards;
-}
-@keyframes piIn {
-  from { opacity: .55; transform: translateY(12px) scale(.97); }
-  to { opacity: 1; transform: none; }
+.pi-folder:first-child { margin-top: 4px; }
+
+/* زبانه بالای فولدر (مثل ویندوز — چپ) */
+.pi-folder-tabshape {
+  position: absolute;
+  top: -12px;
+  right: 16px; /* RTL: زبانه سمت راست بصری = right */
+  width: 72px;
+  height: 16px;
+  border-radius: 8px 10px 0 0;
+  background: var(--folder-color, #3B6FA0);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.25);
+  z-index: 2;
+  /* بدون متن */
 }
 
-/* لایه اصلی رنگی */
-.pi-folder-shell {
+.pi-folder-inner {
   position: relative;
-  border-radius: 16px;
+  border-radius: 6px 14px 14px 14px;
   overflow: hidden;
   background: var(--folder-color, #3B6FA0);
-}
-
-/* زبانه چپ — شکل فولدر عکس (tab بیرون‌زده از چپ) */
-.pi-folder-tab {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 54px;
-  bottom: 0;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-}
-/* شکل زبانه با clip — شبیه گوشه فولدر */
-.pi-folder-tab::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: rgba(0,0,0,0.14);
-  border-radius: 16px 0 0 16px;
-  /* بریدگی بالای زبانه مثل عکس */
-  clip-path: polygon(
-    0 0,
-    100% 0,
-    100% 100%,
-    0 100%,
-    0 22px,
-    8px 14px,
-    8px 0
-  );
-}
-.pi-folder-tab span {
-  position: relative;
-  z-index: 1;
-  writing-mode: vertical-rl;
-  transform: rotate(180deg);
-  font-size: 11px;
-  font-weight: 800;
-  color: rgba(255,255,255,0.95);
-  letter-spacing: 0.12em;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.15);
 }
 
 .pi-folder-head {
@@ -4259,36 +4219,47 @@ input:focus, select:focus {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  padding: 15px 16px 15px 62px; /* جا برای زبانه چپ */
+  padding: 14px 16px 12px;
   cursor: pointer;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
-  min-height: 52px;
+  min-height: 48px;
   box-sizing: border-box;
+  background: linear-gradient(
+    180deg,
+    rgba(255,255,255,0.14) 0%,
+    rgba(255,255,255,0) 55%
+  );
 }
 .pi-folder-title {
   margin: 0;
-  font-size: 16px;
+  font-size: 15.5px;
   font-weight: 800;
   color: #fff;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.12);
-  flex: 1;
-  text-align: right;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.2);
 }
 .pi-folder-count {
-  font-size: 12px;
-  font-weight: 600;
+  font-size: 11.5px;
+  font-weight: 700;
   color: rgba(255,255,255,0.9);
-  flex-shrink: 0;
+  background: rgba(0,0,0,0.15);
+  padding: 3px 9px;
+  border-radius: 999px;
 }
 
-/* بدنه سفید داخل فولدر باز — مثل عکس */
+/* بدنه کاغذ داخل فولدر باز */
 .pi-folder-body {
-  background: #ffffff;
-  padding: 6px 12px 14px 14px;
-  border-radius: 0 0 15px 15px;
+  background: #FFFBF5;
+  border-top: 1px solid rgba(0,0,0,0.06);
+  padding: 6px 10px 12px;
+  border-radius: 0 0 13px 13px;
 }
 .pi-folder.is-collapsed .pi-folder-body { display: none; }
+.pi-folder.is-expanded {
+  z-index: 8;
+  filter: drop-shadow(0 12px 22px rgba(15,23,42,0.2));
+  transform: translateY(-2px);
+}
 .pi-folder.is-expanded .pi-folder-body {
   display: block;
   animation: piBodyOpen .36s cubic-bezier(.22,1,.36,1);
@@ -4297,16 +4268,21 @@ input:focus, select:focus {
   from { opacity: 0; transform: translateY(-8px); }
   to { opacity: 1; transform: none; }
 }
+.pi-folder.is-switching-in {
+  animation: piIn .4s cubic-bezier(.22,1,.36,1) forwards;
+}
+@keyframes piIn {
+  from { opacity: 0.55; transform: scale(0.96) translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
 
-/* ردیف کار — تگ چپ، متن، چک‌باکس راست (مثل عکس) */
 .pi-task {
   display: flex;
   align-items: center;
   gap: 10px;
   padding: 11px 4px;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid rgba(15,23,42,0.05);
   animation: piTaskIn .32s cubic-bezier(.22,1,.36,1) both;
-  direction: rtl;
 }
 .pi-task:last-of-type { border-bottom: none; }
 @keyframes piTaskIn {
@@ -4324,16 +4300,14 @@ input:focus, select:focus {
   border-radius: 6px;
   flex-shrink: 0;
   white-space: nowrap;
-  order: 3; /* در RTL بعد از متن سمت چپ بصری */
 }
 .pi-task-text {
   flex: 1;
   font-size: 13.5px;
   font-weight: 600;
   color: #1e293b;
-  line-height: 1.4;
+  line-height: 1.35;
   text-align: right;
-  order: 2;
 }
 .pi-cb {
   width: 22px;
@@ -4349,26 +4323,24 @@ input:focus, select:focus {
   font-size: 12px;
   font-weight: 800;
   color: #fff;
-  order: 1; /* چک‌باکس سمت راست در RTL */
   transition: all .15s ease;
 }
 .pi-cb:active { transform: scale(0.9); }
 .pi-task.done .pi-cb {
-  background: #3B6FA0;
-  border-color: #3B6FA0;
+  background: #2F7A72;
+  border-color: #2F7A72;
 }
 .pi-prio-dot {
   width: 8px; height: 8px; border-radius: 50%;
   flex-shrink: 0;
-  order: 3;
 }
-.pi-add-task-row { margin-top: 8px; }
+.pi-add-task-row { margin-top: 6px; padding: 0 2px; }
 .pi-add-task {
   width: 100%;
   border: 1.5px dashed #e2e8f0;
   border-radius: 10px;
   padding: 10px;
-  background: #f8fafc;
+  background: rgba(255,255,255,0.7);
   color: #64748b;
   font-family: inherit;
   font-size: 13px;

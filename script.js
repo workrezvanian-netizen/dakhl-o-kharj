@@ -2721,7 +2721,7 @@ async function initSync() {
 // ---------- Service worker ----------
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js?v=98").catch(() => {});
+    navigator.serviceWorker.register("sw.js?v=97").catch(() => {});
   });
 }
 
@@ -3245,11 +3245,11 @@ initSync();
 
 // ---------- Todo PlanIt folders (fixed) ----------
 const PI_COLORS = [
-  { bg: "#4A6F8C", name: "آبی" },      /* کارهای امروز */
-  { bg: "#E09A3E", name: "نارنجی" },  /* پروژه آپولو */
-  { bg: "#4CAF82", name: "سبز" },     /* وظایف شخصی */
-  { bg: "#4A9BC7", name: "آبی روشن" },/* مطالعه */
-  { bg: "#8B6BC7", name: "بنفش" },    /* یادداشت‌ها */
+  { bg: "#3B6FA0", name: "آبی" },
+  { bg: "#E8A04A", name: "نارنجی" },
+  { bg: "#4CAF82", name: "سبز" },
+  { bg: "#4A9BC7", name: "آبی روشن" },
+  { bg: "#8B6BC7", name: "بنفش" },
   { bg: "#E06B8A", name: "صورتی" },
 ];
 
@@ -3338,9 +3338,9 @@ function renderTodo(opts) {
       const tasksHtml = folder.tasks.map((t, ti) => {
         const p = t.priority || 3;
         return `<div class="pi-task ${t.done ? "done" : ""}" data-fid="${folder.id}" data-tid="${t.id}" style="animation-delay:${ti * 0.04}s">
-          <button type="button" class="pi-cb" data-action="toggle" aria-label="انجام">${t.done ? "✓" : ""}</button>
-          <div class="pi-task-text">${piEsc(t.title)}</div>
           ${t.tag ? `<span class="pi-tag" style="${piTagStyle(t.tag)}">${piEsc(t.tag)}</span>` : `<span class="pi-prio-dot" style="background:${piPrioColor(p)}"></span>`}
+          <div class="pi-task-text">${piEsc(t.title)}</div>
+          <button type="button" class="pi-cb" data-action="toggle" aria-label="انجام">${t.done ? "✓" : ""}</button>
         </div>`;
       }).join("");
       body = `<div class="pi-folder-body">
@@ -3353,8 +3353,8 @@ function renderTodo(opts) {
 
     const anim = animate ? (open ? " is-switching-in" : "") : "";
     return `<div class="pi-folder ${open ? "is-expanded" : "is-collapsed"}${anim}" data-fid="${folder.id}" style="--folder-color:${color.bg};z-index:${open ? 10 : 5 - idx}">
-      <div class="pi-folder-shell" style="background:${color.bg}">
-        <div class="pi-folder-tab" aria-hidden="true"><span>پوشه‌ها</span></div>
+      <div class="pi-folder-tabshape" aria-hidden="true"></div>
+      <div class="pi-folder-inner" style="background:${color.bg}">
         <div class="pi-folder-head" data-action="open" data-fid="${folder.id}">
           <h3 class="pi-folder-title">${piEsc(folder.name)}</h3>
           ${countLabel ? `<span class="pi-folder-count">${countLabel}</span>` : ""}
