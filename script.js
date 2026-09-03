@@ -2721,7 +2721,7 @@ async function initSync() {
 // ---------- Service worker ----------
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js?v=101").catch(() => {});
+    navigator.serviceWorker.register("sw.js?v=102").catch(() => {});
   });
 }
 
@@ -3250,6 +3250,7 @@ const PI_COLORS = [
 
 let _piPendingFolder = null;
 let _piPendingPriority = 3;
+let _piSheetOpening = false;
 
 function ensureTodoState() {
   if (!state.todo || !Array.isArray(state.todo.lists) || !state.todo.lists.length) {
@@ -3269,7 +3270,9 @@ function ensureTodoState() {
       openId: "f1"
     };
   }
-  if (!state.todo.openId) state.todo.openId = state.todo.lists[0].id;
+  if (state.todo.openId == null && state.todo.lists[0]) {
+    state.todo.openId = state.todo.lists[0].id;
+  }
   state.todo.lists.forEach((l, i) => {
     if (l.colorIdx == null) l.colorIdx = i % PI_COLORS.length;
     if (!Array.isArray(l.tasks)) l.tasks = [];
@@ -3292,10 +3295,21 @@ function piJalaliDate() {
       return days[now.getDay()] + "، " + j.jd + " " + months[j.jm];
     }
   } catch (_) {}
-  return new Date().toLocaleDateString("fa-IR");
+  try { return new Date().toLocaleDateString("fa-IR"); } catch (_) { return ""; }
 }
 
-function renderTodo(opts) {
+/** ذخیره سبک — بدون renderAll سنگین (جلوگیری از هنگ) */
+function saveTodoOnly() {
+  try {
+    state.updatedAt = Date.now();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    if (state.syncCode && typeof scheduleSync === "function") scheduleSync();
+  } catch (err) {
+    console.warn("saveTodoOnly", err);
+  }
+}
+
+function renderTodo() {
   ensureTodoState();
   const dateEl = document.getElementById("piDate");
   if (dateEl) dateEl.textContent = piJalaliDate();
@@ -3303,11 +3317,12 @@ function renderTodo(opts) {
   if (!stack) return;
   const openId = state.todo.openId;
 
-  stack.innerHTML = state.todo.lists.map((folder, idx) => {
+  stack.innerHTML = state.todo.lists.map((folder) => {
     const open = folder.id === openId;
     const color = PI_COLORS[folder.colorIdx % PI_COLORS.length];
     const openN = folder.tasks.filter((t) => !t.done).length;
     const total = folder.tasks.length;
+    const meta = openN > 0 ? String(openN) : (total ? String(total) : "");
 
     let body = "";
     if (open) {
@@ -3318,7 +3333,7 @@ function renderTodo(opts) {
         const tasks = folder.tasks.map((t, ti) => {
           const p = t.priority || 3;
           const chip = p <= 2 ? `<span class="td-chip p${p}">${p === 1 ? "فوری" : "بالا"}</span>` : "";
-          return `<div class="td-task ${t.done ? "done" : ""}" data-fid="${folder.id}" data-tid="${t.id}" style="animation-delay:${ti * 0.035}s">
+          return `<div class="td-task ${t.done ? "done" : ""}" data-fid="${folder.id}" data-tid="${t.id}" style="animation-delay:${Math.min(ti, 12) * 0.03}s">
             <button type="button" class="td-check" data-action="toggle" aria-label="انجام">${t.done ? "✓" : ""}</button>
             <div class="td-task-main">
               <div class="td-task-title">${piEsc(t.title)}</div>
@@ -3331,16 +3346,80 @@ function renderTodo(opts) {
       }
     }
 
-    return `<div class="td-card ${open ? "is-open" : ""}" data-fid="${folder.id}" role="listitem">
+    return `<div class="td-card ${open ? "is-open" : ""}" data-fid="${folder.id}">
       <div class="td-card-head" data-action="open" data-fid="${folder.id}">
         <span class="td-dot" style="--c:${color};background:${color}"></span>
         <h3 class="td-card-name">${piEsc(folder.name)}</h3>
-        <span class="td-card-meta">${openN || total || ""}</span>
+        <span class="td-card-meta">${meta}</span>
         <svg class="td-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
       </div>
       ${body}
     </div>`;
   }).join("");
+}
+
+function piOpenSheet(folderId) {
+  if (_piSheetOpening) return;
+  _piSheetOpening = true;
+  try {
+    ensureTodoState();
+    _piPendingFolder = folderId || state.todo.openId || (state.todo.lists[0] && state.todo.lists[0].id);
+    _piPendingPriority = 3;
+    const sheet = document.getElementById("piTaskSheet");
+    const input = document.getElementById("piTaskTitle");
+    document.querySelectorAll("#piPrioBtns .seg-btn").forEach((x) => {
+      x.classList.toggle("active", x.getAttribute("data-p") === "3");
+    });
+    if (sheet) {
+      sheet.hidden = false;
+      document.body.classList.add("sheet-open");
+    }
+    if (input) {
+      input.value = "";
+      requestAnimationFrame(() => {
+        try { input.focus(); } catch (_) {}
+      });
+    }
+  } finally {
+    setTimeout(() => { _piSheetOpening = false; }, 300);
+  }
+}
+
+function piCloseSheet() {
+  const sheet = document.getElementById("piTaskSheet");
+  if (sheet) sheet.hidden = true;
+  document.body.classList.remove("sheet-open");
+  _piPendingFolder = null;
+}
+
+function piSaveTask(e) {
+  if (e) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+  const input = document.getElementById("piTaskTitle");
+  const title = (input && input.value ? input.value : "").trim();
+  if (!title) {
+    if (input) input.focus();
+    return;
+  }
+  ensureTodoState();
+  const fid = _piPendingFolder || state.todo.openId;
+  const folder = state.todo.lists.find((l) => l.id === fid);
+  if (!folder) {
+    piCloseSheet();
+    return;
+  }
+  folder.tasks.unshift({
+    id: piUid(),
+    title,
+    done: false,
+    priority: _piPendingPriority || 3
+  });
+  state.todo.openId = fid;
+  saveTodoOnly();
+  piCloseSheet();
+  renderTodo();
 }
 
 function setupTodoUI() {
@@ -3351,11 +3430,12 @@ function setupTodoUI() {
       const btn = e.target.closest("[data-action]");
       if (!btn) return;
       const action = btn.dataset.action;
-      const fid = btn.dataset.fid || btn.closest("[data-fid]")?.dataset.fid;
-      const tid = btn.closest("[data-tid]")?.dataset.tid;
+      const fid = btn.dataset.fid || (btn.closest("[data-fid]") && btn.closest("[data-fid]").dataset.fid);
+      const tid = btn.closest("[data-tid]") && btn.closest("[data-tid]").dataset.tid;
 
       if (action === "open" && fid) {
-        state.todo.openId = state.todo.openId === fid ? null : fid;
+        const wasOpen = state.todo.openId === fid;
+        state.todo.openId = wasOpen ? null : fid;
         renderTodo();
         return;
       }
@@ -3363,10 +3443,10 @@ function setupTodoUI() {
         e.preventDefault();
         e.stopPropagation();
         const folder = state.todo.lists.find((l) => l.id === fid);
-        const task = folder?.tasks.find((t) => t.id === tid);
+        const task = folder && folder.tasks.find((t) => t.id === tid);
         if (!task) return;
         task.done = !task.done;
-        saveState();
+        saveTodoOnly();
         renderTodo();
         return;
       }
@@ -3381,101 +3461,90 @@ function setupTodoUI() {
   const fab = document.getElementById("piFab");
   if (fab && !fab._piBound) {
     fab._piBound = true;
-    fab.addEventListener("click", () => {
+    fab.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
       ensureTodoState();
-      const openId = state.todo.openId;
-      if (openId && state.todo.lists.some((l) => l.id === openId)) {
-        piOpenSheet(openId);
-      } else if (state.todo.lists[0]) {
-        state.todo.openId = state.todo.lists[0].id;
-        piOpenSheet(state.todo.lists[0].id);
+      let openId = state.todo.openId;
+      if (!openId || !state.todo.lists.some((l) => l.id === openId)) {
+        openId = state.todo.lists[0] && state.todo.lists[0].id;
+        state.todo.openId = openId;
         renderTodo();
       }
+      if (openId) piOpenSheet(openId);
     });
   }
 
-  document.getElementById("piNewProject")?.addEventListener("click", () => {
-    ensureTodoState();
-    const name = prompt("نام پروژه؟", "");
-    if (!name || !name.trim()) return;
-    const folder = {
-      id: piUid(),
-      name: name.trim(),
-      colorIdx: state.todo.lists.length % PI_COLORS.length,
-      tasks: []
-    };
-    state.todo.lists.push(folder);
-    state.todo.openId = folder.id;
-    saveState();
-    renderTodo();
-  });
+  const newProj = document.getElementById("piNewProject");
+  if (newProj && !newProj._piBound) {
+    newProj._piBound = true;
+    newProj.addEventListener("click", () => {
+      ensureTodoState();
+      const name = window.prompt("نام پروژه؟", "");
+      if (!name || !name.trim()) return;
+      const folder = {
+        id: piUid(),
+        name: name.trim(),
+        colorIdx: state.todo.lists.length % PI_COLORS.length,
+        tasks: []
+      };
+      state.todo.lists.push(folder);
+      state.todo.openId = folder.id;
+      saveTodoOnly();
+      renderTodo();
+    });
+  }
 
   const piSheet = document.getElementById("piTaskSheet");
-  if (piSheet && !piSheet._backdropBound) {
-    piSheet._backdropBound = true;
+  if (piSheet && !piSheet._piBound) {
+    piSheet._piBound = true;
     piSheet.addEventListener("click", (e) => {
       if (e.target === piSheet) piCloseSheet();
     });
   }
-  document.getElementById("piTaskCancel")?.addEventListener("click", piCloseSheet);
-  document.getElementById("piTaskSave")?.addEventListener("click", piSaveTask);
-  document.getElementById("piTaskTitle")?.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") piSaveTask();
-  });
-  document.getElementById("piPrioBtns")?.addEventListener("click", (e) => {
-    const b = e.target.closest(".pi-prio, .seg-btn");
-    if (!b) return;
-    _piPendingPriority = parseInt(b.dataset.p, 10) || 3;
-    document.querySelectorAll("#piPrioBtns .pi-prio").forEach((x) => x.classList.toggle("active", x === b));
-  });
+  const cancel = document.getElementById("piTaskCancel");
+  if (cancel && !cancel._piBound) {
+    cancel._piBound = true;
+    cancel.addEventListener("click", (e) => {
+      e.preventDefault();
+      piCloseSheet();
+    });
+  }
+  const saveBtn = document.getElementById("piTaskSave");
+  if (saveBtn && !saveBtn._piBound) {
+    saveBtn._piBound = true;
+    saveBtn.addEventListener("click", piSaveTask);
+  }
+  const titleIn = document.getElementById("piTaskTitle");
+  if (titleIn && !titleIn._piBound) {
+    titleIn._piBound = true;
+    titleIn.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        piSaveTask(e);
+      }
+    });
+  }
+  const prio = document.getElementById("piPrioBtns");
+  if (prio && !prio._piBound) {
+    prio._piBound = true;
+    prio.addEventListener("click", (e) => {
+      const b = e.target.closest(".seg-btn");
+      if (!b || !prio.contains(b)) return;
+      e.preventDefault();
+      e.stopPropagation();
+      _piPendingPriority = parseInt(b.getAttribute("data-p"), 10) || 3;
+      prio.querySelectorAll(".seg-btn").forEach((x) => x.classList.toggle("active", x === b));
+    });
+  }
 }
 
-function piOpenSheet(folderId) {
-  _piPendingFolder = folderId;
-  _piPendingPriority = 3;
-  document.querySelectorAll("#piPrioBtns .pi-prio, #piPrioBtns .seg-btn").forEach((x) => {
-    x.classList.toggle("active", x.dataset.p === "3");
-  });
-  const sheet = document.getElementById("piTaskSheet");
-  const input = document.getElementById("piTaskTitle");
-  if (sheet) {
-    sheet.hidden = false;
-    document.body.classList.add("sheet-open");
-  }
-  if (input) {
-    input.value = "";
-    setTimeout(() => input.focus(), 80);
-  }
+// defer setup until DOM ready
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", setupTodoUI);
+} else {
+  setupTodoUI();
 }
-function piCloseSheet() {
-  const sheet = document.getElementById("piTaskSheet");
-  if (sheet) sheet.hidden = true;
-  document.body.classList.remove("sheet-open");
-  _piPendingFolder = null;
-}
-function piSaveTask() {
-  const title = (document.getElementById("piTaskTitle")?.value || "").trim();
-  if (!title) {
-    document.getElementById("piTaskTitle")?.focus();
-    return;
-  }
-  ensureTodoState();
-  const fid = _piPendingFolder || state.todo.openId;
-  const folder = state.todo.lists.find((l) => l.id === fid);
-  if (!folder) return;
-  folder.tasks.unshift({
-    id: piUid(),
-    title,
-    done: false,
-    priority: _piPendingPriority
-  });
-  state.todo.openId = fid;
-  saveState();
-  piCloseSheet();
-  renderTodo();
-}
-
-setupTodoUI();
 
 function renderBudget() {
   if (!document.getElementById("budgetCategoryList")) return;

@@ -42,6 +42,7 @@ body.sheet-open #appScroll {
 }
 body.sheet-open .bottom-nav,
 body.sheet-open #fab,
+body.sheet-open #piFab,
 body.sheet-open .ai-floating-star {
   pointer-events: none;
   opacity: 0.35;
