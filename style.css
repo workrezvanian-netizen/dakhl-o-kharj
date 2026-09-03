@@ -4314,9 +4314,10 @@ input:focus, select:focus {
   background: #f1f5f9;
   color: #64748b;
 }
-.td-chip.p1 { background: #fef2f2; color: #dc2626; }
-.td-chip.p2 { background: #fff7ed; color: #ea580c; }
-.td-chip.p3 { background: #eff6ff; color: #2563eb; }
+.td-chip.p1 { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+.td-chip.p2 { background: #fff7ed; color: #ea580c; border: 1px solid #fed7aa; }
+.td-chip.p3 { background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; }
+.td-chip.p4 { background: #f8fafc; color: #64748b; border: 1px solid #e2e8f0; }
 
 .td-empty {
   text-align: center;
@@ -4427,3 +4428,77 @@ input:focus, select:focus {
   right: auto;
   z-index: 35;
 }
+
+/* اولویت کارها — رنگ مجزا در شیت و لیست */
+#piTaskSheet #piPrioBtns {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+#piTaskSheet #piPrioBtns .seg-btn {
+  border-radius: 12px;
+  padding: 10px 4px;
+  font-size: 12px;
+  font-weight: 800;
+  border-width: 1.5px;
+  transition: transform .12s ease, box-shadow .15s ease, background .15s ease;
+}
+#piTaskSheet #piPrioBtns .seg-btn[data-p="1"] {
+  color: #b91c1c;
+  border-color: #fecaca;
+  background: #fef2f2;
+}
+#piTaskSheet #piPrioBtns .seg-btn[data-p="2"] {
+  color: #c2410c;
+  border-color: #fed7aa;
+  background: #fff7ed;
+}
+#piTaskSheet #piPrioBtns .seg-btn[data-p="3"] {
+  color: #1d4ed8;
+  border-color: #bfdbfe;
+  background: #eff6ff;
+}
+#piTaskSheet #piPrioBtns .seg-btn[data-p="4"] {
+  color: #64748b;
+  border-color: #e2e8f0;
+  background: #f8fafc;
+}
+#piTaskSheet #piPrioBtns .seg-btn.active[data-p="1"] {
+  background: linear-gradient(160deg, #f87171, #dc2626);
+  border-color: #dc2626;
+  color: #fff;
+  box-shadow: 0 6px 14px rgba(220,38,38,0.28);
+}
+#piTaskSheet #piPrioBtns .seg-btn.active[data-p="2"] {
+  background: linear-gradient(160deg, #fb923c, #ea580c);
+  border-color: #ea580c;
+  color: #fff;
+  box-shadow: 0 6px 14px rgba(234,88,12,0.28);
+}
+#piTaskSheet #piPrioBtns .seg-btn.active[data-p="3"] {
+  background: linear-gradient(160deg, #60a5fa, #2563eb);
+  border-color: #2563eb;
+  color: #fff;
+  box-shadow: 0 6px 14px rgba(37,99,235,0.28);
+}
+#piTaskSheet #piPrioBtns .seg-btn.active[data-p="4"] {
+  background: linear-gradient(160deg, #94a3b8, #64748b);
+  border-color: #64748b;
+  color: #fff;
+  box-shadow: 0 6px 14px rgba(100,116,139,0.25);
+}
+#piTaskSheet #piPrioBtns .seg-btn:active { transform: scale(0.96); }
+
+.td-chip.p1 { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+.td-chip.p2 { background: #fff7ed; color: #ea580c; border: 1px solid #fed7aa; }
+.td-chip.p3 { background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; }
+.td-chip.p4 { background: #f8fafc; color: #64748b; border: 1px solid #e2e8f0; }
+
+.td-check.p1 { border-color: #f87171; }
+.td-check.p2 { border-color: #fb923c; }
+.td-check.p3 { border-color: #60a5fa; }
+.td-check.p4 { border-color: #cbd5e1; }
+.td-task.done .td-check.p1 { background: #dc2626; border-color: #dc2626; }
+.td-task.done .td-check.p2 { background: #ea580c; border-color: #ea580c; }
+.td-task.done .td-check.p3 { background: #2563eb; border-color: #2563eb; }
+.td-task.done .td-check.p4 { background: #64748b; border-color: #64748b; }

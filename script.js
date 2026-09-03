@@ -2721,7 +2721,7 @@ async function initSync() {
 // ---------- Service worker ----------
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js?v=102").catch(() => {});
+    navigator.serviceWorker.register("sw.js?v=103").catch(() => {});
   });
 }
 
@@ -3331,13 +3331,14 @@ function renderTodo() {
           <button type="button" class="td-add-inline" data-action="add" data-fid="${folder.id}">+ افزودن کار</button></div>`;
       } else {
         const tasks = folder.tasks.map((t, ti) => {
-          const p = t.priority || 3;
-          const chip = p <= 2 ? `<span class="td-chip p${p}">${p === 1 ? "فوری" : "بالا"}</span>` : "";
+          const p = Math.min(4, Math.max(1, t.priority || 3));
+          const labels = { 1: "فوری", 2: "بالا", 3: "عادی", 4: "کم" };
+          const chip = `<span class="td-chip p${p}">${labels[p]}</span>`;
           return `<div class="td-task ${t.done ? "done" : ""}" data-fid="${folder.id}" data-tid="${t.id}" style="animation-delay:${Math.min(ti, 12) * 0.03}s">
-            <button type="button" class="td-check" data-action="toggle" aria-label="انجام">${t.done ? "✓" : ""}</button>
+            <button type="button" class="td-check p${p}" data-action="toggle" aria-label="انجام">${t.done ? "✓" : ""}</button>
             <div class="td-task-main">
               <div class="td-task-title">${piEsc(t.title)}</div>
-              ${chip ? `<div class="td-task-foot">${chip}</div>` : ""}
+              <div class="td-task-foot">${chip}</div>
             </div>
           </div>`;
         }).join("");
