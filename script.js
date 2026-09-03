@@ -2721,7 +2721,7 @@ async function initSync() {
 // ---------- Service worker ----------
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js?v=100").catch(() => {});
+    navigator.serviceWorker.register("sw.js?v=101").catch(() => {});
   });
 }
 
@@ -3410,14 +3410,20 @@ function setupTodoUI() {
     renderTodo();
   });
 
-  document.getElementById("piSheetBackdrop")?.addEventListener("click", piCloseSheet);
+  const piSheet = document.getElementById("piTaskSheet");
+  if (piSheet && !piSheet._backdropBound) {
+    piSheet._backdropBound = true;
+    piSheet.addEventListener("click", (e) => {
+      if (e.target === piSheet) piCloseSheet();
+    });
+  }
   document.getElementById("piTaskCancel")?.addEventListener("click", piCloseSheet);
   document.getElementById("piTaskSave")?.addEventListener("click", piSaveTask);
   document.getElementById("piTaskTitle")?.addEventListener("keydown", (e) => {
     if (e.key === "Enter") piSaveTask();
   });
   document.getElementById("piPrioBtns")?.addEventListener("click", (e) => {
-    const b = e.target.closest(".pi-prio");
+    const b = e.target.closest(".pi-prio, .seg-btn");
     if (!b) return;
     _piPendingPriority = parseInt(b.dataset.p, 10) || 3;
     document.querySelectorAll("#piPrioBtns .pi-prio").forEach((x) => x.classList.toggle("active", x === b));
@@ -3427,12 +3433,15 @@ function setupTodoUI() {
 function piOpenSheet(folderId) {
   _piPendingFolder = folderId;
   _piPendingPriority = 3;
-  document.querySelectorAll("#piPrioBtns .pi-prio").forEach((x) => {
+  document.querySelectorAll("#piPrioBtns .pi-prio, #piPrioBtns .seg-btn").forEach((x) => {
     x.classList.toggle("active", x.dataset.p === "3");
   });
   const sheet = document.getElementById("piTaskSheet");
   const input = document.getElementById("piTaskTitle");
-  if (sheet) sheet.hidden = false;
+  if (sheet) {
+    sheet.hidden = false;
+    document.body.classList.add("sheet-open");
+  }
   if (input) {
     input.value = "";
     setTimeout(() => input.focus(), 80);
@@ -3441,6 +3450,7 @@ function piOpenSheet(folderId) {
 function piCloseSheet() {
   const sheet = document.getElementById("piTaskSheet");
   if (sheet) sheet.hidden = true;
+  document.body.classList.remove("sheet-open");
   _piPendingFolder = null;
 }
 function piSaveTask() {

@@ -14,7 +14,7 @@
 <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css">
 <link href="https://cdn.jsdelivr.net/gh/rastikerdar/kamran@v1.0.0/dist/font-face.css" rel="stylesheet" type="text/css">
 <link href="https://cdn.jsdelivr.net/gh/rastikerdar/samim-font@v4.0.5/dist/font-face.css" rel="stylesheet" type="text/css">
-<link rel="stylesheet" href="style.css?v=100">
+<link rel="stylesheet" href="style.css?v=101">
 </head>
 <body>
 
@@ -374,28 +374,32 @@
       <div class="td-projects" id="piStack" role="list"></div>
     </div>
 
-    <div id="piTaskSheet" class="pi-sheet" hidden>
-      <div class="pi-sheet-backdrop" id="piSheetBackdrop"></div>
-      <div class="pi-sheet-panel" role="dialog">
-        <div class="pi-sheet-handle"></div>
-        <h3 id="piSheetTitle">کار جدید</h3>
-        <input type="text" id="piTaskTitle" placeholder="چه کاری باید انجام شود؟" maxlength="160" autocomplete="off">
-        <div class="pi-priority-row">
-          <span class="pi-prio-label">اولویت</span>
-          <div class="pi-prio-btns" id="piPrioBtns">
-            <button type="button" class="pi-prio" data-p="1">فوری</button>
-            <button type="button" class="pi-prio" data-p="2">بالا</button>
-            <button type="button" class="pi-prio active" data-p="3">عادی</button>
-            <button type="button" class="pi-prio" data-p="4">کم</button>
+  </section>
+
+    <!-- پاپ‌آپ افزودن کار — همان الگوی شیت اقساط/تقویم -->
+    <div id="piTaskSheet" class="sheet-overlay" hidden>
+      <div class="sheet" role="dialog" aria-labelledby="piSheetTitle">
+        <div class="sheet-handle"></div>
+        <h2 id="piSheetTitle">کار جدید</h2>
+        <label class="field">
+          <input type="text" id="piTaskTitle" placeholder="عنوان کار" maxlength="160" autocomplete="off" aria-label="عنوان کار">
+        </label>
+        <div class="field">
+          <span>اولویت</span>
+          <div class="segmented" id="piPrioBtns">
+            <button type="button" class="seg-btn pi-prio" data-p="1">فوری</button>
+            <button type="button" class="seg-btn pi-prio" data-p="2">بالا</button>
+            <button type="button" class="seg-btn pi-prio active" data-p="3">عادی</button>
+            <button type="button" class="seg-btn pi-prio" data-p="4">کم</button>
           </div>
         </div>
-        <div class="pi-sheet-actions">
-          <button type="button" id="piTaskCancel" class="pi-btn-secondary">انصراف</button>
-          <button type="button" id="piTaskSave" class="pi-btn-primary">افزودن</button>
+        <div class="sheet-actions">
+          <button type="button" class="inst-btn inst-btn-ghost" id="piTaskCancel">انصراف</button>
+          <button type="button" class="inst-btn inst-btn-primary" id="piTaskSave">افزودن</button>
         </div>
       </div>
     </div>
-  </section>
+
 
   <!-- SETTINGS -->
   <section id="tab-settings" class="tab">
@@ -844,8 +848,8 @@ n  <!-- Progress -->
 </div>
 <!-- ═══════════════ END ONBOARDING ═══════════════ -->
 
-<script src="script.js?v=100"></script>
-<script src="installments.js?v=100"></script>
-<script src="three-scene.js?v=100"></script>
+<script src="script.js?v=101"></script>
+<script src="installments.js?v=101"></script>
+<script src="three-scene.js?v=101"></script>
 </body>
 </html>
