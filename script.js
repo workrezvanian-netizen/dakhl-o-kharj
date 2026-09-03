@@ -585,7 +585,7 @@ function switchTab(tab, opts = {}) {
     requestAnimationFrame(() => window.refreshInstallments());
   }
   if (tab === "todo") {
-    renderTodo();
+    renderTodo({ enterAnimate: true });
     const piFab = document.getElementById("piFab");
     if (piFab) piFab.hidden = false;
   } else {
@@ -2721,7 +2721,7 @@ async function initSync() {
 // ---------- Service worker ----------
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js?v=104").catch(() => {});
+    navigator.serviceWorker.register("sw.js?v=105").catch(() => {});
   });
 }
 
@@ -3309,13 +3309,22 @@ function saveTodoOnly() {
   }
 }
 
-function renderTodo() {
+function renderTodo(opts) {
   ensureTodoState();
   const dateEl = document.getElementById("piDate");
   if (dateEl) dateEl.textContent = piJalaliDate();
   const stack = document.getElementById("piStack");
   if (!stack) return;
-  const openId = state.todo.openId;
+
+  // ورود به تب: اول همه بسته، بعد «امروز» با انیمیشن کرکره باز شود
+  const enterAnimate = opts && opts.enterAnimate;
+  let targetOpenId = state.todo.openId;
+  if (enterAnimate) {
+    const today = state.todo.lists.find((l) => l.id === "f1" || l.name === "امروز") || state.todo.lists[0];
+    targetOpenId = today ? today.id : state.todo.openId;
+    state.todo.openId = targetOpenId;
+  }
+  const openId = enterAnimate ? null : state.todo.openId;
 
   stack.innerHTML = state.todo.lists.map((folder) => {
     const open = folder.id === openId;
@@ -3358,6 +3367,18 @@ function renderTodo() {
       </div>
     </div>`;
   }).join("");
+
+  if (enterAnimate && targetOpenId) {
+    // force reflow سپس باز کردن با کلاس — انیمیشن کرکره
+    void stack.offsetHeight;
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        stack.querySelectorAll(".td-card").forEach((card) => {
+          card.classList.toggle("is-open", card.dataset.fid === targetOpenId);
+        });
+      });
+    });
+  }
 }
 
 function piOpenSheet(folderId) {
