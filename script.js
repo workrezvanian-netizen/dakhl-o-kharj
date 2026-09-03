@@ -2721,7 +2721,7 @@ async function initSync() {
 // ---------- Service worker ----------
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js?v=105").catch(() => {});
+    navigator.serviceWorker.register("sw.js?v=106").catch(() => {});
   });
 }
 
@@ -3342,7 +3342,7 @@ function renderTodo(opts) {
         const p = Math.min(4, Math.max(1, t.priority || 3));
         const labels = { 1: "فوری", 2: "بالا", 3: "عادی", 4: "کم" };
         const chip = `<span class="td-chip p${p}">${labels[p]}</span>`;
-        return `<div class="td-task ${t.done ? "done" : ""}" data-fid="${folder.id}" data-tid="${t.id}" style="animation-delay:${Math.min(ti, 12) * 0.04}s">
+        return `<div class="td-task ${t.done ? "done" : ""}" data-fid="${folder.id}" data-tid="${t.id}" style="animation-delay:${Math.min(ti, 12) * 0.06}s">
           <button type="button" class="td-check p${p}" data-action="toggle" aria-label="انجام">${t.done ? "✓" : ""}</button>
           <div class="td-task-main">
             <div class="td-task-title">${piEsc(t.title)}</div>
@@ -3369,15 +3369,15 @@ function renderTodo(opts) {
   }).join("");
 
   if (enterAnimate && targetOpenId) {
-    // force reflow سپس باز کردن با کلاس — انیمیشن کرکره
     void stack.offsetHeight;
-    requestAnimationFrame(() => {
+    // کمی صبر تا تب دیده شود، بعد کرکره آرام باز شود
+    setTimeout(() => {
       requestAnimationFrame(() => {
         stack.querySelectorAll(".td-card").forEach((card) => {
           card.classList.toggle("is-open", card.dataset.fid === targetOpenId);
         });
       });
-    });
+    }, 120);
   }
 }
 
