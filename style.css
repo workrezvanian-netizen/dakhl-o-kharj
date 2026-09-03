@@ -4170,7 +4170,12 @@ input:focus, select:focus {
 
 /* FAB مثل اقساط — فقط در تب کارها */
 .fab-todo {
-  /* همان استایل .fab */
+  /* همان استایل .fab — شناور پایین چپ مثل اقساط */
+  position: fixed;
+  bottom: calc(88px + max(env(safe-area-inset-bottom), 8px));
+  left: 18px;
+  right: auto;
+  z-index: 35;
 }
 #tab-todo { padding-bottom: calc(100px + env(safe-area-inset-bottom, 0px)); }
 
