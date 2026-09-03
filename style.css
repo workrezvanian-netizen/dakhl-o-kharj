@@ -4241,18 +4241,57 @@ input:focus, select:focus {
 .td-card.is-open .td-chevron { transform: rotate(90deg); color: #94a3b8; }
 
 .td-body {
-  display: none;
-  padding: 0 12px 14px;
-  border-top: 1px solid rgba(22,63,60,0.05);
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.42s cubic-bezier(.22,1,.36,1);
+  border-top: 1px solid transparent;
 }
 .td-card.is-open .td-body {
-  display: block;
-  animation: tdOpen .32s cubic-bezier(.22,1,.36,1);
+  grid-template-rows: 1fr;
+  border-top-color: rgba(22,63,60,0.06);
 }
-@keyframes tdOpen {
-  from { opacity: 0; transform: translateY(-6px); }
+.td-body-inner {
+  overflow: hidden;
+  min-height: 0;
+}
+.td-body-content {
+  padding: 0 12px 14px;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition:
+    opacity 0.28s ease 0.06s,
+    transform 0.38s cubic-bezier(.22,1,.36,1) 0.04s;
+  pointer-events: none;
+}
+.td-card.is-open .td-body-content {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+.td-card {
+  transition:
+    box-shadow 0.35s cubic-bezier(.22,1,.36,1),
+    transform 0.35s cubic-bezier(.22,1,.36,1),
+    border-color 0.3s ease;
+}
+.td-card.is-open {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 32px rgba(40,50,40,0.1);
+}
+.td-chevron {
+  transition: transform 0.38s cubic-bezier(.22,1,.36,1), color 0.25s ease;
+}
+.td-task {
+  /* stagger via animation when parent opens */
+}
+.td-card.is-open .td-task {
+  animation: tdTaskIn 0.4s cubic-bezier(.22,1,.36,1) both;
+}
+@keyframes tdTaskIn {
+  from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: none; }
 }
+
 
 .td-task {
   display: flex;

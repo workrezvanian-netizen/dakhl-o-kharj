@@ -2721,7 +2721,7 @@ async function initSync() {
 // ---------- Service worker ----------
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js?v=103").catch(() => {});
+    navigator.serviceWorker.register("sw.js?v=104").catch(() => {});
   });
 }
 
@@ -3324,27 +3324,24 @@ function renderTodo() {
     const total = folder.tasks.length;
     const meta = openN > 0 ? String(openN) : (total ? String(total) : "");
 
-    let body = "";
-    if (open) {
-      if (!folder.tasks.length) {
-        body = `<div class="td-body"><p class="td-empty">هنوز کاری نیست</p>
-          <button type="button" class="td-add-inline" data-action="add" data-fid="${folder.id}">+ افزودن کار</button></div>`;
-      } else {
-        const tasks = folder.tasks.map((t, ti) => {
-          const p = Math.min(4, Math.max(1, t.priority || 3));
-          const labels = { 1: "فوری", 2: "بالا", 3: "عادی", 4: "کم" };
-          const chip = `<span class="td-chip p${p}">${labels[p]}</span>`;
-          return `<div class="td-task ${t.done ? "done" : ""}" data-fid="${folder.id}" data-tid="${t.id}" style="animation-delay:${Math.min(ti, 12) * 0.03}s">
-            <button type="button" class="td-check p${p}" data-action="toggle" aria-label="انجام">${t.done ? "✓" : ""}</button>
-            <div class="td-task-main">
-              <div class="td-task-title">${piEsc(t.title)}</div>
-              <div class="td-task-foot">${chip}</div>
-            </div>
-          </div>`;
-        }).join("");
-        body = `<div class="td-body">${tasks}
-          <button type="button" class="td-add-inline" data-action="add" data-fid="${folder.id}">+ افزودن کار</button></div>`;
-      }
+    let inner = "";
+    if (!folder.tasks.length) {
+      inner = `<p class="td-empty">هنوز کاری نیست</p>
+        <button type="button" class="td-add-inline" data-action="add" data-fid="${folder.id}">+ افزودن کار</button>`;
+    } else {
+      inner = folder.tasks.map((t, ti) => {
+        const p = Math.min(4, Math.max(1, t.priority || 3));
+        const labels = { 1: "فوری", 2: "بالا", 3: "عادی", 4: "کم" };
+        const chip = `<span class="td-chip p${p}">${labels[p]}</span>`;
+        return `<div class="td-task ${t.done ? "done" : ""}" data-fid="${folder.id}" data-tid="${t.id}" style="animation-delay:${Math.min(ti, 12) * 0.04}s">
+          <button type="button" class="td-check p${p}" data-action="toggle" aria-label="انجام">${t.done ? "✓" : ""}</button>
+          <div class="td-task-main">
+            <div class="td-task-title">${piEsc(t.title)}</div>
+            <div class="td-task-foot">${chip}</div>
+          </div>
+        </div>`;
+      }).join("") + `
+        <button type="button" class="td-add-inline" data-action="add" data-fid="${folder.id}">+ افزودن کار</button>`;
     }
 
     return `<div class="td-card ${open ? "is-open" : ""}" data-fid="${folder.id}">
@@ -3354,7 +3351,11 @@ function renderTodo() {
         <span class="td-card-meta">${meta}</span>
         <svg class="td-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      ${body}
+      <div class="td-body">
+        <div class="td-body-inner">
+          <div class="td-body-content">${inner}</div>
+        </div>
+      </div>
     </div>`;
   }).join("");
 }
@@ -3436,7 +3437,19 @@ function setupTodoUI() {
 
       if (action === "open" && fid) {
         const wasOpen = state.todo.openId === fid;
-        state.todo.openId = wasOpen ? null : fid;
+        const nextId = wasOpen ? null : fid;
+        // انیمیشن کرکره‌ای: اول کلاس‌ها را عوض کن، اگر لازم محتوای جدید بعداً
+        const cards = stack.querySelectorAll(".td-card");
+        if (cards.length === state.todo.lists.length) {
+          state.todo.openId = nextId;
+          cards.forEach((card) => {
+            const id = card.dataset.fid;
+            const shouldOpen = id === nextId;
+            card.classList.toggle("is-open", shouldOpen);
+          });
+          return;
+        }
+        state.todo.openId = nextId;
         renderTodo();
         return;
       }
