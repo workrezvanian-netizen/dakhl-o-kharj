@@ -14,7 +14,7 @@
 <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css">
 <link href="https://cdn.jsdelivr.net/gh/rastikerdar/kamran@v1.0.0/dist/font-face.css" rel="stylesheet" type="text/css">
 <link href="https://cdn.jsdelivr.net/gh/rastikerdar/samim-font@v4.0.5/dist/font-face.css" rel="stylesheet" type="text/css">
-<link rel="stylesheet" href="style.css?v=99">
+<link rel="stylesheet" href="style.css?v=100">
 </head>
 <body>
 
@@ -358,26 +358,28 @@
 
   </section>
 
-  <!-- TODO — PlanIt exact folder stack -->
+  <!-- TODO minimal -->
   <section id="tab-todo" class="tab">
-    <div class="pi-app">
-      <div class="pi-header">
-        <div class="pi-header-center">
-          <h2 class="pi-title">لیست کارها</h2>
-          <p class="pi-date" id="piDate">—</p>
+    <div class="td-wrap">
+      <header class="td-top">
+        <div>
+          <h2 class="td-h1">کارها</h2>
+          <p class="td-sub" id="piDate">—</p>
         </div>
-      </div>
+        <button type="button" id="piNewProject" class="td-icon-btn" aria-label="پروژه جدید">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
+      </header>
 
-      <div class="pi-stack" id="piStack"></div>
+      <div class="td-projects" id="piStack" role="list"></div>
     </div>
 
-    <!-- شیت افزودن کار -->
     <div id="piTaskSheet" class="pi-sheet" hidden>
       <div class="pi-sheet-backdrop" id="piSheetBackdrop"></div>
       <div class="pi-sheet-panel" role="dialog">
         <div class="pi-sheet-handle"></div>
         <h3 id="piSheetTitle">کار جدید</h3>
-        <input type="text" id="piTaskTitle" placeholder="عنوان کار..." maxlength="160" autocomplete="off">
+        <input type="text" id="piTaskTitle" placeholder="چه کاری باید انجام شود؟" maxlength="160" autocomplete="off">
         <div class="pi-priority-row">
           <span class="pi-prio-label">اولویت</span>
           <div class="pi-prio-btns" id="piPrioBtns">
@@ -389,7 +391,7 @@
         </div>
         <div class="pi-sheet-actions">
           <button type="button" id="piTaskCancel" class="pi-btn-secondary">انصراف</button>
-          <button type="button" id="piTaskSave" class="pi-btn-primary">ذخیره</button>
+          <button type="button" id="piTaskSave" class="pi-btn-primary">افزودن</button>
         </div>
       </div>
     </div>
@@ -842,8 +844,8 @@ n  <!-- Progress -->
 </div>
 <!-- ═══════════════ END ONBOARDING ═══════════════ -->
 
-<script src="script.js?v=99"></script>
-<script src="installments.js?v=99"></script>
-<script src="three-scene.js?v=99"></script>
+<script src="script.js?v=100"></script>
+<script src="installments.js?v=100"></script>
+<script src="three-scene.js?v=100"></script>
 </body>
 </html>
