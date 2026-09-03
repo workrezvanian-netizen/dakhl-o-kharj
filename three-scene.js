@@ -16,7 +16,7 @@
   const maxTilt = 5; // درجه
   // این‌ها خودشون تعامل کشیدنیِ مختص خودشون رو دارن (مثل ورق‌زدن کارت‌ها یا اسلایدر بودجه)
   // پس اگه اشاره‌گر داخل اون‌هاست، نباید بلوک بیرونی هم کج بشه.
-  const NO_TILT_INSIDE = ".chart-carousel-page, input[type=range], .todo-task-check, .todo-add-task-input, .todo-add-task-form, .todo-color-swatch, .todo-folder-open-title, .todo-new-folder-input, .todo-add-task-tag-toggle, .todo-add-task-tag-input";
+  const NO_TILT_INSIDE = ".chart-carousel-page, .budget-cat-slider, input[type=range]";
 
   function bindTilt(el) {
     if (el.dataset.tiltBound === "1") return;
