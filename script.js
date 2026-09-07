@@ -2095,11 +2095,13 @@ function renderCombinedBarChart(containerId) {
   });
 }
 
-// -- کاروسل کشویی به‌شکل «دسته کارت روی هم» — ورق‌خوردن با کشیدن یا زدن دات‌ها --
+// -- کاروسل نمودار: سوایپ لمسی + درگ موس + دات‌ها --
 function setupChartCarousel(trackId, dotsId, onShow) {
   const track = document.getElementById(trackId);
   const dots = document.getElementById(dotsId);
   if (!track || !dots) return;
+  if (track.dataset.carouselBound === "1") return;
+  track.dataset.carouselBound = "1";
   const pages = Array.from(track.querySelectorAll(":scope > .chart-carousel-page"));
   const dotEls = Array.from(dots.children);
   if (!pages.length) return;
@@ -2107,7 +2109,7 @@ function setupChartCarousel(trackId, dotsId, onShow) {
   let scrollTimer = null;
 
   function pageWidth() {
-    return pages[0] ? pages[0].offsetWidth : (track.clientWidth || 1);
+    return pages[0] ? pages[0].getBoundingClientRect().width : (track.clientWidth || 1);
   }
 
   function setActive(index) {
@@ -2115,7 +2117,7 @@ function setupChartCarousel(trackId, dotsId, onShow) {
     const changed = index !== activeIndex;
     activeIndex = index;
     dotEls.forEach((d, i) => d.classList.toggle("active", i === activeIndex));
-    if (changed && onShow) onShow(activeIndex);
+    if (changed && typeof onShow === "function") onShow(activeIndex);
   }
 
   function goTo(index) {
@@ -2126,17 +2128,66 @@ function setupChartCarousel(trackId, dotsId, onShow) {
   }
 
   dotEls.forEach((dot, i) => {
-    dot.addEventListener("click", () => goTo(i));
+    dot.addEventListener("click", (e) => {
+      e.preventDefault();
+      goTo(i);
+    });
   });
 
   track.addEventListener("scroll", () => {
     clearTimeout(scrollTimer);
     scrollTimer = setTimeout(() => {
-      const w = pageWidth();
+      const w = pageWidth() || 1;
       const idx = Math.round(track.scrollLeft / w);
       setActive(Math.min(pages.length - 1, Math.max(0, idx)));
-    }, 50);
+    }, 40);
   }, { passive: true });
+
+  // درگ/سوایپ صریح (موس + تاچ) — مکمل اسکرول native
+  let dragging = false;
+  let startX = 0;
+  let startScroll = 0;
+  let moved = false;
+
+  function onPointerDown(e) {
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+    dragging = true;
+    moved = false;
+    startX = e.clientX;
+    startScroll = track.scrollLeft;
+    track.classList.add("is-dragging");
+    try { track.setPointerCapture(e.pointerId); } catch (_) {}
+  }
+  function onPointerMove(e) {
+    if (!dragging) return;
+    const dx = e.clientX - startX;
+    if (Math.abs(dx) > 4) moved = true;
+    track.scrollLeft = startScroll - dx;
+  }
+  function onPointerUp(e) {
+    if (!dragging) return;
+    dragging = false;
+    track.classList.remove("is-dragging");
+    try { track.releasePointerCapture(e.pointerId); } catch (_) {}
+    const dx = e.clientX - startX;
+    const w = pageWidth() || 1;
+    if (moved && Math.abs(dx) > Math.min(48, w * 0.15)) {
+      // سوایپ افقی کافی → صفحه بعد/قبل
+      if (dx < 0) goTo(Math.min(pages.length - 1, activeIndex + 1));
+      else goTo(Math.max(0, activeIndex - 1));
+    } else {
+      // برگرد به نزدیک‌ترین صفحه
+      const idx = Math.round(track.scrollLeft / w);
+      goTo(Math.min(pages.length - 1, Math.max(0, idx)));
+    }
+  }
+
+  track.addEventListener("pointerdown", onPointerDown, { passive: true });
+  track.addEventListener("pointermove", onPointerMove, { passive: true });
+  track.addEventListener("pointerup", onPointerUp, { passive: true });
+  track.addEventListener("pointercancel", onPointerUp, { passive: true });
+  // جلوگیری از درگ تصویر/متن موقع سوایپ
+  track.addEventListener("dragstart", (e) => e.preventDefault());
 
   window.addEventListener("resize", () => {
     if (pages[activeIndex]) track.scrollLeft = pages[activeIndex].offsetLeft;
@@ -2723,7 +2774,7 @@ async function initSync() {
 // ---------- Service worker ----------
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js?v=111").catch(() => {});
+    navigator.serviceWorker.register("sw.js?v=112").catch(() => {});
   });
 }
 

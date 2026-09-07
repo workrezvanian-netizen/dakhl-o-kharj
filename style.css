@@ -747,33 +747,33 @@ h2 {
 .balance-hero-wallet {
   width: 36px;
   height: 36px;
-  border-radius: 50%;
-  background: linear-gradient(145deg, #e8f5e9 0%, #c8e6c9 100%);
+  border-radius: 0;
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  box-shadow:
-    0 2px 8px rgba(76,175,80,0.2),
-    inset 0 1px 0 rgba(255,255,255,0.85);
-  border: 1px solid rgba(76,175,80,0.18);
+  box-shadow: none;
+  border: none;
   position: relative;
   z-index: 2;
   margin: 0;
   top: auto;
   right: auto;
   transform: none;
+  padding: 0;
 }
 .balance-hero-card:hover .balance-hero-wallet { /* static */ }
 .balance-hero-wallet svg {
-  width: 18px;
-  height: 18px;
+  width: 22px;
+  height: 22px;
   color: #2E7D32;
+  filter: drop-shadow(0 1px 2px rgba(16,70,43,0.12));
 }
 .balance-hero-card.negative .balance-hero-wallet {
-  background: linear-gradient(145deg, #fce4ec 0%, #f8bbd0 100%);
-  box-shadow: 0 2px 8px rgba(244,67,54,0.16), inset 0 1px 0 rgba(255,255,255,0.85);
-  border-color: rgba(244,67,54,0.14);
+  background: transparent;
+  box-shadow: none;
+  border: none;
 }
 .balance-hero-card.negative .balance-hero-wallet svg {
   color: #C62828;
@@ -1593,10 +1593,16 @@ input:focus, select:focus {
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
   overscroll-behavior-x: contain;
-  touch-action: pan-x;
+  touch-action: pan-x pinch-zoom;
   padding: 4px 0 2px;
-  /* در RTL اسکرول افقی مثل LTR رفتار کند تا ورق درست کار کند */
   direction: ltr;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.chart-carousel-track.is-dragging {
+  cursor: grabbing;
+  scroll-snap-type: none;
 }
 .chart-carousel-track::-webkit-scrollbar { display: none; }
 .chart-carousel-page {
