@@ -693,119 +693,130 @@ h2 {
 .month-nav-today-btn:active .icon-mask { background: #fff; }
 .month-nav-today-btn[hidden] { display: none; }
 
-/* ---------- باکس موجودی کل — شیشه‌ای مینیمال با آیکون کیف پول و چشم ---------- */
+/* ---------- باکس موجودی — فشرده ۷۰×۲۰ نسبی، شیک ---------- */
 .balance-hero-card {
-  margin: 0 auto 14px;
-  padding: 14px 20px;
-  min-height: 56px;
-  border-radius: 14px;
-  background: linear-gradient(145deg, rgba(255,255,255,0.92) 0%, rgba(22,63,60,0.04) 100%);
-  border: 1px solid rgba(255,255,255,0.9);
-  box-shadow: 0 6px 20px rgba(16,70,43,0.10), 0 2px 6px rgba(0,0,0,0.04);
+  margin: 0 auto 12px;
+  width: 70%;
+  max-width: 280px;
+  min-width: 200px;
+  height: 40px;           /* نسبت تقریبی 70×20 */
+  min-height: 40px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background:
+    linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(240,248,246,0.9) 55%, rgba(22,63,60,0.06) 100%);
+  border: 1px solid rgba(22,63,60,0.08);
+  box-shadow:
+    0 8px 22px rgba(16,70,43,0.10),
+    0 2px 6px rgba(0,0,0,0.04),
+    inset 0 1px 0 rgba(255,255,255,0.9);
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 10px;
-  transition: transform .3s cubic-bezier(.22,1,.36,1), box-shadow .3s ease;
+  justify-content: space-between;
+  gap: 8px;
   position: relative;
   overflow: hidden;
-  will-change: transform;
   contain: layout style;
 }
 .balance-hero-card::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 50%;
-  border-radius: 14px 14px 0 0;
-  background: linear-gradient(180deg, rgba(255,255,255,0.4) 0%, transparent 100%);
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(180deg, rgba(255,255,255,0.45) 0%, transparent 55%);
   pointer-events: none;
   z-index: 0;
 }
 .balance-hero-card:hover {
-  box-shadow: 0 10px 28px rgba(16,70,43,0.14), 0 3px 8px rgba(0,0,0,0.05);
+  box-shadow:
+    0 10px 26px rgba(16,70,43,0.12),
+    0 2px 6px rgba(0,0,0,0.04),
+    inset 0 1px 0 rgba(255,255,255,0.9);
 }
 .balance-hero-card.negative {
-  border-color: rgba(194,74,46,0.18);
-  background: linear-gradient(145deg, rgba(194,74,46,0.06) 0%, rgba(255,245,243,0.7) 40%, rgba(194,74,46,0.03) 100%);
+  border-color: rgba(194,74,46,0.16);
+  background: linear-gradient(135deg, rgba(255,250,249,0.96) 0%, rgba(252,228,236,0.55) 100%);
   box-shadow:
-    0 2px 16px rgba(194,74,46,0.1),
-    0 1px 3px rgba(194,74,46,0.05),
-    0 1px 0 rgba(255,255,255,0.9) inset;
+    0 8px 20px rgba(194,74,46,0.10),
+    0 2px 6px rgba(194,74,46,0.05),
+    inset 0 1px 0 rgba(255,255,255,0.9);
 }
 .balance-hero-card.negative::before {
-  background: radial-gradient(circle, rgba(194,74,46,0.05) 0%, transparent 70%);
+  background: linear-gradient(180deg, rgba(255,255,255,0.4) 0%, transparent 55%);
 }
 .balance-hero-wallet {
-  width: 36px;
-  height: 36px;
-  border-radius: 11px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
   background: linear-gradient(145deg, #e8f5e9 0%, #c8e6c9 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  box-shadow: 0 3px 10px rgba(76,175,80,0.18), 0 1px 3px rgba(76,175,80,0.12), 0 1px 0 rgba(255,255,255,0.8) inset;
-  transition: transform .25s ease, box-shadow .25s ease;
+  box-shadow:
+    0 2px 8px rgba(76,175,80,0.2),
+    inset 0 1px 0 rgba(255,255,255,0.85);
   border: 1px solid rgba(76,175,80,0.18);
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
+  position: relative;
   z-index: 2;
+  margin: 0;
+  top: auto;
+  right: auto;
+  transform: none;
 }
-.balance-hero-card:hover .balance-hero-wallet {
-  /* بدون حرکت با موس */
-}
+.balance-hero-card:hover .balance-hero-wallet { /* static */ }
 .balance-hero-wallet svg {
-  width: 18px;
-  height: 18px;
+  width: 14px;
+  height: 14px;
   color: #2E7D32;
-  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.06));
 }
 .balance-hero-card.negative .balance-hero-wallet {
   background: linear-gradient(145deg, #fce4ec 0%, #f8bbd0 100%);
-  box-shadow: 0 3px 10px rgba(244,67,54,0.14), 0 1px 3px rgba(244,67,54,0.10), 0 1px 0 rgba(255,255,255,0.8) inset;
+  box-shadow: 0 2px 8px rgba(244,67,54,0.16), inset 0 1px 0 rgba(255,255,255,0.85);
   border-color: rgba(244,67,54,0.14);
 }
 .balance-hero-card.negative .balance-hero-wallet svg {
   color: #C62828;
 }
 .balance-hero-center {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
+  position: relative;
+  left: auto;
+  top: auto;
+  transform: none;
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1px;
+  justify-content: center;
+  gap: 0;
   z-index: 1;
+  min-width: 0;
+  padding: 0 2px;
 }
 .balance-hero-label {
-  font-size: 10px;
-  font-weight: 600;
+  font-size: 9px;
+  font-weight: 700;
   color: var(--text-mute);
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  opacity: 0.7;
+  letter-spacing: 0.4px;
+  opacity: 0.75;
+  line-height: 1;
+  margin-bottom: 2px;
 }
 .balance-hero-amount {
-  font-size: 18px;
+  font-size: 14px;
   font-weight: 800;
   color: var(--green-deep);
   direction: ltr;
   text-align: center;
-  line-height: 1.2;
+  line-height: 1.15;
   font-variant-numeric: tabular-nums;
-  transition: all .3s ease;
-  text-shadow: 0 1px 2px rgba(16,70,43,0.08);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 .balance-hero-card.negative .balance-hero-amount {
   color: var(--expense);
-  text-shadow: 0 1px 2px rgba(194,74,46,0.08);
 }
 .balance-hero-amount #dashBalanceAmount {
   font-variant-numeric: tabular-nums;
@@ -814,7 +825,7 @@ h2 {
 .balance-eye-btn {
   width: 28px;
   height: 28px;
-  border-radius: 8px;
+  border-radius: 50%;
   border: none;
   background: rgba(22,63,60,0.06);
   display: flex;
@@ -822,12 +833,12 @@ h2 {
   justify-content: center;
   cursor: pointer;
   flex-shrink: 0;
-  transition: all .2s ease;
+  transition: background .2s ease;
   padding: 0;
-  position: absolute;
-  left: 12px;
-  top: 50%;
-  transform: translateY(-50%);
+  position: relative;
+  left: auto;
+  top: auto;
+  transform: none;
   z-index: 2;
 }
 .balance-eye-btn:hover {
