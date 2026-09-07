@@ -592,8 +592,11 @@ function loadMonthlyTotal() {
     }
     document.getElementById("summaryMonth").textContent = monthLabel;
     animateNumberInst(document.getElementById("summaryTotal"), data.total);
-    animateNumberInst(document.getElementById("summaryPaid"), data.paid_total);
-    animateNumberInst(document.getElementById("summaryRemaining"), data.remaining_total);
+    // پرداخت‌شده و باقی‌مانده بدون کانتر
+    const paidEl = document.getElementById("summaryPaid");
+    const remainEl = document.getElementById("summaryRemaining");
+    if (paidEl) paidEl.textContent = formatAmount(String(data.paid_total));
+    if (remainEl) remainEl.textContent = formatAmount(String(data.remaining_total));
   } catch (e) {
     /* خطای غیرحیاتی، لیست اصلی همچنان کار می‌کنه */
   }
