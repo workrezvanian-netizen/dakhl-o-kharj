@@ -1436,8 +1436,10 @@ function renderDashboard() {
   const totalExpense = expenses.reduce((s, x) => s + x.amount, 0);
   const balance = totalIncome - totalExpense;
 
-  animateNumber(document.getElementById("dashIncomeChip"), totalIncome);
-  animateNumber(document.getElementById("dashExpenseChip"), totalExpense);
+  const _incChip = document.getElementById("dashIncomeChip");
+  const _expChip = document.getElementById("dashExpenseChip");
+  if (_incChip) _incChip.textContent = fmtAmount(totalIncome);
+  if (_expChip) _expChip.textContent = fmtAmount(totalExpense);
 
   const total = totalIncome + totalExpense;
   const incomePct = total ? (totalIncome / total) * 100 : 50;
@@ -1858,8 +1860,8 @@ function renderCombinedDailyChart(containerId, incomeTotalElId, expenseTotalElId
     const j = toJalaali(gy, gm, gd);
     if (isYear ? j.jy === todayJHead.jy : (j.jy === todayJHead.jy && j.jm === todayJHead.jm)) headerExpense += x.amount;
   });
-  if (incomeTotalEl) animateNumber(incomeTotalEl, headerIncome, 500);
-  if (expenseTotalEl) animateNumber(expenseTotalEl, headerExpense, 500);
+  if (incomeTotalEl) incomeTotalEl.textContent = fmtAmount(headerIncome);
+  if (expenseTotalEl) expenseTotalEl.textContent = fmtAmount(headerExpense);
 
   const totalIncome = pool.reduce((s, p) => s + p.income, 0);
   const totalExpense = pool.reduce((s, p) => s + p.expense, 0);
@@ -2721,7 +2723,7 @@ async function initSync() {
 // ---------- Service worker ----------
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js?v=106").catch(() => {});
+    navigator.serviceWorker.register("sw.js?v=107").catch(() => {});
   });
 }
 

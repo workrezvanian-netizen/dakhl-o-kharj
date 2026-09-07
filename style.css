@@ -749,8 +749,7 @@ h2 {
   z-index: 2;
 }
 .balance-hero-card:hover .balance-hero-wallet {
-  transform: translateY(-50%) scale(1.08);
-  box-shadow: 0 5px 16px rgba(76,175,80,0.22), 0 2px 4px rgba(76,175,80,0.14), 0 1px 0 rgba(255,255,255,0.8) inset;
+  /* بدون حرکت با موس */
 }
 .balance-hero-wallet svg {
   width: 18px;
@@ -1529,7 +1528,7 @@ input:focus, select:focus {
 }
 .compare-gauge-seg { transition: stroke-dasharray .7s cubic-bezier(.4,0,.2,1); }
 .compare-gauge-svg { filter: drop-shadow(0 6px 16px rgba(16,70,43,0.18)); transition: filter .2s ease, transform .2s ease; }
-.compare-gauge:hover .compare-gauge-svg { filter: drop-shadow(0 8px 22px rgba(16,70,43,0.26)); transform: scale(1.03); }
+.compare-gauge:hover .compare-gauge-svg { filter: drop-shadow(0 8px 22px rgba(16,70,43,0.26)); }
 .compare-gauge-center {
   position: absolute;
   top: 0;
@@ -1822,7 +1821,7 @@ input:focus, select:focus {
   will-change: transform;
   contain: layout style;
 }
-.quick-cat-card:hover { filter: brightness(1.06); box-shadow: 0 6px 20px rgba(0,0,0,0.08), inset 0 1px 2px rgba(255,255,255,0.9); transform: translateY(-2px); }
+.quick-cat-card:hover { filter: brightness(1.06); box-shadow: 0 6px 20px rgba(0,0,0,0.08), inset 0 1px 2px rgba(255,255,255,0.9); }
 .quick-cat-card:active { transform: scale(0.95) translateY(0); box-shadow: 0 1px 3px rgba(0,0,0,0.05), inset 0 1px 2px rgba(255,255,255,0.9); }
 .quick-cat-card::before {
   content: "";
@@ -3338,7 +3337,7 @@ input:focus, select:focus {
   will-change: transform;
   contain: layout style;
 }
-.budget-cat-row:hover { transform: translateY(-1px); box-shadow: 0 3px 10px rgba(0,0,0,0.06); }
+.budget-cat-row:hover { box-shadow: 0 3px 10px rgba(0,0,0,0.06); }
 .budget-cat-head {
   display: flex;
   align-items: center;
@@ -3924,7 +3923,7 @@ input:focus, select:focus {
   transition: all .25s ease;
   margin-top: 8px;
 }
-.ob-cta-btn:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 12px 40px rgba(76,175,80,0.45); }
+.ob-cta-btn:hover { box-shadow: 0 12px 40px rgba(76,175,80,0.45); }
 .ob-cta-btn:active { transform: scale(0.97); }
 .ob-privacy {
   display: flex;
