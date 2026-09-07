@@ -697,11 +697,11 @@ h2 {
 .balance-hero-card {
   margin: 0 auto 12px;
   width: 70%;
-  max-width: 280px;
-  min-width: 200px;
-  height: 40px;           /* نسبت تقریبی 70×20 */
-  min-height: 40px;
-  padding: 0 10px;
+  max-width: 300px;
+  min-width: 220px;
+  height: 52px;
+  min-height: 52px;
+  padding: 0 12px;
   border-radius: 999px;
   background:
     linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(240,248,246,0.9) 55%, rgba(22,63,60,0.06) 100%);
@@ -745,8 +745,8 @@ h2 {
   background: linear-gradient(180deg, rgba(255,255,255,0.4) 0%, transparent 55%);
 }
 .balance-hero-wallet {
-  width: 28px;
-  height: 28px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   background: linear-gradient(145deg, #e8f5e9 0%, #c8e6c9 100%);
   display: flex;
@@ -766,8 +766,8 @@ h2 {
 }
 .balance-hero-card:hover .balance-hero-wallet { /* static */ }
 .balance-hero-wallet svg {
-  width: 14px;
-  height: 14px;
+  width: 18px;
+  height: 18px;
   color: #2E7D32;
 }
 .balance-hero-card.negative .balance-hero-wallet {
@@ -794,7 +794,7 @@ h2 {
   padding: 0 2px;
 }
 .balance-hero-label {
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 700;
   color: var(--text-mute);
   letter-spacing: 0.4px;
@@ -803,7 +803,7 @@ h2 {
   margin-bottom: 2px;
 }
 .balance-hero-amount {
-  font-size: 14px;
+  font-size: 18px;
   font-weight: 800;
   color: var(--green-deep);
   direction: ltr;
@@ -823,8 +823,8 @@ h2 {
 }
 /* Eye toggle button */
 .balance-eye-btn {
-  width: 28px;
-  height: 28px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   border: none;
   background: rgba(22,63,60,0.06);
@@ -848,8 +848,8 @@ h2 {
   background: rgba(22,63,60,0.15);
 }
 .balance-eye-btn svg {
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
   color: var(--text-mute);
 }
 .balance-hero-card.is-hidden .balance-hero-amount {
