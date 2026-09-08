@@ -2905,7 +2905,7 @@ async function initSync() {
 // ---------- Service worker ----------
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js?v=113").catch(() => {});
+    navigator.serviceWorker.register("sw.js?v=114").catch(() => {});
   });
 }
 
