@@ -4562,3 +4562,123 @@ input:focus, select:focus {
 .td-task.done .td-check.p2 { background: #ea580c; border-color: #ea580c; }
 .td-task.done .td-check.p3 { background: #2563eb; border-color: #2563eb; }
 .td-task.done .td-check.p4 { background: #64748b; border-color: #64748b; }
+
+
+.chart-page-title {
+  margin: 0 0 10px;
+  text-align: center;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text-mute, #7A8582);
+  letter-spacing: -0.01em;
+}
+.chart-carousel {
+  position: relative;
+  margin: 0 -4px;
+}
+.chart-carousel-track {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+  touch-action: pan-x;
+  padding: 6px 0 4px;
+  direction: ltr;
+  scroll-behavior: smooth;
+}
+.chart-carousel-track::-webkit-scrollbar { display: none; }
+.chart-carousel-page {
+  flex: 0 0 100%;
+  width: 100%;
+  min-width: 100%;
+  max-width: 100%;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  box-sizing: border-box;
+  padding: 8px 6px 4px;
+  direction: rtl;
+  /* جلوگیری از اسکرول عمودی اشتباه داخل صفحه */
+  touch-action: pan-y pinch-zoom;
+}
+.chart-carousel-dots {
+  display: flex;
+  justify-content: center;
+  gap: 7px;
+  margin-top: 10px;
+}
+.chart-carousel-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(22,63,60,0.18);
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: transform .25s ease, background .25s ease, width .25s ease;
+}
+.chart-carousel-dot.active {
+  width: 18px;
+  border-radius: 999px;
+  background: var(--green-deep, #163F3C);
+}
+
+/* نمودار دسته‌ها افقی */
+.cat-hbar-list { display: flex; flex-direction: column; gap: 10px; padding: 4px 2px; }
+.cat-hbar-row { display: flex; flex-direction: column; gap: 4px; }
+.cat-hbar-meta {
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 12px; font-weight: 700; color: #1a2e2b;
+}
+.cat-hbar-track {
+  height: 10px; border-radius: 999px; background: rgba(22,63,60,0.06); overflow: hidden;
+}
+.cat-hbar-fill {
+  height: 100%; border-radius: 999px; width: 0;
+  transition: width .7s cubic-bezier(.22,1,.36,1);
+}
+
+/* حلقه پس‌انداز */
+.savings-ring-wrap {
+  display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 8px 0 4px;
+}
+.savings-ring-svg { width: 160px; height: 160px; }
+.savings-ring-center {
+  font-size: 22px; font-weight: 800; fill: #163F3C;
+}
+.savings-ring-sub { font-size: 11px; fill: #7A8582; }
+.savings-ring-legend {
+  display: flex; gap: 14px; font-size: 12px; font-weight: 600; color: #334155;
+}
+.savings-ring-legend i {
+  display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-left: 5px;
+}
+
+/* پیشرفت بودجه */
+.bp-list { display: flex; flex-direction: column; gap: 12px; padding: 4px 2px; }
+.bp-row { display: flex; flex-direction: column; gap: 5px; }
+.bp-head { display: flex; justify-content: space-between; font-size: 12.5px; font-weight: 700; }
+.bp-track { height: 12px; border-radius: 999px; background: rgba(22,63,60,0.07); overflow: hidden; }
+.bp-fill { height: 100%; border-radius: 999px; width: 0; transition: width .75s cubic-bezier(.22,1,.36,1); }
+
+/* KPI */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding: 4px 2px;
+}
+.kpi-card {
+  border-radius: 14px;
+  padding: 12px 12px 10px;
+  background: linear-gradient(160deg, #fff 0%, #f4faf8 100%);
+  border: 1px solid rgba(22,63,60,0.07);
+  box-shadow: 0 4px 12px rgba(16,70,43,0.05);
+}
+.kpi-card .kpi-label { font-size: 11px; font-weight: 600; color: #7A8582; margin-bottom: 4px; }
+.kpi-card .kpi-value { font-size: 15px; font-weight: 800; color: #163F3C; direction: ltr; text-align: right; }
+.kpi-card.neg .kpi-value { color: #C24A2E; }

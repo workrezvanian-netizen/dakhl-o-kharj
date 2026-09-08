@@ -14,7 +14,7 @@
 <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css">
 <link href="https://cdn.jsdelivr.net/gh/rastikerdar/kamran@v1.0.0/dist/font-face.css" rel="stylesheet" type="text/css">
 <link href="https://cdn.jsdelivr.net/gh/rastikerdar/samim-font@v4.0.5/dist/font-face.css" rel="stylesheet" type="text/css">
-<link rel="stylesheet" href="style.css?v=112">
+<link rel="stylesheet" href="style.css?v=113">
 </head>
 <body>
 
@@ -268,20 +268,32 @@
           <span class="daily-chart-dot expense-dot"></span>
         </div>
       </div>
-      <div class="chart-carousel">
+      <div class="chart-carousel" data-carousel="daily">
         <div class="chart-carousel-track" id="dailyChartTrack">
-          <div class="chart-carousel-page">
+          <div class="chart-carousel-page" data-page="0">
+            <p class="chart-page-title">روند درآمد و مخارج</p>
             <div class="daily-chart-scroll" id="dailyChartScroll">
               <div id="combinedDailyChart"></div>
             </div>
           </div>
-          <div class="chart-carousel-page">
+          <div class="chart-carousel-page" data-page="1">
+            <p class="chart-page-title">میله‌ای مقایسه‌ای</p>
             <div id="combinedBarChart"></div>
+          </div>
+          <div class="chart-carousel-page" data-page="2">
+            <p class="chart-page-title">سهم دسته‌بندی مخارج</p>
+            <div id="catHBarChart"></div>
+          </div>
+          <div class="chart-carousel-page" data-page="3">
+            <p class="chart-page-title">نسبت پس‌انداز ماه</p>
+            <div id="savingsRingChart"></div>
           </div>
         </div>
         <div class="chart-carousel-dots" id="dailyChartDots">
-          <span class="chart-carousel-dot active"></span>
-          <span class="chart-carousel-dot"></span>
+          <span class="chart-carousel-dot active" data-i="0"></span>
+          <span class="chart-carousel-dot" data-i="1"></span>
+          <span class="chart-carousel-dot" data-i="2"></span>
+          <span class="chart-carousel-dot" data-i="3"></span>
         </div>
       </div>
     </div>
@@ -295,18 +307,30 @@
           <button type="button" class="chart-period-btn" data-period="all" style="padding:6px 10px;flex:none;width:auto;">کل بازه</button>
         </div>
       </div>
-      <div class="chart-carousel">
+      <div class="chart-carousel" data-carousel="compare">
         <div class="chart-carousel-track" id="compareChartTrack">
-          <div class="chart-carousel-page">
+          <div class="chart-carousel-page" data-page="0">
+            <p class="chart-page-title">گیج مقایسه</p>
             <div id="incomeExpenseChart"></div>
           </div>
-          <div class="chart-carousel-page">
+          <div class="chart-carousel-page" data-page="1">
+            <p class="chart-page-title">دونات درآمد / مخارج</p>
             <div id="incomeExpensePie"></div>
+          </div>
+          <div class="chart-carousel-page" data-page="2">
+            <p class="chart-page-title">نوار پیشرفت بودجه ماه</p>
+            <div id="budgetProgressChart"></div>
+          </div>
+          <div class="chart-carousel-page" data-page="3">
+            <p class="chart-page-title">شاخص‌های کلیدی</p>
+            <div id="kpiCardsChart"></div>
           </div>
         </div>
         <div class="chart-carousel-dots" id="compareChartDots">
-          <span class="chart-carousel-dot active"></span>
-          <span class="chart-carousel-dot"></span>
+          <span class="chart-carousel-dot active" data-i="0"></span>
+          <span class="chart-carousel-dot" data-i="1"></span>
+          <span class="chart-carousel-dot" data-i="2"></span>
+          <span class="chart-carousel-dot" data-i="3"></span>
         </div>
       </div>
     </div>
@@ -847,8 +871,8 @@ n  <!-- Progress -->
 </div>
 <!-- ═══════════════ END ONBOARDING ═══════════════ -->
 
-<script src="script.js?v=112"></script>
-<script src="installments.js?v=112"></script>
-<script src="three-scene.js?v=112"></script>
+<script src="script.js?v=113"></script>
+<script src="installments.js?v=113"></script>
+<script src="three-scene.js?v=113"></script>
 </body>
 </html>

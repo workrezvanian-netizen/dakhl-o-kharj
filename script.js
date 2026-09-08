@@ -2053,6 +2053,8 @@ function renderCombinedDailyChart(containerId, incomeTotalElId, expenseTotalElId
       dailyChartMode = btn.dataset.mode;
       renderCombinedDailyChart("combinedDailyChart", "incomeChartTotal", "expenseChartTotal");
       renderCombinedBarChart("combinedBarChart");
+      renderCatHBarChart("catHBarChart");
+      renderSavingsRingChart("savingsRingChart");
     });
   });
 })();
@@ -2095,133 +2097,258 @@ function renderCombinedBarChart(containerId) {
   });
 }
 
-// -- کاروسل نمودار: سوایپ لمسی + درگ موس + دات‌ها --
+// -- کاروسل نمودار: سوایپ پایدار ---
 function setupChartCarousel(trackId, dotsId, onShow) {
   const track = document.getElementById(trackId);
   const dots = document.getElementById(dotsId);
   if (!track || !dots) return;
-  if (track.dataset.carouselBound === "1") return;
-  track.dataset.carouselBound = "1";
-  const pages = Array.from(track.querySelectorAll(":scope > .chart-carousel-page"));
-  const dotEls = Array.from(dots.children);
-  if (!pages.length) return;
-  let activeIndex = 0;
-  let scrollTimer = null;
 
-  function pageWidth() {
-    return pages[0] ? pages[0].getBoundingClientRect().width : (track.clientWidth || 1);
+  // اجازهٔ راه‌اندازی مجدد بعد از تغییر DOM
+  const pages = Array.from(track.querySelectorAll(":scope > .chart-carousel-page"));
+  const dotEls = Array.from(dots.querySelectorAll(".chart-carousel-dot"));
+  if (!pages.length) return;
+
+  let activeIndex = 0;
+  let lock = false;
+
+  function pageW() {
+    return track.clientWidth || pages[0].getBoundingClientRect().width || 1;
   }
 
-  function setActive(index) {
-    if (index < 0 || index >= pages.length) return;
+  function setActive(index, fire) {
+    index = Math.max(0, Math.min(pages.length - 1, index));
     const changed = index !== activeIndex;
     activeIndex = index;
     dotEls.forEach((d, i) => d.classList.toggle("active", i === activeIndex));
-    if (changed && typeof onShow === "function") onShow(activeIndex);
+    if (fire !== false && changed && typeof onShow === "function") onShow(activeIndex);
   }
 
-  function goTo(index) {
-    if (index < 0 || index >= pages.length) return;
-    const left = pages[index].offsetLeft;
-    track.scrollTo({ left, behavior: "smooth" });
+  function goTo(index, smooth) {
+    index = Math.max(0, Math.min(pages.length - 1, index));
+    const left = index * pageW();
+    track.scrollTo({ left, behavior: smooth === false ? "auto" : "smooth" });
     setActive(index);
   }
 
+  // دات‌ها
   dotEls.forEach((dot, i) => {
-    dot.addEventListener("click", (e) => {
+    dot.onclick = (e) => {
       e.preventDefault();
+      e.stopPropagation();
       goTo(i);
-    });
+    };
   });
 
-  track.addEventListener("scroll", () => {
-    clearTimeout(scrollTimer);
-    scrollTimer = setTimeout(() => {
-      const w = pageWidth() || 1;
-      const idx = Math.round(track.scrollLeft / w);
-      setActive(Math.min(pages.length - 1, Math.max(0, idx)));
-    }, 40);
-  }, { passive: true });
+  // اسکرول → همگام‌سازی دات
+  let scrollT = null;
+  track.onscroll = () => {
+    if (lock) return;
+    clearTimeout(scrollT);
+    scrollT = setTimeout(() => {
+      const idx = Math.round(track.scrollLeft / pageW());
+      setActive(idx);
+    }, 60);
+  };
 
-  // درگ/سوایپ صریح (موس + تاچ) — مکمل اسکرول native
-  let dragging = false;
-  let startX = 0;
-  let startScroll = 0;
-  let moved = false;
+  // سوایپ لمسی / درگ — بدون تداخل با اسکرول عمودی صفحه
+  let sx = 0, sy = 0, sl = 0, axis = null, down = false;
 
-  function onPointerDown(e) {
-    if (e.pointerType === "mouse" && e.button !== 0) return;
-    dragging = true;
-    moved = false;
-    startX = e.clientX;
-    startScroll = track.scrollLeft;
-    track.classList.add("is-dragging");
-    try { track.setPointerCapture(e.pointerId); } catch (_) {}
-  }
-  function onPointerMove(e) {
-    if (!dragging) return;
-    const dx = e.clientX - startX;
-    if (Math.abs(dx) > 4) moved = true;
-    track.scrollLeft = startScroll - dx;
-  }
-  function onPointerUp(e) {
-    if (!dragging) return;
-    dragging = false;
-    track.classList.remove("is-dragging");
-    try { track.releasePointerCapture(e.pointerId); } catch (_) {}
-    const dx = e.clientX - startX;
-    const w = pageWidth() || 1;
-    if (moved && Math.abs(dx) > Math.min(48, w * 0.15)) {
-      // سوایپ افقی کافی → صفحه بعد/قبل
-      if (dx < 0) goTo(Math.min(pages.length - 1, activeIndex + 1));
-      else goTo(Math.max(0, activeIndex - 1));
-    } else {
-      // برگرد به نزدیک‌ترین صفحه
-      const idx = Math.round(track.scrollLeft / w);
-      goTo(Math.min(pages.length - 1, Math.max(0, idx)));
+  track.ontouchstart = (e) => {
+    if (!e.touches[0]) return;
+    down = true;
+    axis = null;
+    sx = e.touches[0].clientX;
+    sy = e.touches[0].clientY;
+    sl = track.scrollLeft;
+    lock = true;
+  };
+  track.ontouchmove = (e) => {
+    if (!down || !e.touches[0]) return;
+    const dx = e.touches[0].clientX - sx;
+    const dy = e.touches[0].clientY - sy;
+    if (axis === null && (Math.abs(dx) > 8 || Math.abs(dy) > 8)) {
+      axis = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
     }
-  }
+    if (axis === "x") {
+      e.preventDefault();
+      track.scrollLeft = sl - dx;
+    }
+  };
+  track.ontouchend = (e) => {
+    if (!down) return;
+    down = false;
+    lock = false;
+    if (axis !== "x") {
+      // اسکرول عمودی بود — فقط اسنپ افقی را درست کن
+      const idx = Math.round(track.scrollLeft / pageW());
+      goTo(idx);
+      return;
+    }
+    const t = e.changedTouches && e.changedTouches[0];
+    const dx = t ? t.clientX - sx : 0;
+    const thresh = Math.min(56, pageW() * 0.18);
+    if (dx < -thresh) goTo(activeIndex + 1);
+    else if (dx > thresh) goTo(activeIndex - 1);
+    else goTo(activeIndex);
+  };
+  track.ontouchcancel = () => { down = false; lock = false; };
 
-  track.addEventListener("pointerdown", onPointerDown, { passive: true });
-  track.addEventListener("pointermove", onPointerMove, { passive: true });
-  track.addEventListener("pointerup", onPointerUp, { passive: true });
-  track.addEventListener("pointercancel", onPointerUp, { passive: true });
-  // جلوگیری از درگ تصویر/متن موقع سوایپ
-  track.addEventListener("dragstart", (e) => e.preventDefault());
+  // موس (دسکتاپ)
+  let md = false, msx = 0, msl = 0;
+  track.onmousedown = (e) => {
+    if (e.button !== 0) return;
+    md = true;
+    msx = e.clientX;
+    msl = track.scrollLeft;
+    lock = true;
+  };
+  window.addEventListener("mousemove", (e) => {
+    if (!md) return;
+    track.scrollLeft = msl - (e.clientX - msx);
+  });
+  window.addEventListener("mouseup", (e) => {
+    if (!md) return;
+    md = false;
+    lock = false;
+    const dx = e.clientX - msx;
+    const thresh = Math.min(56, pageW() * 0.18);
+    if (dx < -thresh) goTo(activeIndex + 1);
+    else if (dx > thresh) goTo(activeIndex - 1);
+    else goTo(activeIndex);
+  });
 
   window.addEventListener("resize", () => {
-    if (pages[activeIndex]) track.scrollLeft = pages[activeIndex].offsetLeft;
+    goTo(activeIndex, false);
   });
 
-  setActive(0);
+  setActive(0, false);
+  track.scrollLeft = 0;
 }
-setupChartCarousel("dailyChartTrack", "dailyChartDots", () => {
-  // هر دو صفحه رو دوباره می‌سازیم (نه فقط صفحه‌ی تازه‌نمایان‌شده) تا انیمیشن گرافیکی همیشه پخش بشه
-  renderCombinedDailyChart("combinedDailyChart", "incomeChartTotal", "expenseChartTotal");
-  renderCombinedBarChart("combinedBarChart");
-});
-setupChartCarousel("compareChartTrack", "compareChartDots", () => {
-  renderMonthCompareCard("incomeExpenseChart", analysisPeriod);
-  renderIncomeExpensePieCompare("incomeExpensePie", analysisPeriod);
-});
 
-
-function computeMonthTotals(jy, jm) {
-  const inMonth = (dateStr) => {
-    const [gy, gm, gd] = dateStr.split("-").map(Number);
-    const j = toJalaali(gy, gm, gd);
-    return j.jy === jy && j.jm === jm;
-  };
-  const incomes = state.incomes.filter((x) => inMonth(x.date));
-  const expenses = state.expenses.filter((x) => inMonth(x.date));
-  const totalIncome = incomes.reduce((s, x) => s + x.amount, 0);
-  const totalExpense = expenses.reduce((s, x) => s + x.amount, 0);
+function renderCatHBarChart(containerId) {
+  const wrap = document.getElementById(containerId);
+  if (!wrap) return;
+  const expenses = state.expenses.filter((x) => inViewedMonth(x.date));
   const byCat = {};
   expenses.forEach((x) => { byCat[x.category] = (byCat[x.category] || 0) + x.amount; });
-  const categories = Object.entries(byCat).sort((a, b) => b[1] - a[1]).map(([name, amount]) => ({ name, amount }));
-  return { totalIncome, totalExpense, categories };
+  const rows = Object.entries(byCat).sort((a, b) => b[1] - a[1]).slice(0, 6);
+  if (!rows.length) {
+    wrap.innerHTML = `<p class="empty-hint">مخارجی در این ماه نیست</p>`;
+    return;
+  }
+  const max = rows[0][1] || 1;
+  wrap.innerHTML = `<div class="cat-hbar-list">${rows.map(([name, amt]) => {
+    const color = catColor(name);
+    const pct = Math.max(6, (amt / max) * 100);
+    return `<div class="cat-hbar-row">
+      <div class="cat-hbar-meta"><span>${name}</span><span style="direction:ltr">${fmtAmount(amt)}</span></div>
+      <div class="cat-hbar-track"><div class="cat-hbar-fill" style="background:${color}" data-w="${pct}"></div></div>
+    </div>`;
+  }).join("")}</div>`;
+  requestAnimationFrame(() => {
+    wrap.querySelectorAll(".cat-hbar-fill").forEach((el) => { el.style.width = el.dataset.w + "%"; });
+  });
 }
 
+function renderSavingsRingChart(containerId) {
+  const wrap = document.getElementById(containerId);
+  if (!wrap) return;
+  const incomes = state.incomes.filter((x) => inViewedMonth(x.date));
+  const expenses = state.expenses.filter((x) => inViewedMonth(x.date));
+  const inc = incomes.reduce((s, x) => s + x.amount, 0);
+  const exp = expenses.reduce((s, x) => s + x.amount, 0);
+  const saved = Math.max(inc - exp, 0);
+  const rate = inc > 0 ? Math.min(100, Math.round((saved / inc) * 100)) : 0;
+  const r = 54, c = 2 * Math.PI * r;
+  const dash = (rate / 100) * c;
+  wrap.innerHTML = `<div class="savings-ring-wrap">
+    <svg class="savings-ring-svg" viewBox="0 0 140 140">
+      <circle cx="70" cy="70" r="${r}" fill="none" stroke="rgba(22,63,60,0.08)" stroke-width="12"/>
+      <circle cx="70" cy="70" r="${r}" fill="none" stroke="#2F7A72" stroke-width="12"
+        stroke-linecap="round"
+        stroke-dasharray="${dash} ${c}"
+        transform="rotate(-90 70 70)"
+        style="transition: stroke-dasharray .9s cubic-bezier(.22,1,.36,1)"/>
+      <text x="70" y="68" text-anchor="middle" class="savings-ring-center">${rate}٪</text>
+      <text x="70" y="86" text-anchor="middle" class="savings-ring-sub">نرخ پس‌انداز</text>
+    </svg>
+    <div class="savings-ring-legend">
+      <span><i style="background:#2F7A72"></i>پس‌انداز ${fmtAmount(saved)}</span>
+      <span><i style="background:#C24A2E"></i>مخارج ${fmtAmount(exp)}</span>
+    </div>
+  </div>`;
+}
+
+function renderBudgetProgressChart(containerId) {
+  const wrap = document.getElementById(containerId);
+  if (!wrap) return;
+  const expenses = state.expenses.filter((x) => inViewedMonth(x.date));
+  const byCat = {};
+  expenses.forEach((x) => { byCat[x.category] = (byCat[x.category] || 0) + x.amount; });
+  const cats = state.categories.slice(0, 5);
+  if (!cats.length) {
+    wrap.innerHTML = `<p class="empty-hint">دسته‌ای تعریف نشده</p>`;
+    return;
+  }
+  const maxSpend = Math.max(1, ...Object.values(byCat), 1);
+  wrap.innerHTML = `<div class="bp-list">${cats.map((c) => {
+    const name = c.name;
+    const spent = byCat[name] || 0;
+    const pct = Math.min(100, (spent / maxSpend) * 100);
+    const color = catColor(name);
+    return `<div class="bp-row">
+      <div class="bp-head"><span>${name}</span><span style="direction:ltr;color:${color}">${fmtAmount(spent)}</span></div>
+      <div class="bp-track"><div class="bp-fill" style="background:${color}" data-w="${pct}"></div></div>
+    </div>`;
+  }).join("")}</div>`;
+  requestAnimationFrame(() => {
+    wrap.querySelectorAll(".bp-fill").forEach((el) => { el.style.width = el.dataset.w + "%"; });
+  });
+}
+
+function renderKpiCardsChart(containerId) {
+  const wrap = document.getElementById(containerId);
+  if (!wrap) return;
+  const incomes = state.incomes.filter((x) => inViewedMonth(x.date));
+  const expenses = state.expenses.filter((x) => inViewedMonth(x.date));
+  const inc = incomes.reduce((s, x) => s + x.amount, 0);
+  const exp = expenses.reduce((s, x) => s + x.amount, 0);
+  const bal = inc - exp;
+  const avgExp = expenses.length ? Math.round(exp / Math.max(expenses.length, 1)) : 0;
+  const days = new Set(expenses.map((x) => x.date)).size || 1;
+  const dailyAvg = Math.round(exp / days);
+  wrap.innerHTML = `<div class="kpi-grid">
+    <div class="kpi-card ${bal < 0 ? "neg" : ""}">
+      <div class="kpi-label">مانده ماه</div>
+      <div class="kpi-value">${fmtAmount(bal)}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">میانگین هر خرج</div>
+      <div class="kpi-value">${fmtAmount(avgExp)}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">میانگین روزانه</div>
+      <div class="kpi-value">${fmtAmount(dailyAvg)}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">تعداد مخارج</div>
+      <div class="kpi-value">${expenses.length.toLocaleString("fa-IR")}</div>
+    </div>
+  </div>`;
+}
+
+setupChartCarousel("dailyChartTrack", "dailyChartDots", (idx) => {
+  if (idx === 0) renderCombinedDailyChart("combinedDailyChart", "incomeChartTotal", "expenseChartTotal");
+  if (idx === 1) renderCombinedBarChart("combinedBarChart");
+  if (idx === 2) renderCatHBarChart("catHBarChart");
+  if (idx === 3) renderSavingsRingChart("savingsRingChart");
+});
+setupChartCarousel("compareChartTrack", "compareChartDots", (idx) => {
+  if (idx === 0) renderMonthCompareCard("incomeExpenseChart", analysisPeriod);
+  if (idx === 1) renderIncomeExpensePieCompare("incomeExpensePie", analysisPeriod);
+  if (idx === 2) renderBudgetProgressChart("budgetProgressChart");
+  if (idx === 3) renderKpiCardsChart("kpiCardsChart");
+});
 
 function renderTopTransactionsList(containerId) {
   const wrap = document.getElementById(containerId);
@@ -2272,6 +2399,10 @@ function renderTopTransactionsList(containerId) {
 function renderAnalysis() {
   renderCombinedDailyChart("combinedDailyChart", "incomeChartTotal", "expenseChartTotal");
   renderCombinedBarChart("combinedBarChart");
+  renderCatHBarChart("catHBarChart");
+  renderSavingsRingChart("savingsRingChart");
+  renderBudgetProgressChart("budgetProgressChart");
+  renderKpiCardsChart("kpiCardsChart");
 
   const inPeriod = (dateStr) => {
     if (analysisPeriod === "all") return true;
@@ -2774,7 +2905,7 @@ async function initSync() {
 // ---------- Service worker ----------
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js?v=112").catch(() => {});
+    navigator.serviceWorker.register("sw.js?v=113").catch(() => {});
   });
 }
 
