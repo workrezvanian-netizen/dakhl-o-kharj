@@ -2097,22 +2097,34 @@ function renderCombinedBarChart(containerId) {
   });
 }
 
-// -- کاروسل نمودار: سوایپ پایدار ---
+// -- کاروسل نمودار: سوایپ با transform (قابل‌اعتماد روی iOS) ---
 function setupChartCarousel(trackId, dotsId, onShow) {
   const track = document.getElementById(trackId);
   const dots = document.getElementById(dotsId);
   if (!track || !dots) return;
 
-  // اجازهٔ راه‌اندازی مجدد بعد از تغییر DOM
+  // جلوگیری از بایند تکراری
+  if (track._carousel && track._carousel.destroy) {
+    track._carousel.destroy();
+  }
+
+  const viewport = track.parentElement; // .chart-carousel
   const pages = Array.from(track.querySelectorAll(":scope > .chart-carousel-page"));
   const dotEls = Array.from(dots.querySelectorAll(".chart-carousel-dot"));
   if (!pages.length) return;
 
   let activeIndex = 0;
-  let lock = false;
+  let startX = 0, startY = 0, deltaX = 0;
+  let tracking = false, axis = null, pointerId = null;
 
-  function pageW() {
-    return track.clientWidth || pages[0].getBoundingClientRect().width || 1;
+  function apply(offsetPx, animate) {
+    const w = viewport.clientWidth || track.clientWidth || 1;
+    const base = -activeIndex * w;
+    const x = base + (offsetPx || 0);
+    track.style.transition = animate
+      ? "transform 0.32s cubic-bezier(.22,1,.36,1)"
+      : "none";
+    track.style.transform = `translate3d(${x}px,0,0)`;
   }
 
   function setActive(index, fire) {
@@ -2120,17 +2132,16 @@ function setupChartCarousel(trackId, dotsId, onShow) {
     const changed = index !== activeIndex;
     activeIndex = index;
     dotEls.forEach((d, i) => d.classList.toggle("active", i === activeIndex));
-    if (fire !== false && changed && typeof onShow === "function") onShow(activeIndex);
+    apply(0, true);
+    if (fire !== false && changed && typeof onShow === "function") {
+      try { onShow(activeIndex); } catch (err) { console.warn(err); }
+    }
   }
 
-  function goTo(index, smooth) {
-    index = Math.max(0, Math.min(pages.length - 1, index));
-    const left = index * pageW();
-    track.scrollTo({ left, behavior: smooth === false ? "auto" : "smooth" });
-    setActive(index);
+  function goTo(index) {
+    setActive(index, true);
   }
 
-  // دات‌ها
   dotEls.forEach((dot, i) => {
     dot.onclick = (e) => {
       e.preventDefault();
@@ -2139,90 +2150,91 @@ function setupChartCarousel(trackId, dotsId, onShow) {
     };
   });
 
-  // اسکرول → همگام‌سازی دات
-  let scrollT = null;
-  track.onscroll = () => {
-    if (lock) return;
-    clearTimeout(scrollT);
-    scrollT = setTimeout(() => {
-      const idx = Math.round(track.scrollLeft / pageW());
-      setActive(idx);
-    }, 60);
-  };
-
-  // سوایپ لمسی / درگ — بدون تداخل با اسکرول عمودی صفحه
-  let sx = 0, sy = 0, sl = 0, axis = null, down = false;
-
-  track.ontouchstart = (e) => {
-    if (!e.touches[0]) return;
-    down = true;
+  function onDown(e) {
+    // فقط لمس یا کلیک اصلی
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+    tracking = true;
     axis = null;
-    sx = e.touches[0].clientX;
-    sy = e.touches[0].clientY;
-    sl = track.scrollLeft;
-    lock = true;
-  };
-  track.ontouchmove = (e) => {
-    if (!down || !e.touches[0]) return;
-    const dx = e.touches[0].clientX - sx;
-    const dy = e.touches[0].clientY - sy;
-    if (axis === null && (Math.abs(dx) > 8 || Math.abs(dy) > 8)) {
+    deltaX = 0;
+    pointerId = e.pointerId;
+    startX = e.clientX;
+    startY = e.clientY;
+    track.style.transition = "none";
+    try { track.setPointerCapture(pointerId); } catch (_) {}
+  }
+
+  function onMove(e) {
+    if (!tracking) return;
+    if (pointerId != null && e.pointerId !== pointerId) return;
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+    if (axis === null) {
+      if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return;
       axis = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
+      if (axis === "y") {
+        // اسکرول عمودی صفحه — کاروسل را رها کن
+        tracking = false;
+        try { track.releasePointerCapture(pointerId); } catch (_) {}
+        return;
+      }
     }
-    if (axis === "x") {
-      e.preventDefault();
-      track.scrollLeft = sl - dx;
+    if (axis !== "x") return;
+    e.preventDefault();
+    deltaX = dx;
+    // مقاومت در ابتدا/انتها
+    let resist = deltaX;
+    if ((activeIndex === 0 && deltaX > 0) || (activeIndex === pages.length - 1 && deltaX < 0)) {
+      resist = deltaX * 0.35;
     }
-  };
-  track.ontouchend = (e) => {
-    if (!down) return;
-    down = false;
-    lock = false;
+    apply(resist, false);
+  }
+
+  function onUp(e) {
+    if (!tracking) return;
+    if (pointerId != null && e.pointerId !== pointerId) return;
+    tracking = false;
+    try { track.releasePointerCapture(pointerId); } catch (_) {}
+    pointerId = null;
     if (axis !== "x") {
-      // اسکرول عمودی بود — فقط اسنپ افقی را درست کن
-      const idx = Math.round(track.scrollLeft / pageW());
-      goTo(idx);
+      apply(0, true);
+      axis = null;
       return;
     }
-    const t = e.changedTouches && e.changedTouches[0];
-    const dx = t ? t.clientX - sx : 0;
-    const thresh = Math.min(56, pageW() * 0.18);
-    if (dx < -thresh) goTo(activeIndex + 1);
-    else if (dx > thresh) goTo(activeIndex - 1);
-    else goTo(activeIndex);
+    const w = viewport.clientWidth || 1;
+    const thresh = Math.min(50, w * 0.18);
+    if (deltaX <= -thresh) goTo(activeIndex + 1);
+    else if (deltaX >= thresh) goTo(activeIndex - 1);
+    else apply(0, true);
+    axis = null;
+    deltaX = 0;
+  }
+
+  track.addEventListener("pointerdown", onDown, { passive: true });
+  track.addEventListener("pointermove", onMove, { passive: false });
+  track.addEventListener("pointerup", onUp, { passive: true });
+  track.addEventListener("pointercancel", onUp, { passive: true });
+  track.addEventListener("lostpointercapture", onUp, { passive: true });
+
+  const onResize = () => apply(0, false);
+  window.addEventListener("resize", onResize);
+
+  track._carousel = {
+    goTo,
+    destroy() {
+      track.removeEventListener("pointerdown", onDown);
+      track.removeEventListener("pointermove", onMove);
+      track.removeEventListener("pointerup", onUp);
+      track.removeEventListener("pointercancel", onUp);
+      window.removeEventListener("resize", onResize);
+      track.style.transform = "";
+      track.style.transition = "";
+    }
   };
-  track.ontouchcancel = () => { down = false; lock = false; };
 
-  // موس (دسکتاپ)
-  let md = false, msx = 0, msl = 0;
-  track.onmousedown = (e) => {
-    if (e.button !== 0) return;
-    md = true;
-    msx = e.clientX;
-    msl = track.scrollLeft;
-    lock = true;
-  };
-  window.addEventListener("mousemove", (e) => {
-    if (!md) return;
-    track.scrollLeft = msl - (e.clientX - msx);
-  });
-  window.addEventListener("mouseup", (e) => {
-    if (!md) return;
-    md = false;
-    lock = false;
-    const dx = e.clientX - msx;
-    const thresh = Math.min(56, pageW() * 0.18);
-    if (dx < -thresh) goTo(activeIndex + 1);
-    else if (dx > thresh) goTo(activeIndex - 1);
-    else goTo(activeIndex);
-  });
-
-  window.addEventListener("resize", () => {
-    goTo(activeIndex, false);
-  });
-
-  setActive(0, false);
-  track.scrollLeft = 0;
+  // شروع از صفحه ۰
+  activeIndex = 0;
+  dotEls.forEach((d, i) => d.classList.toggle("active", i === 0));
+  requestAnimationFrame(() => apply(0, false));
 }
 
 function renderCatHBarChart(containerId) {
@@ -2905,7 +2917,7 @@ async function initSync() {
 // ---------- Service worker ----------
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js?v=114").catch(() => {});
+    navigator.serviceWorker.register("sw.js?v=115").catch(() => {});
   });
 }
 

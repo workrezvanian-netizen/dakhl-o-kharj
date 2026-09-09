@@ -4682,3 +4682,47 @@ input:focus, select:focus {
 .kpi-card .kpi-label { font-size: 11px; font-weight: 600; color: #7A8582; margin-bottom: 4px; }
 .kpi-card .kpi-value { font-size: 15px; font-weight: 800; color: #163F3C; direction: ltr; text-align: right; }
 .kpi-card.neg .kpi-value { color: #C24A2E; }
+
+
+/* ===== کاروسل transform-based (override) ===== */
+.chart-carousel {
+  position: relative !important;
+  width: 100% !important;
+  overflow: hidden !important;
+  margin: 0 !important;
+  touch-action: pan-y !important;
+}
+.chart-carousel-track {
+  display: flex !important;
+  flex-direction: row !important;
+  width: 100% !important;
+  overflow: visible !important;
+  scroll-snap-type: none !important;
+  transform: translate3d(0,0,0);
+  will-change: transform;
+  cursor: grab;
+  touch-action: pan-y !important;
+  direction: ltr !important;
+  padding: 4px 0 2px !important;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.chart-carousel-page {
+  flex: 0 0 100% !important;
+  width: 100% !important;
+  min-width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  direction: rtl !important;
+  scroll-snap-align: none !important;
+  touch-action: manipulation !important;
+  pointer-events: auto !important;
+}
+.chart-carousel-page .daily-chart-scroll {
+  overflow-x: hidden !important; /* نگیرد سوایپ را */
+  overflow-y: visible !important;
+}
+.dual-vbar-chart {
+  overflow-x: auto;
+  touch-action: pan-x;
+}
