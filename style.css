@@ -4726,3 +4726,25 @@ input:focus, select:focus {
   overflow-x: auto;
   touch-action: pan-x;
 }
+
+/* نقطه‌های کاروسل: چپ → راست مطابق ترتیب صفحات */
+.chart-carousel-dots {
+  direction: ltr !important;
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 7px !important;
+}
+.chart-carousel-dot.active {
+  width: 18px !important;
+  border-radius: 999px !important;
+  transform: none !important;
+}
+.chart-carousel-page {
+  min-height: 200px !important;
+}
+.chart-carousel-page:empty::after,
+.chart-carousel-page .empty-hint {
+  display: block;
+}

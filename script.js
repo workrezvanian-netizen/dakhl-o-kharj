@@ -568,6 +568,36 @@ function switchTab(tab, opts = {}) {
     requestAnimationFrame(() => renderDashboard());
   }
   if (tab === "analysis") {
+    // عرض کاروسل بعد از نمایش تب درست شود
+    requestAnimationFrame(() => {
+      document.querySelectorAll(".chart-carousel-track").forEach((tr) => {
+        if (tr._carousel && typeof tr._carousel.goTo === "function") {
+          /* stay on current via re-apply */
+        }
+        // force layout re-apply
+        const pages = tr.querySelectorAll(":scope > .chart-carousel-page");
+        if (!pages.length) return;
+        // keep transform consistent
+        const active = tr.querySelector(".chart-carousel-dot.active"); // dots are outside
+      });
+      if (typeof refreshDailyCarouselCharts === "function") refreshDailyCarouselCharts();
+      if (typeof refreshCompareCarouselCharts === "function") refreshCompareCarouselCharts();
+      // reset carousel positions after visible
+      ["dailyChartTrack", "compareChartTrack"].forEach((id) => {
+        const tr = document.getElementById(id);
+        if (tr && tr._carousel && tr._carousel.goTo) {
+          // re-go to same index to recalc width
+          const dotsId = id === "dailyChartTrack" ? "dailyChartDots" : "compareChartDots";
+          const dots = document.getElementById(dotsId);
+          let idx = 0;
+          if (dots) {
+            const list = [...dots.querySelectorAll(".chart-carousel-dot")];
+            idx = Math.max(0, list.findIndex((d) => d.classList.contains("active")));
+          }
+          tr._carousel.goTo(idx);
+        }
+      });
+    });
     // Reset analysis numbers to 0 so animateNumber plays from scratch
     const incEl = document.getElementById("incomeChartTotal");
     const expEl = document.getElementById("expenseChartTotal");
@@ -2117,8 +2147,14 @@ function setupChartCarousel(trackId, dotsId, onShow) {
   let startX = 0, startY = 0, deltaX = 0;
   let tracking = false, axis = null, pointerId = null;
 
+  function pageWidth() {
+    // عرض واقعی صفحه اول (پایدارتر از clientWidth والد)
+    const p0 = pages[0];
+    const w = (p0 && p0.offsetWidth) || viewport.clientWidth || track.clientWidth || 1;
+    return w > 0 ? w : 1;
+  }
   function apply(offsetPx, animate) {
-    const w = viewport.clientWidth || track.clientWidth || 1;
+    const w = pageWidth();
     const base = -activeIndex * w;
     const x = base + (offsetPx || 0);
     track.style.transition = animate
@@ -2200,8 +2236,9 @@ function setupChartCarousel(trackId, dotsId, onShow) {
       axis = null;
       return;
     }
-    const w = viewport.clientWidth || 1;
+    const w = pageWidth();
     const thresh = Math.min(50, w * 0.18);
+    // سوایپ به چپ (محتوا می‌رود چپ) = صفحه بعدی
     if (deltaX <= -thresh) goTo(activeIndex + 1);
     else if (deltaX >= thresh) goTo(activeIndex - 1);
     else apply(0, true);
@@ -2231,10 +2268,19 @@ function setupChartCarousel(trackId, dotsId, onShow) {
     }
   };
 
-  // شروع از صفحه ۰
+  // شروع از صفحه ۰ + رندر اولیه
   activeIndex = 0;
+  // نقطه‌ها چپ‌به‌راست مطابق صفحات (نه معکوس RTL)
+  dots.style.direction = "ltr";
+  dots.style.display = "flex";
+  dots.style.justifyContent = "center";
   dotEls.forEach((d, i) => d.classList.toggle("active", i === 0));
-  requestAnimationFrame(() => apply(0, false));
+  requestAnimationFrame(() => {
+    apply(0, false);
+    if (typeof onShow === "function") {
+      try { onShow(0); } catch (err) { console.warn(err); }
+    }
+  });
 }
 
 function renderCatHBarChart(containerId) {
@@ -2349,18 +2395,20 @@ function renderKpiCardsChart(containerId) {
   </div>`;
 }
 
-setupChartCarousel("dailyChartTrack", "dailyChartDots", (idx) => {
-  if (idx === 0) renderCombinedDailyChart("combinedDailyChart", "incomeChartTotal", "expenseChartTotal");
-  if (idx === 1) renderCombinedBarChart("combinedBarChart");
-  if (idx === 2) renderCatHBarChart("catHBarChart");
-  if (idx === 3) renderSavingsRingChart("savingsRingChart");
-});
-setupChartCarousel("compareChartTrack", "compareChartDots", (idx) => {
-  if (idx === 0) renderMonthCompareCard("incomeExpenseChart", analysisPeriod);
-  if (idx === 1) renderIncomeExpensePieCompare("incomeExpensePie", analysisPeriod);
-  if (idx === 2) renderBudgetProgressChart("budgetProgressChart");
-  if (idx === 3) renderKpiCardsChart("kpiCardsChart");
-});
+function refreshDailyCarouselCharts() {
+  renderCombinedDailyChart("combinedDailyChart", "incomeChartTotal", "expenseChartTotal");
+  renderCombinedBarChart("combinedBarChart");
+  renderCatHBarChart("catHBarChart");
+  renderSavingsRingChart("savingsRingChart");
+}
+function refreshCompareCarouselCharts() {
+  renderMonthCompareCard("incomeExpenseChart", analysisPeriod);
+  renderIncomeExpensePieCompare("incomeExpensePie", analysisPeriod);
+  renderBudgetProgressChart("budgetProgressChart");
+  renderKpiCardsChart("kpiCardsChart");
+}
+setupChartCarousel("dailyChartTrack", "dailyChartDots", () => refreshDailyCarouselCharts());
+setupChartCarousel("compareChartTrack", "compareChartDots", () => refreshCompareCarouselCharts());
 
 function renderTopTransactionsList(containerId) {
   const wrap = document.getElementById(containerId);
@@ -2409,12 +2457,18 @@ function renderTopTransactionsList(containerId) {
 }
 
 function renderAnalysis() {
-  renderCombinedDailyChart("combinedDailyChart", "incomeChartTotal", "expenseChartTotal");
-  renderCombinedBarChart("combinedBarChart");
-  renderCatHBarChart("catHBarChart");
-  renderSavingsRingChart("savingsRingChart");
-  renderBudgetProgressChart("budgetProgressChart");
-  renderKpiCardsChart("kpiCardsChart");
+  if (typeof refreshDailyCarouselCharts === "function") refreshDailyCarouselCharts();
+  else {
+    renderCombinedDailyChart("combinedDailyChart", "incomeChartTotal", "expenseChartTotal");
+    renderCombinedBarChart("combinedBarChart");
+    renderCatHBarChart("catHBarChart");
+    renderSavingsRingChart("savingsRingChart");
+  }
+  if (typeof refreshCompareCarouselCharts === "function") refreshCompareCarouselCharts();
+  else {
+    renderBudgetProgressChart("budgetProgressChart");
+    renderKpiCardsChart("kpiCardsChart");
+  }
 
   const inPeriod = (dateStr) => {
     if (analysisPeriod === "all") return true;
@@ -2917,7 +2971,7 @@ async function initSync() {
 // ---------- Service worker ----------
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js?v=115").catch(() => {});
+    navigator.serviceWorker.register("sw.js?v=116").catch(() => {});
   });
 }
 
