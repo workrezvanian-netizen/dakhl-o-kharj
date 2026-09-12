@@ -1600,6 +1600,7 @@ function getCompareData(period) {
 
 function renderMonthCompareCard(containerId, period = "month") {
   const wrap = document.getElementById(containerId);
+  if (!wrap) return;
   const { curData, prevData, periodLegend } = getCompareData(period);
 
   if (!curData.totalIncome && !curData.totalExpense && !prevData.totalIncome && !prevData.totalExpense) {
@@ -1675,7 +1676,7 @@ function renderMonthCompareCard(containerId, period = "month") {
       </div>`;
   }).join("");
 
-  wrap.innerHTML = `<div class="compare-gauges-row chart-graphic-enter">${gaugeHTML}</div>`;
+  wrap.innerHTML = `<div class="compare-gauges-row">${gaugeHTML}</div>`;
 
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
@@ -1694,6 +1695,7 @@ function renderMonthCompareCard(containerId, period = "month") {
 
 function renderIncomeExpensePieCompare(containerId, period = "month") {
   const wrap = document.getElementById(containerId);
+  if (!wrap) return;
   const { curData, periodLegend } = getCompareData(period);
   const totalIncome = curData.totalIncome || 0;
   const totalExpense = curData.totalExpense || 0;
@@ -1712,7 +1714,7 @@ function renderIncomeExpensePieCompare(containerId, period = "month") {
   const uid = Date.now();
 
   wrap.innerHTML = `
-    <div class="pie-compare chart-graphic-enter">
+    <div class="pie-compare">
       <svg viewBox="0 0 180 180" class="pie-compare-svg">
         <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#C24A2E" stroke-width="${sw}"/>
         <circle id="pieCompareIncome-${uid}" cx="${cx}" cy="${cy}" r="${r}" fill="none"
@@ -1743,7 +1745,8 @@ function renderIncomeExpensePieCompare(containerId, period = "month") {
 
 function renderPieChart(containerId, segments, chartType = "expense") {
   const wrap = document.getElementById(containerId);
-  const total = segments.reduce((s, x) => s + x.value, 0);
+  if (!wrap) return;
+  const total = (segments || []).reduce((s, x) => s + x.value, 0);
   if (!total) {
     wrap.innerHTML = `<p class="empty-hint">داده‌ای برای این بازه نیست</p>`;
     return;
@@ -2127,18 +2130,17 @@ function renderCombinedBarChart(containerId) {
   });
 }
 
-// -- کاروسل نمودار: سوایپ با transform (قابل‌اعتماد روی iOS) ---
+// -- کاروسل نمودار: سوایپ transform + عرض ثابت صفحات ---
 function setupChartCarousel(trackId, dotsId, onShow) {
   const track = document.getElementById(trackId);
   const dots = document.getElementById(dotsId);
   if (!track || !dots) return;
 
-  // جلوگیری از بایند تکراری
   if (track._carousel && track._carousel.destroy) {
-    track._carousel.destroy();
+    try { track._carousel.destroy(); } catch (_) {}
   }
 
-  const viewport = track.parentElement; // .chart-carousel
+  const viewport = track.closest(".chart-carousel") || track.parentElement;
   const pages = Array.from(track.querySelectorAll(":scope > .chart-carousel-page"));
   const dotEls = Array.from(dots.querySelectorAll(".chart-carousel-dot"));
   if (!pages.length) return;
@@ -2147,36 +2149,43 @@ function setupChartCarousel(trackId, dotsId, onShow) {
   let startX = 0, startY = 0, deltaX = 0;
   let tracking = false, axis = null, pointerId = null;
 
-  function pageWidth() {
-    // عرض واقعی صفحه اول (پایدارتر از clientWidth والد)
-    const p0 = pages[0];
-    const w = (p0 && p0.offsetWidth) || viewport.clientWidth || track.clientWidth || 1;
-    return w > 0 ? w : 1;
+  function measure() {
+    const w = Math.max(1, Math.round(viewport.getBoundingClientRect().width || viewport.clientWidth || window.innerWidth));
+    pages.forEach((p) => {
+      p.style.flex = "0 0 " + w + "px";
+      p.style.width = w + "px";
+      p.style.minWidth = w + "px";
+      p.style.maxWidth = w + "px";
+    });
+    track.style.width = (w * pages.length) + "px";
+    return w;
   }
+
   function apply(offsetPx, animate) {
-    const w = pageWidth();
-    const base = -activeIndex * w;
-    const x = base + (offsetPx || 0);
+    const w = measure();
+    const x = -activeIndex * w + (offsetPx || 0);
     track.style.transition = animate
-      ? "transform 0.32s cubic-bezier(.22,1,.36,1)"
+      ? "transform 0.34s cubic-bezier(.22,1,.36,1)"
       : "none";
-    track.style.transform = `translate3d(${x}px,0,0)`;
+    track.style.transform = "translate3d(" + x + "px,0,0)";
   }
 
   function setActive(index, fire) {
     index = Math.max(0, Math.min(pages.length - 1, index));
     const changed = index !== activeIndex;
     activeIndex = index;
+    dots.style.direction = "ltr";
     dotEls.forEach((d, i) => d.classList.toggle("active", i === activeIndex));
     apply(0, true);
-    if (fire !== false && changed && typeof onShow === "function") {
-      try { onShow(activeIndex); } catch (err) { console.warn(err); }
+    if (fire !== false && typeof onShow === "function") {
+      // همیشه رندر کن تا صفحه خالی نماند
+      requestAnimationFrame(() => {
+        try { onShow(activeIndex); } catch (err) { console.warn(err); }
+      });
     }
   }
 
-  function goTo(index) {
-    setActive(index, true);
-  }
+  function goTo(index) { setActive(index, true); }
 
   dotEls.forEach((dot, i) => {
     dot.onclick = (e) => {
@@ -2187,7 +2196,6 @@ function setupChartCarousel(trackId, dotsId, onShow) {
   });
 
   function onDown(e) {
-    // فقط لمس یا کلیک اصلی
     if (e.pointerType === "mouse" && e.button !== 0) return;
     tracking = true;
     axis = null;
@@ -2208,7 +2216,6 @@ function setupChartCarousel(trackId, dotsId, onShow) {
       if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return;
       axis = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
       if (axis === "y") {
-        // اسکرول عمودی صفحه — کاروسل را رها کن
         tracking = false;
         try { track.releasePointerCapture(pointerId); } catch (_) {}
         return;
@@ -2217,7 +2224,6 @@ function setupChartCarousel(trackId, dotsId, onShow) {
     if (axis !== "x") return;
     e.preventDefault();
     deltaX = dx;
-    // مقاومت در ابتدا/انتها
     let resist = deltaX;
     if ((activeIndex === 0 && deltaX > 0) || (activeIndex === pages.length - 1 && deltaX < 0)) {
       resist = deltaX * 0.35;
@@ -2236,9 +2242,8 @@ function setupChartCarousel(trackId, dotsId, onShow) {
       axis = null;
       return;
     }
-    const w = pageWidth();
+    const w = measure();
     const thresh = Math.min(50, w * 0.18);
-    // سوایپ به چپ (محتوا می‌رود چپ) = صفحه بعدی
     if (deltaX <= -thresh) goTo(activeIndex + 1);
     else if (deltaX >= thresh) goTo(activeIndex - 1);
     else apply(0, true);
@@ -2250,30 +2255,24 @@ function setupChartCarousel(trackId, dotsId, onShow) {
   track.addEventListener("pointermove", onMove, { passive: false });
   track.addEventListener("pointerup", onUp, { passive: true });
   track.addEventListener("pointercancel", onUp, { passive: true });
-  track.addEventListener("lostpointercapture", onUp, { passive: true });
 
   const onResize = () => apply(0, false);
   window.addEventListener("resize", onResize);
 
   track._carousel = {
     goTo,
+    refresh() { apply(0, false); if (typeof onShow === "function") onShow(activeIndex); },
     destroy() {
       track.removeEventListener("pointerdown", onDown);
       track.removeEventListener("pointermove", onMove);
       track.removeEventListener("pointerup", onUp);
       track.removeEventListener("pointercancel", onUp);
       window.removeEventListener("resize", onResize);
-      track.style.transform = "";
-      track.style.transition = "";
     }
   };
 
-  // شروع از صفحه ۰ + رندر اولیه
   activeIndex = 0;
-  // نقطه‌ها چپ‌به‌راست مطابق صفحات (نه معکوس RTL)
   dots.style.direction = "ltr";
-  dots.style.display = "flex";
-  dots.style.justifyContent = "center";
   dotEls.forEach((d, i) => d.classList.toggle("active", i === 0));
   requestAnimationFrame(() => {
     apply(0, false);
@@ -2971,7 +2970,7 @@ async function initSync() {
 // ---------- Service worker ----------
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js?v=116").catch(() => {});
+    navigator.serviceWorker.register("sw.js?v=117").catch(() => {});
   });
 }
 

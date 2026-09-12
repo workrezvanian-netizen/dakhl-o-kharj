@@ -4748,3 +4748,40 @@ input:focus, select:focus {
 .chart-carousel-page .empty-hint {
   display: block;
 }
+
+
+/* اطمینان از دیده شدن نمودارهای دایره‌ای داخل کاروسل */
+.chart-carousel .compare-gauges-row,
+.chart-carousel .pie-compare,
+.chart-carousel .donut-wrap,
+.chart-carousel .savings-ring-wrap {
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: none !important;
+  filter: none !important;
+}
+.chart-carousel .pie-compare {
+  width: 180px !important;
+  height: 180px !important;
+  margin: 8px auto !important;
+  display: block !important;
+}
+.chart-carousel .compare-gauge-svg,
+.chart-carousel .pie-compare-svg,
+.chart-carousel .donut-svg,
+.chart-carousel .savings-ring-svg {
+  display: block !important;
+  max-width: 100%;
+}
+.chart-carousel-track {
+  width: max-content !important;
+  max-width: none !important;
+}
+.chart-carousel {
+  overflow: hidden !important;
+}
+/* تنوع مخارج بیرون کاروسل */
+#expenseDiversityChart .donut-wrap {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
