@@ -540,8 +540,11 @@ function moveNavBead(tab, opts = {}) {
   const btnRect = btn.getBoundingClientRect();
   if (navRect.width < 10) return;
   const x = btnRect.left + btnRect.width / 2 - navRect.left;
+  // کپسول به اندازه تقریبی ناحیه آیکون تب
+  const beadW = Math.max(52, Math.min(72, Math.round(btnRect.width * 0.92)));
   const color = btn.getAttribute("data-color") || "#22C55E";
   bead.style.setProperty("--bead-x", x + "px");
+  bead.style.setProperty("--bead-w", beadW + "px");
   bead.style.setProperty("--bead-color", color);
   bead.style.background = color;
   btn.style.setProperty("--bead-label", color);
@@ -3087,7 +3090,7 @@ async function initSync() {
 // ---------- Service worker ----------
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js?v=120").catch(() => {});
+    navigator.serviceWorker.register("sw.js?v=121").catch(() => {});
   });
 }
 

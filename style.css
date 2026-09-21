@@ -2050,16 +2050,16 @@ input:focus, select:focus {
 .bottom-nav.meniscus-nav {
   position: fixed;
   bottom: max(12px, env(safe-area-inset-bottom, 12px));
-  right: 18px;
-  left: 18px;
+  right: 16px;
+  left: 16px;
   z-index: 20;
   display: flex;
   align-items: center;
   justify-content: space-between;
   isolation: isolate;
   overflow: visible;
-  height: 56px;
-  padding: 0 6px;
+  height: 64px;
+  padding: 0 8px;
   /* شیشه‌ای روشن */
   background: linear-gradient(
     165deg,
@@ -2093,26 +2093,28 @@ input:focus, select:focus {
 }
 .bottom-nav.meniscus-nav::after { display: none; }
 
-/* دانه رنگی متحرک */
+/* نشانگر کپسولی متحرک (شبیه تب Phone در iOS) */
 .meniscus-bead {
   position: absolute;
   top: 50%;
   left: 0;
-  width: 48px;
+  width: var(--bead-w, 56px);
   height: 48px;
   margin-top: -24px;
-  margin-left: -24px;
-  border-radius: 50%;
+  margin-left: calc(var(--bead-w, 56px) / -2);
+  border-radius: 999px;
   background: #22C55E;
-  transform: translate3d(var(--bead-x, 50%), 0, 0) scale(0.92);
+  transform: translate3d(var(--bead-x, 50%), 0, 0) scale(0.94);
   transition:
     transform 0.48s cubic-bezier(0.34, 1.45, 0.64, 1),
     background 0.35s ease,
-    box-shadow 0.35s ease;
+    box-shadow 0.35s ease,
+    width 0.35s cubic-bezier(0.34, 1.2, 0.64, 1),
+    margin-left 0.35s cubic-bezier(0.34, 1.2, 0.64, 1);
   box-shadow:
-    0 8px 22px color-mix(in srgb, var(--bead-color, #22C55E) 45%, transparent),
-    0 2px 6px rgba(0,0,0,0.2),
-    inset 0 1px 0 rgba(255,255,255,0.35);
+    0 6px 18px color-mix(in srgb, var(--bead-color, #22C55E) 40%, transparent),
+    0 2px 6px rgba(0,0,0,0.12),
+    inset 0 1px 0 rgba(255,255,255,0.4);
   z-index: 1;
   pointer-events: none;
   opacity: 0;
@@ -2122,8 +2124,8 @@ input:focus, select:focus {
   transform: translate3d(var(--bead-x, 50%), 0, 0) scale(1);
 }
 .meniscus-bead.is-dragging {
-  transition: background 0.2s ease;
-  transform: translate3d(var(--bead-x, 50%), 0, 0) scale(1.08);
+  transition: background 0.2s ease, width 0.2s ease;
+  transform: translate3d(var(--bead-x, 50%), 0, 0) scale(1.04);
 }
 
 .nav-btn {
@@ -2153,15 +2155,15 @@ input:focus, select:focus {
 .nav-btn .nav-icon {
   display: grid;
   place-items: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
+  width: 52px;
+  height: 48px;
+  border-radius: 999px;
   position: relative;
   z-index: 2;
 }
 .nav-btn svg {
-  width: 22px;
-  height: 22px;
+  width: 23px;
+  height: 23px;
   fill: none;
   stroke: currentColor;
   stroke-width: 1.85;
