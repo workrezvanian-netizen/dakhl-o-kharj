@@ -2046,117 +2046,162 @@ input:focus, select:focus {
 .sync-msg.error { color: var(--expense); }
 .danger-zone h2 { color: var(--expense); }
 
-/* ---------- Bottom nav — جمع‌وجور برای ۵ تب ---------- */
-.bottom-nav {
+/* ---------- Bottom nav — Meniscus bead style ---------- */
+.bottom-nav.meniscus-nav {
   position: fixed;
-  bottom: max(8px, env(safe-area-inset-bottom, 8px));
-  right: 10px;
-  left: 10px;
+  bottom: max(12px, env(safe-area-inset-bottom, 12px));
+  right: 18px;
+  left: 18px;
   z-index: 20;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   isolation: isolate;
-  overflow: hidden;
-  /* شیشه‌ای‌تر: شفاف‌تر + بلور قوی‌تر */
-  background: linear-gradient(
-    165deg,
-    rgba(255, 255, 255, 0.38) 0%,
-    rgba(255, 255, 255, 0.22) 45%,
-    rgba(247, 242, 234, 0.28) 100%
-  );
-  backdrop-filter: blur(40px) saturate(1.85);
-  -webkit-backdrop-filter: blur(40px) saturate(1.85);
-  border: 1px solid rgba(255, 255, 255, 0.55);
-  border-radius: 28px;
+  overflow: visible;
+  height: 56px;
+  padding: 0 6px;
+  background: rgba(28, 32, 38, 0.72);
+  backdrop-filter: blur(28px) saturate(1.4);
+  -webkit-backdrop-filter: blur(28px) saturate(1.4);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
   box-shadow:
-    0 14px 36px rgba(30, 40, 35, 0.16),
-    0 4px 12px rgba(30, 40, 35, 0.08),
-    inset 0 1px 1px rgba(255, 255, 255, 0.75),
-    inset 0 -1px 1px rgba(255, 255, 255, 0.15);
-  padding: 5px 4px;
+    0 16px 40px rgba(0, 0, 0, 0.28),
+    0 4px 12px rgba(0, 0, 0, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14);
 }
-.bottom-nav::before {
+.bottom-nav.meniscus-nav::before {
   content: "";
   position: absolute;
   inset: 0;
   border-radius: inherit;
   pointer-events: none;
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.45) 0%,
-    rgba(255, 255, 255, 0.08) 42%,
-    rgba(255, 255, 255, 0) 100%
-  );
+  background: linear-gradient(180deg, rgba(255,255,255,0.12) 0%, transparent 55%);
   z-index: 0;
 }
-.bottom-nav::after { display: none; }
+.bottom-nav.meniscus-nav::after { display: none; }
+
+/* دانه رنگی متحرک */
+.meniscus-bead {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 48px;
+  height: 48px;
+  margin-top: -24px;
+  margin-left: -24px;
+  border-radius: 50%;
+  background: #22C55E;
+  transform: translate3d(var(--bead-x, 50%), 0, 0) scale(0.92);
+  transition:
+    transform 0.48s cubic-bezier(0.34, 1.45, 0.64, 1),
+    background 0.35s ease,
+    box-shadow 0.35s ease;
+  box-shadow:
+    0 8px 22px color-mix(in srgb, var(--bead-color, #22C55E) 45%, transparent),
+    0 2px 6px rgba(0,0,0,0.2),
+    inset 0 1px 0 rgba(255,255,255,0.35);
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0;
+}
+.meniscus-bead.is-ready {
+  opacity: 1;
+  transform: translate3d(var(--bead-x, 50%), 0, 0) scale(1);
+}
+.meniscus-bead.is-dragging {
+  transition: background 0.2s ease;
+  transform: translate3d(var(--bead-x, 50%), 0, 0) scale(1.08);
+}
+
 .nav-btn {
   position: relative;
-  z-index: 1;
+  z-index: 2;
   flex: 1;
   min-width: 0;
+  height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
-  background: none;
-  border: none;
-  border-radius: 16px;
-  padding: 7px 1px;
-  margin: 0 1px;
-  color: var(--text-mute);
+  gap: 0;
+  background: none !important;
+  border: none !important;
+  border-radius: 0;
+  padding: 0;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.45);
   font-family: inherit;
-  font-size: 9.5px;
+  font-size: 10px;
   cursor: pointer;
-  transition: transform .2s cubic-bezier(.4,0,.2,1), color .2s ease, background .2s ease, box-shadow .2s ease;
+  box-shadow: none !important;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.25s ease;
 }
-.nav-btn span {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100%;
-  font-size: 9.5px;
-}
-.nav-btn:active {
-  transform: scale(0.92);
+.nav-btn .nav-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  position: relative;
+  z-index: 2;
 }
 .nav-btn svg {
-  width: 20px; height: 20px;
+  width: 22px;
+  height: 22px;
   fill: none;
   stroke: currentColor;
-  stroke-width: 1.8;
+  stroke-width: 1.85;
   stroke-linecap: round;
   stroke-linejoin: round;
-  transition: stroke .22s ease, transform .28s cubic-bezier(.22,1,.36,1), width .28s ease, height .28s ease;
-  transform-origin: center center;
+  transition: stroke 0.25s ease, transform 0.35s cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+.nav-btn .nav-label {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  white-space: nowrap;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--bead-label, #22C55E);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.28s ease, transform 0.35s cubic-bezier(0.34, 1.4, 0.64, 1);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.15);
 }
 .nav-btn.active {
-  color: var(--green-deep);
-  background: linear-gradient(180deg, rgba(232, 244, 241, 0.72) 0%, rgba(212, 235, 229, 0.55) 100%);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  box-shadow:
-    0 3px 10px rgba(16,70,43,0.1),
-    inset 0 1px 0 rgba(255,255,255,0.85);
-  padding-top: 5px;
-  padding-bottom: 6px;
+  color: #fff;
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0;
 }
 .nav-btn.active svg {
-  stroke: var(--green-deep);
-  stroke-width: 2.1;
-  width: 26px;
-  height: 26px;
-  transform: scale(1.08);
+  stroke: #fff;
+  stroke-width: 2.15;
+  transform: scale(1.06);
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.15));
 }
-.nav-btn.active span {
-  font-weight: 700;
-  font-size: 10.5px;
+.nav-btn.active .nav-label {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+.nav-btn:active .nav-icon {
+  transform: scale(0.94);
 }
 
 @media (min-width: 560px) {
-  .bottom-nav { max-width: 480px; margin: 0 auto; left: 50%; transform: translateX(-50%); right: auto; width: calc(100% - 28px); }
+  .bottom-nav.meniscus-nav {
+    max-width: 420px;
+    margin: 0 auto;
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    width: calc(100% - 48px);
+  }
 }
 
 /* ---------- Toggle switch — مدل iOS ---------- */
@@ -4173,7 +4218,7 @@ input:focus, select:focus {
 
 /* ---------- Todo minimal modern ---------- */
 #tab-todo {
-  padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px));
 }
 .td-wrap { padding: 4px 2px 24px; }
 .td-top {
