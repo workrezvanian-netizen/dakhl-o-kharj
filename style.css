@@ -4785,3 +4785,48 @@ input:focus, select:focus {
   opacity: 1 !important;
   visibility: visible !important;
 }
+
+
+/* === v118 stability overrides === */
+.chart-carousel {
+  position: relative !important;
+  width: 100% !important;
+  overflow: hidden !important;
+}
+.chart-carousel-track {
+  display: flex !important;
+  flex-direction: row !important;
+  overflow: visible !important;
+  transform: translate3d(0,0,0);
+  will-change: transform;
+  direction: ltr !important;
+}
+.chart-carousel-page {
+  box-sizing: border-box !important;
+  direction: rtl !important;
+  min-height: 180px !important;
+  overflow: visible !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+.chart-carousel .compare-gauges-row,
+.chart-carousel .pie-compare,
+.chart-carousel .donut-wrap,
+.chart-carousel .savings-ring-wrap,
+.chart-carousel #combinedDailyChart,
+.chart-carousel #combinedBarChart {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+#tab-todo .td-wrap,
+#tab-todo .td-projects,
+#tab-todo .td-card {
+  display: block;
+}
+#tab-todo .td-projects {
+  display: flex !important;
+  flex-direction: column !important;
+}
+#tab-todo.tab.active {
+  display: block !important;
+}

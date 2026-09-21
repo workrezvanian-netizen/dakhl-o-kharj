@@ -568,45 +568,24 @@ function switchTab(tab, opts = {}) {
     requestAnimationFrame(() => renderDashboard());
   }
   if (tab === "analysis") {
-    // عرض کاروسل بعد از نمایش تب درست شود
-    requestAnimationFrame(() => {
-      document.querySelectorAll(".chart-carousel-track").forEach((tr) => {
-        if (tr._carousel && typeof tr._carousel.goTo === "function") {
-          /* stay on current via re-apply */
-        }
-        // force layout re-apply
-        const pages = tr.querySelectorAll(":scope > .chart-carousel-page");
-        if (!pages.length) return;
-        // keep transform consistent
-        const active = tr.querySelector(".chart-carousel-dot.active"); // dots are outside
-      });
-      if (typeof refreshDailyCarouselCharts === "function") refreshDailyCarouselCharts();
-      if (typeof refreshCompareCarouselCharts === "function") refreshCompareCarouselCharts();
-      // reset carousel positions after visible
-      ["dailyChartTrack", "compareChartTrack"].forEach((id) => {
-        const tr = document.getElementById(id);
-        if (tr && tr._carousel && tr._carousel.goTo) {
-          // re-go to same index to recalc width
-          const dotsId = id === "dailyChartTrack" ? "dailyChartDots" : "compareChartDots";
-          const dots = document.getElementById(dotsId);
-          let idx = 0;
-          if (dots) {
-            const list = [...dots.querySelectorAll(".chart-carousel-dot")];
-            idx = Math.max(0, list.findIndex((d) => d.classList.contains("active")));
-          }
-          tr._carousel.goTo(idx);
-        }
-      });
-    });
-    // Reset analysis numbers to 0 so animateNumber plays from scratch
     const incEl = document.getElementById("incomeChartTotal");
     const expEl = document.getElementById("expenseChartTotal");
     if (incEl) incEl.textContent = "۰";
     if (expEl) expEl.textContent = "۰";
+    // دو فریم صبر تا تب visible شود و عرض واقعی باشد
     requestAnimationFrame(() => {
-      renderAnalysis();
-      // Re-measure and reset the AI card collapse so it starts fresh
-      if (typeof window._aiCollapseReset === "function") window._aiCollapseReset();
+      requestAnimationFrame(() => {
+        try { renderAnalysis(); } catch (e) { console.warn(e); }
+        ["dailyChartTrack", "compareChartTrack"].forEach((id) => {
+          const tr = document.getElementById(id);
+          if (tr && tr._carousel && typeof tr._carousel.refresh === "function") {
+            tr._carousel.refresh();
+          } else if (typeof initChartCarousels === "function") {
+            initChartCarousels();
+          }
+        });
+        if (typeof window._aiCollapseReset === "function") window._aiCollapseReset();
+      });
     });
   }
   if (tab === "installments" && typeof window.refreshInstallments === "function") {
@@ -615,7 +594,10 @@ function switchTab(tab, opts = {}) {
     requestAnimationFrame(() => window.refreshInstallments());
   }
   if (tab === "todo") {
-    renderTodo({ enterAnimate: true });
+    try {
+      if (typeof setupTodoUI === "function") setupTodoUI();
+      renderTodo({ enterAnimate: true });
+    } catch (e) { console.warn("todo tab", e); }
     const piFab = document.getElementById("piFab");
     if (piFab) piFab.hidden = false;
   } else {
@@ -2130,58 +2112,64 @@ function renderCombinedBarChart(containerId) {
   });
 }
 
-// -- کاروسل نمودار: سوایپ transform + عرض ثابت صفحات ---
+// -- کاروسل نمودار پایدار ---
 function setupChartCarousel(trackId, dotsId, onShow) {
   const track = document.getElementById(trackId);
   const dots = document.getElementById(dotsId);
-  if (!track || !dots) return;
+  if (!track || !dots) return null;
 
-  if (track._carousel && track._carousel.destroy) {
+  if (track._carousel && typeof track._carousel.destroy === "function") {
     try { track._carousel.destroy(); } catch (_) {}
   }
 
   const viewport = track.closest(".chart-carousel") || track.parentElement;
+  if (!viewport) return null;
   const pages = Array.from(track.querySelectorAll(":scope > .chart-carousel-page"));
   const dotEls = Array.from(dots.querySelectorAll(".chart-carousel-dot"));
-  if (!pages.length) return;
+  if (!pages.length) return null;
 
   let activeIndex = 0;
   let startX = 0, startY = 0, deltaX = 0;
   let tracking = false, axis = null, pointerId = null;
 
   function measure() {
-    const w = Math.max(1, Math.round(viewport.getBoundingClientRect().width || viewport.clientWidth || window.innerWidth));
+    // وقتی تب مخفی است width=0 می‌شود؛ از عرض پنجره استفاده کن
+    let w = Math.round(viewport.getBoundingClientRect().width || viewport.clientWidth || 0);
+    if (w < 40) w = Math.round(Math.min(window.innerWidth || 360, 420) - 48);
+    w = Math.max(w, 260);
     pages.forEach((p) => {
       p.style.flex = "0 0 " + w + "px";
       p.style.width = w + "px";
       p.style.minWidth = w + "px";
       p.style.maxWidth = w + "px";
+      p.style.boxSizing = "border-box";
     });
     track.style.width = (w * pages.length) + "px";
+    track.style.display = "flex";
+    track.style.flexDirection = "row";
     return w;
   }
 
   function apply(offsetPx, animate) {
     const w = measure();
     const x = -activeIndex * w + (offsetPx || 0);
-    track.style.transition = animate
-      ? "transform 0.34s cubic-bezier(.22,1,.36,1)"
-      : "none";
+    track.style.transition = animate ? "transform 0.34s cubic-bezier(.22,1,.36,1)" : "none";
     track.style.transform = "translate3d(" + x + "px,0,0)";
   }
 
+  function paintCharts() {
+    if (typeof onShow !== "function") return;
+    try { onShow(activeIndex); } catch (err) { console.warn("carousel onShow", err); }
+  }
+
   function setActive(index, fire) {
-    index = Math.max(0, Math.min(pages.length - 1, index));
-    const changed = index !== activeIndex;
+    index = Math.max(0, Math.min(pages.length - 1, index | 0));
     activeIndex = index;
-    dots.style.direction = "ltr";
+    if (dots) dots.style.direction = "ltr";
     dotEls.forEach((d, i) => d.classList.toggle("active", i === activeIndex));
     apply(0, true);
-    if (fire !== false && typeof onShow === "function") {
-      // همیشه رندر کن تا صفحه خالی نماند
-      requestAnimationFrame(() => {
-        try { onShow(activeIndex); } catch (err) { console.warn(err); }
-      });
+    if (fire !== false) {
+      requestAnimationFrame(paintCharts);
     }
   }
 
@@ -2222,7 +2210,7 @@ function setupChartCarousel(trackId, dotsId, onShow) {
       }
     }
     if (axis !== "x") return;
-    e.preventDefault();
+    try { e.preventDefault(); } catch (_) {}
     deltaX = dx;
     let resist = deltaX;
     if ((activeIndex === 0 && deltaX > 0) || (activeIndex === pages.length - 1 && deltaX < 0)) {
@@ -2256,12 +2244,15 @@ function setupChartCarousel(trackId, dotsId, onShow) {
   track.addEventListener("pointerup", onUp, { passive: true });
   track.addEventListener("pointercancel", onUp, { passive: true });
 
-  const onResize = () => apply(0, false);
+  const onResize = () => { apply(0, false); };
   window.addEventListener("resize", onResize);
 
   track._carousel = {
     goTo,
-    refresh() { apply(0, false); if (typeof onShow === "function") onShow(activeIndex); },
+    refresh() {
+      apply(0, false);
+      paintCharts();
+    },
     destroy() {
       track.removeEventListener("pointerdown", onDown);
       track.removeEventListener("pointermove", onMove);
@@ -2272,14 +2263,13 @@ function setupChartCarousel(trackId, dotsId, onShow) {
   };
 
   activeIndex = 0;
-  dots.style.direction = "ltr";
+  if (dots) dots.style.direction = "ltr";
   dotEls.forEach((d, i) => d.classList.toggle("active", i === 0));
   requestAnimationFrame(() => {
     apply(0, false);
-    if (typeof onShow === "function") {
-      try { onShow(0); } catch (err) { console.warn(err); }
-    }
+    paintCharts();
   });
+  return track._carousel;
 }
 
 function renderCatHBarChart(containerId) {
@@ -2406,8 +2396,24 @@ function refreshCompareCarouselCharts() {
   renderBudgetProgressChart("budgetProgressChart");
   renderKpiCardsChart("kpiCardsChart");
 }
-setupChartCarousel("dailyChartTrack", "dailyChartDots", () => refreshDailyCarouselCharts());
-setupChartCarousel("compareChartTrack", "compareChartDots", () => refreshCompareCarouselCharts());
+function initChartCarousels() {
+  try {
+    setupChartCarousel("dailyChartTrack", "dailyChartDots", () => {
+      try { refreshDailyCarouselCharts(); } catch (e) { console.warn(e); }
+    });
+    setupChartCarousel("compareChartTrack", "compareChartDots", () => {
+      try { refreshCompareCarouselCharts(); } catch (e) { console.warn(e); }
+    });
+  } catch (e) {
+    console.warn("initChartCarousels", e);
+  }
+}
+// بعد از DOM — و با تأخیر کوتاه تا layout آماده شود
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", () => setTimeout(initChartCarousels, 0));
+} else {
+  setTimeout(initChartCarousels, 0);
+}
 
 function renderTopTransactionsList(containerId) {
   const wrap = document.getElementById(containerId);
@@ -2970,7 +2976,7 @@ async function initSync() {
 // ---------- Service worker ----------
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js?v=117").catch(() => {});
+    navigator.serviceWorker.register("sw.js?v=118").catch(() => {});
   });
 }
 
@@ -3502,30 +3508,51 @@ let _piPendingPriority = 3;
 let _piSheetOpening = false;
 
 function ensureTodoState() {
-  if (!state.todo || !Array.isArray(state.todo.lists) || !state.todo.lists.length) {
+  try {
+    if (!state.todo || typeof state.todo !== "object") state.todo = null;
+    if (!state.todo || !Array.isArray(state.todo.lists) || !state.todo.lists.length) {
+      state.todo = {
+        lists: [
+          {
+            id: "f1", name: "امروز", colorIdx: 0,
+            tasks: [
+              { id: "t1", title: "تکمیل طراحی رابط کاربری", done: false, priority: 2 },
+              { id: "t2", title: "ارسال فایل‌ها به تیم", done: false, priority: 1 },
+              { id: "t3", title: "خرید هفتگی", done: true, priority: 4 },
+            ]
+          },
+          { id: "f2", name: "کار", colorIdx: 2, tasks: [] },
+          { id: "f3", name: "شخصی", colorIdx: 1, tasks: [] },
+        ],
+        openId: "f1"
+      };
+    }
+    state.todo.lists = state.todo.lists.filter((l) => l && typeof l === "object");
+    if (!state.todo.lists.length) {
+      state.todo.lists = [{ id: "f1", name: "امروز", colorIdx: 0, tasks: [] }];
+    }
+    if (!state.todo.openId || !state.todo.lists.some((l) => l.id === state.todo.openId)) {
+      state.todo.openId = state.todo.lists[0].id;
+    }
+    state.todo.lists.forEach((l, i) => {
+      if (!l.id) l.id = "f" + i + "_" + Date.now().toString(36);
+      if (!l.name) l.name = "پوشه " + (i + 1);
+      if (l.colorIdx == null || isNaN(l.colorIdx)) l.colorIdx = i % PI_COLORS.length;
+      if (!Array.isArray(l.tasks)) l.tasks = [];
+      l.tasks = l.tasks.filter((t) => t && typeof t === "object" && t.title);
+      l.tasks.forEach((t) => {
+        if (!t.id) t.id = "t" + Date.now().toString(36);
+        t.done = !!t.done;
+        t.priority = Math.min(4, Math.max(1, parseInt(t.priority, 10) || 3));
+      });
+    });
+  } catch (err) {
+    console.warn("ensureTodoState", err);
     state.todo = {
-      lists: [
-        {
-          id: "f1", name: "امروز", colorIdx: 0,
-          tasks: [
-            { id: "t1", title: "تکمیل طراحی رابط کاربری", done: false, priority: 2 },
-            { id: "t2", title: "ارسال فایل‌ها به تیم", done: false, priority: 1 },
-            { id: "t3", title: "خرید هفتگی", done: true, priority: 4 },
-          ]
-        },
-        { id: "f2", name: "کار", colorIdx: 2, tasks: [] },
-        { id: "f3", name: "شخصی", colorIdx: 1, tasks: [] },
-      ],
+      lists: [{ id: "f1", name: "امروز", colorIdx: 0, tasks: [] }],
       openId: "f1"
     };
   }
-  if (state.todo.openId == null && state.todo.lists[0]) {
-    state.todo.openId = state.todo.lists[0].id;
-  }
-  state.todo.lists.forEach((l, i) => {
-    if (l.colorIdx == null) l.colorIdx = i % PI_COLORS.length;
-    if (!Array.isArray(l.tasks)) l.tasks = [];
-  });
 }
 
 function piUid() {
