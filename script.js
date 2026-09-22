@@ -541,7 +541,7 @@ function moveNavBead(tab, opts = {}) {
   if (navRect.width < 10) return;
   const x = btnRect.left + btnRect.width / 2 - navRect.left;
   // کپسول به اندازه تقریبی ناحیه آیکون تب
-  const beadW = Math.max(52, Math.min(72, Math.round(btnRect.width * 0.92)));
+  const beadW = Math.max(58, Math.min(78, Math.round(btnRect.width * 1.05)));
   const color = btn.getAttribute("data-color") || "#22C55E";
   bead.style.setProperty("--bead-x", x + "px");
   bead.style.setProperty("--bead-w", beadW + "px");
@@ -686,17 +686,15 @@ function switchTab(tab, opts = {}) {
     const expEl = document.getElementById("expenseChartTotal");
     if (incEl) incEl.textContent = "۰";
     if (expEl) expEl.textContent = "۰";
-    // دو فریم صبر تا تب visible شود و عرض واقعی باشد
     requestAnimationFrame(() => {
+      try {
+        if (typeof initChartCarousels === "function") initChartCarousels();
+        renderAnalysis();
+      } catch (e) { console.warn("analysis", e); }
       requestAnimationFrame(() => {
-        try { renderAnalysis(); } catch (e) { console.warn(e); }
         ["dailyChartTrack", "compareChartTrack"].forEach((id) => {
           const tr = document.getElementById(id);
-          if (tr && tr._carousel && typeof tr._carousel.refresh === "function") {
-            tr._carousel.refresh();
-          } else if (typeof initChartCarousels === "function") {
-            initChartCarousels();
-          }
+          if (tr && tr._carousel && tr._carousel.refresh) tr._carousel.refresh();
         });
         if (typeof window._aiCollapseReset === "function") window._aiCollapseReset();
       });
@@ -2226,7 +2224,7 @@ function renderCombinedBarChart(containerId) {
   });
 }
 
-// -- کاروسل نمودار پایدار ---
+// -- کاروسل نمودار: scroll-snap ساده و پایدار ---
 function setupChartCarousel(trackId, dotsId, onShow) {
   const track = document.getElementById(trackId);
   const dots = document.getElementById(dotsId);
@@ -2236,152 +2234,86 @@ function setupChartCarousel(trackId, dotsId, onShow) {
     try { track._carousel.destroy(); } catch (_) {}
   }
 
-  const viewport = track.closest(".chart-carousel") || track.parentElement;
-  if (!viewport) return null;
+  // ریست استایل‌های transform قبلی
+  track.style.transform = "";
+  track.style.width = "";
+  track.style.transition = "";
+  Array.from(track.children).forEach((p) => {
+    p.style.flex = "";
+    p.style.width = "";
+    p.style.minWidth = "";
+    p.style.maxWidth = "";
+  });
+
+  track.classList.add("chart-snap-track");
   const pages = Array.from(track.querySelectorAll(":scope > .chart-carousel-page"));
   const dotEls = Array.from(dots.querySelectorAll(".chart-carousel-dot"));
   if (!pages.length) return null;
 
   let activeIndex = 0;
-  let startX = 0, startY = 0, deltaX = 0;
-  let tracking = false, axis = null, pointerId = null;
+  let scrollTimer = null;
 
-  function measure() {
-    // وقتی تب مخفی است width=0 می‌شود؛ از عرض پنجره استفاده کن
-    let w = Math.round(viewport.getBoundingClientRect().width || viewport.clientWidth || 0);
-    if (w < 40) w = Math.round(Math.min(window.innerWidth || 360, 420) - 48);
-    w = Math.max(w, 260);
-    pages.forEach((p) => {
-      p.style.flex = "0 0 " + w + "px";
-      p.style.width = w + "px";
-      p.style.minWidth = w + "px";
-      p.style.maxWidth = w + "px";
-      p.style.boxSizing = "border-box";
-    });
-    track.style.width = (w * pages.length) + "px";
-    track.style.display = "flex";
-    track.style.flexDirection = "row";
-    return w;
+  function setDots(i) {
+    activeIndex = Math.max(0, Math.min(pages.length - 1, i));
+    dots.style.direction = "ltr";
+    dotEls.forEach((d, di) => d.classList.toggle("active", di === activeIndex));
   }
 
-  function apply(offsetPx, animate) {
-    const w = measure();
-    const x = -activeIndex * w + (offsetPx || 0);
-    track.style.transition = animate ? "transform 0.34s cubic-bezier(.22,1,.36,1)" : "none";
-    track.style.transform = "translate3d(" + x + "px,0,0)";
-  }
-
-  function paintCharts() {
-    if (typeof onShow !== "function") return;
-    try { onShow(activeIndex); } catch (err) { console.warn("carousel onShow", err); }
-  }
-
-  function setActive(index, fire) {
-    index = Math.max(0, Math.min(pages.length - 1, index | 0));
-    activeIndex = index;
-    if (dots) dots.style.direction = "ltr";
-    dotEls.forEach((d, i) => d.classList.toggle("active", i === activeIndex));
-    apply(0, true);
-    if (fire !== false) {
-      requestAnimationFrame(paintCharts);
+  function goTo(index) {
+    index = Math.max(0, Math.min(pages.length - 1, index));
+    const page = pages[index];
+    if (!page) return;
+    const left = page.offsetLeft;
+    track.scrollTo({ left, behavior: "smooth" });
+    setDots(index);
+    if (typeof onShow === "function") {
+      try { onShow(index); } catch (e) { console.warn(e); }
     }
   }
 
-  function goTo(index) { setActive(index, true); }
+  function onScroll() {
+    clearTimeout(scrollTimer);
+    scrollTimer = setTimeout(() => {
+      const w = track.clientWidth || 1;
+      const i = Math.round(track.scrollLeft / w);
+      setDots(i);
+      if (typeof onShow === "function") {
+        try { onShow(i); } catch (e) {}
+      }
+    }, 60);
+  }
 
   dotEls.forEach((dot, i) => {
     dot.onclick = (e) => {
       e.preventDefault();
-      e.stopPropagation();
       goTo(i);
     };
   });
 
-  function onDown(e) {
-    if (e.pointerType === "mouse" && e.button !== 0) return;
-    tracking = true;
-    axis = null;
-    deltaX = 0;
-    pointerId = e.pointerId;
-    startX = e.clientX;
-    startY = e.clientY;
-    track.style.transition = "none";
-    try { track.setPointerCapture(pointerId); } catch (_) {}
-  }
-
-  function onMove(e) {
-    if (!tracking) return;
-    if (pointerId != null && e.pointerId !== pointerId) return;
-    const dx = e.clientX - startX;
-    const dy = e.clientY - startY;
-    if (axis === null) {
-      if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return;
-      axis = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
-      if (axis === "y") {
-        tracking = false;
-        try { track.releasePointerCapture(pointerId); } catch (_) {}
-        return;
-      }
-    }
-    if (axis !== "x") return;
-    try { e.preventDefault(); } catch (_) {}
-    deltaX = dx;
-    let resist = deltaX;
-    if ((activeIndex === 0 && deltaX > 0) || (activeIndex === pages.length - 1 && deltaX < 0)) {
-      resist = deltaX * 0.35;
-    }
-    apply(resist, false);
-  }
-
-  function onUp(e) {
-    if (!tracking) return;
-    if (pointerId != null && e.pointerId !== pointerId) return;
-    tracking = false;
-    try { track.releasePointerCapture(pointerId); } catch (_) {}
-    pointerId = null;
-    if (axis !== "x") {
-      apply(0, true);
-      axis = null;
-      return;
-    }
-    const w = measure();
-    const thresh = Math.min(50, w * 0.18);
-    if (deltaX <= -thresh) goTo(activeIndex + 1);
-    else if (deltaX >= thresh) goTo(activeIndex - 1);
-    else apply(0, true);
-    axis = null;
-    deltaX = 0;
-  }
-
-  track.addEventListener("pointerdown", onDown, { passive: true });
-  track.addEventListener("pointermove", onMove, { passive: false });
-  track.addEventListener("pointerup", onUp, { passive: true });
-  track.addEventListener("pointercancel", onUp, { passive: true });
-
-  const onResize = () => { apply(0, false); };
-  window.addEventListener("resize", onResize);
+  track.addEventListener("scroll", onScroll, { passive: true });
 
   track._carousel = {
     goTo,
     refresh() {
-      apply(0, false);
-      paintCharts();
+      if (typeof onShow === "function") {
+        try { onShow(activeIndex); } catch (e) {}
+      }
+      // stay
+      const page = pages[activeIndex];
+      if (page) track.scrollLeft = page.offsetLeft;
     },
     destroy() {
-      track.removeEventListener("pointerdown", onDown);
-      track.removeEventListener("pointermove", onMove);
-      track.removeEventListener("pointerup", onUp);
-      track.removeEventListener("pointercancel", onUp);
-      window.removeEventListener("resize", onResize);
+      track.removeEventListener("scroll", onScroll);
+      clearTimeout(scrollTimer);
     }
   };
 
-  activeIndex = 0;
-  if (dots) dots.style.direction = "ltr";
-  dotEls.forEach((d, i) => d.classList.toggle("active", i === 0));
+  setDots(0);
   requestAnimationFrame(() => {
-    apply(0, false);
-    paintCharts();
+    track.scrollLeft = 0;
+    if (typeof onShow === "function") {
+      try { onShow(0); } catch (e) {}
+    }
   });
   return track._carousel;
 }
@@ -3090,7 +3022,7 @@ async function initSync() {
 // ---------- Service worker ----------
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js?v=123").catch(() => {});
+    navigator.serviceWorker.register("sw.js?v=124").catch(() => {});
   });
 }
 
@@ -3706,7 +3638,6 @@ function renderTodo(opts) {
   const stack = document.getElementById("piStack");
   if (!stack) return;
 
-  // ورود به تب: اول همه بسته، بعد «امروز» با انیمیشن کرکره باز شود
   const enterAnimate = opts && opts.enterAnimate;
   let targetOpenId = state.todo.openId;
   if (enterAnimate) {
@@ -3716,60 +3647,108 @@ function renderTodo(opts) {
   }
   const openId = enterAnimate ? null : state.todo.openId;
 
-  stack.innerHTML = state.todo.lists.map((folder) => {
+  // پوشه‌های رنگی روی هم (سبک فولدر)
+  stack.innerHTML = state.todo.lists.map((folder, fi) => {
     const open = folder.id === openId;
     const color = PI_COLORS[folder.colorIdx % PI_COLORS.length];
     const openN = folder.tasks.filter((t) => !t.done).length;
     const total = folder.tasks.length;
-    const meta = openN > 0 ? String(openN) : (total ? String(total) : "");
+    const countLabel = openN > 0
+      ? (openN.toLocaleString("fa-IR") + " کار")
+      : (total ? total.toLocaleString("fa-IR") + " کار" : "خالی");
 
-    let inner = "";
+    let tasksHtml = "";
     if (!folder.tasks.length) {
-      inner = `<p class="td-empty">هنوز کاری نیست</p>
+      tasksHtml = `<p class="td-empty">هنوز کاری نیست</p>
         <button type="button" class="td-add-inline" data-action="add" data-fid="${folder.id}">+ افزودن کار</button>`;
     } else {
-      inner = folder.tasks.map((t, ti) => {
+      tasksHtml = folder.tasks.map((t, ti) => {
         const p = Math.min(4, Math.max(1, t.priority || 3));
         const labels = { 1: "فوری", 2: "بالا", 3: "عادی", 4: "کم" };
-        const chip = `<span class="td-chip p${p}">${labels[p]}</span>`;
-        return `<div class="td-task ${t.done ? "done" : ""}" data-fid="${folder.id}" data-tid="${t.id}" style="animation-delay:${Math.min(ti, 12) * 0.06}s">
+        return `<div class="td-task ${t.done ? "done" : ""}" data-fid="${folder.id}" data-tid="${t.id}" style="animation-delay:${Math.min(ti, 10) * 0.05}s">
           <button type="button" class="td-check p${p}" data-action="toggle" aria-label="انجام">${t.done ? "✓" : ""}</button>
           <div class="td-task-main">
             <div class="td-task-title">${piEsc(t.title)}</div>
-            <div class="td-task-foot">${chip}</div>
+            <div class="td-task-foot"><span class="td-chip p${p}">${labels[p]}</span></div>
           </div>
         </div>`;
       }).join("") + `
         <button type="button" class="td-add-inline" data-action="add" data-fid="${folder.id}">+ افزودن کار</button>`;
     }
 
-    return `<div class="td-card ${open ? "is-open" : ""}" data-fid="${folder.id}">
-      <div class="td-card-head" data-action="open" data-fid="${folder.id}">
-        <span class="td-dot" style="--c:${color};background:${color}"></span>
-        <h3 class="td-card-name">${piEsc(folder.name)}</h3>
-        <span class="td-card-meta">${meta}</span>
-        <svg class="td-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+    return `<div class="td-folder ${open ? "is-open" : ""}" data-fid="${folder.id}" style="--folder-color:${color}; --folder-z:${state.todo.lists.length - fi}">
+      <div class="td-folder-tab" data-action="toggle-folder">
+        <span class="td-folder-tab-face"></span>
+        <span class="td-folder-name">${piEsc(folder.name)}</span>
+        <span class="td-folder-count">${countLabel}</span>
       </div>
-      <div class="td-body">
-        <div class="td-body-inner">
-          <div class="td-body-content">${inner}</div>
+      <div class="td-folder-body">
+        <div class="td-folder-paper">
+          ${tasksHtml}
         </div>
       </div>
     </div>`;
   }).join("");
 
+  // کلیک روی زبانه پوشه
+  stack.querySelectorAll("[data-action='toggle-folder']").forEach((tab) => {
+    tab.addEventListener("click", (e) => {
+      e.preventDefault();
+      const card = tab.closest(".td-folder");
+      if (!card) return;
+      const fid = card.getAttribute("data-fid");
+      if (state.todo.openId === fid) {
+        state.todo.openId = null;
+      } else {
+        state.todo.openId = fid;
+      }
+      saveTodoOnly();
+      renderTodo();
+    });
+  });
+  stack.querySelectorAll("[data-action='toggle']").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const row = btn.closest(".td-task");
+      if (!row) return;
+      const fid = row.getAttribute("data-fid");
+      const tid = row.getAttribute("data-tid");
+      const folder = state.todo.lists.find((l) => l.id === fid);
+      if (!folder) return;
+      const task = folder.tasks.find((t) => t.id === tid);
+      if (!task) return;
+      task.done = !task.done;
+      saveTodoOnly();
+      renderTodo();
+    });
+  });
+  stack.querySelectorAll("[data-action='add']").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const fid = btn.getAttribute("data-fid");
+      if (typeof piOpenSheet === "function") piOpenSheet(fid);
+      else if (typeof openTodoSheet === "function") openTodoSheet(fid);
+    });
+  });
+
   if (enterAnimate && targetOpenId) {
-    void stack.offsetHeight;
-    // کمی صبر تا تب دیده شود، بعد کرکره آرام باز شود
-    setTimeout(() => {
-      requestAnimationFrame(() => {
-        stack.querySelectorAll(".td-card").forEach((card) => {
-          card.classList.toggle("is-open", card.dataset.fid === targetOpenId);
+    requestAnimationFrame(() => {
+      state.todo.openId = targetOpenId;
+      const el = stack.querySelector(`.td-folder[data-fid="${targetOpenId}"]`);
+      if (el) {
+        // باز شدن نرم
+        requestAnimationFrame(() => {
+          el.classList.add("is-open");
         });
-      });
-    }, 120);
+      } else {
+        renderTodo();
+      }
+    });
   }
 }
+
 
 function piOpenSheet(folderId) {
   if (_piSheetOpening) return;
