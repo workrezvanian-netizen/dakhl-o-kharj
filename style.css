@@ -5269,3 +5269,42 @@ input:focus, select:focus {
 .meniscus-bead {
   opacity: 1; /* جلوگیری از مخفی ماندن قبل از is-ready */
 }
+
+
+/* کپسول همیشه دیده شود */
+#navBead.meniscus-bead,
+.meniscus-bead {
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: block !important;
+  z-index: 3 !important;
+}
+
+/* آنالیز: نمودارها همیشه دیده شوند */
+#tab-analysis {
+  padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px));
+}
+#tab-analysis .chart-carousel-page,
+#tab-analysis #combinedDailyChart,
+#tab-analysis #combinedBarChart,
+#tab-analysis #catHBarChart,
+#tab-analysis #savingsRingChart,
+#tab-analysis #incomeExpenseChart,
+#tab-analysis #incomeExpensePie,
+#tab-analysis #budgetProgressChart,
+#tab-analysis #kpiCardsChart,
+#tab-analysis #expenseDiversityChart,
+#tab-analysis #topTransactionsList {
+  min-height: 40px;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+#dailyChartTrack,
+#compareChartTrack {
+  direction: ltr !important;
+  overflow-x: auto !important;
+  scroll-snap-type: x mandatory !important;
+  -webkit-overflow-scrolling: touch !important;
+  transform: none !important;
+  width: 100% !important;
+}

@@ -533,26 +533,27 @@ function moveNavBead(tab, opts = {}) {
   const nav = document.getElementById("bottomNav") || document.querySelector(".bottom-nav");
   const bead = document.getElementById("navBead");
   if (!nav || !bead) return false;
-  const btn = document.querySelector(`.nav-btn[data-tab="${tab}"]`)
+  const tabId = tab || "dashboard";
+  const btn = document.querySelector('.nav-btn[data-tab="' + tabId + '"]')
     || document.querySelector(".nav-btn.active")
-    || document.querySelector(`.nav-btn[data-tab="dashboard"]`);
+    || document.querySelector('.nav-btn[data-tab="dashboard"]');
   if (!btn) return false;
+  // active class sync
+  document.querySelectorAll(".nav-btn").forEach((b) => b.classList.toggle("active", b === btn));
   const navRect = nav.getBoundingClientRect();
   const btnRect = btn.getBoundingClientRect();
   if (navRect.width < 10 || btnRect.width < 4) return false;
-  const x = btnRect.left + btnRect.width / 2 - navRect.left;
-  if (!isFinite(x) || x < 0) return false;
-  const beadW = Math.max(60, Math.min(84, Math.round(btnRect.width * 1.08)));
+  let x = btnRect.left + btnRect.width / 2 - navRect.left;
+  if (!isFinite(x)) return false;
+  x = Math.max(20, Math.min(navRect.width - 20, x));
+  const beadW = Math.max(60, Math.min(88, Math.round(btnRect.width * 1.1)));
   const color = btn.getAttribute("data-color") || "#22C55E";
   bead.style.setProperty("--bead-x", Math.round(x) + "px");
   bead.style.setProperty("--bead-w", beadW + "px");
   bead.style.setProperty("--bead-color", color);
   bead.style.background = color;
+  bead.style.opacity = "1";
   bead.classList.add("is-ready");
-  document.querySelectorAll(".nav-btn").forEach((b) => {
-    const c = b.getAttribute("data-color") || "#22C55E";
-    b.style.setProperty("--bead-label", c);
-  });
   return true;
 }
 
@@ -686,12 +687,15 @@ function switchTab(tab, opts = {}) {
     const expEl = document.getElementById("expenseChartTotal");
     if (incEl) incEl.textContent = "۰";
     if (expEl) expEl.textContent = "۰";
+    // رندر فوری + یک فریم بعد از visible شدن تب
+    try { renderAnalysis(); } catch (e) { console.warn(e); }
     requestAnimationFrame(() => {
       try {
         if (typeof initChartCarousels === "function") initChartCarousels();
         renderAnalysis();
       } catch (e) { console.warn("analysis", e); }
       requestAnimationFrame(() => {
+        try { renderAnalysis(); } catch (_) {}
         ["dailyChartTrack", "compareChartTrack"].forEach((id) => {
           const tr = document.getElementById(id);
           if (tr && tr._carousel && tr._carousel.refresh) tr._carousel.refresh();
@@ -1966,6 +1970,7 @@ function buildYearlyChartPool(jy) {
 
 function renderCombinedDailyChart(containerId, incomeTotalElId, expenseTotalElId) {
   const wrap = document.getElementById(containerId);
+  if (!wrap) return;
   const scrollWrap = document.getElementById("dailyChartScroll");
   const incomeTotalEl = document.getElementById(incomeTotalElId);
   const expenseTotalEl = document.getElementById(expenseTotalElId);
@@ -2508,50 +2513,56 @@ function renderTopTransactionsList(containerId) {
 }
 
 function renderAnalysis() {
-  if (typeof refreshDailyCarouselCharts === "function") refreshDailyCarouselCharts();
-  else {
-    renderCombinedDailyChart("combinedDailyChart", "incomeChartTotal", "expenseChartTotal");
-    renderCombinedBarChart("combinedBarChart");
-    renderCatHBarChart("catHBarChart");
-    renderSavingsRingChart("savingsRingChart");
-  }
-  if (typeof refreshCompareCarouselCharts === "function") refreshCompareCarouselCharts();
-  else {
-    renderBudgetProgressChart("budgetProgressChart");
-    renderKpiCardsChart("kpiCardsChart");
-  }
-
-  const inPeriod = (dateStr) => {
-    if (analysisPeriod === "all") return true;
-    const [gy, gm, gd] = dateStr.split("-").map(Number);
-    const d = new Date(gy, gm - 1, gd);
-    const today = new Date();
-    const daysDiff = Math.floor((today - d) / (1000 * 60 * 60 * 24));
-    
-    if (analysisPeriod === "week") return daysDiff >= 0 && daysDiff < 7;
-    if (analysisPeriod === "month") return inViewedMonth(dateStr);
-    return true;
+  const safe = (fn, label) => {
+    try { fn(); } catch (err) { console.warn("analysis:" + label, err); }
   };
-  const expenses = state.expenses.filter((x) => inPeriod(x.date));
-  const incomes = state.incomes.filter((x) => inPeriod(x.date));
 
-  // Update title based on period
-  const periodLabels = { "week": "این هفته", "month": isViewingCurrentMonth() ? "این ماه" : JALALI_MONTHS[viewedMonth.jm - 1], "all": "کل بازه" };
-  const analysisTitle = document.querySelector(".ai-card-head h2");
-  if (analysisTitle) {
-    analysisTitle.textContent = `تحلیل هوشمند ${periodLabels[analysisPeriod]}`;
-  }
+  // تیتر تحلیل هوشمند
+  try {
+    const periodLabels = {
+      week: "این هفته",
+      month: isViewingCurrentMonth() ? "این ماه" : JALALI_MONTHS[viewedMonth.jm - 1],
+      all: "کل بازه"
+    };
+    const analysisTitle = document.querySelector(".ai-card-head h2");
+    if (analysisTitle) {
+      analysisTitle.textContent = "تحلیل هوشمند " + (periodLabels[analysisPeriod] || "این ماه");
+    }
+  } catch (_) {}
 
-  renderMonthCompareCard("incomeExpenseChart", analysisPeriod);
-  renderIncomeExpensePieCompare("incomeExpensePie", analysisPeriod);
-  renderTopTransactionsList("topTransactionsList");
+  // نمودارهای کاروسل اول
+  safe(() => renderCombinedDailyChart("combinedDailyChart", "incomeChartTotal", "expenseChartTotal"), "daily");
+  safe(() => renderCombinedBarChart("combinedBarChart"), "bar");
+  safe(() => renderCatHBarChart("catHBarChart"), "catH");
+  safe(() => renderSavingsRingChart("savingsRingChart"), "savings");
 
-  const byCat = {};
-  expenses.forEach((x) => { byCat[x.category] = (byCat[x.category] || 0) + x.amount; });
-  const expenseSegments = Object.entries(byCat)
-    .sort((a, b) => b[1] - a[1])
-    .map(([name, amt]) => ({ label: name, value: amt, color: catColor(name), icon: catIcon(name) }));
-  renderPieChart("expenseDiversityChart", expenseSegments, "expense");
+  // نمودارهای کاروسل دوم
+  safe(() => renderMonthCompareCard("incomeExpenseChart", analysisPeriod), "gauge");
+  safe(() => renderIncomeExpensePieCompare("incomeExpensePie", analysisPeriod), "pie");
+  safe(() => renderBudgetProgressChart("budgetProgressChart"), "budget");
+  safe(() => renderKpiCardsChart("kpiCardsChart"), "kpi");
+
+  // لیست و دونات
+  safe(() => renderTopTransactionsList("topTransactionsList"), "top");
+  safe(() => {
+    const inPeriod = (dateStr) => {
+      if (analysisPeriod === "all") return true;
+      if (analysisPeriod === "week") {
+        const [gy, gm, gd] = dateStr.split("-").map(Number);
+        const d = new Date(gy, gm - 1, gd);
+        const daysDiff = Math.floor((Date.now() - d.getTime()) / 86400000);
+        return daysDiff >= 0 && daysDiff < 7;
+      }
+      return inViewedMonth(dateStr);
+    };
+    const expenses = (state.expenses || []).filter((x) => inPeriod(x.date));
+    const byCat = {};
+    expenses.forEach((x) => { byCat[x.category] = (byCat[x.category] || 0) + x.amount; });
+    const expenseSegments = Object.entries(byCat)
+      .sort((a, b) => b[1] - a[1])
+      .map(([name, amt]) => ({ label: name, value: amt, color: catColor(name), icon: catIcon(name) }));
+    renderPieChart("expenseDiversityChart", expenseSegments, "expense");
+  }, "diversity");
 }
 
 // ---------- AI analysis ----------
@@ -3022,7 +3033,7 @@ async function initSync() {
 // ---------- Service worker ----------
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js?v=125").catch(() => {});
+    navigator.serviceWorker.register("sw.js?v=126").catch(() => {});
   });
 }
 
@@ -4158,14 +4169,17 @@ document.getElementById("budgetCategoryList").addEventListener("blur", (e) => {
 
 
 (function initMeniscusNav() {
-  function placeBead() {
+  function placeBead(forceTab) {
     try {
       const active = document.querySelector(".nav-btn.active");
-      const tab = (active && active.dataset.tab) || "dashboard";
-      // مطمئن شو تب داشبورد در HTML هم active است
-      if (!active) {
+      const tab = forceTab || (active && active.dataset.tab) || "dashboard";
+      // در شروع برنامه همیشه داشبورد
+      if (!forceTab && !active) {
         const dash = document.querySelector('.nav-btn[data-tab="dashboard"]');
-        if (dash) dash.classList.add("active");
+        if (dash) {
+          document.querySelectorAll(".nav-btn").forEach((b) => b.classList.remove("active"));
+          dash.classList.add("active");
+        }
       }
       return moveNavBead(tab);
     } catch (e) {
@@ -4175,15 +4189,14 @@ document.getElementById("budgetCategoryList").addEventListener("blur", (e) => {
   }
   function boot() {
     try { setupMeniscusNavDrag(); } catch (e) {}
-    // چند بار تلاش تا بعد از layout و فونت‌ها موقعیت درست شود
+    // اجبار روی داشبورد در اولین بار
+    placeBead("dashboard");
     requestAnimationFrame(() => {
-      placeBead();
-      requestAnimationFrame(placeBead);
+      placeBead("dashboard");
+      requestAnimationFrame(() => placeBead("dashboard"));
     });
-    setTimeout(placeBead, 50);
-    setTimeout(placeBead, 180);
-    setTimeout(placeBead, 400);
-    window.addEventListener("load", placeBead, { once: true });
+    [50, 120, 250, 500, 1000].forEach((ms) => setTimeout(() => placeBead("dashboard"), ms));
+    window.addEventListener("load", () => placeBead("dashboard"), { once: true });
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
   else boot();
