@@ -532,28 +532,44 @@ document.querySelectorAll(".nav-btn").forEach((btn) => {
 function moveNavBead(tab, opts = {}) {
   const nav = document.getElementById("bottomNav") || document.querySelector(".bottom-nav");
   const bead = document.getElementById("navBead");
-  if (!nav || !bead) return;
-  const btn = document.querySelector(`.nav-btn[data-tab="${tab}"]`)
-    || document.querySelector(".nav-btn.active");
-  if (!btn) return;
+  if (!nav || !bead) return false;
+  const tabId = tab || "dashboard";
+  const btn = document.querySelector('.nav-btn[data-tab="' + tabId + '"]')
+    || document.querySelector(".nav-btn.active")
+    || document.querySelector('.nav-btn[data-tab="dashboard"]');
+  if (!btn) return false;
+
   const navRect = nav.getBoundingClientRect();
   const btnRect = btn.getBoundingClientRect();
-  if (navRect.width < 10) return;
-  const x = btnRect.left + btnRect.width / 2 - navRect.left;
-  // کپسول به اندازه تقریبی ناحیه آیکون تب
-  const beadW = Math.max(58, Math.min(78, Math.round(btnRect.width * 1.05)));
+  // اگر هنوز layout نشده، بعداً دوباره تلاش شود
+  if (navRect.width < 20 || btnRect.width < 4) return false;
+
+  const beadW = Math.max(56, Math.min(76, Math.round(btnRect.width * 0.95)));
+  const beadH = 48;
+  // مرکز دکمه نسبت به نوار
+  let centerX = btnRect.left + btnRect.width / 2 - navRect.left;
+  if (!isFinite(centerX)) return false;
+  centerX = Math.max(beadW / 2, Math.min(navRect.width - beadW / 2, centerX));
+  const left = centerX - beadW / 2;
   const color = btn.getAttribute("data-color") || "#22C55E";
-  bead.style.setProperty("--bead-x", x + "px");
+
+  // موقعیت مستقیم با left — مطمئن‌تر از فقط CSS variable
+  bead.style.width = beadW + "px";
+  bead.style.height = beadH + "px";
+  bead.style.marginLeft = "0";
+  bead.style.marginTop = (-beadH / 2) + "px";
+  bead.style.left = Math.round(left) + "px";
+  bead.style.top = "50%";
+  bead.style.transform = "translate3d(0,0,0) scale(1)";
+  bead.style.background = color;
+  bead.style.opacity = "1";
+  bead.style.visibility = "visible";
+  bead.style.display = "block";
+  bead.style.setProperty("--bead-x", Math.round(centerX) + "px");
   bead.style.setProperty("--bead-w", beadW + "px");
   bead.style.setProperty("--bead-color", color);
-  bead.style.background = color;
-  btn.style.setProperty("--bead-label", color);
-  if (!opts.silent) bead.classList.add("is-ready");
-  // sync label color on active only
-  document.querySelectorAll(".nav-btn").forEach((b) => {
-    const c = b.getAttribute("data-color") || "#22C55E";
-    b.style.setProperty("--bead-label", c);
-  });
+  bead.classList.add("is-ready");
+  return true;
 }
 
 function setupMeniscusNavDrag() {
@@ -3022,7 +3038,7 @@ async function initSync() {
 // ---------- Service worker ----------
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js?v=129").catch(() => {});
+    navigator.serviceWorker.register("sw.js?v=130").catch(() => {});
   });
 }
 
@@ -4158,6 +4174,7 @@ document.getElementById("budgetCategoryList").addEventListener("blur", (e) => {
 
 
 (function initMeniscusNav() {
+  let tries = 0;
   function placeDashboardBead() {
     try {
       const dash = document.querySelector('.nav-btn[data-tab="dashboard"]');
@@ -4165,26 +4182,44 @@ document.getElementById("budgetCategoryList").addEventListener("blur", (e) => {
         document.querySelectorAll(".nav-btn").forEach((b) => b.classList.remove("active"));
         dash.classList.add("active");
       }
-      moveNavBead("dashboard");
+      const ok = moveNavBead("dashboard");
       const bead = document.getElementById("navBead");
-      if (bead) bead.classList.add("is-ready");
+      if (bead) {
+        bead.classList.add("is-ready");
+        bead.style.opacity = "1";
+        bead.style.visibility = "visible";
+      }
+      return ok;
     } catch (e) {
       console.warn("meniscus", e);
+      return false;
     }
   }
   function boot() {
     try { setupMeniscusNavDrag(); } catch (e) {}
-    // موقع باز شدن: کپسول روی داشبورد
-    placeDashboardBead();
-    requestAnimationFrame(placeDashboardBead);
-    setTimeout(placeDashboardBead, 100);
-    setTimeout(placeDashboardBead, 350);
-    window.addEventListener("load", placeDashboardBead, { once: true });
+    function attempt() {
+      tries += 1;
+      const ok = placeDashboardBead();
+      // تا وقتی layout آماده نشده، چند بار تکرار کن
+      if (!ok && tries < 20) {
+        setTimeout(attempt, 50);
+      }
+    }
+    attempt();
+    requestAnimationFrame(attempt);
+    window.addEventListener("load", attempt, { once: true });
+    // بعد از اولین تعامل کاربر هم یک‌بار مطمئن شو
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") {
+        const active = document.querySelector(".nav-btn.active");
+        moveNavBead((active && active.dataset.tab) || "dashboard");
+      }
+    });
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
   else boot();
   window.addEventListener("resize", () => {
     const active = document.querySelector(".nav-btn.active");
-    if (active) moveNavBead(active.dataset.tab, { silent: true });
+    moveNavBead((active && active.dataset.tab) || "dashboard");
   });
 })();

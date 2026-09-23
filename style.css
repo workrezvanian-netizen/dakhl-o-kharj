@@ -2120,8 +2120,9 @@ input:focus, select:focus {
   opacity: 0;
 }
 .meniscus-bead.is-ready {
-  opacity: 1;
-  transform: translate3d(var(--bead-x, 50%), 0, 0) scale(1);
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: translate3d(0, 0, 0) scale(1);
 }
 .meniscus-bead.is-dragging {
   transition: background 0.2s ease, width 0.2s ease;
@@ -5077,13 +5078,10 @@ input:focus, select:focus {
   stroke-width: 2.3;
   transform: scale(1.12);
 }
-/* کپسول مثل ذره‌بین: بزرگ‌تر روی تب فعال */
+/* کپسول کمی بزرگ‌تر روی تب فعال — بدون خراب کردن left */
 .meniscus-bead.is-ready {
-  width: var(--bead-w, 64px) !important;
-  height: 52px !important;
-  margin-top: -26px !important;
-  margin-left: calc(var(--bead-w, 64px) / -2) !important;
-  transform: translate3d(var(--bead-x, 50%), 0, 0) scale(1.12) !important;
+  opacity: 1 !important;
+  visibility: visible !important;
   filter: drop-shadow(0 4px 12px color-mix(in srgb, var(--bead-color, #22C55E) 35%, transparent));
 }
 /* کپسول فعال هم کمی سه‌بعدی و شیشه‌ای‌تر */
