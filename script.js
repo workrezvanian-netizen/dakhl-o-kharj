@@ -533,6 +533,27 @@ function moveNavBead(tab, opts = {}) {
   const nav = document.getElementById("bottomNav") || document.querySelector(".bottom-nav");
   const bead = document.getElementById("navBead");
   if (!nav || !bead) return false;
+  const btn = document.querySelector('.nav-btn[data-tab="' + (tab || "dashboard") + '"]')
+    || document.querySelector(".nav-btn.active")
+    || document.querySelector('.nav-btn[data-tab="dashboard"]');
+  if (!btn) return false;
+  const navRect = nav.getBoundingClientRect();
+  const btnRect = btn.getBoundingClientRect();
+  if (navRect.width < 20 || btnRect.width < 4) return false;
+  const x = btnRect.left + btnRect.width / 2 - navRect.left;
+  if (!isFinite(x)) return false;
+  const beadW = Math.max(52, Math.min(72, Math.round(btnRect.width * 0.92)));
+  const color = btn.getAttribute("data-color") || "#22C55E";
+  bead.style.setProperty("--bead-x", Math.round(x) + "px");
+  bead.style.setProperty("--bead-w", beadW + "px");
+  bead.style.setProperty("--bead-color", color);
+  bead.style.background = color;
+  bead.classList.add("is-ready");
+  return true;
+}) {
+  const nav = document.getElementById("bottomNav") || document.querySelector(".bottom-nav");
+  const bead = document.getElementById("navBead");
+  if (!nav || !bead) return false;
   const tabId = tab || "dashboard";
   const btn = document.querySelector('.nav-btn[data-tab="' + tabId + '"]')
     || document.querySelector(".nav-btn.active")
@@ -3033,7 +3054,7 @@ async function initSync() {
 // ---------- Service worker ----------
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js?v=126").catch(() => {});
+    navigator.serviceWorker.register("sw.js?v=127").catch(() => {});
   });
 }
 
@@ -4169,39 +4190,32 @@ document.getElementById("budgetCategoryList").addEventListener("blur", (e) => {
 
 
 (function initMeniscusNav() {
-  function placeBead(forceTab) {
+  function place(tab) {
     try {
-      const active = document.querySelector(".nav-btn.active");
-      const tab = forceTab || (active && active.dataset.tab) || "dashboard";
-      // در شروع برنامه همیشه داشبورد
-      if (!forceTab && !active) {
-        const dash = document.querySelector('.nav-btn[data-tab="dashboard"]');
-        if (dash) {
-          document.querySelectorAll(".nav-btn").forEach((b) => b.classList.remove("active"));
-          dash.classList.add("active");
-        }
-      }
-      return moveNavBead(tab);
+      return moveNavBead(tab || "dashboard");
     } catch (e) {
-      console.warn("meniscus place", e);
+      console.warn("meniscus", e);
       return false;
     }
   }
   function boot() {
     try { setupMeniscusNavDrag(); } catch (e) {}
-    // اجبار روی داشبورد در اولین بار
-    placeBead("dashboard");
-    requestAnimationFrame(() => {
-      placeBead("dashboard");
-      requestAnimationFrame(() => placeBead("dashboard"));
-    });
-    [50, 120, 250, 500, 1000].forEach((ms) => setTimeout(() => placeBead("dashboard"), ms));
-    window.addEventListener("load", () => placeBead("dashboard"), { once: true });
+    // شروع برنامه: همیشه داشبورد
+    const dash = document.querySelector('.nav-btn[data-tab="dashboard"]');
+    if (dash) {
+      document.querySelectorAll(".nav-btn").forEach((b) => b.classList.remove("active"));
+      dash.classList.add("active");
+    }
+    place("dashboard");
+    requestAnimationFrame(() => place("dashboard"));
+    setTimeout(() => place("dashboard"), 80);
+    setTimeout(() => place("dashboard"), 300);
+    window.addEventListener("load", () => place("dashboard"), { once: true });
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
   else boot();
   window.addEventListener("resize", () => {
     const active = document.querySelector(".nav-btn.active");
-    moveNavBead((active && active.dataset.tab) || "dashboard", { silent: true });
+    place((active && active.dataset.tab) || "dashboard");
   });
-})();
+})();)();
