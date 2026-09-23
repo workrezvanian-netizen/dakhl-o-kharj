@@ -550,32 +550,6 @@ function moveNavBead(tab, opts = {}) {
   bead.style.background = color;
   bead.classList.add("is-ready");
   return true;
-}) {
-  const nav = document.getElementById("bottomNav") || document.querySelector(".bottom-nav");
-  const bead = document.getElementById("navBead");
-  if (!nav || !bead) return false;
-  const tabId = tab || "dashboard";
-  const btn = document.querySelector('.nav-btn[data-tab="' + tabId + '"]')
-    || document.querySelector(".nav-btn.active")
-    || document.querySelector('.nav-btn[data-tab="dashboard"]');
-  if (!btn) return false;
-  // active class sync
-  document.querySelectorAll(".nav-btn").forEach((b) => b.classList.toggle("active", b === btn));
-  const navRect = nav.getBoundingClientRect();
-  const btnRect = btn.getBoundingClientRect();
-  if (navRect.width < 10 || btnRect.width < 4) return false;
-  let x = btnRect.left + btnRect.width / 2 - navRect.left;
-  if (!isFinite(x)) return false;
-  x = Math.max(20, Math.min(navRect.width - 20, x));
-  const beadW = Math.max(60, Math.min(88, Math.round(btnRect.width * 1.1)));
-  const color = btn.getAttribute("data-color") || "#22C55E";
-  bead.style.setProperty("--bead-x", Math.round(x) + "px");
-  bead.style.setProperty("--bead-w", beadW + "px");
-  bead.style.setProperty("--bead-color", color);
-  bead.style.background = color;
-  bead.style.opacity = "1";
-  bead.classList.add("is-ready");
-  return true;
 }
 
 function setupMeniscusNavDrag() {
@@ -3054,7 +3028,7 @@ async function initSync() {
 // ---------- Service worker ----------
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js?v=127").catch(() => {});
+    navigator.serviceWorker.register("sw.js?v=128").catch(() => {});
   });
 }
 
@@ -4218,4 +4192,4 @@ document.getElementById("budgetCategoryList").addEventListener("blur", (e) => {
     const active = document.querySelector(".nav-btn.active");
     place((active && active.dataset.tab) || "dashboard");
   });
-})();)();
+})();
