@@ -532,24 +532,28 @@ document.querySelectorAll(".nav-btn").forEach((btn) => {
 function moveNavBead(tab, opts = {}) {
   const nav = document.getElementById("bottomNav") || document.querySelector(".bottom-nav");
   const bead = document.getElementById("navBead");
-  if (!nav || !bead) return false;
-  const btn = document.querySelector('.nav-btn[data-tab="' + (tab || "dashboard") + '"]')
-    || document.querySelector(".nav-btn.active")
-    || document.querySelector('.nav-btn[data-tab="dashboard"]');
-  if (!btn) return false;
+  if (!nav || !bead) return;
+  const btn = document.querySelector(`.nav-btn[data-tab="${tab}"]`)
+    || document.querySelector(".nav-btn.active");
+  if (!btn) return;
   const navRect = nav.getBoundingClientRect();
   const btnRect = btn.getBoundingClientRect();
-  if (navRect.width < 20 || btnRect.width < 4) return false;
+  if (navRect.width < 10) return;
   const x = btnRect.left + btnRect.width / 2 - navRect.left;
-  if (!isFinite(x)) return false;
-  const beadW = Math.max(52, Math.min(72, Math.round(btnRect.width * 0.92)));
+  // کپسول به اندازه تقریبی ناحیه آیکون تب
+  const beadW = Math.max(58, Math.min(78, Math.round(btnRect.width * 1.05)));
   const color = btn.getAttribute("data-color") || "#22C55E";
-  bead.style.setProperty("--bead-x", Math.round(x) + "px");
+  bead.style.setProperty("--bead-x", x + "px");
   bead.style.setProperty("--bead-w", beadW + "px");
   bead.style.setProperty("--bead-color", color);
   bead.style.background = color;
-  bead.classList.add("is-ready");
-  return true;
+  btn.style.setProperty("--bead-label", color);
+  if (!opts.silent) bead.classList.add("is-ready");
+  // sync label color on active only
+  document.querySelectorAll(".nav-btn").forEach((b) => {
+    const c = b.getAttribute("data-color") || "#22C55E";
+    b.style.setProperty("--bead-label", c);
+  });
 }
 
 function setupMeniscusNavDrag() {
@@ -682,15 +686,12 @@ function switchTab(tab, opts = {}) {
     const expEl = document.getElementById("expenseChartTotal");
     if (incEl) incEl.textContent = "۰";
     if (expEl) expEl.textContent = "۰";
-    // رندر فوری + یک فریم بعد از visible شدن تب
-    try { renderAnalysis(); } catch (e) { console.warn(e); }
     requestAnimationFrame(() => {
       try {
         if (typeof initChartCarousels === "function") initChartCarousels();
         renderAnalysis();
       } catch (e) { console.warn("analysis", e); }
       requestAnimationFrame(() => {
-        try { renderAnalysis(); } catch (_) {}
         ["dailyChartTrack", "compareChartTrack"].forEach((id) => {
           const tr = document.getElementById(id);
           if (tr && tr._carousel && tr._carousel.refresh) tr._carousel.refresh();
@@ -1965,7 +1966,6 @@ function buildYearlyChartPool(jy) {
 
 function renderCombinedDailyChart(containerId, incomeTotalElId, expenseTotalElId) {
   const wrap = document.getElementById(containerId);
-  if (!wrap) return;
   const scrollWrap = document.getElementById("dailyChartScroll");
   const incomeTotalEl = document.getElementById(incomeTotalElId);
   const expenseTotalEl = document.getElementById(expenseTotalElId);
@@ -2508,56 +2508,50 @@ function renderTopTransactionsList(containerId) {
 }
 
 function renderAnalysis() {
-  const safe = (fn, label) => {
-    try { fn(); } catch (err) { console.warn("analysis:" + label, err); }
+  if (typeof refreshDailyCarouselCharts === "function") refreshDailyCarouselCharts();
+  else {
+    renderCombinedDailyChart("combinedDailyChart", "incomeChartTotal", "expenseChartTotal");
+    renderCombinedBarChart("combinedBarChart");
+    renderCatHBarChart("catHBarChart");
+    renderSavingsRingChart("savingsRingChart");
+  }
+  if (typeof refreshCompareCarouselCharts === "function") refreshCompareCarouselCharts();
+  else {
+    renderBudgetProgressChart("budgetProgressChart");
+    renderKpiCardsChart("kpiCardsChart");
+  }
+
+  const inPeriod = (dateStr) => {
+    if (analysisPeriod === "all") return true;
+    const [gy, gm, gd] = dateStr.split("-").map(Number);
+    const d = new Date(gy, gm - 1, gd);
+    const today = new Date();
+    const daysDiff = Math.floor((today - d) / (1000 * 60 * 60 * 24));
+    
+    if (analysisPeriod === "week") return daysDiff >= 0 && daysDiff < 7;
+    if (analysisPeriod === "month") return inViewedMonth(dateStr);
+    return true;
   };
+  const expenses = state.expenses.filter((x) => inPeriod(x.date));
+  const incomes = state.incomes.filter((x) => inPeriod(x.date));
 
-  // تیتر تحلیل هوشمند
-  try {
-    const periodLabels = {
-      week: "این هفته",
-      month: isViewingCurrentMonth() ? "این ماه" : JALALI_MONTHS[viewedMonth.jm - 1],
-      all: "کل بازه"
-    };
-    const analysisTitle = document.querySelector(".ai-card-head h2");
-    if (analysisTitle) {
-      analysisTitle.textContent = "تحلیل هوشمند " + (periodLabels[analysisPeriod] || "این ماه");
-    }
-  } catch (_) {}
+  // Update title based on period
+  const periodLabels = { "week": "این هفته", "month": isViewingCurrentMonth() ? "این ماه" : JALALI_MONTHS[viewedMonth.jm - 1], "all": "کل بازه" };
+  const analysisTitle = document.querySelector(".ai-card-head h2");
+  if (analysisTitle) {
+    analysisTitle.textContent = `تحلیل هوشمند ${periodLabels[analysisPeriod]}`;
+  }
 
-  // نمودارهای کاروسل اول
-  safe(() => renderCombinedDailyChart("combinedDailyChart", "incomeChartTotal", "expenseChartTotal"), "daily");
-  safe(() => renderCombinedBarChart("combinedBarChart"), "bar");
-  safe(() => renderCatHBarChart("catHBarChart"), "catH");
-  safe(() => renderSavingsRingChart("savingsRingChart"), "savings");
+  renderMonthCompareCard("incomeExpenseChart", analysisPeriod);
+  renderIncomeExpensePieCompare("incomeExpensePie", analysisPeriod);
+  renderTopTransactionsList("topTransactionsList");
 
-  // نمودارهای کاروسل دوم
-  safe(() => renderMonthCompareCard("incomeExpenseChart", analysisPeriod), "gauge");
-  safe(() => renderIncomeExpensePieCompare("incomeExpensePie", analysisPeriod), "pie");
-  safe(() => renderBudgetProgressChart("budgetProgressChart"), "budget");
-  safe(() => renderKpiCardsChart("kpiCardsChart"), "kpi");
-
-  // لیست و دونات
-  safe(() => renderTopTransactionsList("topTransactionsList"), "top");
-  safe(() => {
-    const inPeriod = (dateStr) => {
-      if (analysisPeriod === "all") return true;
-      if (analysisPeriod === "week") {
-        const [gy, gm, gd] = dateStr.split("-").map(Number);
-        const d = new Date(gy, gm - 1, gd);
-        const daysDiff = Math.floor((Date.now() - d.getTime()) / 86400000);
-        return daysDiff >= 0 && daysDiff < 7;
-      }
-      return inViewedMonth(dateStr);
-    };
-    const expenses = (state.expenses || []).filter((x) => inPeriod(x.date));
-    const byCat = {};
-    expenses.forEach((x) => { byCat[x.category] = (byCat[x.category] || 0) + x.amount; });
-    const expenseSegments = Object.entries(byCat)
-      .sort((a, b) => b[1] - a[1])
-      .map(([name, amt]) => ({ label: name, value: amt, color: catColor(name), icon: catIcon(name) }));
-    renderPieChart("expenseDiversityChart", expenseSegments, "expense");
-  }, "diversity");
+  const byCat = {};
+  expenses.forEach((x) => { byCat[x.category] = (byCat[x.category] || 0) + x.amount; });
+  const expenseSegments = Object.entries(byCat)
+    .sort((a, b) => b[1] - a[1])
+    .map(([name, amt]) => ({ label: name, value: amt, color: catColor(name), icon: catIcon(name) }));
+  renderPieChart("expenseDiversityChart", expenseSegments, "expense");
 }
 
 // ---------- AI analysis ----------
@@ -3028,7 +3022,7 @@ async function initSync() {
 // ---------- Service worker ----------
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js?v=128").catch(() => {});
+    navigator.serviceWorker.register("sw.js?v=129").catch(() => {});
   });
 }
 
@@ -4164,32 +4158,33 @@ document.getElementById("budgetCategoryList").addEventListener("blur", (e) => {
 
 
 (function initMeniscusNav() {
-  function place(tab) {
+  function placeDashboardBead() {
     try {
-      return moveNavBead(tab || "dashboard");
+      const dash = document.querySelector('.nav-btn[data-tab="dashboard"]');
+      if (dash) {
+        document.querySelectorAll(".nav-btn").forEach((b) => b.classList.remove("active"));
+        dash.classList.add("active");
+      }
+      moveNavBead("dashboard");
+      const bead = document.getElementById("navBead");
+      if (bead) bead.classList.add("is-ready");
     } catch (e) {
       console.warn("meniscus", e);
-      return false;
     }
   }
   function boot() {
     try { setupMeniscusNavDrag(); } catch (e) {}
-    // شروع برنامه: همیشه داشبورد
-    const dash = document.querySelector('.nav-btn[data-tab="dashboard"]');
-    if (dash) {
-      document.querySelectorAll(".nav-btn").forEach((b) => b.classList.remove("active"));
-      dash.classList.add("active");
-    }
-    place("dashboard");
-    requestAnimationFrame(() => place("dashboard"));
-    setTimeout(() => place("dashboard"), 80);
-    setTimeout(() => place("dashboard"), 300);
-    window.addEventListener("load", () => place("dashboard"), { once: true });
+    // موقع باز شدن: کپسول روی داشبورد
+    placeDashboardBead();
+    requestAnimationFrame(placeDashboardBead);
+    setTimeout(placeDashboardBead, 100);
+    setTimeout(placeDashboardBead, 350);
+    window.addEventListener("load", placeDashboardBead, { once: true });
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
   else boot();
   window.addEventListener("resize", () => {
     const active = document.querySelector(".nav-btn.active");
-    place((active && active.dataset.tab) || "dashboard");
+    if (active) moveNavBead(active.dataset.tab, { silent: true });
   });
 })();

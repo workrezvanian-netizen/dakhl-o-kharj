@@ -2046,12 +2046,12 @@ input:focus, select:focus {
 .sync-msg.error { color: var(--expense); }
 .danger-zone h2 { color: var(--expense); }
 
-/* ---------- Bottom nav — Meniscus bead style (restored v121) ---------- */
+/* ---------- Bottom nav — Meniscus bead style ---------- */
 .bottom-nav.meniscus-nav {
   position: fixed;
-  bottom: max(12px, env(safe-area-inset-bottom, 12px));
-  right: 16px;
-  left: 16px;
+  bottom: max(4px, env(safe-area-inset-bottom, 4px));
+  right: 14px;
+  left: 14px;
   z-index: 20;
   display: flex;
   align-items: center;
@@ -2060,6 +2060,7 @@ input:focus, select:focus {
   overflow: visible;
   height: 64px;
   padding: 0 8px;
+  /* شیشه‌ای روشن */
   background: linear-gradient(
     165deg,
     rgba(255, 255, 255, 0.55) 0%,
@@ -2092,6 +2093,7 @@ input:focus, select:focus {
 }
 .bottom-nav.meniscus-nav::after { display: none; }
 
+/* نشانگر کپسولی متحرک (شبیه تب Phone در iOS) */
 .meniscus-bead {
   position: absolute;
   top: 50%;
@@ -2142,7 +2144,7 @@ input:focus, select:focus {
   border-radius: 0;
   padding: 0;
   margin: 0;
-  color: rgba(22, 63, 60, 0.45);
+  color: rgba(22, 63, 60, 0.42);
   font-family: inherit;
   font-size: 10px;
   cursor: pointer;
@@ -2168,23 +2170,26 @@ input:focus, select:focus {
   stroke-linecap: round;
   stroke-linejoin: round;
   transition: stroke 0.25s ease, transform 0.35s cubic-bezier(0.34, 1.4, 0.64, 1);
-  display: block;
 }
 .nav-btn .nav-label {
-  display: none !important; /* بدون اسم تب */
+  display: none !important;
 }
 .nav-btn.active {
-  color: #fff !important;
+  color: #fff;
   background: none !important;
   border: none !important;
   box-shadow: none !important;
   padding: 0;
 }
 .nav-btn.active svg {
-  stroke: #fff !important;
+  stroke: #fff;
   stroke-width: 2.15;
   transform: scale(1.06);
   filter: drop-shadow(0 1px 2px rgba(0,0,0,0.15));
+}
+.nav-btn.active .nav-label {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
 }
 .nav-btn:active .nav-icon {
   transform: scale(0.94);
@@ -5012,8 +5017,33 @@ input:focus, select:focus {
   }
 }
 
-
-
+/* نوار پایین — شیشه‌ای سه‌بعدی */
+.bottom-nav.meniscus-nav {
+  background: linear-gradient(
+    165deg,
+    rgba(255, 255, 255, 0.58) 0%,
+    rgba(255, 255, 255, 0.28) 42%,
+    rgba(247, 242, 234, 0.36) 100%
+  ) !important;
+  backdrop-filter: blur(42px) saturate(1.9) !important;
+  -webkit-backdrop-filter: blur(42px) saturate(1.9) !important;
+  border: 1px solid rgba(255, 255, 255, 0.7) !important;
+  box-shadow:
+    0 18px 44px rgba(16, 70, 43, 0.16),
+    0 6px 16px rgba(0, 0, 0, 0.08),
+    inset 0 1px 1px rgba(255, 255, 255, 0.85),
+    inset 0 -2px 6px rgba(255, 255, 255, 0.2) !important;
+  transform-style: preserve-3d;
+  perspective: 800px;
+}
+.bottom-nav.meniscus-nav::before {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.65) 0%,
+    rgba(255, 255, 255, 0.15) 40%,
+    transparent 100%
+  ) !important;
+}
 /* دکمه‌های نوار — شیشه‌ای سه‌بعدی */
 .bottom-nav.meniscus-nav .nav-btn {
   transition: transform 0.28s cubic-bezier(.22,1,.36,1), color 0.25s ease !important;
@@ -5035,8 +5065,37 @@ input:focus, select:focus {
       inset 0 1px 0 rgba(255,255,255,0.55);
   }
 }
-
-
+.bottom-nav.meniscus-nav .nav-btn.active .nav-icon {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  transform: scale(1.22);
+}
+.bottom-nav.meniscus-nav .nav-btn.active svg {
+  width: 28px !important;
+  height: 28px !important;
+  stroke-width: 2.3;
+  transform: scale(1.12);
+}
+/* کپسول مثل ذره‌بین: بزرگ‌تر روی تب فعال */
+.meniscus-bead.is-ready {
+  width: var(--bead-w, 64px) !important;
+  height: 52px !important;
+  margin-top: -26px !important;
+  margin-left: calc(var(--bead-w, 64px) / -2) !important;
+  transform: translate3d(var(--bead-x, 50%), 0, 0) scale(1.12) !important;
+  filter: drop-shadow(0 4px 12px color-mix(in srgb, var(--bead-color, #22C55E) 35%, transparent));
+}
+/* کپسول فعال هم کمی سه‌بعدی و شیشه‌ای‌تر */
+.meniscus-bead {
+  backdrop-filter: blur(8px) saturate(1.2);
+  -webkit-backdrop-filter: blur(8px) saturate(1.2);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  box-shadow:
+    0 8px 22px color-mix(in srgb, var(--bead-color, #22C55E) 42%, transparent),
+    0 3px 8px rgba(0,0,0,0.12),
+    inset 0 1px 0 rgba(255,255,255,0.45) !important;
+}
 
 
 /* ===== پوشه‌های تب کارها ===== */
@@ -5190,44 +5249,4 @@ input:focus, select:focus {
   opacity: 1 !important;
   visibility: visible !important;
   transform: none !important;
-}
-
-
-
-
-
-.meniscus-bead {
-  opacity: 1; /* جلوگیری از مخفی ماندن قبل از is-ready */
-}
-
-
-
-
-/* آنالیز: نمودارها همیشه دیده شوند */
-#tab-analysis {
-  padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px));
-}
-#tab-analysis .chart-carousel-page,
-#tab-analysis #combinedDailyChart,
-#tab-analysis #combinedBarChart,
-#tab-analysis #catHBarChart,
-#tab-analysis #savingsRingChart,
-#tab-analysis #incomeExpenseChart,
-#tab-analysis #incomeExpensePie,
-#tab-analysis #budgetProgressChart,
-#tab-analysis #kpiCardsChart,
-#tab-analysis #expenseDiversityChart,
-#tab-analysis #topTransactionsList {
-  min-height: 40px;
-  opacity: 1 !important;
-  visibility: visible !important;
-}
-#dailyChartTrack,
-#compareChartTrack {
-  direction: ltr !important;
-  overflow-x: auto !important;
-  scroll-snap-type: x mandatory !important;
-  -webkit-overflow-scrolling: touch !important;
-  transform: none !important;
-  width: 100% !important;
 }
