@@ -5248,3 +5248,265 @@ input:focus, select:focus {
   visibility: visible !important;
   transform: none !important;
 }
+
+
+
+/* ========== تب کارها — سبک PlanIt ========== */
+#tab-todo {
+  padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px));
+  background: #f3f4f6;
+}
+#tab-todo .td-wrap {
+  padding: 8px 14px 28px;
+  max-width: 480px;
+  margin: 0 auto;
+}
+#tab-todo .td-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 4px 2px 0;
+  direction: rtl;
+}
+#tab-todo .td-top-text {
+  text-align: right;
+  flex: 1;
+}
+#tab-todo .td-h1 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: #1a1a1a;
+  background: none;
+  -webkit-text-fill-color: #1a1a1a;
+  animation: none;
+}
+#tab-todo .td-sub {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #8b93a0;
+  font-weight: 500;
+}
+#tab-todo .td-icon-btn {
+  width: 42px;
+  height: 42px;
+  border: none;
+  border-radius: 50%;
+  background: #fff;
+  color: #1a1a1a;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+#tab-todo .td-icon-btn:active { transform: scale(0.94); }
+
+/* پشته پوشه‌ها */
+.pi-stack,
+#tab-todo .td-projects {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0 !important;
+  padding: 8px 0 12px !important;
+  position: relative;
+}
+
+.pi-folder {
+  position: relative;
+  z-index: var(--zi, 1);
+  margin-top: -6px;
+  filter: drop-shadow(0 6px 14px color-mix(in srgb, var(--c, #5B9BD5) 28%, transparent));
+  transition: transform 0.4s cubic-bezier(.33,1,.28,1), filter 0.35s ease;
+}
+.pi-folder:first-child { margin-top: 0; }
+.pi-folder.is-open {
+  z-index: 50;
+  filter: drop-shadow(0 12px 28px color-mix(in srgb, var(--c, #5B9BD5) 35%, transparent));
+  transform: translateY(-2px);
+}
+
+/* هدر پوشه = بدنه رنگی فولدر */
+.pi-folder-hit {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 54px;
+  padding: 12px 18px 12px 14px;
+  border: none;
+  border-radius: 0 18px 0 0;
+  background: var(--c, #5B9BD5);
+  color: #fff;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: right;
+  direction: rtl;
+  -webkit-tap-highlight-color: transparent;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.28),
+    inset 0 -1px 0 rgba(0,0,0,0.06);
+}
+.pi-folder.is-open .pi-folder-hit {
+  border-radius: 0 18px 0 0;
+}
+.pi-folder:not(.is-open) .pi-folder-hit {
+  border-radius: 0 16px 14px 0;
+}
+
+/* زبانه چپ «پوشه‌ها» */
+.pi-folder-tab {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translate(-78%, -50%) rotate(-90deg);
+  transform-origin: center center;
+  background: color-mix(in srgb, var(--c, #5B9BD5) 88%, #000);
+  color: rgba(255,255,255,0.95);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding: 6px 14px;
+  border-radius: 8px 8px 0 0;
+  white-space: nowrap;
+  box-shadow: -2px 0 8px rgba(0,0,0,0.08);
+  pointer-events: none;
+}
+.pi-folder-title {
+  flex: 1;
+  font-size: 16px;
+  font-weight: 800;
+  text-align: right;
+  line-height: 1.3;
+}
+.pi-folder-count {
+  font-size: 12.5px;
+  font-weight: 600;
+  opacity: 0.92;
+  white-space: nowrap;
+}
+
+/* بدنه بازشونده */
+.pi-folder-body {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.55s cubic-bezier(.33,1,.28,1);
+  background: var(--c, #5B9BD5);
+  border-radius: 0 0 18px 18px;
+  padding: 0 8px 0;
+}
+.pi-folder.is-open .pi-folder-body {
+  grid-template-rows: 1fr;
+  padding: 0 8px 10px;
+}
+.pi-folder-paper {
+  overflow: hidden;
+  min-height: 0;
+  background: #fff;
+  border-radius: 12px;
+  padding: 6px 4px 10px;
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: opacity 0.4s ease 0.06s, transform 0.45s cubic-bezier(.33,1,.28,1) 0.04s;
+  pointer-events: none;
+}
+.pi-folder.is-open .pi-folder-paper {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+
+/* ردیف کار */
+.pi-task {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 12px;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+  direction: rtl;
+  animation: piTaskIn 0.4s cubic-bezier(.33,1,.28,1) both;
+}
+.pi-task:last-of-type { border-bottom: none; }
+@keyframes piTaskIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+.pi-task.done .pi-task-title {
+  text-decoration: line-through;
+  opacity: 0.45;
+}
+.pi-task-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  text-align: right;
+}
+.pi-task-title {
+  font-size: 14.5px;
+  font-weight: 600;
+  color: #1f2937;
+  line-height: 1.45;
+  width: 100%;
+}
+.pi-task-tag {
+  display: inline-block;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--tag, #2563eb);
+  background: color-mix(in srgb, var(--tag, #2563eb) 12%, #fff);
+  border: 1px solid color-mix(in srgb, var(--tag, #2563eb) 22%, transparent);
+  border-radius: 6px;
+  padding: 2px 7px;
+}
+.pi-check {
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  border: 2px solid #c5cdd6;
+  background: #fff;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  padding: 0;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+}
+.pi-check.on {
+  background: var(--c, #5B9BD5);
+  border-color: var(--c, #5B9BD5);
+}
+.pi-check:active { transform: scale(0.9); }
+
+#tab-todo .td-empty {
+  margin: 12px 8px 4px;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 13px;
+}
+#tab-todo .td-add-inline {
+  display: block;
+  width: calc(100% - 16px);
+  margin: 8px 8px 4px;
+  padding: 10px;
+  border: 1.5px dashed rgba(0,0,0,0.12);
+  border-radius: 10px;
+  background: rgba(0,0,0,0.02);
+  color: #64748b;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+#tab-todo .td-add-inline:active {
+  background: rgba(0,0,0,0.05);
+}

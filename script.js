@@ -3038,7 +3038,7 @@ async function initSync() {
 // ---------- Service worker ----------
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js?v=130").catch(() => {});
+    navigator.serviceWorker.register("sw.js?v=131").catch(() => {});
   });
 }
 
@@ -3562,7 +3562,12 @@ initSync();
 
 // ---------- Todo minimal ----------
 const PI_COLORS = [
-  "#2F7A72", "#E09A3E", "#5C6BC0", "#26A69A", "#8B6BC7", "#EC407A"
+  "#5B9BD5", /* آبی — امروز */
+  "#E8A04B", /* نارنجی — پروژه */
+  "#4CAF8A", /* سبز — شخصی */
+  "#4A9FD8", /* آبی روشن — مطالعه */
+  "#9B7EBD", /* بنفش — یادداشت */
+  "#EC407A"
 ];
 
 let _piPendingFolder = null;
@@ -3576,15 +3581,19 @@ function ensureTodoState() {
       state.todo = {
         lists: [
           {
-            id: "f1", name: "امروز", colorIdx: 0,
+            id: "f1", name: "کارهای امروز", colorIdx: 0,
             tasks: [
-              { id: "t1", title: "تکمیل طراحی رابط کاربری", done: false, priority: 2 },
-              { id: "t2", title: "ارسال فایل‌ها به تیم", done: false, priority: 1 },
-              { id: "t3", title: "خرید هفتگی", done: true, priority: 4 },
+              { id: "t1", title: "تکمیل طراحی رابط کاربری پروژه", done: false, priority: 2 },
+              { id: "t2", title: "ارسال فایل‌های نهایی به تیم", done: false, priority: 1 },
+              { id: "t3", title: "شرکت در جلسه آنلاین با مشتری", done: false, priority: 3 },
+              { id: "t4", title: "برنامه‌ریزی محتوا برای فردا", done: false, priority: 3 },
+              { id: "t5", title: "خرید شخصی", done: false, priority: 4 },
             ]
           },
-          { id: "f2", name: "کار", colorIdx: 2, tasks: [] },
-          { id: "f3", name: "شخصی", colorIdx: 1, tasks: [] },
+          { id: "f2", name: "پروژه آپولو", colorIdx: 1, tasks: [] },
+          { id: "f3", name: "وظایف شخصی", colorIdx: 2, tasks: [] },
+          { id: "f4", name: "مطالعه و توسعه", colorIdx: 3, tasks: [] },
+          { id: "f5", name: "یادداشت‌ها", colorIdx: 4, tasks: [] },
         ],
         openId: "f1"
       };
@@ -3657,21 +3666,21 @@ function renderTodo(opts) {
   const enterAnimate = opts && opts.enterAnimate;
   let targetOpenId = state.todo.openId;
   if (enterAnimate) {
-    const today = state.todo.lists.find((l) => l.id === "f1" || l.name === "امروز") || state.todo.lists[0];
+    const today = state.todo.lists.find((l) => l.id === "f1" || /امروز/.test(l.name)) || state.todo.lists[0];
     targetOpenId = today ? today.id : state.todo.openId;
     state.todo.openId = targetOpenId;
   }
   const openId = enterAnimate ? null : state.todo.openId;
+  const n = state.todo.lists.length;
 
-  // پوشه‌های رنگی روی هم (سبک فولدر)
   stack.innerHTML = state.todo.lists.map((folder, fi) => {
     const open = folder.id === openId;
     const color = PI_COLORS[folder.colorIdx % PI_COLORS.length];
     const openN = folder.tasks.filter((t) => !t.done).length;
     const total = folder.tasks.length;
-    const countLabel = openN > 0
-      ? (openN.toLocaleString("fa-IR") + " کار")
-      : (total ? total.toLocaleString("fa-IR") + " کار" : "خالی");
+    const countLabel = total
+      ? (total.toLocaleString("fa-IR") + " tasks")
+      : "خالی";
 
     let tasksHtml = "";
     if (!folder.tasks.length) {
@@ -3681,43 +3690,41 @@ function renderTodo(opts) {
       tasksHtml = folder.tasks.map((t, ti) => {
         const p = Math.min(4, Math.max(1, t.priority || 3));
         const labels = { 1: "فوری", 2: "بالا", 3: "عادی", 4: "کم" };
-        return `<div class="td-task ${t.done ? "done" : ""}" data-fid="${folder.id}" data-tid="${t.id}" style="animation-delay:${Math.min(ti, 10) * 0.05}s">
-          <button type="button" class="td-check p${p}" data-action="toggle" aria-label="انجام">${t.done ? "✓" : ""}</button>
-          <div class="td-task-main">
-            <div class="td-task-title">${piEsc(t.title)}</div>
-            <div class="td-task-foot"><span class="td-chip p${p}">${labels[p]}</span></div>
+        const tagColors = { 1: "#e11d48", 2: "#ea580c", 3: "#2563eb", 4: "#64748b" };
+        const tag = `<span class="pi-task-tag" style="--tag:${tagColors[p]}">${labels[p]}</span>`;
+        return `<div class="pi-task ${t.done ? "done" : ""}" data-fid="${folder.id}" data-tid="${t.id}" style="animation-delay:${Math.min(ti, 12) * 0.045}s">
+          <div class="pi-task-main">
+            <span class="pi-task-title">${piEsc(t.title)}</span>
+            ${tag}
           </div>
+          <button type="button" class="pi-check ${t.done ? "on" : ""}" data-action="toggle" aria-label="انجام">
+            ${t.done ? "✓" : ""}
+          </button>
         </div>`;
       }).join("") + `
         <button type="button" class="td-add-inline" data-action="add" data-fid="${folder.id}">+ افزودن کار</button>`;
     }
 
-    return `<div class="td-folder ${open ? "is-open" : ""}" data-fid="${folder.id}" style="--folder-color:${color}; --folder-z:${state.todo.lists.length - fi}">
-      <div class="td-folder-tab" data-action="toggle-folder">
-        <span class="td-folder-tab-face"></span>
-        <span class="td-folder-name">${piEsc(folder.name)}</span>
-        <span class="td-folder-count">${countLabel}</span>
-      </div>
-      <div class="td-folder-body">
-        <div class="td-folder-paper">
-          ${tasksHtml}
-        </div>
+    return `<div class="pi-folder ${open ? "is-open" : ""}" data-fid="${folder.id}"
+        style="--c:${color}; --zi:${n - fi};">
+      <button type="button" class="pi-folder-hit" data-action="toggle-folder" aria-expanded="${open}">
+        <span class="pi-folder-tab">پوشه‌ها</span>
+        <span class="pi-folder-title">${piEsc(folder.name)}</span>
+        <span class="pi-folder-count">${open ? "" : countLabel}</span>
+      </button>
+      <div class="pi-folder-body">
+        <div class="pi-folder-paper">${tasksHtml}</div>
       </div>
     </div>`;
   }).join("");
 
-  // کلیک روی زبانه پوشه
   stack.querySelectorAll("[data-action='toggle-folder']").forEach((tab) => {
     tab.addEventListener("click", (e) => {
       e.preventDefault();
-      const card = tab.closest(".td-folder");
+      const card = tab.closest(".pi-folder");
       if (!card) return;
       const fid = card.getAttribute("data-fid");
-      if (state.todo.openId === fid) {
-        state.todo.openId = null;
-      } else {
-        state.todo.openId = fid;
-      }
+      state.todo.openId = (state.todo.openId === fid) ? null : fid;
       saveTodoOnly();
       renderTodo();
     });
@@ -3726,7 +3733,7 @@ function renderTodo(opts) {
     btn.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation();
-      const row = btn.closest(".td-task");
+      const row = btn.closest(".pi-task");
       if (!row) return;
       const fid = row.getAttribute("data-fid");
       const tid = row.getAttribute("data-tid");
@@ -3752,15 +3759,9 @@ function renderTodo(opts) {
   if (enterAnimate && targetOpenId) {
     requestAnimationFrame(() => {
       state.todo.openId = targetOpenId;
-      const el = stack.querySelector(`.td-folder[data-fid="${targetOpenId}"]`);
-      if (el) {
-        // باز شدن نرم
-        requestAnimationFrame(() => {
-          el.classList.add("is-open");
-        });
-      } else {
-        renderTodo();
-      }
+      const el = stack.querySelector(`.pi-folder[data-fid="${targetOpenId}"]`);
+      if (el) requestAnimationFrame(() => el.classList.add("is-open"));
+      else renderTodo();
     });
   }
 }
