@@ -3038,7 +3038,7 @@ async function initSync() {
 // ---------- Service worker ----------
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js?v=132").catch(() => {});
+    navigator.serviceWorker.register("sw.js?v=133").catch(() => {});
   });
 }
 
@@ -3682,48 +3682,52 @@ function renderTodo(opts) {
     const open = folder.id === openId;
     const color = PI_COLORS[folder.colorIdx % PI_COLORS.length];
     const total = folder.tasks.length;
-    const countLabel = total ? (total.toLocaleString("fa-IR") + " tasks") : "";
+    const countTxt = total ? (total.toLocaleString("fa-IR") + " tasks") : "";
 
-    let tasksHtml = "";
-    if (!folder.tasks.length) {
-      tasksHtml = `<p class="plan-empty">هنوز کاری در این پوشه نیست</p>
-        <button type="button" class="plan-add-task" data-action="add" data-fid="${folder.id}">+ افزودن کار</button>`;
-    } else {
-      tasksHtml = folder.tasks.map((t, ti) => {
-        const p = Math.min(4, Math.max(1, t.priority || 3));
-        const labels = { 1: "فوری", 2: "مهم", 3: "عادی", 4: "کم" };
-        const tagColors = { 1: "#e11d48", 2: "#ea580c", 3: "#3b82f6", 4: "#94a3b8" };
-        return `<label class="plan-task ${t.done ? "done" : ""}" data-fid="${folder.id}" data-tid="${t.id}" style="animation-delay:${Math.min(ti, 10)*0.04}s">
-          <button type="button" class="plan-check ${t.done ? "on" : ""}" data-action="toggle" aria-label="انجام">${t.done ? "✓" : ""}</button>
-          <span class="plan-task-text">
-            <span class="plan-task-title">${piEsc(t.title)}</span>
-            <span class="plan-task-tag" style="--tc:${tagColors[p]}">${labels[p]}</span>
-          </span>
-        </label>`;
-      }).join("") + `
-        <button type="button" class="plan-add-task" data-action="add" data-fid="${folder.id}">+ افزودن کار</button>`;
+    let body = "";
+    if (open) {
+      if (!folder.tasks.length) {
+        body = `<div class="pl-sheet">
+          <p class="pl-empty">هنوز کاری نیست</p>
+          <button type="button" class="pl-add" data-action="add" data-fid="${folder.id}">+ افزودن کار</button>
+        </div>`;
+      } else {
+        const rows = folder.tasks.map((t, ti) => {
+          const p = Math.min(4, Math.max(1, t.priority || 3));
+          const tags = { 1: "فوری", 2: "مهم", 3: "عادی", 4: "کم" };
+          const cols = { 1: "#e11d48", 2: "#f97316", 3: "#3b82f6", 4: "#94a3b8" };
+          return `<div class="pl-row ${t.done ? "done" : ""}" data-fid="${folder.id}" data-tid="${t.id}">
+            <button type="button" class="pl-box ${t.done ? "on" : ""}" data-action="toggle">${t.done ? "✓" : ""}</button>
+            <div class="pl-row-main">
+              <span class="pl-row-title">${piEsc(t.title)}</span>
+              <span class="pl-chip" style="--tc:${cols[p]}">${tags[p]}</span>
+            </div>
+          </div>`;
+        }).join("");
+        body = `<div class="pl-sheet">${rows}
+          <button type="button" class="pl-add" data-action="add" data-fid="${folder.id}">+ افزودن کار</button>
+        </div>`;
+      }
     }
 
-    return `<article class="plan-folder ${open ? "is-open" : ""}" data-fid="${folder.id}" style="--c:${color};--z:${n - fi}">
-      <div class="plan-folder-inner">
-        <div class="plan-tab" aria-hidden="true"><span>پوشه‌ها</span></div>
-        <div class="plan-main">
-          <button type="button" class="plan-bar" data-action="toggle-folder" aria-expanded="${open}">
-            <span class="plan-bar-name">${piEsc(folder.name)}</span>
-            ${open ? "" : `<span class="plan-bar-count">${countLabel}</span>`}
+    return `<div class="pl-folder ${open ? "open" : ""}" data-fid="${folder.id}" style="--c:${color};--z:${n - fi}">
+      <div class="pl-card">
+        <div class="pl-tab">پوشه‌ها</div>
+        <div class="pl-body">
+          <button type="button" class="pl-label" data-action="toggle-folder">
+            <span class="pl-name">${piEsc(folder.name)}</span>
+            ${!open && countTxt ? `<span class="pl-count">${countTxt}</span>` : ""}
           </button>
-          <div class="plan-panel">
-            <div class="plan-panel-inner">${tasksHtml}</div>
-          </div>
+          ${body}
         </div>
       </div>
-    </article>`;
+    </div>`;
   }).join("");
 
   stack.querySelectorAll("[data-action='toggle-folder']").forEach((el) => {
     el.addEventListener("click", (e) => {
       e.preventDefault();
-      const card = el.closest(".plan-folder");
+      const card = el.closest(".pl-folder");
       if (!card) return;
       const fid = card.getAttribute("data-fid");
       state.todo.openId = state.todo.openId === fid ? null : fid;
@@ -3735,11 +3739,11 @@ function renderTodo(opts) {
     btn.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation();
-      const row = btn.closest(".plan-task");
+      const row = btn.closest(".pl-row");
       if (!row) return;
-      const folder = state.todo.lists.find((l) => l.id === row.getAttribute("data-fid"));
+      const folder = state.todo.lists.find((l) => l.id === row.dataset.fid);
       if (!folder) return;
-      const task = folder.tasks.find((t) => t.id === row.getAttribute("data-tid"));
+      const task = folder.tasks.find((t) => t.id === row.dataset.tid);
       if (!task) return;
       task.done = !task.done;
       saveTodoOnly();
@@ -3750,16 +3754,15 @@ function renderTodo(opts) {
     btn.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation();
-      const fid = btn.getAttribute("data-fid");
-      if (typeof piOpenSheet === "function") piOpenSheet(fid);
+      if (typeof piOpenSheet === "function") piOpenSheet(btn.dataset.fid);
     });
   });
 
   if (enterAnimate && targetOpenId) {
     requestAnimationFrame(() => {
       state.todo.openId = targetOpenId;
-      const el = stack.querySelector(`.plan-folder[data-fid="${targetOpenId}"]`);
-      if (el) requestAnimationFrame(() => el.classList.add("is-open"));
+      const el = stack.querySelector(`.pl-folder[data-fid="${targetOpenId}"]`);
+      if (el) requestAnimationFrame(() => el.classList.add("open"));
       else renderTodo();
     });
   }

@@ -5797,3 +5797,273 @@ input:focus, select:focus {
 #tab-todo .pi-stack,
 #tab-todo .pi-folder,
 #tab-todo .td-projects { /* noop safety */ }
+
+
+
+/* =========================================================
+   PlanIt folders — match reference screenshot exactly
+   ========================================================= */
+#tab-todo {
+  background: #e8ecf1 !important;
+  min-height: 100%;
+  padding: 0 0 calc(110px + env(safe-area-inset-bottom, 0px)) !important;
+}
+.pl-wrap {
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 12px 18px 24px;
+}
+.pl-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  direction: rtl;
+  margin-bottom: 20px;
+}
+.pl-head-r { text-align: right; }
+.pl-h1 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 800;
+  color: #1a1a1a !important;
+  letter-spacing: -0.02em;
+  background: none !important;
+  -webkit-text-fill-color: #1a1a1a !important;
+  animation: none !important;
+}
+.pl-date {
+  margin: 5px 0 0;
+  font-size: 13px;
+  color: #8e95a0;
+  font-weight: 500;
+}
+.pl-plus {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  border: none;
+  background: none;
+  color: #1a1a1a;
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.15;
+  cursor: pointer;
+  padding: 0;
+  text-align: center;
+}
+.pl-plus svg {
+  width: 36px;
+  height: 36px;
+  padding: 7px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  box-sizing: content-box;
+}
+.pl-plus:active svg { transform: scale(0.94); }
+
+/* stack */
+.pl-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  position: relative;
+}
+
+.pl-folder {
+  position: relative;
+  z-index: var(--z, 1);
+  margin-top: -14px;
+  transition: transform .4s cubic-bezier(.33,1,.28,1);
+}
+.pl-folder:first-child { margin-top: 0; }
+.pl-folder.open {
+  z-index: 30;
+  margin-bottom: 6px;
+}
+
+/* card = tab + body side by side */
+.pl-card {
+  display: flex;
+  align-items: flex-start;
+  direction: ltr;
+  filter: drop-shadow(0 6px 14px color-mix(in srgb, var(--c) 32%, transparent));
+}
+
+/* LEFT TAB — horizontal text like screenshot */
+.pl-tab {
+  flex-shrink: 0;
+  width: 52px;
+  min-height: 48px;
+  margin-top: 0;
+  padding: 12px 6px;
+  background: color-mix(in srgb, var(--c) 78%, #1a1a1a 22%);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+  border-radius: 12px 0 0 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.2);
+  align-self: stretch;
+  max-height: 56px;
+}
+.pl-folder.open .pl-tab {
+  max-height: none;
+  align-self: flex-start;
+  min-height: 52px;
+  border-radius: 12px 0 0 0;
+}
+
+/* RIGHT BODY */
+.pl-body {
+  flex: 1;
+  min-width: 0;
+  background: var(--c);
+  border-radius: 0 16px 16px 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.pl-folder:not(.open) .pl-body {
+  border-radius: 0 14px 14px 0;
+}
+.pl-folder.open .pl-body {
+  border-radius: 0 16px 16px 12px;
+}
+
+.pl-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  min-height: 52px;
+  padding: 12px 16px 12px 12px;
+  border: none;
+  background: transparent;
+  color: #fff;
+  font-family: inherit;
+  cursor: pointer;
+  direction: rtl;
+  text-align: right;
+  -webkit-tap-highlight-color: transparent;
+}
+.pl-name {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+.pl-count {
+  font-size: 12.5px;
+  font-weight: 600;
+  opacity: 0.92;
+  white-space: nowrap;
+}
+
+/* white sheet inside open folder */
+.pl-sheet {
+  margin: 0 8px 10px;
+  background: #fff;
+  border-radius: 12px;
+  padding: 4px 0 8px;
+  animation: plSheetIn .45s cubic-bezier(.33,1,.28,1) both;
+}
+@keyframes plSheetIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: none; }
+}
+
+.pl-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 11px 14px;
+  border-bottom: 1px solid #f1f3f5;
+  direction: ltr; /* checkbox left like photo */
+}
+.pl-row:last-of-type { border-bottom: none; }
+.pl-row.done .pl-row-title {
+  text-decoration: line-through;
+  color: #a1a1aa;
+}
+.pl-box {
+  width: 22px;
+  height: 22px;
+  margin-top: 1px;
+  border-radius: 6px;
+  border: 2px solid #c5ccd4;
+  background: #fff;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  padding: 0;
+  cursor: pointer;
+}
+.pl-box.on {
+  background: var(--c);
+  border-color: var(--c);
+}
+.pl-row-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  direction: rtl;
+  text-align: right;
+}
+.pl-row-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+  line-height: 1.4;
+  width: 100%;
+}
+.pl-chip {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--tc);
+  background: color-mix(in srgb, var(--tc) 12%, #fff);
+  border: 1px solid color-mix(in srgb, var(--tc) 22%, transparent);
+  border-radius: 5px;
+  padding: 1px 7px;
+  align-self: flex-start;
+}
+.pl-empty {
+  margin: 12px;
+  text-align: center;
+  color: #9ca3af;
+  font-size: 13px;
+}
+.pl-add {
+  display: block;
+  width: calc(100% - 20px);
+  margin: 6px 10px 4px;
+  padding: 10px;
+  border: 1.5px dashed #d0d5db;
+  border-radius: 10px;
+  background: #fafbfc;
+  color: #6b7280;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* hide broken legacy structures if any remain */
+#tab-todo .td-projects,
+#tab-todo .pi-folder,
+#tab-todo .plan-folder,
+#tab-todo .td-folder { display: none !important; }
+#tab-todo .pl-stack { display: flex !important; }
