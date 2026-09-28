@@ -3038,7 +3038,7 @@ async function initSync() {
 // ---------- Service worker ----------
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js?v=131").catch(() => {});
+    navigator.serviceWorker.register("sw.js?v=132").catch(() => {});
   });
 }
 
@@ -3562,11 +3562,11 @@ initSync();
 
 // ---------- Todo minimal ----------
 const PI_COLORS = [
-  "#5B9BD5", /* آبی — امروز */
-  "#E8A04B", /* نارنجی — پروژه */
-  "#4CAF8A", /* سبز — شخصی */
-  "#4A9FD8", /* آبی روشن — مطالعه */
-  "#9B7EBD", /* بنفش — یادداشت */
+  "#5B9FD4", /* آبی */
+  "#E9A24A", /* نارنجی */
+  "#3DB89A", /* سبز فیروزه‌ای */
+  "#4BA3E0", /* آبی روشن */
+  "#9B7EC8", /* بنفش */
   "#EC407A"
 ];
 
@@ -3598,9 +3598,14 @@ function ensureTodoState() {
         openId: "f1"
       };
     }
+    // مهاجرت نام‌های قدیمی
+    const rename = { "امروز": "کارهای امروز", "کار": "پروژه آپولو", "شخصی": "وظایف شخصی" };
+    state.todo.lists.forEach((l) => {
+      if (rename[l.name]) l.name = rename[l.name];
+    });
     state.todo.lists = state.todo.lists.filter((l) => l && typeof l === "object");
     if (!state.todo.lists.length) {
-      state.todo.lists = [{ id: "f1", name: "امروز", colorIdx: 0, tasks: [] }];
+      state.todo.lists = [{ id: "f1", name: "کارهای امروز", colorIdx: 0, tasks: [] }];
     }
     if (!state.todo.openId || !state.todo.lists.some((l) => l.id === state.todo.openId)) {
       state.todo.openId = state.todo.lists[0].id;
@@ -3620,7 +3625,7 @@ function ensureTodoState() {
   } catch (err) {
     console.warn("ensureTodoState", err);
     state.todo = {
-      lists: [{ id: "f1", name: "امروز", colorIdx: 0, tasks: [] }],
+      lists: [{ id: "f1", name: "کارهای امروز", colorIdx: 0, tasks: [] }],
       openId: "f1"
     };
   }
@@ -3676,55 +3681,52 @@ function renderTodo(opts) {
   stack.innerHTML = state.todo.lists.map((folder, fi) => {
     const open = folder.id === openId;
     const color = PI_COLORS[folder.colorIdx % PI_COLORS.length];
-    const openN = folder.tasks.filter((t) => !t.done).length;
     const total = folder.tasks.length;
-    const countLabel = total
-      ? (total.toLocaleString("fa-IR") + " tasks")
-      : "خالی";
+    const countLabel = total ? (total.toLocaleString("fa-IR") + " tasks") : "";
 
     let tasksHtml = "";
     if (!folder.tasks.length) {
-      tasksHtml = `<p class="td-empty">هنوز کاری نیست</p>
-        <button type="button" class="td-add-inline" data-action="add" data-fid="${folder.id}">+ افزودن کار</button>`;
+      tasksHtml = `<p class="plan-empty">هنوز کاری در این پوشه نیست</p>
+        <button type="button" class="plan-add-task" data-action="add" data-fid="${folder.id}">+ افزودن کار</button>`;
     } else {
       tasksHtml = folder.tasks.map((t, ti) => {
         const p = Math.min(4, Math.max(1, t.priority || 3));
-        const labels = { 1: "فوری", 2: "بالا", 3: "عادی", 4: "کم" };
-        const tagColors = { 1: "#e11d48", 2: "#ea580c", 3: "#2563eb", 4: "#64748b" };
-        const tag = `<span class="pi-task-tag" style="--tag:${tagColors[p]}">${labels[p]}</span>`;
-        return `<div class="pi-task ${t.done ? "done" : ""}" data-fid="${folder.id}" data-tid="${t.id}" style="animation-delay:${Math.min(ti, 12) * 0.045}s">
-          <div class="pi-task-main">
-            <span class="pi-task-title">${piEsc(t.title)}</span>
-            ${tag}
-          </div>
-          <button type="button" class="pi-check ${t.done ? "on" : ""}" data-action="toggle" aria-label="انجام">
-            ${t.done ? "✓" : ""}
-          </button>
-        </div>`;
+        const labels = { 1: "فوری", 2: "مهم", 3: "عادی", 4: "کم" };
+        const tagColors = { 1: "#e11d48", 2: "#ea580c", 3: "#3b82f6", 4: "#94a3b8" };
+        return `<label class="plan-task ${t.done ? "done" : ""}" data-fid="${folder.id}" data-tid="${t.id}" style="animation-delay:${Math.min(ti, 10)*0.04}s">
+          <button type="button" class="plan-check ${t.done ? "on" : ""}" data-action="toggle" aria-label="انجام">${t.done ? "✓" : ""}</button>
+          <span class="plan-task-text">
+            <span class="plan-task-title">${piEsc(t.title)}</span>
+            <span class="plan-task-tag" style="--tc:${tagColors[p]}">${labels[p]}</span>
+          </span>
+        </label>`;
       }).join("") + `
-        <button type="button" class="td-add-inline" data-action="add" data-fid="${folder.id}">+ افزودن کار</button>`;
+        <button type="button" class="plan-add-task" data-action="add" data-fid="${folder.id}">+ افزودن کار</button>`;
     }
 
-    return `<div class="pi-folder ${open ? "is-open" : ""}" data-fid="${folder.id}"
-        style="--c:${color}; --zi:${n - fi};">
-      <button type="button" class="pi-folder-hit" data-action="toggle-folder" aria-expanded="${open}">
-        <span class="pi-folder-tab">پوشه‌ها</span>
-        <span class="pi-folder-title">${piEsc(folder.name)}</span>
-        <span class="pi-folder-count">${open ? "" : countLabel}</span>
-      </button>
-      <div class="pi-folder-body">
-        <div class="pi-folder-paper">${tasksHtml}</div>
+    return `<article class="plan-folder ${open ? "is-open" : ""}" data-fid="${folder.id}" style="--c:${color};--z:${n - fi}">
+      <div class="plan-folder-inner">
+        <div class="plan-tab" aria-hidden="true"><span>پوشه‌ها</span></div>
+        <div class="plan-main">
+          <button type="button" class="plan-bar" data-action="toggle-folder" aria-expanded="${open}">
+            <span class="plan-bar-name">${piEsc(folder.name)}</span>
+            ${open ? "" : `<span class="plan-bar-count">${countLabel}</span>`}
+          </button>
+          <div class="plan-panel">
+            <div class="plan-panel-inner">${tasksHtml}</div>
+          </div>
+        </div>
       </div>
-    </div>`;
+    </article>`;
   }).join("");
 
-  stack.querySelectorAll("[data-action='toggle-folder']").forEach((tab) => {
-    tab.addEventListener("click", (e) => {
+  stack.querySelectorAll("[data-action='toggle-folder']").forEach((el) => {
+    el.addEventListener("click", (e) => {
       e.preventDefault();
-      const card = tab.closest(".pi-folder");
+      const card = el.closest(".plan-folder");
       if (!card) return;
       const fid = card.getAttribute("data-fid");
-      state.todo.openId = (state.todo.openId === fid) ? null : fid;
+      state.todo.openId = state.todo.openId === fid ? null : fid;
       saveTodoOnly();
       renderTodo();
     });
@@ -3733,13 +3735,11 @@ function renderTodo(opts) {
     btn.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation();
-      const row = btn.closest(".pi-task");
+      const row = btn.closest(".plan-task");
       if (!row) return;
-      const fid = row.getAttribute("data-fid");
-      const tid = row.getAttribute("data-tid");
-      const folder = state.todo.lists.find((l) => l.id === fid);
+      const folder = state.todo.lists.find((l) => l.id === row.getAttribute("data-fid"));
       if (!folder) return;
-      const task = folder.tasks.find((t) => t.id === tid);
+      const task = folder.tasks.find((t) => t.id === row.getAttribute("data-tid"));
       if (!task) return;
       task.done = !task.done;
       saveTodoOnly();
@@ -3752,14 +3752,13 @@ function renderTodo(opts) {
       e.stopPropagation();
       const fid = btn.getAttribute("data-fid");
       if (typeof piOpenSheet === "function") piOpenSheet(fid);
-      else if (typeof openTodoSheet === "function") openTodoSheet(fid);
     });
   });
 
   if (enterAnimate && targetOpenId) {
     requestAnimationFrame(() => {
       state.todo.openId = targetOpenId;
-      const el = stack.querySelector(`.pi-folder[data-fid="${targetOpenId}"]`);
+      const el = stack.querySelector(`.plan-folder[data-fid="${targetOpenId}"]`);
       if (el) requestAnimationFrame(() => el.classList.add("is-open"));
       else renderTodo();
     });

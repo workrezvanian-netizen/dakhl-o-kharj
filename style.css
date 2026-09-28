@@ -5510,3 +5510,290 @@ input:focus, select:focus {
 #tab-todo .td-add-inline:active {
   background: rgba(0,0,0,0.05);
 }
+
+
+
+/* ============================================================
+   تب کارها — فولدرهای PlanIt (شبیه اسکرین‌شات)
+   الهام: PlanIt + Things 3 (تمیزی) + Todoist (خوانایی)
+   ============================================================ */
+#tab-todo {
+  background: #eef1f5 !important;
+  padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px));
+  min-height: 100%;
+}
+.plan-wrap {
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 10px 16px 32px;
+}
+.plan-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  direction: rtl;
+  margin-bottom: 18px;
+  padding: 4px 0 0;
+}
+.plan-head-text { text-align: right; flex: 1; }
+.plan-title {
+  margin: 0;
+  font-size: 30px;
+  font-weight: 800;
+  color: #1c1c1e;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  background: none !important;
+  -webkit-text-fill-color: #1c1c1e !important;
+  animation: none !important;
+}
+.plan-date {
+  margin: 6px 0 0;
+  font-size: 13.5px;
+  color: #8e8e93;
+  font-weight: 500;
+}
+.plan-add-folder {
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 50%;
+  background: #fff;
+  color: #1c1c1e;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.plan-add-folder:active { transform: scale(0.93); }
+
+/* پشته فولدرها */
+.plan-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 4px 0 8px;
+  position: relative;
+}
+
+.plan-folder {
+  position: relative;
+  z-index: var(--z, 1);
+  margin-top: -10px;
+  transition: transform 0.45s cubic-bezier(.33,1,.28,1), z-index 0s;
+}
+.plan-folder:first-child { margin-top: 0; }
+.plan-folder.is-open {
+  z-index: 40;
+  transform: translateY(-4px);
+  margin-bottom: 8px;
+}
+
+.plan-folder-inner {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  direction: ltr; /* زبانه چپ ثابت */
+  filter: drop-shadow(0 8px 18px color-mix(in srgb, var(--c, #5B9FD4) 30%, transparent));
+}
+
+/* زبانه فولدر — چپ */
+.plan-tab {
+  width: 34px;
+  flex-shrink: 0;
+  align-self: flex-start;
+  margin-top: 10px;
+  height: 52px;
+  background: color-mix(in srgb, var(--c, #5B9FD4) 82%, #000 18%);
+  border-radius: 10px 0 0 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 2;
+  box-shadow: inset 1px 0 0 rgba(255,255,255,0.15);
+}
+.plan-tab span {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.95);
+  letter-spacing: 0.04em;
+  line-height: 1;
+}
+
+/* بدنه اصلی فولدر */
+.plan-main {
+  flex: 1;
+  min-width: 0;
+  background: var(--c, #5B9FD4);
+  border-radius: 0 18px 16px 0;
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
+}
+.plan-folder.is-open .plan-main {
+  border-radius: 0 18px 18px 14px;
+}
+.plan-folder:not(.is-open) .plan-main {
+  border-radius: 0 16px 14px 4px;
+}
+
+/* نوار عنوان */
+.plan-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  min-height: 56px;
+  padding: 14px 18px 14px 14px;
+  border: none;
+  background: transparent;
+  color: #fff;
+  font-family: inherit;
+  cursor: pointer;
+  direction: rtl;
+  text-align: right;
+  -webkit-tap-highlight-color: transparent;
+}
+.plan-bar-name {
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  text-shadow: 0 1px 0 rgba(0,0,0,0.08);
+}
+.plan-bar-count {
+  font-size: 13px;
+  font-weight: 600;
+  opacity: 0.9;
+  white-space: nowrap;
+}
+
+/* پنل کارها */
+.plan-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.55s cubic-bezier(.33,1,.28,1);
+  padding: 0 8px;
+}
+.plan-folder.is-open .plan-panel {
+  grid-template-rows: 1fr;
+  padding: 0 8px 10px;
+}
+.plan-panel-inner {
+  overflow: hidden;
+  min-height: 0;
+  background: #fff;
+  border-radius: 12px;
+  padding: 4px 0 6px;
+  opacity: 0;
+  transform: translateY(-8px);
+  transition: opacity 0.4s ease 0.05s, transform 0.5s cubic-bezier(.33,1,.28,1) 0.03s;
+  pointer-events: none;
+}
+.plan-folder.is-open .plan-panel-inner {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+
+/* ردیف کار — چک‌باکس چپ، متن راست (مثل عکس) */
+.plan-task {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  border-bottom: 1px solid #f0f1f3;
+  direction: ltr; /* چک‌باکس سمت چپ مثل اسکرین‌شات */
+  cursor: default;
+  animation: planTaskIn 0.4s cubic-bezier(.33,1,.28,1) both;
+}
+.plan-task:last-of-type { border-bottom: none; }
+@keyframes planTaskIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+.plan-task.done .plan-task-title {
+  text-decoration: line-through;
+  color: #a1a1aa;
+}
+.plan-check {
+  width: 22px;
+  height: 22px;
+  margin-top: 1px;
+  border-radius: 6px;
+  border: 2px solid #c8ced6;
+  background: #fff;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  padding: 0;
+  cursor: pointer;
+  transition: background .2s, border-color .2s, transform .15s;
+}
+.plan-check.on {
+  background: var(--c, #5B9FD4);
+  border-color: var(--c, #5B9FD4);
+}
+.plan-check:active { transform: scale(0.9); }
+.plan-task-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end; /* متن راست‌چین فارسی */
+  gap: 5px;
+  text-align: right;
+  direction: rtl;
+}
+.plan-task-title {
+  font-size: 14.5px;
+  font-weight: 600;
+  color: #1f2937;
+  line-height: 1.45;
+  width: 100%;
+}
+.plan-task-tag {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--tc, #3b82f6);
+  background: color-mix(in srgb, var(--tc, #3b82f6) 12%, #fff);
+  border: 1px solid color-mix(in srgb, var(--tc, #3b82f6) 20%, transparent);
+  border-radius: 6px;
+  padding: 2px 8px;
+  align-self: flex-start; /* مثل تگ‌های عکس کنار متن */
+}
+
+.plan-empty {
+  margin: 14px 12px 6px;
+  text-align: center;
+  color: #9ca3af;
+  font-size: 13px;
+}
+.plan-add-task {
+  display: block;
+  width: calc(100% - 20px);
+  margin: 8px 10px 6px;
+  padding: 11px;
+  border: 1.5px dashed #d1d5db;
+  border-radius: 10px;
+  background: #fafbfc;
+  color: #6b7280;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.plan-add-task:active { background: #f3f4f6; }
+
+/* مخفی کردن استایل‌های قدیمی تداخل‌دار */
+#tab-todo .td-wrap,
+#tab-todo .pi-stack,
+#tab-todo .pi-folder,
+#tab-todo .td-projects { /* noop safety */ }
