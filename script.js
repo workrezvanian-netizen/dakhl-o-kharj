@@ -3038,7 +3038,7 @@ async function initSync() {
 // ---------- Service worker ----------
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js?v=136").catch(() => {});
+    navigator.serviceWorker.register("sw.js?v=137").catch(() => {});
   });
 }
 
@@ -3563,96 +3563,86 @@ initSync();
 // ---------- Todo minimal ----------
 
 
-/* ========== تب کارها PlanIt (مقاوم در برابر خطای داده) ========== */
-var PI_COLORS = ["#5B9FD4", "#E9A24A", "#3DB89A", "#4BA3E0", "#9B7EC8", "#EC4899"];
+
+/* ========== تب کارها PlanIt — بدون وابستگی شکننده ========== */
 var _piPendingFolder = null;
 var _piPendingPriority = 3;
 var _piSheetOpening = false;
 
-function ensureTodoState() {
-  if (typeof state === "undefined" || !state) {
-    return;
-  }
-  try {
-    // اگر ساختار خراب باشد از نو بساز
-    var needDefault = false;
-    if (!state.todo || typeof state.todo !== "object") {
-      needDefault = true;
-    } else {
-      if (!Array.isArray(state.todo.lists)) {
-        // مهاجرت از ساختارهای قدیمی
-        if (Array.isArray(state.todo.projects)) {
-          state.todo.lists = state.todo.projects;
-        } else if (Array.isArray(state.todo.folders)) {
-          state.todo.lists = state.todo.folders;
-        } else {
-          needDefault = true;
-        }
-      }
-    }
-    if (needDefault || !state.todo.lists || !state.todo.lists.length) {
-      state.todo = {
-        lists: [
-          {
-            id: "f1",
-            name: "کارهای امروز",
-            colorIdx: 0,
-            tasks: [
-              { id: "t1", title: "تکمیل طراحی رابط کاربری پروژه", done: false, priority: 2 },
-              { id: "t2", title: "ارسال فایل‌های نهایی به تیم", done: false, priority: 1 },
-              { id: "t3", title: "شرکت در جلسه آنلاین با مشتری", done: false, priority: 3 },
-              { id: "t4", title: "برنامه‌ریزی محتوا برای فردا", done: false, priority: 3 },
-              { id: "t5", title: "خرید شخصی", done: false, priority: 4 }
-            ]
-          },
-          { id: "f2", name: "پروژه آپولو", colorIdx: 1, tasks: [] },
-          { id: "f3", name: "وظایف شخصی", colorIdx: 2, tasks: [] },
-          { id: "f4", name: "مطالعه و توسعه", colorIdx: 3, tasks: [] },
-          { id: "f5", name: "یادداشت‌ها", colorIdx: 4, tasks: [] }
-        ],
-        openId: "f1"
-      };
-    }
+function _piColors() {
+  return ["#5B9FD4", "#E9A24A", "#3DB89A", "#4BA3E0", "#9B7EC8", "#EC4899"];
+}
 
-    // پاکسازی آیتم‌های نامعتبر
+function _piDefaultTodo() {
+  return {
+    lists: [
+      {
+        id: "f1",
+        name: "کارهای امروز",
+        colorIdx: 0,
+        tasks: [
+          { id: "t1", title: "تکمیل طراحی رابط کاربری پروژه", done: false, priority: 2 },
+          { id: "t2", title: "ارسال فایل‌های نهایی به تیم", done: false, priority: 1 },
+          { id: "t3", title: "شرکت در جلسه آنلاین با مشتری", done: false, priority: 3 },
+          { id: "t4", title: "برنامه‌ریزی محتوا برای فردا", done: false, priority: 3 },
+          { id: "t5", title: "خرید شخصی", done: false, priority: 4 }
+        ]
+      },
+      { id: "f2", name: "پروژه آپولو", colorIdx: 1, tasks: [] },
+      { id: "f3", name: "وظایف شخصی", colorIdx: 2, tasks: [] },
+      { id: "f4", name: "مطالعه و توسعه", colorIdx: 3, tasks: [] },
+      { id: "f5", name: "یادداشت‌ها", colorIdx: 4, tasks: [] }
+    ],
+    openId: "f1"
+  };
+}
+
+function ensureTodoState() {
+  try {
+    if (typeof state === "undefined" || state === null) return;
+    var lists = state.todo && state.todo.lists;
+    if (!state.todo || typeof state.todo !== "object" || !Array.isArray(lists) || lists.length === 0) {
+      state.todo = _piDefaultTodo();
+      return;
+    }
+    var colors = _piColors();
     var clean = [];
-    for (var i = 0; i < state.todo.lists.length; i++) {
-      var l = state.todo.lists[i];
+    for (var i = 0; i < lists.length; i++) {
+      var l = lists[i];
       if (!l || typeof l !== "object") continue;
-      if (!l.id) l.id = "f" + Date.now().toString(36) + i;
-      if (!l.name) l.name = "پوشه " + (clean.length + 1);
-      l.colorIdx = (l.colorIdx == null || isNaN(+l.colorIdx)) ? (clean.length % PI_COLORS.length) : (+l.colorIdx);
-      if (!Array.isArray(l.tasks)) l.tasks = [];
-      var tasks = [];
-      for (var j = 0; j < l.tasks.length; j++) {
-        var t = l.tasks[j];
+      var tasksIn = Array.isArray(l.tasks) ? l.tasks : [];
+      var tasksOut = [];
+      for (var j = 0; j < tasksIn.length; j++) {
+        var t = tasksIn[j];
         if (!t || typeof t !== "object") continue;
-        if (!t.title && t.title !== 0) continue;
-        tasks.push({
-          id: t.id || ("t" + Date.now().toString(36) + j),
+        if (t.title == null || t.title === "") continue;
+        tasksOut.push({
+          id: t.id ? String(t.id) : ("t" + Date.now().toString(36) + j),
           title: String(t.title),
           done: !!t.done,
           priority: Math.min(4, Math.max(1, parseInt(t.priority, 10) || 3))
         });
       }
-      l.tasks = tasks;
-      clean.push(l);
+      clean.push({
+        id: l.id ? String(l.id) : ("f" + Date.now().toString(36) + i),
+        name: l.name ? String(l.name) : ("پوشه " + (clean.length + 1)),
+        colorIdx: (l.colorIdx == null || isNaN(+l.colorIdx)) ? (clean.length % colors.length) : (+l.colorIdx),
+        tasks: tasksOut
+      });
     }
-    if (!clean.length) {
-      clean = [{ id: "f1", name: "کارهای امروز", colorIdx: 0, tasks: [] }];
+    if (clean.length === 0) {
+      state.todo = _piDefaultTodo();
+      return;
     }
-    state.todo.lists = clean;
+    var openId = state.todo.openId;
     var openOk = false;
     for (var k = 0; k < clean.length; k++) {
-      if (clean[k].id === state.todo.openId) { openOk = true; break; }
+      if (clean[k].id === openId) { openOk = true; break; }
     }
-    if (!openOk) state.todo.openId = clean[0].id;
+    state.todo = { lists: clean, openId: openOk ? openId : clean[0].id };
   } catch (err) {
     console.warn("ensureTodoState", err);
-    state.todo = {
-      lists: [{ id: "f1", name: "کارهای امروز", colorIdx: 0, tasks: [] }],
-      openId: "f1"
-    };
+    try { state.todo = _piDefaultTodo(); } catch (e2) {}
   }
 }
 
@@ -3671,7 +3661,9 @@ function piJalaliDate() {
       var j = toJalaali(now.getFullYear(), now.getMonth() + 1, now.getDate());
       var days = ["یکشنبه", "دوشنبه", "سه‌شنبه", "چهارشنبه", "پنجشنبه", "جمعه", "شنبه"];
       var months = ["فروردین", "اردیبهشت", "خرداد", "تیر", "مرداد", "شهریور", "مهر", "آبان", "آذر", "دی", "بهمن", "اسفند"];
-      return days[now.getDay()] + "، " + Number(j.jd).toLocaleString("fa-IR") + " " + months[j.jm - 1];
+      var jd = (j && j.jd != null) ? Number(j.jd) : now.getDate();
+      var jm = (j && j.jm != null) ? j.jm : 1;
+      return days[now.getDay()] + "، " + jd.toLocaleString("fa-IR") + " " + (months[jm - 1] || "");
     }
     return now.toLocaleDateString("fa-IR");
   } catch (e) {
@@ -3681,9 +3673,9 @@ function piJalaliDate() {
 
 function saveTodoOnly() {
   try {
-    if (!state) return;
+    if (typeof state === "undefined" || !state) return;
     state.updatedAt = Date.now();
-    if (typeof STORAGE_KEY !== "undefined") {
+    if (typeof STORAGE_KEY === "string") {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     }
     if (state.syncCode && typeof scheduleSync === "function") scheduleSync();
@@ -3694,33 +3686,41 @@ function saveTodoOnly() {
 
 function renderTodo() {
   var stack = document.getElementById("piStack");
+  if (!stack) return;
+
   try {
     ensureTodoState();
+
     var dateEl = document.getElementById("piDate");
     if (dateEl) {
       try { dateEl.textContent = piJalaliDate(); } catch (e) { dateEl.textContent = ""; }
     }
-    if (!stack) return;
-    if (!state || !state.todo || !Array.isArray(state.todo.lists)) {
-      stack.innerHTML = '<p class="pk-empty" style="padding:20px;text-align:center">در حال آماده‌سازی…</p>';
-      ensureTodoState();
+
+    // اگر هنوز داده نیست، پیش‌فرض بگذار
+    if (!state || !state.todo || !Array.isArray(state.todo.lists) || state.todo.lists.length === 0) {
+      if (state) state.todo = _piDefaultTodo();
     }
-    var lists = (state && state.todo && state.todo.lists) ? state.todo.lists : [];
-    var openId = state && state.todo ? state.todo.openId : null;
+
+    var lists = (state && state.todo && Array.isArray(state.todo.lists)) ? state.todo.lists : [];
+    var openId = (state && state.todo) ? state.todo.openId : null;
+    var colors = _piColors();
     var n = lists.length;
-    if (!n) {
-      stack.innerHTML = '<p class="pk-empty" style="padding:24px;text-align:center">پوشه‌ای نیست</p>';
-      return;
-    }
     var parts = [];
+
     for (var fi = 0; fi < n; fi++) {
       var folder = lists[fi];
       if (!folder) continue;
       var open = folder.id === openId;
-      var color = PI_COLORS[(folder.colorIdx || 0) % PI_COLORS.length] || "#5B9FD4";
+      var cidx = (typeof folder.colorIdx === "number" ? folder.colorIdx : 0) % colors.length;
+      if (cidx < 0) cidx = 0;
+      var color = colors[cidx] || "#5B9FD4";
       var tasks = Array.isArray(folder.tasks) ? folder.tasks : [];
       var total = tasks.length;
-      var countTxt = total ? (String(total).replace(/\d/g, function(d){ return "۰۱۲۳۴۵۶۷۸۹"[d]; }) + " tasks") : "";
+      var countTxt = "";
+      if (total > 0) {
+        countTxt = total.toLocaleString("fa-IR") + " tasks";
+      }
+
       var body = "";
       if (open) {
         var rows = "";
@@ -3737,12 +3737,11 @@ function renderTodo() {
             '<span class="pk-tag" style="--tc:' + (cols[p] || "#3b82f6") + '">' + (labels[p] || "عادی") + '</span>' +
             '</div></div>';
         }
-        if (!rows) {
-          rows = '<p class="pk-empty">هنوز کاری نیست</p>';
-        }
+        if (!rows) rows = '<p class="pk-empty">هنوز کاری نیست</p>';
         body = '<div class="pk-paper">' + rows +
           '<button type="button" class="pk-add-task" data-act="add" data-fid="' + piEsc(folder.id) + '">+ افزودن کار</button></div>';
       }
+
       parts.push(
         '<div class="pk-folder' + (open ? " open" : "") + '" data-fid="' + piEsc(folder.id) + '" style="--c:' + color + ';--z:' + (n - fi) + '">' +
         '<div class="pk-card">' +
@@ -3755,81 +3754,58 @@ function renderTodo() {
         '</div></div></div>'
       );
     }
-    stack.innerHTML = parts.join("") || '<p class="pk-empty" style="padding:24px;text-align:center">پوشه‌ای نیست</p>';
+
+    stack.innerHTML = parts.length
+      ? parts.join("")
+      : '<p class="pk-empty" style="padding:24px;text-align:center">پوشه‌ای نیست</p>';
   } catch (err) {
     console.error("renderTodo", err);
-    // ریست اجباری و یک‌بار دیگر تلاش
+    // ریست کامل todo و نمایش پیش‌فرض بدون recursion
     try {
-      if (state) {
-        state.todo = {
-          lists: [
-            { id: "f1", name: "کارهای امروز", colorIdx: 0, tasks: [
-              { id: "t1", title: "تکمیل طراحی رابط کاربری پروژه", done: false, priority: 2 },
-              { id: "t2", title: "ارسال فایل‌های نهایی به تیم", done: false, priority: 1 },
-              { id: "t3", title: "خرید شخصی", done: false, priority: 4 }
-            ]},
-            { id: "f2", name: "پروژه آپولو", colorIdx: 1, tasks: [] },
-            { id: "f3", name: "وظایف شخصی", colorIdx: 2, tasks: [] }
-          ],
-          openId: "f1"
-        };
+      if (typeof state !== "undefined" && state) {
+        state.todo = _piDefaultTodo();
         saveTodoOnly();
       }
-      if (stack) {
-        stack.innerHTML = '<p style="padding:16px;text-align:center;color:#666;font-size:13px">در حال بازیابی…</p>';
-        setTimeout(function () {
-          try { renderTodoSafe(); } catch (e2) {
-            stack.innerHTML = '<p style="padding:20px;color:#c00;text-align:center;font-size:13px">خطا: ' + piEsc(String(err && err.message || err)) + '</p>';
+      var colors2 = _piColors();
+      var d = _piDefaultTodo();
+      var html = "";
+      for (var i = 0; i < d.lists.length; i++) {
+        var f = d.lists[i];
+        var col = colors2[f.colorIdx % colors2.length];
+        var open = f.id === d.openId;
+        var body = "";
+        if (open) {
+          var rows = "";
+          for (var j = 0; j < f.tasks.length; j++) {
+            var t = f.tasks[j];
+            rows += '<div class="pk-row" data-fid="' + f.id + '" data-tid="' + t.id + '">' +
+              '<button type="button" class="pk-check" data-act="check"></button>' +
+              '<div class="pk-row-text"><span class="pk-row-title">' + piEsc(t.title) + '</span></div></div>';
           }
-        }, 50);
+          body = '<div class="pk-paper">' + rows +
+            '<button type="button" class="pk-add-task" data-act="add" data-fid="' + f.id + '">+ افزودن کار</button></div>';
+        }
+        html += '<div class="pk-folder' + (open ? " open" : "") + '" data-fid="' + f.id + '" style="--c:' + col + '">' +
+          '<div class="pk-card"><div class="pk-tab">پوشه‌ها</div><div class="pk-main">' +
+          '<button type="button" class="pk-bar" data-act="toggle" data-fid="' + f.id + '">' +
+          '<span class="pk-name">' + piEsc(f.name) + '</span>' +
+          (!open ? '<span class="pk-count">' + f.tasks.length + ' tasks</span>' : '') +
+          '</button>' + body + '</div></div></div>';
       }
-    } catch (e3) {
-      if (stack) stack.innerHTML = '<p style="padding:20px;color:#c00;text-align:center">خطا در نمایش کارها</p>';
+      stack.innerHTML = html;
+    } catch (e2) {
+      stack.innerHTML = '<p style="padding:20px;text-align:center;color:#c00;font-size:13px">خطا در نمایش. لطفاً حافظه مرورگر را پاک کنید.</p>';
+      console.error("renderTodo fallback", e2);
     }
   }
-}
-
-function renderTodoSafe() {
-  // نسخه بدون try بیرونی برای retry
-  ensureTodoState();
-  var stack = document.getElementById("piStack");
-  if (!stack || !state || !state.todo) return;
-  var lists = state.todo.lists || [];
-  var openId = state.todo.openId;
-  var html = "";
-  for (var fi = 0; fi < lists.length; fi++) {
-    var folder = lists[fi];
-    if (!folder) continue;
-    var open = folder.id === openId;
-    var color = PI_COLORS[(folder.colorIdx || 0) % PI_COLORS.length];
-    var tasks = folder.tasks || [];
-    var body = "";
-    if (open) {
-      var rows = "";
-      for (var ti = 0; ti < tasks.length; ti++) {
-        var t = tasks[ti];
-        if (!t) continue;
-        rows += '<div class="pk-row" data-fid="' + folder.id + '" data-tid="' + t.id + '">' +
-          '<button type="button" class="pk-check" data-act="check"></button>' +
-          '<div class="pk-row-text"><span class="pk-row-title">' + piEsc(t.title) + '</span></div></div>';
-      }
-      body = '<div class="pk-paper">' + (rows || '<p class="pk-empty">خالی</p>') +
-        '<button type="button" class="pk-add-task" data-act="add" data-fid="' + folder.id + '">+ افزودن کار</button></div>';
-    }
-    html += '<div class="pk-folder' + (open ? " open" : "") + '" data-fid="' + folder.id + '" style="--c:' + color + '">' +
-      '<div class="pk-card"><div class="pk-tab">پوشه‌ها</div><div class="pk-main">' +
-      '<button type="button" class="pk-bar" data-act="toggle" data-fid="' + folder.id + '">' +
-      '<span class="pk-name">' + piEsc(folder.name) + '</span></button>' + body +
-      '</div></div></div>';
-  }
-  stack.innerHTML = html;
 }
 
 function piOpenSheet(folderId) {
   if (_piSheetOpening) return;
   _piSheetOpening = true;
   ensureTodoState();
-  _piPendingFolder = folderId || (state.todo && state.todo.openId) || (state.todo && state.todo.lists[0] && state.todo.lists[0].id);
+  var lists = (state && state.todo && state.todo.lists) ? state.todo.lists : [];
+  _piPendingFolder = folderId || (state && state.todo && state.todo.openId) || (lists[0] && lists[0].id) || null;
   _piPendingPriority = 3;
   var sheet = document.getElementById("piTaskSheet");
   var input = document.getElementById("piTaskTitle");
@@ -3867,12 +3843,16 @@ function piSaveTask(e) {
     if (input) input.focus();
     return;
   }
+  if (!state || !state.todo || !Array.isArray(state.todo.lists) || !state.todo.lists.length) {
+    state.todo = _piDefaultTodo();
+  }
   var folder = null;
   for (var i = 0; i < state.todo.lists.length; i++) {
     if (state.todo.lists[i].id === _piPendingFolder) { folder = state.todo.lists[i]; break; }
   }
   if (!folder) folder = state.todo.lists[0];
   if (!folder) return;
+  if (!Array.isArray(folder.tasks)) folder.tasks = [];
   folder.tasks.push({
     id: "t" + Date.now().toString(36),
     title: title,
@@ -3887,10 +3867,7 @@ function piSaveTask(e) {
 
 function setupTodoUI() {
   var stack = document.getElementById("piStack");
-  if (!stack) {
-    console.warn("piStack not in DOM");
-    return;
-  }
+  if (!stack) return;
   renderTodo();
 
   if (!stack._pkBound) {
@@ -3902,6 +3879,8 @@ function setupTodoUI() {
       e.stopPropagation();
       var act = btn.getAttribute("data-act");
       ensureTodoState();
+      if (!state || !state.todo || !Array.isArray(state.todo.lists)) return;
+
       if (act === "toggle") {
         var fid = btn.getAttribute("data-fid");
         state.todo.openId = state.todo.openId === fid ? null : fid;
@@ -3911,18 +3890,14 @@ function setupTodoUI() {
         var row = btn.closest(".pk-row");
         if (!row) return;
         var folder = null, task = null;
+        var fid2 = row.getAttribute("data-fid");
+        var tid = row.getAttribute("data-tid");
         for (var i = 0; i < state.todo.lists.length; i++) {
-          if (state.todo.lists[i].id === row.getAttribute("data-fid")) {
-            folder = state.todo.lists[i];
-            break;
-          }
+          if (state.todo.lists[i].id === fid2) { folder = state.todo.lists[i]; break; }
         }
-        if (!folder) return;
+        if (!folder || !Array.isArray(folder.tasks)) return;
         for (var j = 0; j < folder.tasks.length; j++) {
-          if (folder.tasks[j].id === row.getAttribute("data-tid")) {
-            task = folder.tasks[j];
-            break;
-          }
+          if (folder.tasks[j].id === tid) { task = folder.tasks[j]; break; }
         }
         if (!task) return;
         task.done = !task.done;
@@ -3940,7 +3915,8 @@ function setupTodoUI() {
     fab.addEventListener("click", function (e) {
       e.preventDefault();
       ensureTodoState();
-      var fid = state.todo.openId || (state.todo.lists[0] && state.todo.lists[0].id);
+      var lists = (state && state.todo && state.todo.lists) ? state.todo.lists : [];
+      var fid = (state && state.todo && state.todo.openId) || (lists[0] && lists[0].id);
       piOpenSheet(fid);
     });
   }
@@ -3953,11 +3929,13 @@ function setupTodoUI() {
       ensureTodoState();
       var name = window.prompt("نام پوشه جدید:");
       if (!name || !name.trim()) return;
+      if (!state.todo.lists) state.todo.lists = [];
+      var colors = _piColors();
       var id = "f" + Date.now().toString(36);
       state.todo.lists.push({
         id: id,
         name: name.trim(),
-        colorIdx: state.todo.lists.length % PI_COLORS.length,
+        colorIdx: state.todo.lists.length % colors.length,
         tasks: []
       });
       state.todo.openId = id;
@@ -4008,7 +3986,6 @@ function setupTodoUI() {
   }
 }
 
-// boot
 (function () {
   function boot() {
     try { setupTodoUI(); } catch (e) { console.warn("todo boot", e); }
