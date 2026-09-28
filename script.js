@@ -3038,7 +3038,7 @@ async function initSync() {
 // ---------- Service worker ----------
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js?v=135").catch(() => {});
+    navigator.serviceWorker.register("sw.js?v=136").catch(() => {});
   });
 }
 
@@ -3562,52 +3562,91 @@ initSync();
 
 // ---------- Todo minimal ----------
 
-/* ========== تب کارها — از نو، ساده و کارآمد ========== */
 
-/* ========== تب کارها PlanIt — نسخه پایدار ========== */
-const PI_COLORS = ["#5B9FD4", "#E9A24A", "#3DB89A", "#4BA3E0", "#9B7EC8", "#EC4899"];
-let _piPendingFolder = null;
-let _piPendingPriority = 3;
-let _piSheetOpening = false;
+/* ========== تب کارها PlanIt (مقاوم در برابر خطای داده) ========== */
+var PI_COLORS = ["#5B9FD4", "#E9A24A", "#3DB89A", "#4BA3E0", "#9B7EC8", "#EC4899"];
+var _piPendingFolder = null;
+var _piPendingPriority = 3;
+var _piSheetOpening = false;
 
 function ensureTodoState() {
+  if (typeof state === "undefined" || !state) {
+    return;
+  }
   try {
-    if (!state) return;
-    if (!state.todo || typeof state.todo !== "object") state.todo = { lists: [], openId: null };
-    if (!Array.isArray(state.todo.lists)) state.todo.lists = [];
-    if (!state.todo.lists.length) {
-      state.todo.lists = [
-        {
-          id: "f1", name: "کارهای امروز", colorIdx: 0,
-          tasks: [
-            { id: "t1", title: "تکمیل طراحی رابط کاربری پروژه", done: false, priority: 2 },
-            { id: "t2", title: "ارسال فایل‌های نهایی به تیم", done: false, priority: 1 },
-            { id: "t3", title: "شرکت در جلسه آنلاین با مشتری", done: false, priority: 3 },
-            { id: "t4", title: "برنامه‌ریزی محتوا برای فردا", done: false, priority: 3 },
-            { id: "t5", title: "خرید شخصی", done: false, priority: 4 }
-          ]
-        },
-        { id: "f2", name: "پروژه آپولو", colorIdx: 1, tasks: [] },
-        { id: "f3", name: "وظایف شخصی", colorIdx: 2, tasks: [] },
-        { id: "f4", name: "مطالعه و توسعه", colorIdx: 3, tasks: [] },
-        { id: "f5", name: "یادداشت‌ها", colorIdx: 4, tasks: [] }
-      ];
-      state.todo.openId = "f1";
+    // اگر ساختار خراب باشد از نو بساز
+    var needDefault = false;
+    if (!state.todo || typeof state.todo !== "object") {
+      needDefault = true;
+    } else {
+      if (!Array.isArray(state.todo.lists)) {
+        // مهاجرت از ساختارهای قدیمی
+        if (Array.isArray(state.todo.projects)) {
+          state.todo.lists = state.todo.projects;
+        } else if (Array.isArray(state.todo.folders)) {
+          state.todo.lists = state.todo.folders;
+        } else {
+          needDefault = true;
+        }
+      }
     }
-    state.todo.lists.forEach(function (l, i) {
+    if (needDefault || !state.todo.lists || !state.todo.lists.length) {
+      state.todo = {
+        lists: [
+          {
+            id: "f1",
+            name: "کارهای امروز",
+            colorIdx: 0,
+            tasks: [
+              { id: "t1", title: "تکمیل طراحی رابط کاربری پروژه", done: false, priority: 2 },
+              { id: "t2", title: "ارسال فایل‌های نهایی به تیم", done: false, priority: 1 },
+              { id: "t3", title: "شرکت در جلسه آنلاین با مشتری", done: false, priority: 3 },
+              { id: "t4", title: "برنامه‌ریزی محتوا برای فردا", done: false, priority: 3 },
+              { id: "t5", title: "خرید شخصی", done: false, priority: 4 }
+            ]
+          },
+          { id: "f2", name: "پروژه آپولو", colorIdx: 1, tasks: [] },
+          { id: "f3", name: "وظایف شخصی", colorIdx: 2, tasks: [] },
+          { id: "f4", name: "مطالعه و توسعه", colorIdx: 3, tasks: [] },
+          { id: "f5", name: "یادداشت‌ها", colorIdx: 4, tasks: [] }
+        ],
+        openId: "f1"
+      };
+    }
+
+    // پاکسازی آیتم‌های نامعتبر
+    var clean = [];
+    for (var i = 0; i < state.todo.lists.length; i++) {
+      var l = state.todo.lists[i];
+      if (!l || typeof l !== "object") continue;
       if (!l.id) l.id = "f" + Date.now().toString(36) + i;
-      if (!l.name) l.name = "پوشه " + (i + 1);
-      if (l.colorIdx == null || isNaN(l.colorIdx)) l.colorIdx = i % PI_COLORS.length;
+      if (!l.name) l.name = "پوشه " + (clean.length + 1);
+      l.colorIdx = (l.colorIdx == null || isNaN(+l.colorIdx)) ? (clean.length % PI_COLORS.length) : (+l.colorIdx);
       if (!Array.isArray(l.tasks)) l.tasks = [];
-      l.tasks.forEach(function (t) {
-        if (!t.id) t.id = "t" + Date.now().toString(36);
-        t.done = !!t.done;
-        t.priority = Math.min(4, Math.max(1, parseInt(t.priority, 10) || 3));
-      });
-    });
-    if (!state.todo.openId || !state.todo.lists.some(function (l) { return l.id === state.todo.openId; })) {
-      state.todo.openId = state.todo.lists[0] ? state.todo.lists[0].id : null;
+      var tasks = [];
+      for (var j = 0; j < l.tasks.length; j++) {
+        var t = l.tasks[j];
+        if (!t || typeof t !== "object") continue;
+        if (!t.title && t.title !== 0) continue;
+        tasks.push({
+          id: t.id || ("t" + Date.now().toString(36) + j),
+          title: String(t.title),
+          done: !!t.done,
+          priority: Math.min(4, Math.max(1, parseInt(t.priority, 10) || 3))
+        });
+      }
+      l.tasks = tasks;
+      clean.push(l);
     }
+    if (!clean.length) {
+      clean = [{ id: "f1", name: "کارهای امروز", colorIdx: 0, tasks: [] }];
+    }
+    state.todo.lists = clean;
+    var openOk = false;
+    for (var k = 0; k < clean.length; k++) {
+      if (clean[k].id === state.todo.openId) { openOk = true; break; }
+    }
+    if (!openOk) state.todo.openId = clean[0].id;
   } catch (err) {
     console.warn("ensureTodoState", err);
     state.todo = {
@@ -3618,7 +3657,11 @@ function ensureTodoState() {
 }
 
 function piEsc(s) {
-  return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  return String(s == null ? "" : s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
 function piJalaliDate() {
@@ -3631,15 +3674,18 @@ function piJalaliDate() {
       return days[now.getDay()] + "، " + Number(j.jd).toLocaleString("fa-IR") + " " + months[j.jm - 1];
     }
     return now.toLocaleDateString("fa-IR");
-  } catch (_) {
+  } catch (e) {
     return "";
   }
 }
 
 function saveTodoOnly() {
   try {
+    if (!state) return;
     state.updatedAt = Date.now();
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    if (typeof STORAGE_KEY !== "undefined") {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
     if (state.syncCode && typeof scheduleSync === "function") scheduleSync();
   } catch (e) {
     console.warn("saveTodoOnly", e);
@@ -3647,79 +3693,157 @@ function saveTodoOnly() {
 }
 
 function renderTodo() {
+  var stack = document.getElementById("piStack");
   try {
     ensureTodoState();
     var dateEl = document.getElementById("piDate");
-    if (dateEl) dateEl.textContent = piJalaliDate();
-    var stack = document.getElementById("piStack");
-    if (!stack) {
-      console.warn("piStack missing");
+    if (dateEl) {
+      try { dateEl.textContent = piJalaliDate(); } catch (e) { dateEl.textContent = ""; }
+    }
+    if (!stack) return;
+    if (!state || !state.todo || !Array.isArray(state.todo.lists)) {
+      stack.innerHTML = '<p class="pk-empty" style="padding:20px;text-align:center">در حال آماده‌سازی…</p>';
+      ensureTodoState();
+    }
+    var lists = (state && state.todo && state.todo.lists) ? state.todo.lists : [];
+    var openId = state && state.todo ? state.todo.openId : null;
+    var n = lists.length;
+    if (!n) {
+      stack.innerHTML = '<p class="pk-empty" style="padding:24px;text-align:center">پوشه‌ای نیست</p>';
       return;
     }
-    var openId = state.todo.openId;
-    var n = state.todo.lists.length;
-    var html = state.todo.lists.map(function (folder, fi) {
+    var parts = [];
+    for (var fi = 0; fi < n; fi++) {
+      var folder = lists[fi];
+      if (!folder) continue;
       var open = folder.id === openId;
-      var color = PI_COLORS[folder.colorIdx % PI_COLORS.length];
-      var total = folder.tasks.length;
-      var countTxt = total ? (Number(total).toLocaleString("fa-IR") + " tasks") : "";
+      var color = PI_COLORS[(folder.colorIdx || 0) % PI_COLORS.length] || "#5B9FD4";
+      var tasks = Array.isArray(folder.tasks) ? folder.tasks : [];
+      var total = tasks.length;
+      var countTxt = total ? (String(total).replace(/\d/g, function(d){ return "۰۱۲۳۴۵۶۷۸۹"[d]; }) + " tasks") : "";
       var body = "";
       if (open) {
-        if (!total) {
-          body = '<div class="pk-paper"><p class="pk-empty">هنوز کاری نیست</p>' +
-            '<button type="button" class="pk-add-task" data-act="add" data-fid="' + folder.id + '">+ افزودن کار</button></div>';
-        } else {
-          var rows = folder.tasks.map(function (t) {
-            var p = t.priority || 3;
-            var labels = { 1: "فوری", 2: "مهم", 3: "عادی", 4: "کم" };
-            var cols = { 1: "#e11d48", 2: "#f97316", 3: "#3b82f6", 4: "#94a3b8" };
-            return '<div class="pk-row' + (t.done ? " done" : "") + '" data-fid="' + folder.id + '" data-tid="' + t.id + '">' +
-              '<button type="button" class="pk-check' + (t.done ? " on" : "") + '" data-act="check">' + (t.done ? "✓" : "") + '</button>' +
-              '<div class="pk-row-text">' +
-              '<span class="pk-row-title">' + piEsc(t.title) + '</span>' +
-              '<span class="pk-tag" style="--tc:' + cols[p] + '">' + labels[p] + '</span>' +
-              '</div></div>';
-          }).join("");
-          body = '<div class="pk-paper">' + rows +
-            '<button type="button" class="pk-add-task" data-act="add" data-fid="' + folder.id + '">+ افزودن کار</button></div>';
+        var rows = "";
+        for (var ti = 0; ti < tasks.length; ti++) {
+          var t = tasks[ti];
+          if (!t) continue;
+          var p = t.priority || 3;
+          var labels = { 1: "فوری", 2: "مهم", 3: "عادی", 4: "کم" };
+          var cols = { 1: "#e11d48", 2: "#f97316", 3: "#3b82f6", 4: "#94a3b8" };
+          rows += '<div class="pk-row' + (t.done ? " done" : "") + '" data-fid="' + piEsc(folder.id) + '" data-tid="' + piEsc(t.id) + '">' +
+            '<button type="button" class="pk-check' + (t.done ? " on" : "") + '" data-act="check">' + (t.done ? "✓" : "") + '</button>' +
+            '<div class="pk-row-text">' +
+            '<span class="pk-row-title">' + piEsc(t.title) + '</span>' +
+            '<span class="pk-tag" style="--tc:' + (cols[p] || "#3b82f6") + '">' + (labels[p] || "عادی") + '</span>' +
+            '</div></div>';
         }
+        if (!rows) {
+          rows = '<p class="pk-empty">هنوز کاری نیست</p>';
+        }
+        body = '<div class="pk-paper">' + rows +
+          '<button type="button" class="pk-add-task" data-act="add" data-fid="' + piEsc(folder.id) + '">+ افزودن کار</button></div>';
       }
-      return '<div class="pk-folder' + (open ? " open" : "") + '" data-fid="' + folder.id + '" style="--c:' + color + ';--z:' + (n - fi) + '">' +
+      parts.push(
+        '<div class="pk-folder' + (open ? " open" : "") + '" data-fid="' + piEsc(folder.id) + '" style="--c:' + color + ';--z:' + (n - fi) + '">' +
         '<div class="pk-card">' +
         '<div class="pk-tab">پوشه‌ها</div>' +
         '<div class="pk-main">' +
-        '<button type="button" class="pk-bar" data-act="toggle" data-fid="' + folder.id + '">' +
+        '<button type="button" class="pk-bar" data-act="toggle" data-fid="' + piEsc(folder.id) + '">' +
         '<span class="pk-name">' + piEsc(folder.name) + '</span>' +
         (!open && countTxt ? '<span class="pk-count">' + countTxt + '</span>' : '') +
         '</button>' + body +
-        '</div></div></div>';
-    }).join("");
-    stack.innerHTML = html || '<p class="pk-empty" style="padding:24px;text-align:center">پوشه‌ای نیست</p>';
+        '</div></div></div>'
+      );
+    }
+    stack.innerHTML = parts.join("") || '<p class="pk-empty" style="padding:24px;text-align:center">پوشه‌ای نیست</p>';
   } catch (err) {
     console.error("renderTodo", err);
-    var stack2 = document.getElementById("piStack");
-    if (stack2) stack2.innerHTML = '<p style="padding:20px;color:#c00;text-align:center">خطا در نمایش کارها</p>';
+    // ریست اجباری و یک‌بار دیگر تلاش
+    try {
+      if (state) {
+        state.todo = {
+          lists: [
+            { id: "f1", name: "کارهای امروز", colorIdx: 0, tasks: [
+              { id: "t1", title: "تکمیل طراحی رابط کاربری پروژه", done: false, priority: 2 },
+              { id: "t2", title: "ارسال فایل‌های نهایی به تیم", done: false, priority: 1 },
+              { id: "t3", title: "خرید شخصی", done: false, priority: 4 }
+            ]},
+            { id: "f2", name: "پروژه آپولو", colorIdx: 1, tasks: [] },
+            { id: "f3", name: "وظایف شخصی", colorIdx: 2, tasks: [] }
+          ],
+          openId: "f1"
+        };
+        saveTodoOnly();
+      }
+      if (stack) {
+        stack.innerHTML = '<p style="padding:16px;text-align:center;color:#666;font-size:13px">در حال بازیابی…</p>';
+        setTimeout(function () {
+          try { renderTodoSafe(); } catch (e2) {
+            stack.innerHTML = '<p style="padding:20px;color:#c00;text-align:center;font-size:13px">خطا: ' + piEsc(String(err && err.message || err)) + '</p>';
+          }
+        }, 50);
+      }
+    } catch (e3) {
+      if (stack) stack.innerHTML = '<p style="padding:20px;color:#c00;text-align:center">خطا در نمایش کارها</p>';
+    }
   }
+}
+
+function renderTodoSafe() {
+  // نسخه بدون try بیرونی برای retry
+  ensureTodoState();
+  var stack = document.getElementById("piStack");
+  if (!stack || !state || !state.todo) return;
+  var lists = state.todo.lists || [];
+  var openId = state.todo.openId;
+  var html = "";
+  for (var fi = 0; fi < lists.length; fi++) {
+    var folder = lists[fi];
+    if (!folder) continue;
+    var open = folder.id === openId;
+    var color = PI_COLORS[(folder.colorIdx || 0) % PI_COLORS.length];
+    var tasks = folder.tasks || [];
+    var body = "";
+    if (open) {
+      var rows = "";
+      for (var ti = 0; ti < tasks.length; ti++) {
+        var t = tasks[ti];
+        if (!t) continue;
+        rows += '<div class="pk-row" data-fid="' + folder.id + '" data-tid="' + t.id + '">' +
+          '<button type="button" class="pk-check" data-act="check"></button>' +
+          '<div class="pk-row-text"><span class="pk-row-title">' + piEsc(t.title) + '</span></div></div>';
+      }
+      body = '<div class="pk-paper">' + (rows || '<p class="pk-empty">خالی</p>') +
+        '<button type="button" class="pk-add-task" data-act="add" data-fid="' + folder.id + '">+ افزودن کار</button></div>';
+    }
+    html += '<div class="pk-folder' + (open ? " open" : "") + '" data-fid="' + folder.id + '" style="--c:' + color + '">' +
+      '<div class="pk-card"><div class="pk-tab">پوشه‌ها</div><div class="pk-main">' +
+      '<button type="button" class="pk-bar" data-act="toggle" data-fid="' + folder.id + '">' +
+      '<span class="pk-name">' + piEsc(folder.name) + '</span></button>' + body +
+      '</div></div></div>';
+  }
+  stack.innerHTML = html;
 }
 
 function piOpenSheet(folderId) {
   if (_piSheetOpening) return;
   _piSheetOpening = true;
   ensureTodoState();
-  _piPendingFolder = folderId || state.todo.openId || (state.todo.lists[0] && state.todo.lists[0].id);
+  _piPendingFolder = folderId || (state.todo && state.todo.openId) || (state.todo && state.todo.lists[0] && state.todo.lists[0].id);
   _piPendingPriority = 3;
   var sheet = document.getElementById("piTaskSheet");
   var input = document.getElementById("piTaskTitle");
   if (input) input.value = "";
-  document.querySelectorAll(".todo-prio").forEach(function (b) {
-    b.classList.toggle("selected", b.getAttribute("data-p") === "3");
-  });
+  var prios = document.querySelectorAll(".todo-prio");
+  for (var i = 0; i < prios.length; i++) {
+    prios[i].classList.toggle("selected", prios[i].getAttribute("data-p") === "3");
+  }
   if (sheet) {
     sheet.hidden = false;
     document.body.classList.add("sheet-open");
     requestAnimationFrame(function () {
       sheet.classList.add("show");
-      if (input) setTimeout(function () { input.focus(); }, 100);
+      if (input) setTimeout(function () { try { input.focus(); } catch (e) {} }, 100);
     });
   }
   setTimeout(function () { _piSheetOpening = false; }, 300);
@@ -3740,10 +3864,14 @@ function piSaveTask(e) {
   var input = document.getElementById("piTaskTitle");
   var title = ((input && input.value) || "").trim();
   if (!title) {
-    if (input) { input.focus(); input.style.borderColor = "#ef4444"; }
+    if (input) input.focus();
     return;
   }
-  var folder = state.todo.lists.find(function (l) { return l.id === _piPendingFolder; }) || state.todo.lists[0];
+  var folder = null;
+  for (var i = 0; i < state.todo.lists.length; i++) {
+    if (state.todo.lists[i].id === _piPendingFolder) { folder = state.todo.lists[i]; break; }
+  }
+  if (!folder) folder = state.todo.lists[0];
   if (!folder) return;
   folder.tasks.push({
     id: "t" + Date.now().toString(36),
@@ -3759,40 +3887,52 @@ function piSaveTask(e) {
 
 function setupTodoUI() {
   var stack = document.getElementById("piStack");
-  if (!stack) return;
-
-  // همیشه رندر کن (حتی اگر قبلاً bind شده)
+  if (!stack) {
+    console.warn("piStack not in DOM");
+    return;
+  }
   renderTodo();
 
-  if (stack._pkBound) return;
-  stack._pkBound = true;
-
-  stack.addEventListener("click", function (e) {
-    var btn = e.target.closest("[data-act]");
-    if (!btn) return;
-    e.preventDefault();
-    e.stopPropagation();
-    var act = btn.getAttribute("data-act");
-    ensureTodoState();
-    if (act === "toggle") {
-      var fid = btn.getAttribute("data-fid");
-      state.todo.openId = state.todo.openId === fid ? null : fid;
-      saveTodoOnly();
-      renderTodo();
-    } else if (act === "check") {
-      var row = btn.closest(".pk-row");
-      if (!row) return;
-      var folder = state.todo.lists.find(function (l) { return l.id === row.getAttribute("data-fid"); });
-      if (!folder) return;
-      var task = folder.tasks.find(function (t) { return t.id === row.getAttribute("data-tid"); });
-      if (!task) return;
-      task.done = !task.done;
-      saveTodoOnly();
-      renderTodo();
-    } else if (act === "add") {
-      piOpenSheet(btn.getAttribute("data-fid"));
-    }
-  });
+  if (!stack._pkBound) {
+    stack._pkBound = true;
+    stack.addEventListener("click", function (e) {
+      var btn = e.target.closest("[data-act]");
+      if (!btn) return;
+      e.preventDefault();
+      e.stopPropagation();
+      var act = btn.getAttribute("data-act");
+      ensureTodoState();
+      if (act === "toggle") {
+        var fid = btn.getAttribute("data-fid");
+        state.todo.openId = state.todo.openId === fid ? null : fid;
+        saveTodoOnly();
+        renderTodo();
+      } else if (act === "check") {
+        var row = btn.closest(".pk-row");
+        if (!row) return;
+        var folder = null, task = null;
+        for (var i = 0; i < state.todo.lists.length; i++) {
+          if (state.todo.lists[i].id === row.getAttribute("data-fid")) {
+            folder = state.todo.lists[i];
+            break;
+          }
+        }
+        if (!folder) return;
+        for (var j = 0; j < folder.tasks.length; j++) {
+          if (folder.tasks[j].id === row.getAttribute("data-tid")) {
+            task = folder.tasks[j];
+            break;
+          }
+        }
+        if (!task) return;
+        task.done = !task.done;
+        saveTodoOnly();
+        renderTodo();
+      } else if (act === "add") {
+        piOpenSheet(btn.getAttribute("data-fid"));
+      }
+    });
+  }
 
   var fab = document.getElementById("piFab");
   if (fab && !fab._pkBound) {
@@ -3800,7 +3940,8 @@ function setupTodoUI() {
     fab.addEventListener("click", function (e) {
       e.preventDefault();
       ensureTodoState();
-      piOpenSheet(state.todo.openId || (state.todo.lists[0] && state.todo.lists[0].id));
+      var fid = state.todo.openId || (state.todo.lists[0] && state.todo.lists[0].id);
+      piOpenSheet(fid);
     });
   }
 
@@ -3810,7 +3951,6 @@ function setupTodoUI() {
     newProj.addEventListener("click", function (e) {
       e.preventDefault();
       ensureTodoState();
-      // open sheet for first folder OR create folder
       var name = window.prompt("نام پوشه جدید:");
       if (!name || !name.trim()) return;
       var id = "f" + Date.now().toString(36);
@@ -3850,26 +3990,35 @@ function setupTodoUI() {
       if (e.key === "Enter") piSaveTask(e);
     });
   }
-  document.querySelectorAll(".todo-prio").forEach(function (b) {
-    if (b._pkBound) return;
-    b._pkBound = true;
-    b.addEventListener("click", function (e) {
-      e.preventDefault();
-      var v = parseInt(b.getAttribute("data-p") || "3", 10);
-      _piPendingPriority = v;
-      document.querySelectorAll(".todo-prio").forEach(function (x) {
-        x.classList.toggle("selected", x.getAttribute("data-p") === String(v));
+  var prios = document.querySelectorAll(".todo-prio");
+  for (var pi = 0; pi < prios.length; pi++) {
+    (function (b) {
+      if (b._pkBound) return;
+      b._pkBound = true;
+      b.addEventListener("click", function (e) {
+        e.preventDefault();
+        var v = parseInt(b.getAttribute("data-p") || "3", 10);
+        _piPendingPriority = v;
+        var all = document.querySelectorAll(".todo-prio");
+        for (var x = 0; x < all.length; x++) {
+          all[x].classList.toggle("selected", all[x].getAttribute("data-p") === String(v));
+        }
       });
-    });
-  });
+    })(prios[pi]);
+  }
 }
 
 // boot
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", function () { try { setupTodoUI(); } catch (e) { console.warn(e); } });
-} else {
-  try { setupTodoUI(); } catch (e) { console.warn(e); }
-}
+(function () {
+  function boot() {
+    try { setupTodoUI(); } catch (e) { console.warn("todo boot", e); }
+  }
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", boot);
+  } else {
+    boot();
+  }
+})();
 
 
 function renderBudget() {
