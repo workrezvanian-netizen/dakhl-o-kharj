@@ -14,7 +14,7 @@
 <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css">
 <link href="https://cdn.jsdelivr.net/gh/rastikerdar/kamran@v1.0.0/dist/font-face.css" rel="stylesheet" type="text/css">
 <link href="https://cdn.jsdelivr.net/gh/rastikerdar/samim-font@v4.0.5/dist/font-face.css" rel="stylesheet" type="text/css">
-<link rel="stylesheet" href="style.css?v=134">
+<link rel="stylesheet" href="style.css?v=135">
 </head>
 <body>
 
@@ -378,20 +378,20 @@
 
   </section>
 
-  <!-- TODO -->
+  <!-- TODO PlanIt -->
   <section id="tab-todo" class="tab">
-    <div class="todo-app">
-      <header class="todo-header">
-        <div class="todo-header-text">
-          <h2 class="todo-title">کارها</h2>
-          <p class="todo-date" id="piDate">—</p>
-        </div>
-        <button type="button" id="piNewProject" class="todo-new-folder" aria-label="پوشه جدید">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>
-          <span>پوشه</span>
+    <div class="pk-wrap">
+      <header class="pk-head">
+        <button type="button" id="piNewProject" class="pk-addbtn" aria-label="افزودن">
+          <span class="pk-add-icon">+</span>
+          <span class="pk-add-txt">افزودن<br>کار جدید</span>
         </button>
+        <div class="pk-head-r">
+          <h2 class="pk-title">لیست کارها</h2>
+          <p class="pk-date" id="piDate">—</p>
+        </div>
       </header>
-      <div class="todo-list" id="piStack"></div>
+      <div class="pk-stack" id="piStack"></div>
     </div>
   </section>
 
@@ -627,6 +627,13 @@
     <h2 id="piSheetTitle">کار جدید</h2>
     <label class="field">
       <input type="text" id="piTaskTitle" placeholder="عنوان کار" maxlength="160" autocomplete="off" aria-label="عنوان کار">
+      <p class="todo-field-label" style="margin-top:14px;text-align:right;font-weight:700;font-size:13px">اولویت</p>
+      <div class="todo-prio-row" id="piPriorityRow" style="display:flex;gap:8px;direction:rtl;flex-wrap:wrap">
+        <button type="button" class="todo-prio" data-p="1" style="flex:1;padding:10px;border-radius:10px;border:1.5px solid #e5e7eb;background:#fff;font-family:inherit;font-weight:700;cursor:pointer">فوری</button>
+        <button type="button" class="todo-prio" data-p="2" style="flex:1;padding:10px;border-radius:10px;border:1.5px solid #e5e7eb;background:#fff;font-family:inherit;font-weight:700;cursor:pointer">بالا</button>
+        <button type="button" class="todo-prio selected" data-p="3" style="flex:1;padding:10px;border-radius:10px;border:1.5px solid #3b82f6;background:#eff6ff;font-family:inherit;font-weight:700;cursor:pointer;color:#1d4ed8">عادی</button>
+        <button type="button" class="todo-prio" data-p="4" style="flex:1;padding:10px;border-radius:10px;border:1.5px solid #e5e7eb;background:#fff;font-family:inherit;font-weight:700;cursor:pointer">کم</button>
+      </div>
     </label>
     <div class="field">
       <span>اولویت</span>
@@ -877,8 +884,8 @@ n  <!-- Progress -->
 </div>
 <!-- ═══════════════ END ONBOARDING ═══════════════ -->
 
-<script src="script.js?v=134"></script>
-<script src="installments.js?v=134"></script>
-<script src="three-scene.js?v=134"></script>
+<script src="script.js?v=135"></script>
+<script src="installments.js?v=135"></script>
+<script src="three-scene.js?v=135"></script>
 </body>
 </html>
