@@ -6573,3 +6573,291 @@ input:focus, select:focus {
   background: #eff6ff !important;
   color: #1d4ed8 !important;
 }
+
+
+
+/* =========================================================
+   تب کارها — لایه گرافیکی PlanIt (نسخه زیباتر)
+   ========================================================= */
+#tab-todo.tab.active {
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(91,159,212,0.18), transparent 55%),
+    radial-gradient(ellipse 60% 40% at 100% 30%, rgba(233,162,74,0.1), transparent 50%),
+    linear-gradient(180deg, #e8eef5 0%, #f0f3f8 40%, #eef1f6 100%) !important;
+}
+#tab-todo .pk-wrap {
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 4px 2px 8px;
+}
+#tab-todo .pk-head {
+  margin-bottom: 20px;
+  padding: 4px 4px 0;
+}
+#tab-todo .pk-title {
+  font-size: 30px !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.04em !important;
+  color: #0f172a !important;
+  text-shadow: 0 1px 0 rgba(255,255,255,0.8);
+}
+#tab-todo .pk-date {
+  font-size: 13.5px;
+  color: #64748b;
+  font-weight: 500;
+}
+#tab-todo .pk-addbtn {
+  transition: transform 0.2s ease;
+}
+#tab-todo .pk-addbtn:active {
+  transform: scale(0.94);
+}
+#tab-todo .pk-add-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #ffffff, #f1f5f9);
+  box-shadow:
+    0 4px 14px rgba(15,23,42,0.12),
+    0 1px 0 rgba(255,255,255,0.9) inset,
+    0 -1px 0 rgba(15,23,42,0.04) inset;
+  font-size: 26px;
+  color: #0f172a;
+  transition: box-shadow 0.25s ease, transform 0.2s ease;
+}
+#tab-todo .pk-addbtn:active .pk-add-icon {
+  box-shadow: 0 2px 6px rgba(15,23,42,0.1);
+}
+#tab-todo .pk-add-txt {
+  margin-top: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #64748b;
+  line-height: 1.2;
+}
+
+/* پشته فولدر */
+#tab-todo .pk-stack {
+  gap: 0;
+  padding: 6px 2px 12px;
+}
+#tab-todo .pk-folder {
+  margin-top: -14px;
+  transition:
+    transform 0.45s cubic-bezier(.34,1.3,.64,1),
+    filter 0.4s ease;
+  will-change: transform;
+}
+#tab-todo .pk-folder:first-child {
+  margin-top: 0;
+  animation: pkFolderIn 0.5s cubic-bezier(.34,1.2,.64,1) both;
+}
+#tab-todo .pk-folder:nth-child(2) { animation: pkFolderIn 0.5s 0.05s cubic-bezier(.34,1.2,.64,1) both; }
+#tab-todo .pk-folder:nth-child(3) { animation: pkFolderIn 0.5s 0.1s cubic-bezier(.34,1.2,.64,1) both; }
+#tab-todo .pk-folder:nth-child(4) { animation: pkFolderIn 0.5s 0.15s cubic-bezier(.34,1.2,.64,1) both; }
+#tab-todo .pk-folder:nth-child(5) { animation: pkFolderIn 0.5s 0.2s cubic-bezier(.34,1.2,.64,1) both; }
+#tab-todo .pk-folder:nth-child(n+6) { animation: pkFolderIn 0.5s 0.22s cubic-bezier(.34,1.2,.64,1) both; }
+
+@keyframes pkFolderIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+#tab-todo .pk-folder.open {
+  z-index: 50 !important;
+  transform: translateY(-6px) scale(1.01);
+  margin-bottom: 12px;
+  filter: drop-shadow(0 16px 32px color-mix(in srgb, var(--c, #5B9FD4) 40%, transparent));
+}
+
+#tab-todo .pk-card {
+  filter: drop-shadow(0 8px 18px color-mix(in srgb, var(--c, #5B9FD4) 32%, transparent));
+  transition: filter 0.35s ease;
+}
+
+/* زبانه فولدر — گرادیان + براق */
+#tab-todo .pk-tab {
+  width: 56px;
+  min-height: 54px;
+  padding: 12px 5px;
+  background:
+    linear-gradient(165deg,
+      color-mix(in srgb, var(--c, #5B9FD4) 70%, #fff 12%) 0%,
+      color-mix(in srgb, var(--c, #5B9FD4) 78%, #000 22%) 100%);
+  border-radius: 14px 0 0 14px;
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  text-shadow: 0 1px 1px rgba(0,0,0,0.18);
+  box-shadow:
+    inset 1px 1px 0 rgba(255,255,255,0.28),
+    inset -1px 0 0 rgba(0,0,0,0.06);
+  position: relative;
+  overflow: hidden;
+}
+#tab-todo .pk-tab::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(255,255,255,0.22), transparent 55%);
+  pointer-events: none;
+}
+#tab-todo .pk-folder.open .pk-tab {
+  border-radius: 14px 0 0 0;
+  min-height: 56px;
+}
+
+/* بدنه رنگی با گرادیان */
+#tab-todo .pk-main {
+  background:
+    linear-gradient(145deg,
+      color-mix(in srgb, var(--c, #5B9FD4) 88%, #fff 12%) 0%,
+      var(--c, #5B9FD4) 45%,
+      color-mix(in srgb, var(--c, #5B9FD4) 82%, #000 18%) 100%) !important;
+  border-radius: 0 18px 16px 0;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.25);
+}
+#tab-todo .pk-folder.open .pk-main {
+  border-radius: 0 18px 18px 14px;
+}
+#tab-todo .pk-folder:not(.open) .pk-main {
+  border-radius: 0 16px 16px 4px;
+}
+
+#tab-todo .pk-bar {
+  min-height: 56px;
+  padding: 14px 18px 14px 14px;
+  transition: background 0.2s ease;
+}
+#tab-todo .pk-bar:active {
+  background: rgba(0,0,0,0.06);
+}
+#tab-todo .pk-name {
+  font-size: 16.5px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.12);
+}
+#tab-todo .pk-count {
+  font-size: 12.5px;
+  font-weight: 700;
+  background: rgba(255,255,255,0.22);
+  padding: 4px 10px;
+  border-radius: 999px;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border: 1px solid rgba(255,255,255,0.25);
+}
+
+/* کاغذ سفید داخل */
+#tab-todo .pk-paper {
+  margin: 0 9px 11px;
+  background: linear-gradient(180deg, #ffffff 0%, #fafbfc 100%) !important;
+  border-radius: 14px;
+  padding: 6px 0 10px;
+  box-shadow:
+    0 2px 8px rgba(15,23,42,0.06),
+    inset 0 1px 0 rgba(255,255,255,1);
+  animation: pkPaperIn 0.45s cubic-bezier(.33,1,.28,1) both;
+}
+@keyframes pkPaperIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+#tab-todo .pk-row {
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(15,23,42,0.05);
+  transition: background 0.15s ease;
+  animation: pkRowIn 0.35s cubic-bezier(.33,1,.28,1) both;
+}
+#tab-todo .pk-row:nth-child(1) { animation-delay: 0.04s; }
+#tab-todo .pk-row:nth-child(2) { animation-delay: 0.08s; }
+#tab-todo .pk-row:nth-child(3) { animation-delay: 0.12s; }
+#tab-todo .pk-row:nth-child(4) { animation-delay: 0.16s; }
+#tab-todo .pk-row:nth-child(5) { animation-delay: 0.2s; }
+#tab-todo .pk-row:nth-child(n+6) { animation-delay: 0.22s; }
+@keyframes pkRowIn {
+  from { opacity: 0; transform: translateX(-8px); }
+  to { opacity: 1; transform: none; }
+}
+#tab-todo .pk-row:active {
+  background: rgba(15,23,42,0.03);
+}
+#tab-todo .pk-row.done .pk-row-title {
+  opacity: 0.45;
+}
+
+#tab-todo .pk-check {
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
+  border: 2px solid #cbd5e1;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(15,23,42,0.06);
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+}
+#tab-todo .pk-check:active {
+  transform: scale(0.88);
+}
+#tab-todo .pk-check.on {
+  background: var(--c, #5B9FD4);
+  border-color: var(--c, #5B9FD4);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--c, #5B9FD4) 45%, transparent);
+}
+
+#tab-todo .pk-row-title {
+  font-size: 14.5px;
+  font-weight: 650;
+  color: #0f172a;
+  line-height: 1.45;
+}
+#tab-todo .pk-tag {
+  font-size: 10.5px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 6px;
+  letter-spacing: -0.01em;
+}
+
+#tab-todo .pk-add-task {
+  margin: 8px 12px 4px;
+  width: calc(100% - 24px);
+  padding: 12px;
+  border: 1.5px dashed color-mix(in srgb, var(--c, #5B9FD4) 35%, #cbd5e1);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--c, #5B9FD4) 6%, #f8fafc);
+  color: color-mix(in srgb, var(--c, #5B9FD4) 70%, #475569);
+  font-weight: 700;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+#tab-todo .pk-add-task:active {
+  background: color-mix(in srgb, var(--c, #5B9FD4) 12%, #f1f5f9);
+}
+
+#tab-todo .pk-empty {
+  color: #94a3b8;
+  font-size: 13.5px;
+  padding: 16px 12px;
+}
+
+/* FAB گرافیکی‌تر */
+.fab-todo {
+  background: linear-gradient(145deg, #60a5fa, #2563eb) !important;
+  box-shadow:
+    0 10px 28px rgba(37, 99, 235, 0.45),
+    0 2px 0 rgba(255,255,255,0.25) inset !important;
+  border: 1px solid rgba(255,255,255,0.2) !important;
+}
