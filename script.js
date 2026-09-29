@@ -1776,6 +1776,63 @@ function renderAnalysis() {
   [anRenderRings, anRenderKpis, anRenderCumulative, anRenderCategories, anRenderTrend, anRenderWeekdays, anRenderTop].forEach((fn) => {
     try { fn(ctx); } catch (e) { console.warn("analysis", fn.name, e); }
   });
+  anSetupReveal();
+}
+
+// هر بخش وقتی وارد صفحه شد ظاهر می‌شود و نمودارهایش همان لحظه جان می‌گیرند
+let _anObserver = null;
+function anReduceMotion() {
+  try { return window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (_) { return false; }
+}
+function anCountUp(el) {
+  const target = Number(el.getAttribute("data-count"));
+  const fmt = el.getAttribute("data-fmt");
+  if (!isFinite(target)) return;
+  const f = fmt === "pct" ? (v) => anPct(v) : (v) => anShort(v);
+  const final = el.textContent;
+  if (anReduceMotion() || Math.abs(target) < 1) { el.textContent = final; return; }
+  const dur = 900, t0 = performance.now();
+  const ease = (t) => 1 - Math.pow(1 - t, 4);
+  const tick = (now) => {
+    const t = Math.min(1, (now - t0) / dur);
+    el.textContent = t < 1 ? f(target * ease(t)) : final;
+    if (t < 1) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
+function anInView(el) {
+  if (el.classList.contains("is-in")) return;
+  el.classList.add("is-in");
+  el.querySelectorAll("[data-count]").forEach(anCountUp);
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    el.querySelectorAll(".an-ring-arc").forEach((a) => { a.style.strokeDashoffset = a.getAttribute("data-off"); });
+    el.querySelectorAll(".an-donut-seg[data-dash]").forEach((a) => { a.style.strokeDasharray = a.getAttribute("data-dash"); });
+  }));
+}
+function anSetupReveal() {
+  const tab = document.getElementById("tab-analysis");
+  if (!tab) return;
+  const secs = Array.from(tab.children).filter((el) => el.nodeType === 1);
+  if (_anObserver) { _anObserver.disconnect(); _anObserver = null; }
+  secs.forEach((el) => {
+    el.classList.add("an-rv");
+    el.classList.remove("is-in");
+    el.style.removeProperty("--rv-d");
+  });
+  // تب پنهان است (رندر پس‌زمینه) — وقتی باز شد دوباره رندر می‌شود
+  if (!tab.classList.contains("active")) return;
+  if (anReduceMotion() || !("IntersectionObserver" in window)) { secs.forEach(anInView); return; }
+  const root = document.getElementById("appScroll");
+  _anObserver = new IntersectionObserver((entries) => {
+    let k = 0;
+    entries.forEach((e) => {
+      if (!e.isIntersecting) return;
+      e.target.style.setProperty("--rv-d", (k++ * 70) + "ms");
+      anInView(e.target);
+      _anObserver && _anObserver.unobserve(e.target);
+    });
+  }, { root: root && root.scrollHeight > root.clientHeight ? root : null, threshold: 0.12, rootMargin: "0px 0px -6% 0px" });
+  secs.forEach((el) => _anObserver.observe(el));
 }
 
 // ---- ۱) حلقه‌ها (سبک Activity Rings آیفون)
@@ -1812,25 +1869,21 @@ function anRenderRings(c) {
   const rate = ti > 0 ? (ti - te) / ti : 0;
   const rings = [
     { key: "expense", label: "مخارج", color: AN_RING.expense, pct: pe ? te / pe : (te ? 1 : 0),
-      value: anShort(te), of: pe ? `از ${anShort(pe)} ${c.prevName}` : `${c.prevName} خرجی نداشت` },
+      value: anShort(te), count: te, fmt: "short", of: pe ? `از ${anShort(pe)} ${c.prevName}` : `${c.prevName} خرجی نداشت` },
     { key: "income", label: "درآمد", color: AN_RING.income, pct: pi ? ti / pi : (ti ? 1 : 0),
-      value: anShort(ti), of: pi ? `از ${anShort(pi)} ${c.prevName}` : `${c.prevName} درآمدی نداشت` },
+      value: anShort(ti), count: ti, fmt: "short", of: pi ? `از ${anShort(pi)} ${c.prevName}` : `${c.prevName} درآمدی نداشت` },
     { key: "save", label: "پس‌انداز", color: AN_RING.save, pct: Math.max(0, rate),
-      value: ti > 0 ? anPct(rate * 100) : "—", of: ti > 0 ? (rate >= 0 ? "از درآمد این ماه" : "خرج بیشتر از درآمد") : "درآمدی ثبت نشده" }
+      value: ti > 0 ? anPct(rate * 100) : "—", count: ti > 0 ? Math.max(0, rate * 100) : null, fmt: "pct", of: ti > 0 ? (rate >= 0 ? "از درآمد این ماه" : "خرج بیشتر از درآمد") : "درآمدی ثبت نشده" }
   ];
   host.innerHTML = `
     <div class="an-rings-wrap">${anRingSvg(rings)}</div>
     <ul class="an-rings-legend">${rings.map((r) => `
       <li style="--rc:${r.color}">
         <span class="an-rl-label">${r.label}</span>
-        <strong>${r.value}</strong>
+        <strong${r.count != null ? ` data-count="${r.count}" data-fmt="${r.fmt}"` : ""}>${r.value}</strong>
         <small>${r.of}${r.key !== "save" && r.pct ? `، ${anPct(r.pct * 100)}` : ""}</small>
       </li>`).join("")}
     </ul>`;
-  // انیمیشن پر شدن حلقه‌ها
-  requestAnimationFrame(() => requestAnimationFrame(() => {
-    host.querySelectorAll(".an-ring-arc").forEach((a) => { a.style.strokeDashoffset = a.getAttribute("data-off"); });
-  }));
 }
 
 // ---- ۲) شاخص‌ها با اسپارک‌لاین ۶ ماه
@@ -1842,7 +1895,7 @@ function anSpark(values, color) {
   const last = pts[pts.length - 1];
   return `<svg class="an-spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">
     <path d="${d}" fill="none" stroke="${color}" stroke-width="1.8" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
-    <circle cx="${last[0]}" cy="${last[1]}" r="2.6" fill="${color}"/></svg>`;
+    <path d="M${last[0]} ${last[1]}h0" stroke="${color}" stroke-width="6" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg>`;
 }
 function anRenderKpis(c) {
   const el = document.getElementById("anKpis");
@@ -1861,25 +1914,25 @@ function anRenderKpis(c) {
   el.innerHTML = `
     <div class="an-kpi">
       <span class="an-kpi-label"><i style="background:${AN_INCOME}"></i>درآمد</span>
-      <strong>${anShort(ti)}</strong>
+      <strong data-count="${ti}" data-fmt="short">${anShort(ti)}</strong>
       ${anDelta(ti, pi, true, c.cmpName)}
       ${anSpark(incSeries, AN_INCOME)}
     </div>
     <div class="an-kpi">
       <span class="an-kpi-label"><i style="background:${AN_EXPENSE}"></i>مخارج</span>
-      <strong>${anShort(te)}</strong>
+      <strong data-count="${te}" data-fmt="short">${anShort(te)}</strong>
       ${anDelta(te, pe, false, c.cmpName)}
       ${anSpark(expSeries, AN_EXPENSE)}
     </div>
     <div class="an-kpi">
       <span class="an-kpi-label"><i style="background:#5B86F2"></i>مانده</span>
-      <strong class="${bal < 0 ? "is-neg" : ""}">${anShort(bal)}</strong>
+      <strong class="${bal < 0 ? "is-neg" : ""}" data-count="${bal}" data-fmt="short">${anShort(bal)}</strong>
       <span class="an-delta">${ti > 0 ? (bal >= 0 ? `${anPct((bal / ti) * 100)} درآمد ماند` : "بیشتر از درآمد خرج شد") : "درآمدی ثبت نشده"}</span>
       ${anSpark(balSeries, "#5B86F2")}
     </div>
     <div class="an-kpi">
       <span class="an-kpi-label"><i style="background:#8A938F"></i>خرج روزانه</span>
-      <strong>${anShort(daily)}</strong>
+      <strong data-count="${daily}" data-fmt="short">${anShort(daily)}</strong>
       <span class="an-delta">${forecast ? `پیش‌بینی آخر ماه: ${anShort(forecast)}` : `میانگین ${toPersianDigits(monthLen)} روز`}</span>
       <span class="an-kpi-foot">۶ ماه اخیر</span>
     </div>`;
@@ -2045,7 +2098,7 @@ function anRenderCategories(c) {
     const dash = rows.length === 1 ? circ : Math.max(0.5, round ? len - gap - SW : len - gap);
     const off = rows.length === 1 ? 0 : acc + gap / 2 + (round ? SW / 2 : 0);
     arcs += `<circle class="an-donut-seg" data-i="${i}" cx="${C}" cy="${C}" r="${R}" fill="none" stroke="${r.color}" stroke-width="${SW}"
-      stroke-linecap="${round && rows.length > 1 ? "round" : "butt"}" stroke-dasharray="${dash.toFixed(1)} ${circ.toFixed(1)}"
+      stroke-linecap="${round && rows.length > 1 ? "round" : "butt"}" stroke-dasharray="0 ${circ.toFixed(1)}" data-dash="${dash.toFixed(1)} ${circ.toFixed(1)}" style="--i:${i}"
       stroke-dashoffset="${(-off).toFixed(1)}" transform="rotate(-90 ${C} ${C})"/>`;
     acc += len;
   });
@@ -2056,7 +2109,7 @@ function anRenderCategories(c) {
         <svg viewBox="0 0 ${S} ${S}" role="img" aria-label="سهم دسته‌ها">
           <circle cx="${C}" cy="${C}" r="${R}" fill="none" stroke="#F3EFE7" stroke-width="${SW}"/>${arcs}
         </svg>
-        <div class="an-donut-center"><small id="anDonutLabel">کل مخارج</small><strong id="anDonutValue">${anShort(total)}</strong></div>
+        <div class="an-donut-center"><small id="anDonutLabel">کل مخارج</small><strong id="anDonutValue" data-count="${total}" data-fmt="short">${anShort(total)}</strong></div>
       </div>
       <p class="an-note an-donut-note">بیشترین سهم: <b>${anEsc(top.name)}</b> با ${anPct((top.amt / total) * 100)} از خرج ${c.isCurrent ? "این ماه" : c.monthName}</p>
     </div>
@@ -2067,7 +2120,7 @@ function anRenderCategories(c) {
         const d = Math.round(((r.amt - r.prev) / r.prev) * 100);
         if (Math.abs(d) >= 5) delta = `<span class="an-cat-delta ${d > 0 ? "is-bad" : "is-good"}">${d > 0 ? "▲" : "▼"}${toPersianDigits(Math.abs(d))}٪</span>`;
       } else delta = `<span class="an-cat-delta">جدید</span>`;
-      return `<button type="button" class="an-cat" data-i="${i}" style="--cc:${r.color}">
+      return `<button type="button" class="an-cat" data-i="${i}" style="--cc:${r.color};--i:${i}">
         <span class="an-cat-icon">${iconSpanHTML(r.icon, `color:${r.color}`)}</span>
         <span class="an-cat-main">
           <span class="an-cat-top"><span class="an-cat-name">${anEsc(r.name)}</span><span class="an-cat-val">${anShort(r.amt)}</span></span>
@@ -2107,10 +2160,11 @@ function anRenderTrend(c) {
   const bw = Math.max(6, Math.min(14, (gw - 12) / 2));
   const y = (v) => pad.t + (1 - v / maxV) * (H - pad.t - pad.b);
   const base = y(0);
+  let _anBarN = 0;
   const cap = (bx, v, grad) => {
     if (v <= 0) return `<rect x="${bx}" y="${base - 3}" width="${bw}" height="3" rx="1.5" fill="#E7E2D8"/>`;
     const h = Math.max(bw, base - y(v));
-    return `<rect class="an-bar-grow" x="${bx}" y="${(base - h).toFixed(1)}" width="${bw}" height="${h.toFixed(1)}" rx="${bw / 2}" fill="url(#${grad})"/>`;
+    return `<rect class="an-bar-grow" style="animation-delay:${(0.05 * _anBarN++).toFixed(2)}s" x="${bx}" y="${(base - h).toFixed(1)}" width="${bw}" height="${h.toFixed(1)}" rx="${bw / 2}" fill="url(#${grad})"/>`;
   };
   let svg = `<defs>
     <linearGradient id="anGInc" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#19B39A"/><stop offset="1" stop-color="${AN_INCOME}"/></linearGradient>
@@ -2194,7 +2248,7 @@ function anRenderWeekdays(c) {
     <div class="an-week" style="--mean:${((mean / max) * 100).toFixed(1)}">
       <span class="an-week-mean"><em>میانگین</em></span>
       ${avg.map((v, i) => `
-      <div class="an-week-col" title="${AN_WEEKDAYS[i]}: میانگین ${fmtAmount(v)} تومان">
+      <div class="an-week-col" style="--i:${i}" title="${AN_WEEKDAYS[i]}: میانگین ${fmtAmount(v)} تومان">
         <div class="an-week-track"><div class="an-week-bar ${i === maxI ? "is-max" : ""}" style="height:${Math.max(4, (v / max) * 100).toFixed(1)}%"></div></div>
         <span>${AN_WEEKDAYS_SHORT[i]}</span>
       </div>`).join("")}
@@ -2213,7 +2267,7 @@ function anRenderTop(c) {
     const j = anJ(x.date);
     const cat = x.category || "سایر";
     const color = catColor(cat);
-    return `<div class="an-top-row">
+    return `<div class="an-top-row" style="--i:${i}">
       <span class="an-top-rank">${toPersianDigits(i + 1)}</span>
       <span class="an-top-icon" style="background:${color}22">${iconSpanHTML(catIcon(cat), `color:${color}`)}</span>
       <span class="an-top-body">
@@ -2228,17 +2282,25 @@ function anRenderTop(c) {
 (function setupAnalysisNav() {
   const prev = document.getElementById("anPrevMonth");
   const next = document.getElementById("anNextMonth");
-  if (prev) prev.addEventListener("click", () => {
-    try { dashboardMode = "month"; } catch (_) {}
-    viewedMonth = addMonthsJalali(viewedMonth.jy, viewedMonth.jm, -1);
-    applyViewedMonthState();
-  });
-  if (next) next.addEventListener("click", () => {
-    if (isViewingCurrentMonth()) return;
-    try { dashboardMode = "month"; } catch (_) {}
-    viewedMonth = addMonthsJalali(viewedMonth.jy, viewedMonth.jm, 1);
-    applyViewedMonthState();
-  });
+  let swapping = false;
+  const swapMonth = (delta) => {
+    if (swapping) return;
+    if (delta > 0 && isViewingCurrentMonth()) return;
+    const tab = document.getElementById("tab-analysis");
+    const go = () => {
+      try { dashboardMode = "month"; } catch (_) {}
+      viewedMonth = addMonthsJalali(viewedMonth.jy, viewedMonth.jm, delta);
+      applyViewedMonthState();
+      if (tab) tab.classList.remove("an-out", "an-out-next", "an-out-prev");
+      swapping = false;
+    };
+    if (!tab || anReduceMotion()) { go(); return; }
+    swapping = true;
+    tab.classList.add("an-out", delta > 0 ? "an-out-next" : "an-out-prev");
+    setTimeout(go, 200);
+  };
+  if (prev) prev.addEventListener("click", () => swapMonth(-1));
+  if (next) next.addEventListener("click", () => swapMonth(1));
   let rt = null;
   window.addEventListener("resize", () => {
     clearTimeout(rt);
@@ -2717,7 +2779,7 @@ async function initSync() {
 // ---------- Service worker ----------
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js?v=142").catch(() => {});
+    navigator.serviceWorker.register("sw.js?v=143").catch(() => {});
   });
 }
 

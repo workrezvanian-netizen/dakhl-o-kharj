@@ -6582,7 +6582,6 @@ input:focus, select:focus {
    تب آنالیز — طراحی کامل (حلقه‌های سبک آیفون + نمودارهای نرم)
    ========================================================= */
 .ai-floating-star { display: none !important; }
-#tab-analysis .ai-card { transform: none !important; opacity: 1 !important; margin-bottom: 16px; }
 #tab-analysis .settings-card.an-card {
   padding: 18px 16px 16px;
   margin-bottom: 14px;
@@ -6840,3 +6839,176 @@ input:focus, select:focus {
 .an-top-body b { font-size: 13.5px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .an-top-body small, .an-top-amt small { font-size: 11px; color: var(--text-mute); font-weight: 500; }
 .an-top-amt { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; font-size: 13.5px; font-weight: 800; color: var(--text); white-space: nowrap; }
+
+/* =========================================================
+   تب آنالیز — نسخه‌ی مدرن و مینیمال + انیمیشن‌ها
+   (بعد از قوانین قبلی می‌آید و آن‌ها را ساده‌تر می‌کند)
+   ========================================================= */
+#tab-analysis { --an-ease: cubic-bezier(.22, 1, .36, 1); }
+
+/* کارت‌ها: بدون حاشیه، سایه‌ی خیلی نرم، فاصله‌ی بیشتر */
+#tab-analysis .settings-card.an-card,
+#tab-analysis .an-kpi {
+  border: none;
+  box-shadow: 0 1px 1px rgba(22,63,60,.03), 0 4px 16px rgba(22,63,60,.045);
+}
+#tab-analysis .settings-card.an-card { border-radius: 26px; padding: 20px 18px 18px; margin-bottom: 12px; }
+#tab-analysis .an-card-head h2 { font-size: 15px; font-weight: 800; letter-spacing: -.1px; }
+#tab-analysis .an-kpi { border-radius: 22px; padding: 14px 15px 10px; }
+#tab-analysis .an-kpi strong { font-size: 20px; letter-spacing: -.2px; }
+#tab-analysis .an-kpis { gap: 8px; margin-bottom: 12px; }
+
+/* سربرگ ماه: فقط تایپوگرافی */
+#tab-analysis .an-month { margin: 0 2px 16px; }
+#tab-analysis .an-month-text small { letter-spacing: .2px; }
+#tab-analysis .an-month-text h2 { font-size: 22px; letter-spacing: -.3px; }
+#tab-analysis .an-month-btn { border: none; box-shadow: 0 1px 1px rgba(22,63,60,.04), 0 3px 10px rgba(22,63,60,.07); }
+
+/* کارت حلقه‌ها: تنها کارت پررنگ صفحه */
+#tab-analysis .an-hero { border-radius: 30px; padding: 20px 20px 22px; margin-bottom: 12px; }
+#tab-analysis .an-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(255,255,255,.07), transparent 38%);
+}
+
+/* تحلیل هوشمند: یک ردیف ساده به‌جای بنر بزرگ */
+#tab-analysis .ai-card {
+  background: var(--surface) !important;
+  border-radius: 22px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+  box-shadow: 0 1px 1px rgba(22,63,60,.03), 0 4px 16px rgba(22,63,60,.045) !important;
+  overflow: hidden;
+}
+#tab-analysis .ai-card-watermark { display: none; }
+#tab-analysis .ai-card-button { gap: 12px; }
+#tab-analysis .ai-card-button::after {
+  content: "‹";
+  margin-inline-start: auto;
+  font-size: 22px;
+  line-height: 1;
+  color: #B8BFBC;
+}
+#tab-analysis .ai-card-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
+  background: linear-gradient(145deg, #5B86F2, #12A48A);
+  box-shadow: 0 6px 14px rgba(91,134,242,.28);
+}
+#tab-analysis .ai-card-icon .icon-mask { width: 20px !important; height: 20px !important; }
+#tab-analysis .ai-card-head { margin: 0; gap: 1px; }
+#tab-analysis .ai-card h2,
+#tab-analysis .ai-card-head h2 {
+  font-size: 15px;
+  background: linear-gradient(90deg, #163F3C 0%, #5B86F2 45%, #12A48A 60%, #163F3C 100%);
+  background-size: 220% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: titleShine 6s linear infinite;
+}
+#tab-analysis .ai-card-sub { color: var(--text-mute); font-size: 12px; }
+#tab-analysis .ai-result-text,
+#tab-analysis .ai-result-error {
+  background: #F6F3EC;
+  color: var(--text);
+  font-size: 14px;
+}
+#tab-analysis .ai-result-loading { color: var(--text-mute); }
+#tab-analysis .ai-spin { border-color: rgba(22,63,60,.18); border-top-color: #5B86F2; }
+
+/* ---------------------------------------------------------
+   انیمیشن‌ها
+   --------------------------------------------------------- */
+/* ظاهر شدن بخش‌ها هنگام ورود به صفحه */
+#tab-analysis .an-rv {
+  opacity: 0;
+  transform: translateY(22px) scale(.985);
+  transition:
+    opacity .55s var(--an-ease) var(--rv-d, 0ms),
+    transform .75s var(--an-ease) var(--rv-d, 0ms);
+}
+#tab-analysis .an-rv.is-in { opacity: 1; transform: none; }
+
+/* تا وقتی بخش دیده نشده، انیمیشن‌های داخلش منتظر بمانند */
+#tab-analysis .an-rv:not(.is-in) .an-draw,
+#tab-analysis .an-rv:not(.is-in) .an-bar-grow,
+#tab-analysis .an-rv:not(.is-in) .an-pop { animation-play-state: paused; }
+#tab-analysis .an-draw { animation-delay: calc(var(--rv-d, 0ms) + .15s); }
+
+.an-pop { transform-box: fill-box; transform-origin: center; animation: anPop .45s var(--an-ease, ease) .85s both; }
+@keyframes anPop { from { transform: scale(0); } 60% { transform: scale(1.5); } to { transform: scale(1); } }
+
+/* حلقه‌ها: بعد از ظاهر شدن کارت پر شوند */
+#tab-analysis .an-ring-arc { transition: stroke-dashoffset 1.4s var(--an-ease); }
+#tab-analysis .an-rings-legend li {
+  opacity: 0;
+  transform: translateX(-10px);
+  transition: opacity .5s var(--an-ease), transform .6s var(--an-ease);
+}
+#tab-analysis .an-rv.is-in .an-rings-legend li { opacity: 1; transform: none; }
+#tab-analysis .an-rv.is-in .an-rings-legend li:nth-child(2) { transition-delay: .1s; }
+#tab-analysis .an-rv.is-in .an-rings-legend li:nth-child(3) { transition-delay: .2s; }
+#tab-analysis .an-rings-wrap { transition: transform .9s var(--an-ease); transform: rotate(-35deg) scale(.9); }
+#tab-analysis .an-rv.is-in .an-rings-wrap { transform: none; }
+
+/* دونات: قطعه‌ها یکی‌یکی جارو شوند */
+#tab-analysis .an-donut-seg {
+  transition:
+    stroke-dasharray .9s var(--an-ease) calc(.25s + var(--i, 0) * .09s),
+    opacity .25s ease;
+}
+#tab-analysis .an-rv:not(.is-in) .an-donut-seg { opacity: 0; }
+#tab-analysis .an-donut-seg.is-dim { opacity: .2; }
+
+/* نوار دسته‌ها و روزهای هفته از صفر رشد کنند */
+#tab-analysis .an-cat-bar { transition: width .9s var(--an-ease) calc(.2s + var(--i, 0) * .07s); }
+#tab-analysis .an-rv:not(.is-in) .an-cat-bar { width: 0 !important; }
+#tab-analysis .an-cat {
+  transition: background .15s ease, opacity .5s var(--an-ease) calc(.1s + var(--i, 0) * .06s), transform .6s var(--an-ease) calc(.1s + var(--i, 0) * .06s);
+}
+#tab-analysis .an-rv:not(.is-in) .an-cat { opacity: 0; transform: translateY(8px); }
+
+#tab-analysis .an-week-bar { animation: none; transition: height .8s var(--an-ease) calc(.15s + var(--i, 0) * .06s); }
+#tab-analysis .an-week-col { --i: 0; }
+#tab-analysis .an-rv:not(.is-in) .an-week-bar { height: 0 !important; }
+#tab-analysis .an-week-mean { transition: opacity .5s ease .7s; }
+#tab-analysis .an-rv:not(.is-in) .an-week-mean { opacity: 0; }
+
+#tab-analysis .an-top-row { transition: opacity .5s var(--an-ease) calc(.1s + var(--i, 0) * .07s), transform .6s var(--an-ease) calc(.1s + var(--i, 0) * .07s); }
+#tab-analysis .an-rv:not(.is-in) .an-top-row { opacity: 0; transform: translateX(-12px); }
+
+/* لمس: بازخورد نرم */
+#tab-analysis .an-kpi,
+#tab-analysis .ai-card,
+#tab-analysis .an-cat { -webkit-tap-highlight-color: transparent; }
+#tab-analysis .an-kpi:active,
+#tab-analysis .ai-card:active { transform: scale(.985); transition-duration: .12s; }
+
+/* تعویض ماه: محتوا محو و کمی جابه‌جا می‌شود، سربرگ ثابت می‌ماند */
+#tab-analysis.an-out > .an-rv:not(.an-month) {
+  opacity: 0;
+  transition: opacity .18s ease, transform .2s ease;
+  transition-delay: 0s;
+}
+#tab-analysis.an-out-prev > .an-rv:not(.an-month) { transform: translateX(22px); }
+#tab-analysis.an-out-next > .an-rv:not(.an-month) { transform: translateX(-22px); }
+#tab-analysis .an-month-text h2 { transition: opacity .2s ease; }
+#tab-analysis.an-out .an-month-text h2 { opacity: .35; }
+
+@media (prefers-reduced-motion: reduce) {
+  #tab-analysis .an-rv,
+  #tab-analysis .an-rv * { transition: none !important; animation: none !important; }
+  #tab-analysis .an-rv { opacity: 1; transform: none; }
+  #tab-analysis .an-draw { stroke-dashoffset: 0; }
+}
+/* اسپارک‌لاین: از چپ به راست ظاهر شود (با کشیدگی svg سازگار است) */
+#tab-analysis .an-spark { clip-path: inset(0 100% 0 0); }
+#tab-analysis .an-rv.is-in .an-spark { animation: anWipe 1s var(--an-ease) calc(var(--rv-d, 0ms) + .2s) forwards; }
+@keyframes anWipe { to { clip-path: inset(0 0 0 0); } }
+@media (prefers-reduced-motion: reduce) { #tab-analysis .an-spark { clip-path: none; } }
