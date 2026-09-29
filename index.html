@@ -14,7 +14,7 @@
 <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css">
 <link href="https://cdn.jsdelivr.net/gh/rastikerdar/kamran@v1.0.0/dist/font-face.css" rel="stylesheet" type="text/css">
 <link href="https://cdn.jsdelivr.net/gh/rastikerdar/samim-font@v4.0.5/dist/font-face.css" rel="stylesheet" type="text/css">
-<link rel="stylesheet" href="style.css?v=141">
+<link rel="stylesheet" href="style.css?v=142">
 </head>
 <body>
 
@@ -228,14 +228,27 @@
   <!-- ANALYSIS -->
   <section id="tab-analysis" class="tab">
     <div class="an-month">
-      <button type="button" class="month-nav-btn" id="anPrevMonth" aria-label="ماه قبل">
+      <button type="button" class="an-month-btn" id="anPrevMonth" aria-label="ماه قبل">
         <span class="icon-mask" data-icon="chevron-right" style="width:18px;height:18px;color:var(--green-deep)"></span>
       </button>
-      <h2 id="anMonthLabel">—</h2>
-      <button type="button" class="month-nav-btn" id="anNextMonth" aria-label="ماه بعد">
+      <div class="an-month-text">
+        <small>گزارش ماه</small>
+        <h2 id="anMonthLabel">—</h2>
+      </div>
+      <button type="button" class="an-month-btn" id="anNextMonth" aria-label="ماه بعد">
         <span class="icon-mask" data-icon="chevron-left" style="width:18px;height:18px;color:var(--green-deep)"></span>
       </button>
     </div>
+
+    <div class="an-hero">
+      <div class="an-hero-head">
+        <h2>خلاصه‌ی ماه</h2>
+        <span>در مقایسه با ماه قبل</span>
+      </div>
+      <div class="an-rings" id="anRings"></div>
+    </div>
+
+    <div class="an-kpis" id="anKpis"></div>
 
     <div class="ai-card" id="aiAnalysisCard">
       <button type="button" id="btnAiAnalyze" class="ai-card-button">
@@ -257,31 +270,29 @@
       <div id="aiAnalysisResult" class="ai-result" style="display:none;"></div>
     </div>
 
-    <div class="an-kpis" id="anKpis"></div>
-
     <div class="settings-card an-card">
-      <h2>روند خرج در طول ماه</h2>
+      <div class="an-card-head"><h2>روند خرج در طول ماه</h2></div>
       <p class="an-note" id="anCumNote"></p>
       <div id="anCumChart"></div>
     </div>
 
     <div class="settings-card an-card">
-      <h2>مخارج بر اساس دسته</h2>
+      <div class="an-card-head"><h2>خرج‌ها کجا رفت؟</h2></div>
       <div id="anCatChart"></div>
     </div>
 
     <div class="settings-card an-card">
-      <h2>درآمد و مخارج ۶ ماه اخیر</h2>
+      <div class="an-card-head"><h2>۶ ماه اخیر</h2></div>
       <div id="anTrendChart"></div>
     </div>
 
     <div class="settings-card an-card">
-      <h2>خرج در روزهای هفته</h2>
+      <div class="an-card-head"><h2>خرج در روزهای هفته</h2></div>
       <div id="anWeekChart"></div>
     </div>
 
     <div class="settings-card an-card">
-      <h2>بزرگ‌ترین خرج‌های ماه</h2>
+      <div class="an-card-head"><h2>بزرگ‌ترین خرج‌های ماه</h2></div>
       <div id="anTopList"></div>
     </div>
   </section>
@@ -877,8 +888,8 @@ n  <!-- Progress -->
 </div>
 <!-- ═══════════════ END ONBOARDING ═══════════════ -->
 
-<script src="script.js?v=141"></script>
-<script src="installments.js?v=141"></script>
-<script src="three-scene.js?v=141"></script>
+<script src="script.js?v=142"></script>
+<script src="installments.js?v=142"></script>
+<script src="three-scene.js?v=142"></script>
 </body>
 </html>

@@ -1642,12 +1642,15 @@ function quickAddIncome(source) {
 
 // ---------- Analysis charts ----------
 // =========================================================
-// تب آنالیز — شاخص‌ها، روند تجمعی خرج، دسته‌ها، ۶ ماه اخیر، روزهای هفته، بزرگ‌ترین خرج‌ها
-// همه‌چیز بر اساس ماهِ دیده‌شده (viewedMonth) و با SVG ساده، بدون کاروسل
+// تب آنالیز — طراحی کامل: حلقه‌های سبک آیفون (Activity Rings)،
+// کارت‌های شاخص با اسپارک‌لاین، منحنی نرم خرج تجمعی، دونات دسته‌ها،
+// ستون‌های کپسولی ۶ ماه، الگوی روزهای هفته و بزرگ‌ترین خرج‌ها.
+// همه‌چیز بر اساس ماهِ دیده‌شده (viewedMonth)
 // =========================================================
-const AN_INCOME = "#00907C";
+const AN_INCOME = "#00907C";   // روی کارت روشن
 const AN_EXPENSE = "#C9482A";
 const AN_CONTEXT = "#C9CFCC";
+const AN_RING = { expense: "#F2555A", income: "#12A48A", save: "#5B86F2" }; // روی کارت تیره
 const AN_WEEKDAYS = ["شنبه", "یکشنبه", "دوشنبه", "سه‌شنبه", "چهارشنبه", "پنجشنبه", "جمعه"];
 const AN_WEEKDAYS_SHORT = ["ش", "ی", "د", "س", "چ", "پ", "ج"];
 
@@ -1663,8 +1666,7 @@ function anMonthItems(list, jy, jm) {
   });
 }
 function anSum(list) { return list.reduce((s, x) => s + (Number(x.amount) || 0), 0); }
-function anFa(n) { return toPersianDigits(Math.round(n)); }
-// مبلغ کوتاه برای محورها و برچسب‌ها: ۱٫۲ میلیون، ۸۵۰ هزار
+// مبلغ کوتاه: ۱٫۲ میلیون، ۸۵۰ هزار
 function anShort(n) {
   const a = Math.abs(n);
   const sign = n < 0 ? "−" : "";
@@ -1677,7 +1679,6 @@ function anShort(n) {
 function anEsc(s) {
   return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
-// گام‌های «گرد» برای محور
 function anNiceMax(v) {
   if (v <= 0) return 1;
   const p = Math.pow(10, Math.floor(Math.log10(v)));
@@ -1685,9 +1686,9 @@ function anNiceMax(v) {
   const step = m <= 1 ? 1 : m <= 2 ? 2 : m <= 2.5 ? 2.5 : m <= 5 ? 5 : 10;
   return step * p;
 }
-// درصد تغییر با جهت، برای متن زیر شاخص‌ها
+function anPct(n) { return toPersianDigits(Math.round(n)) + "٪"; }
 function anDelta(cur, prev, higherIsGood, prevName) {
-  if (!prev) return cur ? `<span class="an-delta">ماه قبل صفر بود</span>` : "";
+  if (!prev) return cur ? `<span class="an-delta">${prevName} صفر بود</span>` : `<span class="an-delta">—</span>`;
   const pct = Math.round(((cur - prev) / Math.abs(prev)) * 100);
   if (pct === 0) return `<span class="an-delta">مثل ${prevName}</span>`;
   const up = pct > 0;
@@ -1696,8 +1697,35 @@ function anDelta(cur, prev, higherIsGood, prevName) {
 }
 function anEmpty(msg) { return `<div class="an-empty">${msg}</div>`; }
 
+// منحنی نرم بدون «بیرون‌زدگی» (monotone cubic — Fritsch–Carlson)؛ هرگز زیر صفر نمی‌رود
+function anMonotonePath(pts) {
+  const n = pts.length;
+  if (!n) return "";
+  if (n === 1) return `M${pts[0][0]} ${pts[0][1]}`;
+  const dx = [], dy = [], m = [];
+  for (let i = 0; i < n - 1; i++) {
+    dx[i] = pts[i + 1][0] - pts[i][0];
+    dy[i] = pts[i + 1][1] - pts[i][1];
+    m[i] = dx[i] ? dy[i] / dx[i] : 0;
+  }
+  const t = [m[0]];
+  for (let i = 1; i < n - 1; i++) t[i] = m[i - 1] * m[i] <= 0 ? 0 : (m[i - 1] + m[i]) / 2;
+  t[n - 1] = m[n - 2];
+  for (let i = 0; i < n - 1; i++) {
+    if (m[i] === 0) { t[i] = 0; t[i + 1] = 0; continue; }
+    const a = t[i] / m[i], b = t[i + 1] / m[i], h = a * a + b * b;
+    if (h > 9) { const k = 3 / Math.sqrt(h); t[i] = k * a * m[i]; t[i + 1] = k * b * m[i]; }
+  }
+  let d = `M${pts[0][0].toFixed(1)} ${pts[0][1].toFixed(1)}`;
+  for (let i = 0; i < n - 1; i++) {
+    const h = dx[i] / 3;
+    d += `C${(pts[i][0] + h).toFixed(1)} ${(pts[i][1] + t[i] * h).toFixed(1)} ${(pts[i + 1][0] - h).toFixed(1)} ${(pts[i + 1][1] - t[i + 1] * h).toFixed(1)} ${pts[i + 1][0].toFixed(1)} ${pts[i + 1][1].toFixed(1)}`;
+  }
+  return d;
+}
+
 // تولتیپ مشترک
-function anTip(host, html, x, y) {
+function anTip(host, html, x) {
   let tip = host.querySelector(".an-tip");
   if (!tip) {
     tip = document.createElement("div");
@@ -1709,7 +1737,7 @@ function anTip(host, html, x, y) {
   tip.classList.add("show");
   const w = tip.offsetWidth, hw = host.clientWidth;
   tip.style.left = Math.max(0, Math.min(hw - w, x - w / 2)) + "px";
-  tip.style.top = Math.max(0, y - tip.offsetHeight - 10) + "px";
+  tip.style.top = -(tip.offsetHeight + 6) + "px";
 }
 
 function renderAnalysis() {
@@ -1737,51 +1765,129 @@ function renderAnalysis() {
   const upToCut = (list) => list.filter((x) => { const j = anJ(x.date); return j && j.jd <= cutDay; });
   const pIncSame = upToCut(pInc), pExpSame = upToCut(pExp);
   const cmpName = isCurrent ? `${toPersianDigits(cutDay)} روز اول ${prevName}` : prevName;
-  const ctx = { vm, pm, monthName, prevName, isCurrent, inc, exp, pInc, pExp, pIncSame, pExpSame, cmpName };
+  // ۶ ماه منتهی به ماه دیده‌شده (برای اسپارک‌لاین‌ها و ستون‌ها)
+  const months = [];
+  for (let i = 5; i >= 0; i--) {
+    const m = addMonthsJalali(vm.jy, vm.jm, -i);
+    months.push({ ...m, inc: anSum(anMonthItems(state.incomes, m.jy, m.jm)), exp: anSum(anMonthItems(state.expenses, m.jy, m.jm)) });
+  }
+  const ctx = { vm, pm, monthName, prevName, isCurrent, inc, exp, pInc, pExp, pIncSame, pExpSame, cmpName, months };
 
-  const parts = [anRenderKpis, anRenderCumulative, anRenderCategories, anRenderTrend, anRenderWeekdays, anRenderTop];
-  parts.forEach((fn) => {
+  [anRenderRings, anRenderKpis, anRenderCumulative, anRenderCategories, anRenderTrend, anRenderWeekdays, anRenderTop].forEach((fn) => {
     try { fn(ctx); } catch (e) { console.warn("analysis", fn.name, e); }
   });
 }
 
-// ---- ۱) شاخص‌ها
+// ---- ۱) حلقه‌ها (سبک Activity Rings آیفون)
+function anRingSvg(rings) {
+  const S = 200, C = S / 2, SW = 18, GAP = 4;
+  let defs = "", body = "";
+  rings.forEach((r, i) => {
+    const rad = C - SW / 2 - 2 - i * (SW + GAP);
+    const circ = 2 * Math.PI * rad;
+    const p = Math.max(0, r.pct);
+    const first = Math.min(p, 1);
+    const over = Math.max(0, Math.min(p - 1, 1));
+    body += `<circle cx="${C}" cy="${C}" r="${rad}" fill="none" stroke="${r.color}" stroke-opacity=".2" stroke-width="${SW}"/>`;
+    if (p > 0) {
+      body += `<circle class="an-ring-arc" cx="${C}" cy="${C}" r="${rad}" fill="none" stroke="${r.color}" stroke-width="${SW}" stroke-linecap="round"
+        stroke-dasharray="${circ.toFixed(1)}" stroke-dashoffset="${circ.toFixed(1)}" data-off="${(circ * (1 - Math.max(first, 0.004))).toFixed(1)}"
+        transform="rotate(-90 ${C} ${C})" style="transition-delay:${i * 0.12}s"/>`;
+    }
+    if (over > 0) {
+      // دور دوم: کمی تیره‌تر با سایه‌ی سرِ حلقه، مثل وقتی هدف آیفون رد می‌شود
+      defs += `<filter id="anRingShadow${i}" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="0" stdDeviation="2.2" flood-color="#000" flood-opacity=".55"/></filter>`;
+      body += `<circle class="an-ring-arc" cx="${C}" cy="${C}" r="${rad}" fill="none" stroke="${r.color}" stroke-width="${SW}" stroke-linecap="round"
+        stroke-dasharray="${circ.toFixed(1)}" stroke-dashoffset="${circ.toFixed(1)}" data-off="${(circ * (1 - over)).toFixed(1)}"
+        transform="rotate(-90 ${C} ${C})" filter="url(#anRingShadow${i})" style="transition-delay:${0.5 + i * 0.12}s"/>`;
+    }
+  });
+  return `<svg viewBox="0 0 ${S} ${S}" class="an-rings-svg" role="img" aria-label="حلقه‌های ماه"><defs>${defs}</defs>${body}</svg>`;
+}
+function anRenderRings(c) {
+  const host = document.getElementById("anRings");
+  if (!host) return;
+  const ti = anSum(c.inc), te = anSum(c.exp);
+  const pi = anSum(c.pInc), pe = anSum(c.pExp);
+  const rate = ti > 0 ? (ti - te) / ti : 0;
+  const rings = [
+    { key: "expense", label: "مخارج", color: AN_RING.expense, pct: pe ? te / pe : (te ? 1 : 0),
+      value: anShort(te), of: pe ? `از ${anShort(pe)} ${c.prevName}` : `${c.prevName} خرجی نداشت` },
+    { key: "income", label: "درآمد", color: AN_RING.income, pct: pi ? ti / pi : (ti ? 1 : 0),
+      value: anShort(ti), of: pi ? `از ${anShort(pi)} ${c.prevName}` : `${c.prevName} درآمدی نداشت` },
+    { key: "save", label: "پس‌انداز", color: AN_RING.save, pct: Math.max(0, rate),
+      value: ti > 0 ? anPct(rate * 100) : "—", of: ti > 0 ? (rate >= 0 ? "از درآمد این ماه" : "خرج بیشتر از درآمد") : "درآمدی ثبت نشده" }
+  ];
+  host.innerHTML = `
+    <div class="an-rings-wrap">${anRingSvg(rings)}</div>
+    <ul class="an-rings-legend">${rings.map((r) => `
+      <li style="--rc:${r.color}">
+        <span class="an-rl-label">${r.label}</span>
+        <strong>${r.value}</strong>
+        <small>${r.of}${r.key !== "save" && r.pct ? `، ${anPct(r.pct * 100)}` : ""}</small>
+      </li>`).join("")}
+    </ul>`;
+  // انیمیشن پر شدن حلقه‌ها
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    host.querySelectorAll(".an-ring-arc").forEach((a) => { a.style.strokeDashoffset = a.getAttribute("data-off"); });
+  }));
+}
+
+// ---- ۲) شاخص‌ها با اسپارک‌لاین ۶ ماه
+function anSpark(values, color) {
+  const W = 100, H = 28;
+  const max = Math.max(...values, 1);
+  const pts = values.map((v, i) => [2 + (i / (values.length - 1)) * (W - 4), H - 3 - (v / max) * (H - 6)]);
+  const d = anMonotonePath(pts);
+  const last = pts[pts.length - 1];
+  return `<svg class="an-spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">
+    <path d="${d}" fill="none" stroke="${color}" stroke-width="1.8" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
+    <circle cx="${last[0]}" cy="${last[1]}" r="2.6" fill="${color}"/></svg>`;
+}
 function anRenderKpis(c) {
   const el = document.getElementById("anKpis");
   if (!el) return;
   const ti = anSum(c.inc), te = anSum(c.exp);
   const pi = anSum(c.pIncSame), pe = anSum(c.pExpSame);
   const bal = ti - te;
-  const rate = ti > 0 ? Math.round((bal / ti) * 100) : null;
   const monthLen = jalaaliMonthLength(c.vm.jy, c.vm.jm);
   const daysSoFar = c.isCurrent ? todayJalali().jd : monthLen;
   const daily = daysSoFar ? te / daysSoFar : 0;
   const forecast = c.isCurrent && daysSoFar < monthLen ? daily * monthLen : null;
+  const incSeries = c.months.map((m) => m.inc);
+  const expSeries = c.months.map((m) => m.exp);
+  const balSeries = c.months.map((m) => Math.max(0, m.inc - m.exp));
 
   el.innerHTML = `
     <div class="an-kpi">
       <span class="an-kpi-label"><i style="background:${AN_INCOME}"></i>درآمد</span>
-      <strong>${fmtAmount(ti)}</strong>
+      <strong>${anShort(ti)}</strong>
       ${anDelta(ti, pi, true, c.cmpName)}
+      ${anSpark(incSeries, AN_INCOME)}
     </div>
     <div class="an-kpi">
       <span class="an-kpi-label"><i style="background:${AN_EXPENSE}"></i>مخارج</span>
-      <strong>${fmtAmount(te)}</strong>
+      <strong>${anShort(te)}</strong>
       ${anDelta(te, pe, false, c.cmpName)}
+      ${anSpark(expSeries, AN_EXPENSE)}
     </div>
     <div class="an-kpi">
-      <span class="an-kpi-label">مانده</span>
-      <strong class="${bal < 0 ? "is-neg" : ""}">${fmtAmount(bal)}</strong>
-      <span class="an-delta">${rate == null ? "درآمدی ثبت نشده" : rate >= 0 ? `${toPersianDigits(rate)}٪ درآمد پس‌انداز شد` : "خرج بیشتر از درآمد"}</span>
+      <span class="an-kpi-label"><i style="background:#5B86F2"></i>مانده</span>
+      <strong class="${bal < 0 ? "is-neg" : ""}">${anShort(bal)}</strong>
+      <span class="an-delta">${ti > 0 ? (bal >= 0 ? `${anPct((bal / ti) * 100)} درآمد ماند` : "بیشتر از درآمد خرج شد") : "درآمدی ثبت نشده"}</span>
+      ${anSpark(balSeries, "#5B86F2")}
     </div>
     <div class="an-kpi">
-      <span class="an-kpi-label">میانگین خرج روزانه</span>
-      <strong>${fmtAmount(daily)}</strong>
-      <span class="an-delta">${forecast ? `پیش‌بینی تا آخر ماه: ${anShort(forecast)}` : `در ${toPersianDigits(monthLen)} روز`}</span>
+      <span class="an-kpi-label"><i style="background:#8A938F"></i>خرج روزانه</span>
+      <strong>${anShort(daily)}</strong>
+      <span class="an-delta">${forecast ? `پیش‌بینی آخر ماه: ${anShort(forecast)}` : `میانگین ${toPersianDigits(monthLen)} روز`}</span>
+      <span class="an-kpi-foot">۶ ماه اخیر</span>
     </div>`;
+  const foot = el.querySelector(".an-kpi-foot");
+  if (foot) foot.outerHTML = anSpark(c.months.map((m) => m.exp / jalaaliMonthLength(m.jy, m.jm)), "#8A938F");
 }
 
-// ---- ۲) روند تجمعی خرج در ماه، در برابر ماه قبل
+// ---- ۳) روند تجمعی خرج در ماه، در برابر ماه قبل (منحنی نرم + گرادیان)
 function anCumulative(items, len) {
   const perDay = new Array(len + 1).fill(0);
   items.forEach((x) => { const j = anJ(x.date); if (j && j.jd <= len) perDay[j.jd] += Number(x.amount) || 0; });
@@ -1803,13 +1909,13 @@ function anRenderCumulative(c) {
     if (note) note.textContent = "";
     return;
   }
-  const W = host.clientWidth || 320, H = 190;
-  const pad = { l: 8, r: 58, t: 14, b: 26 };
+  const W = host.clientWidth || 320, H = 200;
+  const pad = { l: 6, r: 56, t: 16, b: 26 };
   const maxDays = Math.max(len, pLen);
   const maxV = anNiceMax(Math.max(cur[upto], prev[pLen], 1));
   const x = (d) => pad.l + ((d - 1) / (maxDays - 1)) * (W - pad.l - pad.r);
   const y = (v) => pad.t + (1 - v / maxV) * (H - pad.t - pad.b);
-  const line = (arr, n) => { let p = ""; for (let d = 1; d <= n; d++) p += (d === 1 ? "M" : "L") + x(d).toFixed(1) + " " + y(arr[d]).toFixed(1); return p; };
+  const pts = (arr, n) => { const p = []; for (let d = 1; d <= n; d++) p.push([x(d), y(arr[d])]); return p; };
 
   let grid = "";
   [0, 0.5, 1].forEach((f) => {
@@ -1821,7 +1927,8 @@ function anRenderCumulative(c) {
   [1, 10, 20, maxDays].forEach((d) => {
     ticks += `<text x="${x(d).toFixed(1)}" y="${H - 6}" class="an-axis" text-anchor="middle">${toPersianDigits(d)}</text>`;
   });
-  const curPath = line(cur, upto);
+  const curPts = pts(cur, upto);
+  const curPath = anMonotonePath(curPts);
   const area = curPath + `L${x(upto).toFixed(1)} ${y(0).toFixed(1)}L${x(1).toFixed(1)} ${y(0).toFixed(1)}Z`;
   const endX = x(upto), endY = y(cur[upto]);
 
@@ -1832,33 +1939,40 @@ function anRenderCumulative(c) {
     </div>
     <div class="an-plot">
       <svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="روند تجمعی مخارج">
+        <defs>
+          <linearGradient id="anCumGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="${AN_EXPENSE}" stop-opacity=".28"/>
+            <stop offset="100%" stop-color="${AN_EXPENSE}" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
         ${grid}${ticks}
-        <path d="${line(prev, pLen)}" fill="none" stroke="${AN_CONTEXT}" stroke-width="2" stroke-linejoin="round"/>
-        <path d="${area}" fill="${AN_EXPENSE}" opacity="0.08"/>
-        <path d="${curPath}" fill="none" stroke="${AN_EXPENSE}" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>
+        <path d="${anMonotonePath(pts(prev, pLen))}" fill="none" stroke="${AN_CONTEXT}" stroke-width="2" stroke-linecap="round"/>
+        <path d="${area}" fill="url(#anCumGrad)"/>
+        <path class="an-draw" d="${curPath}" fill="none" stroke="${AN_EXPENSE}" stroke-width="2.4" stroke-linecap="round" pathLength="1"/>
+        <circle cx="${endX.toFixed(1)}" cy="${endY.toFixed(1)}" r="9" fill="${AN_EXPENSE}" opacity=".18" class="an-pulse"/>
         <circle cx="${endX.toFixed(1)}" cy="${endY.toFixed(1)}" r="4.5" fill="${AN_EXPENSE}" stroke="#fff" stroke-width="2"/>
         <line class="an-cross" x1="0" x2="0" y1="${pad.t}" y2="${H - pad.b}" visibility="hidden"/>
-        <circle class="an-cross-dot" r="4" fill="${AN_EXPENSE}" stroke="#fff" stroke-width="2" visibility="hidden"/>
-        <rect class="an-hit" x="0" y="0" width="${W}" height="${H}" fill="transparent"/>
+        <circle class="an-cross-dot" r="4.5" fill="${AN_EXPENSE}" stroke="#fff" stroke-width="2" visibility="hidden"/>
+        <circle class="an-cross-dot2" r="4" fill="#AEB6B3" stroke="#fff" stroke-width="2" visibility="hidden"/>
       </svg>
     </div>`;
 
-  // مقایسه با همین روز در ماه قبل
   if (note) {
     const same = prev[Math.min(upto, pLen)];
     const now = cur[upto];
-    let txt = `${c.isCurrent ? "تا امروز" : "در کل ماه"} ${anShort(now)} تومان خرج شده`;
+    let txt = `${c.isCurrent ? "تا امروز" : "در کل ماه"} <b>${anShort(now)} تومان</b> خرج شده`;
     if (same > 0) {
       const pct = Math.round(((now - same) / same) * 100);
-      txt += pct === 0 ? `؛ مثل ${c.prevName}.` : `؛ ${toPersianDigits(Math.abs(pct))}٪ ${pct > 0 ? "بیشتر" : "کمتر"} از ${c.isCurrent ? "همین موقع در " : ""}${c.prevName}.`;
+      txt += pct === 0 ? `؛ مثل ${c.prevName}.` : `؛ <b class="${pct > 0 ? "is-bad" : "is-good"}">${toPersianDigits(Math.abs(pct))}٪ ${pct > 0 ? "بیشتر" : "کمتر"}</b> از ${c.isCurrent ? "همین موقع در " : ""}${c.prevName}.`;
     } else txt += ".";
-    note.textContent = txt;
+    note.innerHTML = txt;
   }
 
   const svg = host.querySelector("svg");
   const plot = host.querySelector(".an-plot");
   const cross = svg.querySelector(".an-cross");
   const dot = svg.querySelector(".an-cross-dot");
+  const dot2 = svg.querySelector(".an-cross-dot2");
   const onMove = (e) => {
     const r = svg.getBoundingClientRect();
     const px = (e.clientX - r.left) * (W / r.width);
@@ -1871,16 +1985,38 @@ function anRenderCumulative(c) {
       dot.setAttribute("cx", cx); dot.setAttribute("cy", y(cur[d])); dot.setAttribute("visibility", "visible");
       html += `<span><i style="background:${AN_EXPENSE}"></i>${c.isCurrent ? "این ماه" : c.monthName}: ${fmtAmount(cur[d])}</span>`;
     } else dot.setAttribute("visibility", "hidden");
-    if (d <= pLen) html += `<span><i style="background:${AN_CONTEXT}"></i>${c.prevName}: ${fmtAmount(prev[d])}</span>`;
-    anTip(plot, html, cx * (r.width / W), 0);
+    if (d <= pLen) {
+      dot2.setAttribute("cx", cx); dot2.setAttribute("cy", y(prev[d])); dot2.setAttribute("visibility", "visible");
+      html += `<span><i style="background:${AN_CONTEXT}"></i>${c.prevName}: ${fmtAmount(prev[d])}</span>`;
+    } else dot2.setAttribute("visibility", "hidden");
+    anTip(plot, html, cx * (r.width / W));
   };
-  const onLeave = () => { cross.setAttribute("visibility", "hidden"); dot.setAttribute("visibility", "hidden"); anTip(plot, null); };
+  const onLeave = () => {
+    [cross, dot, dot2].forEach((n) => n.setAttribute("visibility", "hidden"));
+    anTip(plot, null);
+  };
   svg.addEventListener("pointermove", onMove);
   svg.addEventListener("pointerdown", onMove);
   svg.addEventListener("pointerleave", onLeave);
 }
 
-// ---- ۳) دسته‌ها: میله‌ی افقی، مرتب، با تغییر نسبت به ماه قبل
+// ---- ۴) دسته‌ها: دونات حلقه‌ای + فهرست
+// رنگ هر دسته: رنگ خود کاربر اگر تعریف شده؛ وگرنه (یا اگر تکراری بود) رنگ آزادِ بعدی از پالت
+function anCategoryColors(names) {
+  const used = new Set();
+  const out = {};
+  names.forEach((name) => {
+    const own = (state.categories || []).find((c) => c.name === name);
+    let color = own ? catColor(name) : null;
+    if (!color || used.has(color.toUpperCase())) {
+      color = CATEGORY_COLORS.find((cc) => !used.has(cc.toUpperCase())) || "#AEB6B3";
+    }
+    used.add(color.toUpperCase());
+    out[name] = color;
+  });
+  return out;
+}
+
 function anRenderCategories(c) {
   const host = document.getElementById("anCatChart");
   if (!host) return;
@@ -1889,56 +2025,97 @@ function anRenderCategories(c) {
   const by = {}, pby = {};
   c.exp.forEach((x) => { const k = x.category || "سایر"; by[k] = (by[k] || 0) + (Number(x.amount) || 0); });
   c.pExpSame.forEach((x) => { const k = x.category || "سایر"; pby[k] = (pby[k] || 0) + (Number(x.amount) || 0); });
-  let rows = Object.entries(by).sort((a, b) => b[1] - a[1]);
-  if (rows.length > 7) {
-    const rest = rows.slice(6).reduce((s, r) => s + r[1], 0);
-    const restPrev = rows.slice(6).reduce((s, r) => s + (pby[r[0]] || 0), 0);
-    rows = rows.slice(0, 6);
-    rows.push(["سایر دسته‌ها", rest]);
-    pby["سایر دسته‌ها"] = restPrev;
+  const sorted = Object.entries(by).sort((a, b) => b[1] - a[1]);
+  const colors = anCategoryColors(sorted.slice(0, 6).map((r) => r[0]));
+  let rows = sorted.map(([name, amt]) => ({ name, amt, prev: pby[name] || 0, color: colors[name] || "#AEB6B3", icon: catIcon(name) }));
+  if (rows.length > 6) {
+    const rest = rows.slice(5);
+    rows = rows.slice(0, 5);
+    rows.push({ name: "سایر دسته‌ها", amt: rest.reduce((s, r) => s + r.amt, 0), prev: rest.reduce((s, r) => s + r.prev, 0), color: "#AEB6B3", icon: "package" });
   }
-  const max = rows[0][1];
-  host.innerHTML = rows.map(([name, amt]) => {
-    const pct = Math.round((amt / total) * 100);
-    const prev = pby[name] || 0;
-    let delta = "";
-    if (prev > 0) {
-      const d = Math.round(((amt - prev) / prev) * 100);
-      if (Math.abs(d) >= 5) delta = `<span class="an-cat-delta ${d > 0 ? "is-bad" : "is-good"}">${d > 0 ? "▲" : "▼"}${toPersianDigits(Math.abs(d))}٪</span>`;
-    } else delta = `<span class="an-cat-delta">جدید</span>`;
-    return `<div class="an-cat" title="${anEsc(name)}: ${fmtAmount(amt)} تومان — ماه قبل ${fmtAmount(prev)}">
-      <div class="an-cat-top">
-        <span class="an-cat-name">${anEsc(name)}</span>
-        <span class="an-cat-val">${anShort(amt)} <em>${toPersianDigits(pct)}٪</em>${delta}</span>
+  // دونات با فاصله‌ی ۲px بین قطعه‌ها و سرهای گرد
+  const S = 180, C = S / 2, R = 70, SW = 20;
+  const circ = 2 * Math.PI * R;
+  const gap = rows.length > 1 ? 4 : 0;
+  let acc = 0, arcs = "";
+  rows.forEach((r, i) => {
+    const len = (r.amt / total) * circ;
+    // سرِ گرد نیم‌پهنای خط را به هر طرف اضافه می‌کند؛ پس از طول کم می‌کنیم تا فاصله بماند
+    const round = rows.length === 1 || len - gap - SW > 1;
+    const dash = rows.length === 1 ? circ : Math.max(0.5, round ? len - gap - SW : len - gap);
+    const off = rows.length === 1 ? 0 : acc + gap / 2 + (round ? SW / 2 : 0);
+    arcs += `<circle class="an-donut-seg" data-i="${i}" cx="${C}" cy="${C}" r="${R}" fill="none" stroke="${r.color}" stroke-width="${SW}"
+      stroke-linecap="${round && rows.length > 1 ? "round" : "butt"}" stroke-dasharray="${dash.toFixed(1)} ${circ.toFixed(1)}"
+      stroke-dashoffset="${(-off).toFixed(1)}" transform="rotate(-90 ${C} ${C})"/>`;
+    acc += len;
+  });
+  const top = rows[0];
+  host.innerHTML = `
+    <div class="an-donut">
+      <div class="an-donut-fig">
+        <svg viewBox="0 0 ${S} ${S}" role="img" aria-label="سهم دسته‌ها">
+          <circle cx="${C}" cy="${C}" r="${R}" fill="none" stroke="#F3EFE7" stroke-width="${SW}"/>${arcs}
+        </svg>
+        <div class="an-donut-center"><small id="anDonutLabel">کل مخارج</small><strong id="anDonutValue">${anShort(total)}</strong></div>
       </div>
-      <div class="an-cat-track"><div class="an-cat-bar" style="width:${Math.max(2, (amt / max) * 100).toFixed(1)}%"></div></div>
-    </div>`;
-  }).join("") + `<p class="an-foot">▲▼ تغییر نسبت به ${c.cmpName}</p>`;
+      <p class="an-note an-donut-note">بیشترین سهم: <b>${anEsc(top.name)}</b> با ${anPct((top.amt / total) * 100)} از خرج ${c.isCurrent ? "این ماه" : c.monthName}</p>
+    </div>
+    <div class="an-cat-list">${rows.map((r, i) => {
+      const pct = (r.amt / total) * 100;
+      let delta = "";
+      if (r.prev > 0) {
+        const d = Math.round(((r.amt - r.prev) / r.prev) * 100);
+        if (Math.abs(d) >= 5) delta = `<span class="an-cat-delta ${d > 0 ? "is-bad" : "is-good"}">${d > 0 ? "▲" : "▼"}${toPersianDigits(Math.abs(d))}٪</span>`;
+      } else delta = `<span class="an-cat-delta">جدید</span>`;
+      return `<button type="button" class="an-cat" data-i="${i}" style="--cc:${r.color}">
+        <span class="an-cat-icon">${iconSpanHTML(r.icon, `color:${r.color}`)}</span>
+        <span class="an-cat-main">
+          <span class="an-cat-top"><span class="an-cat-name">${anEsc(r.name)}</span><span class="an-cat-val">${anShort(r.amt)}</span></span>
+          <span class="an-cat-track"><span class="an-cat-bar" style="width:${Math.max(2, pct).toFixed(1)}%"></span></span>
+          <span class="an-cat-sub"><em>${anPct(pct)}</em>${delta}</span>
+        </span>
+      </button>`;
+    }).join("")}</div>
+    <p class="an-foot">▲▼ تغییر نسبت به ${c.cmpName}</p>`;
+
+  const segs = host.querySelectorAll(".an-donut-seg");
+  const items = host.querySelectorAll(".an-cat");
+  const lab = host.querySelector("#anDonutLabel"), val = host.querySelector("#anDonutValue");
+  const focus = (i) => {
+    segs.forEach((s) => s.classList.toggle("is-dim", i != null && +s.dataset.i !== i));
+    items.forEach((s) => s.classList.toggle("is-active", i != null && +s.dataset.i === i));
+    if (i == null) { lab.textContent = "کل مخارج"; val.textContent = anShort(total); }
+    else { lab.textContent = rows[i].name; val.textContent = anPct((rows[i].amt / total) * 100); }
+  };
+  let current = null;
+  const toggle = (i) => { current = current === i ? null : i; focus(current); };
+  segs.forEach((s) => s.addEventListener("click", () => toggle(+s.dataset.i)));
+  items.forEach((s) => s.addEventListener("click", () => toggle(+s.dataset.i)));
 }
 
-// ---- ۴) ۶ ماه اخیر: ستون‌های گروهی درآمد/مخارج
+// ---- ۵) ۶ ماه اخیر: ستون‌های کپسولی درآمد/مخارج
 function anRenderTrend(c) {
   const host = document.getElementById("anTrendChart");
   if (!host) return;
-  const months = [];
-  for (let i = 5; i >= 0; i--) {
-    const m = addMonthsJalali(c.vm.jy, c.vm.jm, -i);
-    months.push({ ...m, inc: anSum(anMonthItems(state.incomes, m.jy, m.jm)), exp: anSum(anMonthItems(state.expenses, m.jy, m.jm)) });
-  }
+  const months = c.months;
   if (months.every((m) => !m.inc && !m.exp)) { host.innerHTML = anEmpty("در ۶ ماه اخیر تراکنشی ثبت نشده"); return; }
-  const W = host.clientWidth || 320, H = 200;
-  const pad = { l: 4, r: 54, t: 12, b: 26 };
+  const W = host.clientWidth || 320, H = 210;
+  const pad = { l: 4, r: 54, t: 12, b: 28 };
   const maxV = anNiceMax(Math.max(...months.map((m) => Math.max(m.inc, m.exp)), 1));
   const plotW = W - pad.l - pad.r;
   const gw = plotW / months.length;
-  const bw = Math.min(16, (gw - 14) / 2);
+  const bw = Math.max(6, Math.min(14, (gw - 12) / 2));
   const y = (v) => pad.t + (1 - v / maxV) * (H - pad.t - pad.b);
-  const bar = (bx, v, color) => {
-    if (v <= 0) return "";
-    const top = y(v), base = y(0), h = Math.max(2, base - top), r = Math.min(4, bw / 2, h);
-    return `<path d="M${bx} ${base}V${base - h + r}Q${bx} ${base - h} ${bx + r} ${base - h}H${bx + bw - r}Q${bx + bw} ${base - h} ${bx + bw} ${base - h + r}V${base}Z" fill="${color}"/>`;
+  const base = y(0);
+  const cap = (bx, v, grad) => {
+    if (v <= 0) return `<rect x="${bx}" y="${base - 3}" width="${bw}" height="3" rx="1.5" fill="#E7E2D8"/>`;
+    const h = Math.max(bw, base - y(v));
+    return `<rect class="an-bar-grow" x="${bx}" y="${(base - h).toFixed(1)}" width="${bw}" height="${h.toFixed(1)}" rx="${bw / 2}" fill="url(#${grad})"/>`;
   };
-  let svg = "";
+  let svg = `<defs>
+    <linearGradient id="anGInc" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#19B39A"/><stop offset="1" stop-color="${AN_INCOME}"/></linearGradient>
+    <linearGradient id="anGExp" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E4684B"/><stop offset="1" stop-color="${AN_EXPENSE}"/></linearGradient>
+  </defs>`;
   [0, 0.5, 1].forEach((f) => {
     const gy = y(maxV * f).toFixed(1);
     svg += `<line x1="${pad.l}" x2="${W - pad.r}" y1="${gy}" y2="${gy}" class="an-grid"/>`;
@@ -1948,17 +2125,22 @@ function anRenderTrend(c) {
     const cx = pad.l + gw * i + gw / 2;
     const isCur = i === months.length - 1;
     svg += `<g class="an-trend-g ${isCur ? "is-cur" : ""}">`;
-    svg += bar(cx - bw - 1, m.inc, AN_INCOME);
-    svg += bar(cx + 1, m.exp, AN_EXPENSE);
-    svg += `<text x="${cx}" y="${H - 6}" class="an-axis ${isCur ? "an-axis-strong" : ""}" text-anchor="middle">${JALALI_MONTHS[m.jm - 1]}</text>`;
+    svg += cap(cx - bw - 2, m.inc, "anGInc");
+    svg += cap(cx + 2, m.exp, "anGExp");
+    svg += `<text x="${cx}" y="${H - 8}" class="an-axis ${isCur ? "an-axis-strong" : ""}" text-anchor="middle">${JALALI_MONTHS[m.jm - 1]}</text>`;
     svg += `<rect class="an-hit" data-i="${i}" x="${pad.l + gw * i}" y="0" width="${gw}" height="${H}" fill="transparent"/></g>`;
   });
+  const avgSave = months.filter((m) => m.inc > 0);
+  const saveTxt = avgSave.length
+    ? `میانگین پس‌انداز ماهانه: <b>${anShort(avgSave.reduce((s, m) => s + (m.inc - m.exp), 0) / avgSave.length)} تومان</b>`
+    : "";
   host.innerHTML = `
     <div class="an-legend">
       <span><i style="background:${AN_INCOME}"></i>درآمد</span>
       <span><i style="background:${AN_EXPENSE}"></i>مخارج</span>
     </div>
-    <div class="an-plot"><svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="درآمد و مخارج ۶ ماه اخیر">${svg}</svg></div>`;
+    <div class="an-plot"><svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="درآمد و مخارج ۶ ماه اخیر">${svg}</svg></div>
+    ${saveTxt ? `<p class="an-foot">${saveTxt}</p>` : ""}`;
   const plot = host.querySelector(".an-plot");
   const svgEl = plot.querySelector("svg");
   const show = (e) => {
@@ -1966,14 +2148,12 @@ function anRenderTrend(c) {
     if (!hit) return;
     const i = +hit.getAttribute("data-i");
     const m = months[i];
-    const bal = m.inc - m.exp;
     svgEl.querySelectorAll(".an-trend-g").forEach((g, j) => g.classList.toggle("is-dim", j !== i));
     const r = svgEl.getBoundingClientRect();
-    const cx = (pad.l + gw * i + gw / 2) * (r.width / W);
     anTip(plot, `<b>${JALALI_MONTHS[m.jm - 1]} ${toPersianDigits(m.jy)}</b>
       <span><i style="background:${AN_INCOME}"></i>درآمد: ${fmtAmount(m.inc)}</span>
       <span><i style="background:${AN_EXPENSE}"></i>مخارج: ${fmtAmount(m.exp)}</span>
-      <span>مانده: ${fmtAmount(bal)}</span>`, cx, 0);
+      <span>مانده: ${fmtAmount(m.inc - m.exp)}</span>`, (pad.l + gw * i + gw / 2) * (r.width / W));
   };
   svgEl.addEventListener("pointerover", show);
   svgEl.addEventListener("pointerdown", show);
@@ -1983,7 +2163,7 @@ function anRenderTrend(c) {
   });
 }
 
-// ---- ۵) خرج بر اساس روز هفته (۹۰ روز منتهی به ماه دیده‌شده)
+// ---- ۶) خرج در روزهای هفته (میانگین ۹۰ روز منتهی به ماه دیده‌شده)
 function anRenderWeekdays(c) {
   const host = document.getElementById("anWeekChart");
   if (!host) return;
@@ -2003,42 +2183,44 @@ function anRenderWeekdays(c) {
     n++;
   });
   if (!n) { host.innerHTML = anEmpty("در ۹۰ روز اخیر خرجی ثبت نشده"); return; }
-  // هر روز هفته در ۹۰ روز تقریباً ۱۳ بار تکرار می‌شود ← میانگین هر روز
   const counts = new Array(7).fill(0);
   for (let i = 0; i < 90; i++) counts[(new Date(start.getFullYear(), start.getMonth(), start.getDate() + i).getDay() + 1) % 7]++;
   const avg = sums.map((s, i) => (counts[i] ? s / counts[i] : 0));
   const maxI = avg.indexOf(Math.max(...avg));
   const max = avg[maxI] || 1;
+  const mean = avg.reduce((s, v) => s + v, 0) / 7;
   host.innerHTML = `
-    <p class="an-note">بیشترین خرج معمولاً <b>${AN_WEEKDAYS[maxI]}</b>‌ها: میانگین ${anShort(avg[maxI])} تومان</p>
-    <div class="an-week">${avg.map((v, i) => `
+    <p class="an-note">بیشترین خرج معمولاً <b>${AN_WEEKDAYS[maxI]}</b>‌ها: میانگین <b>${anShort(avg[maxI])} تومان</b></p>
+    <div class="an-week" style="--mean:${((mean / max) * 100).toFixed(1)}">
+      <span class="an-week-mean"><em>میانگین</em></span>
+      ${avg.map((v, i) => `
       <div class="an-week-col" title="${AN_WEEKDAYS[i]}: میانگین ${fmtAmount(v)} تومان">
-        <div class="an-week-track"><div class="an-week-bar ${i === maxI ? "is-max" : ""}" style="height:${Math.max(3, (v / max) * 100).toFixed(1)}%"></div></div>
+        <div class="an-week-track"><div class="an-week-bar ${i === maxI ? "is-max" : ""}" style="height:${Math.max(4, (v / max) * 100).toFixed(1)}%"></div></div>
         <span>${AN_WEEKDAYS_SHORT[i]}</span>
       </div>`).join("")}
     </div>
     <p class="an-foot">میانگین خرج هر روز هفته در ۹۰ روز اخیر</p>`;
 }
 
-// ---- ۶) بزرگ‌ترین خرج‌های ماه
+// ---- ۷) بزرگ‌ترین خرج‌های ماه
 function anRenderTop(c) {
   const host = document.getElementById("anTopList");
   if (!host) return;
   const top = c.exp.slice().sort((a, b) => (Number(b.amount) || 0) - (Number(a.amount) || 0)).slice(0, 5);
   if (!top.length) { host.innerHTML = anEmpty("در این ماه خرجی ثبت نشده"); return; }
   const total = anSum(c.exp);
-  host.innerHTML = top.map((x) => {
+  host.innerHTML = top.map((x, i) => {
     const j = anJ(x.date);
     const cat = x.category || "سایر";
-    const color = typeof catColor === "function" ? catColor(cat) : AN_EXPENSE;
-    const icon = typeof catIcon === "function" ? catIcon(cat) : "wallet";
+    const color = catColor(cat);
     return `<div class="an-top-row">
-      <span class="an-top-icon" style="background:${color}22">${iconSpanHTML(icon, `color:${color}`)}</span>
+      <span class="an-top-rank">${toPersianDigits(i + 1)}</span>
+      <span class="an-top-icon" style="background:${color}22">${iconSpanHTML(catIcon(cat), `color:${color}`)}</span>
       <span class="an-top-body">
         <b>${anEsc(x.note || cat)}</b>
-        <small>${x.note ? anEsc(cat) + " · " : ""}${j ? toPersianDigits(j.jd) + " " + JALALI_MONTHS[j.jm - 1] : ""}</small>
+        <small>${x.note ? anEsc(cat) + "، " : ""}${j ? toPersianDigits(j.jd) + " " + JALALI_MONTHS[j.jm - 1] : ""}</small>
       </span>
-      <span class="an-top-amt">${fmtAmount(x.amount)}<small>${toPersianDigits(Math.round((x.amount / total) * 100))}٪ از کل</small></span>
+      <span class="an-top-amt">${fmtAmount(x.amount)}<small>${anPct((x.amount / total) * 100)} از کل</small></span>
     </div>`;
   }).join("");
 }
@@ -2535,7 +2717,7 @@ async function initSync() {
 // ---------- Service worker ----------
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js?v=141").catch(() => {});
+    navigator.serviceWorker.register("sw.js?v=142").catch(() => {});
   });
 }
 
