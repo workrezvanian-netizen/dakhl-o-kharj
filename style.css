@@ -6970,72 +6970,138 @@ input:focus, select:focus {
 @media (prefers-reduced-motion: reduce) { #tab-analysis .an-spark { clip-path: none; } }
 
 /* =========================================================
-   نوار پایین — شیشه‌ای، بدون دایره‌ی مات دور آیکون‌ها،
-   نشانگر کپسولی
+   نوار پایین — «Liquid Glass» سبک iOS 26
+   شیشه‌ی شفاف با لبه‌های براق، برچسب زیر آیکون،
+   کپسول انتخاب شیشه‌ای که هنگام حرکت کش می‌آید
    ========================================================= */
 .bottom-nav.meniscus-nav {
   height: 66px;
-  padding: 0 7px;
-  background: linear-gradient(180deg, rgba(255,255,255,.34) 0%, rgba(255,255,255,.14) 100%) !important;
-  backdrop-filter: blur(22px) saturate(1.9) brightness(1.04) !important;
-  -webkit-backdrop-filter: blur(22px) saturate(1.9) brightness(1.04) !important;
-  border: 1px solid rgba(255,255,255,.55) !important;
+  padding: 0 5px;
+  border-radius: 999px;
+  /* شیشه‌ی شفاف: کمی سفیدی، تاری کم، اشباع زیاد تا رنگ‌های پشت زنده بمانند */
+  background:
+    radial-gradient(120% 140% at 50% -40%, rgba(255,255,255,.55) 0%, rgba(255,255,255,0) 55%),
+    linear-gradient(180deg, rgba(255,255,255,.28) 0%, rgba(255,255,255,.12) 100%) !important;
+  backdrop-filter: blur(14px) saturate(2.1) brightness(1.06) contrast(1.02) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(2.1) brightness(1.06) contrast(1.02) !important;
+  border: none !important;
   box-shadow:
-    0 12px 32px rgba(16,40,35,.16),
-    0 2px 6px rgba(16,40,35,.06),
-    inset 0 1px 0 rgba(255,255,255,.8),
-    inset 0 -1px 0 rgba(255,255,255,.2) !important;
+    /* لبه‌ی شیشه: نور از بالا، انعکاس کم‌رنگ از پایین و کناره‌ها */
+    inset 0 1px 0.5px rgba(255,255,255,.95),
+    inset 0 -1px 0.5px rgba(255,255,255,.45),
+    inset 1px 0 0.5px rgba(255,255,255,.35),
+    inset -1px 0 0.5px rgba(255,255,255,.35),
+    inset 0 0 0 0.5px rgba(255,255,255,.35),
+    /* ضخامت شیشه */
+    inset 0 -8px 16px -10px rgba(255,255,255,.55),
+    inset 0 10px 18px -14px rgba(255,255,255,.7),
+    /* سایه‌ی شناور */
+    0 0 0 0.5px rgba(0,0,0,.06),
+    0 10px 30px rgba(0,0,0,.12),
+    0 2px 8px rgba(0,0,0,.06) !important;
 }
-/* برق بالای شیشه */
+/* انعکاس نور روی لبه‌ها (شبیه شکست نور در لبه‌ی شیشه) */
 .bottom-nav.meniscus-nav::before {
-  background: linear-gradient(180deg, rgba(255,255,255,.5) 0%, rgba(255,255,255,.08) 45%, rgba(255,255,255,0) 60%) !important;
-  opacity: .75;
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 1 !important;
+  background:
+    linear-gradient(90deg, rgba(255,255,255,.35) 0%, rgba(255,255,255,0) 7%, rgba(255,255,255,0) 93%, rgba(255,255,255,.35) 100%),
+    linear-gradient(180deg, rgba(255,255,255,.4) 0%, rgba(255,255,255,0) 35%) !important;
+  z-index: 0;
 }
 
-/* آیکون‌ها بدون دایره‌ی مات */
+/* دکمه‌ها: آیکون + برچسب کوچک */
+.bottom-nav.meniscus-nav .nav-btn {
+  flex-direction: column;
+  gap: 1px;
+  color: rgba(28, 28, 30, .78);
+}
 .bottom-nav.meniscus-nav .nav-btn .nav-icon {
   background: none !important;
   border: none !important;
   box-shadow: none !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
-  width: 44px;
-  height: 44px;
+  width: 30px;
+  height: 28px;
+  transform: none !important;
+  transition: transform .35s cubic-bezier(.34,1.5,.64,1) !important;
 }
+.bottom-nav.meniscus-nav .nav-btn svg {
+  width: 24px !important;
+  height: 24px !important;
+  stroke: currentColor !important;
+  stroke-width: 1.9 !important;
+  transform: none !important;
+  filter: none !important;
+}
+.bottom-nav.meniscus-nav .nav-btn .nav-label {
+  display: block !important;
+  position: static !important;
+  transform: none !important;
+  opacity: 1 !important;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -.1px;
+  color: inherit;
+  white-space: nowrap;
+}
+/* تب فعال: آیکون و برچسب به رنگ همان تب (کمی تیره‌تر برای خوانایی) */
+.bottom-nav.meniscus-nav .nav-btn.active {
+  color: color-mix(in srgb, var(--tab-c, #22C55E) 82%, #000) !important;
+}
+.bottom-nav.meniscus-nav .nav-btn.active svg { stroke-width: 2.2 !important; }
+.bottom-nav.meniscus-nav .nav-btn.active .nav-label { font-weight: 800; }
+/* لمس: آیکون کمی بزرگ و «فنری» شود */
+.bottom-nav.meniscus-nav .nav-btn:active .nav-icon { transform: scale(1.14) !important; }
 @media (hover: hover) {
-  .bottom-nav.meniscus-nav .nav-btn:hover .nav-icon {
-    background: none !important;
-    box-shadow: none !important;
-    transform: translateY(-1px);
-  }
+  .bottom-nav.meniscus-nav .nav-btn:hover .nav-icon { transform: translateY(-1px) !important; }
 }
-.bottom-nav.meniscus-nav .nav-btn { color: rgba(22, 50, 46, .55); }
-.bottom-nav.meniscus-nav .nav-btn.active .nav-icon { transform: none; }
-.bottom-nav.meniscus-nav .nav-btn.active svg {
-  width: 25px !important;
-  height: 25px !important;
-  stroke-width: 2.2;
-  transform: none;
-  filter: drop-shadow(0 1px 1px rgba(0,0,0,.18));
-}
-.bottom-nav.meniscus-nav .nav-btn:active .nav-icon { transform: scale(.9); }
 
-/* نشانگر کپسولی، شیشه‌ای و رنگی */
+/* کپسول انتخاب: شیشه‌ی روشن‌تر با ته‌رنگِ تب */
 .meniscus-bead {
   border-radius: 999px !important;
-  background-image: linear-gradient(180deg, rgba(255,255,255,.32) 0%, rgba(255,255,255,.06) 48%, rgba(0,0,0,.06) 100%) !important;
-  border: 1px solid rgba(255,255,255,.45) !important;
+  background-color: color-mix(in srgb, var(--bead-color, #22C55E) 14%, rgba(255,255,255,.62)) !important;
+  background-image:
+    radial-gradient(90% 120% at 50% -20%, rgba(255,255,255,.85) 0%, rgba(255,255,255,0) 60%),
+    linear-gradient(180deg, rgba(255,255,255,.35) 0%, rgba(255,255,255,0) 100%) !important;
+  border: none !important;
   box-shadow:
-    0 6px 16px color-mix(in srgb, var(--bead-color, #22C55E) 38%, transparent),
-    0 1px 3px rgba(0,0,0,.1),
-    inset 0 1px 0 rgba(255,255,255,.55) !important;
+    inset 0 1px 0.5px rgba(255,255,255,1),
+    inset 0 -1px 0.5px rgba(255,255,255,.6),
+    inset 0 0 0 0.5px rgba(255,255,255,.6),
+    inset 0 -6px 10px -8px color-mix(in srgb, var(--bead-color, #22C55E) 40%, transparent),
+    0 0 0 0.5px rgba(0,0,0,.05),
+    0 4px 12px rgba(0,0,0,.08),
+    0 2px 10px color-mix(in srgb, var(--bead-color, #22C55E) 16%, transparent) !important;
   filter: none !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
+  backdrop-filter: blur(6px) saturate(1.6) !important;
+  -webkit-backdrop-filter: blur(6px) saturate(1.6) !important;
+  transform-origin: center;
   transition:
-    left .5s cubic-bezier(.34, 1.3, .64, 1),
+    left .55s cubic-bezier(.3, 1.35, .5, 1),
     width .35s cubic-bezier(.22, 1, .36, 1),
     background-color .35s ease,
     box-shadow .35s ease !important;
 }
-.meniscus-bead.is-dragging { transition: background-color .2s ease !important; }
+/* حرکت مایع: هنگام جابه‌جایی کش بیاید و برگردد */
+.meniscus-bead.is-liquid { animation: navLiquid .55s cubic-bezier(.3, 1.2, .5, 1); }
+@keyframes navLiquid {
+  0%   { transform: scale(1, 1); }
+  30%  { transform: scale(1.28, .86); }
+  60%  { transform: scale(.96, 1.04); }
+  100% { transform: scale(1, 1); }
+}
+.meniscus-bead.is-dragging {
+  transform: scale(1.12, .94) !important;
+  transition: background-color .2s ease, transform .2s ease !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .meniscus-bead { transition: none !important; }
+  .meniscus-bead.is-liquid { animation: none; }
+}

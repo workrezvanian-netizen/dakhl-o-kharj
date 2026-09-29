@@ -544,15 +544,27 @@ function moveNavBead(tab, opts = {}) {
   // اگر هنوز layout نشده، بعداً دوباره تلاش شود
   if (navRect.width < 20 || btnRect.width < 4) return false;
 
-  // کپسول: پهن‌تر از ارتفاع، تقریباً هم‌عرض دکمه
-  const beadW = Math.max(60, Math.min(96, Math.round(btnRect.width * 1.02)));
-  const beadH = 46;
+  // کپسول شیشه‌ای سبک iOS 26: دور آیکون و برچسب، تقریباً هم‌عرض دکمه
+  const beadW = Math.max(60, Math.min(100, Math.round(btnRect.width - 2)));
+  const beadH = Math.max(44, Math.min(56, Math.round(navRect.height - 10)));
+  // رنگ هر تب برای آیکون و برچسبِ فعال
+  nav.querySelectorAll(".nav-btn[data-color]").forEach((b) => {
+    if (!b.style.getPropertyValue("--tab-c")) b.style.setProperty("--tab-c", b.getAttribute("data-color"));
+  });
   // مرکز دکمه نسبت به نوار
   let centerX = btnRect.left + btnRect.width / 2 - navRect.left;
   if (!isFinite(centerX)) return false;
   centerX = Math.max(beadW / 2, Math.min(navRect.width - beadW / 2, centerX));
   const left = centerX - beadW / 2;
   const color = btn.getAttribute("data-color") || "#22C55E";
+
+  // حرکت «مایع»: وقتی کپسول جابه‌جا می‌شود لحظه‌ای کش می‌آید
+  const prevLeft = parseFloat(bead.style.left);
+  if (bead.classList.contains("is-ready") && isFinite(prevLeft) && Math.abs(prevLeft - left) > 4) {
+    bead.classList.remove("is-liquid");
+    void bead.offsetWidth;
+    bead.classList.add("is-liquid");
+  }
 
   // موقعیت مستقیم با left — مطمئن‌تر از فقط CSS variable
   bead.style.width = beadW + "px";
@@ -2780,7 +2792,7 @@ async function initSync() {
 // ---------- Service worker ----------
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js?v=144").catch(() => {});
+    navigator.serviceWorker.register("sw.js?v=145").catch(() => {});
   });
 }
 
