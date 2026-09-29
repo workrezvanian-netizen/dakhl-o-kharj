@@ -6071,248 +6071,477 @@ input:focus, select:focus {
 
 
 /* =========================================================
-   تب کارها — طراحی جدید، ساده و کاربردی
-   الهام: Todoist + Things 3
+   تب کارها — پوشه‌ها به شکل چیپ، گروه‌بندی بر اساس موعد،
+   افزودن سریع، ویرایش در شیت، برگرداندن حذف
    ========================================================= */
 #tab-todo {
-  background: #f4f5f7 !important;
+  --tk-accent: #2563EB;
+  --tk-accent-soft: #E8F0FE;
+  background: transparent !important;
   min-height: 100%;
   padding: 12px 16px calc(130px + env(safe-area-inset-bottom, 0px)) !important;
 }
-.todo-app { max-width: 440px; margin: 0 auto; }
-.todo-header {
+.todo-app { max-width: 460px; margin: 0 auto; }
+
+.tk-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  direction: rtl;
-  margin-bottom: 16px;
+  gap: 12px;
+  padding: 4px 4px 0;
 }
-.todo-header-text { text-align: right; }
-.todo-title {
+.tk-head-text { text-align: right; min-width: 0; }
+.tk-title {
   margin: 0;
-  font-size: 26px;
+  font-size: 28px;
+  font-weight: 900;
+  color: var(--green-deep);
+  letter-spacing: -0.3px;
+}
+.tk-date { margin: 2px 0 0; font-size: 13px; color: var(--text-mute); }
+
+.tk-ring { position: relative; width: 52px; height: 52px; flex-shrink: 0; }
+.tk-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.tk-ring circle { fill: none; stroke-width: 5; }
+.tk-ring-bg { stroke: rgba(22, 63, 60, 0.09); }
+.tk-ring-fg {
+  stroke: var(--tk-accent);
+  stroke-linecap: round;
+  transition: stroke-dashoffset .6s cubic-bezier(.22,1,.36,1);
+}
+.tk-ring span {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 11.5px;
   font-weight: 800;
-  color: #111827 !important;
-  background: none !important;
-  -webkit-text-fill-color: #111827 !important;
-  animation: none !important;
+  color: var(--green-deep);
 }
-.todo-date {
-  margin: 4px 0 0;
+.tk-summary {
+  margin: 8px 4px 14px;
   font-size: 13px;
-  color: #6b7280;
+  color: var(--text-mute);
+  text-align: right;
+  min-height: 1em;
 }
-.todo-new-folder {
+.tk-summary .is-today { color: var(--tk-accent); font-weight: 700; }
+.tk-summary .is-late { color: var(--expense); font-weight: 700; }
+
+/* چیپ‌های پوشه */
+.tk-chips {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 2px 2px 10px;
+  margin: 0 -2px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.tk-chips::-webkit-scrollbar { display: none; }
+.tk-chip {
+  --fc: var(--green-deep);
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .18s ease, color .18s ease, border-color .18s ease, transform .12s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.tk-chip:active { transform: scale(0.96); }
+.tk-chip b {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  display: inline-grid;
+  place-items: center;
+  font-size: 11px;
+  background: rgba(22, 63, 60, 0.08);
+  color: var(--text-mute);
+}
+.tk-chip-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--fc); }
+.tk-chip.is-active {
+  background: var(--fc);
+  border-color: var(--fc);
+  color: #fff;
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--fc) 35%, transparent);
+}
+.tk-chip.is-active .tk-chip-dot { background: rgba(255,255,255,0.85); }
+.tk-chip.is-active b { background: rgba(255,255,255,0.25); color: #fff; }
+.tk-chip-edit { font-style: normal; font-size: 12px; opacity: .85; margin-right: 2px; }
+.tk-chip-add {
+  border-style: dashed;
+  background: transparent;
+  color: var(--text-mute);
+}
+
+/* افزودن سریع */
+.tk-quick {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 6px 6px 6px;
+  padding-right: 16px;
+  margin-bottom: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 2px 10px rgba(22, 63, 60, 0.05);
+  transition: border-color .18s ease, box-shadow .18s ease;
+}
+.tk-quick:focus-within {
+  border-color: var(--tk-accent);
+  box-shadow: 0 0 0 3px var(--tk-accent-soft);
+}
+.tk-quick input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 16px; /* جلوگیری از زوم iOS */
+  color: var(--text);
+  padding: 8px 0;
+}
+.tk-quick input::placeholder { color: #A8B0AD; font-size: 14px; }
+.tk-quick-btn {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 12px;
+  background: var(--tk-accent);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: transform .12s ease;
+}
+.tk-quick-btn:active { transform: scale(0.92); }
+
+/* گروه‌ها و کارت‌ها */
+.tk-group { margin-bottom: 16px; }
+.tk-group-title {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 12px;
-  border: none;
-  border-radius: 12px;
-  background: #fff;
-  color: #111827;
-  font-family: inherit;
+  margin: 0 6px 8px;
   font-size: 13px;
-  font-weight: 700;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-  cursor: pointer;
+  font-weight: 800;
+  color: var(--text-mute);
 }
-.todo-new-folder:active { transform: scale(0.96); }
+.tk-group-title span {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: rgba(22, 63, 60, 0.07);
+}
+.tk-group-late .tk-group-title { color: var(--expense); }
+.tk-group-late .tk-group-title span { background: var(--expense-soft); }
+.tk-group-today .tk-group-title { color: var(--tk-accent); }
+.tk-group-today .tk-group-title span { background: var(--tk-accent-soft); }
 
-.todo-list {
+.tk-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(22, 63, 60, 0.05);
+}
+.tk-task {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  border-bottom: 1px solid #F1ECE2;
+  transition: opacity .3s ease, transform .3s ease, background .15s ease;
+}
+.tk-task:last-child { border-bottom: none; }
+.tk-task.is-checking { opacity: .45; transform: translateX(-6px); }
+.tk-task.is-unchecking { opacity: .6; }
+
+.tk-check {
+  --pc: #9CA3AF;
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  margin-top: 1px;
+  border-radius: 50%;
+  border: 2px solid var(--pc);
+  background: color-mix(in srgb, var(--pc) 8%, transparent);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  cursor: pointer;
+  transition: background .2s ease, transform .15s ease;
+}
+.tk-check svg { width: 15px; height: 15px; opacity: 0; transform: scale(.5); transition: opacity .2s ease, transform .25s cubic-bezier(.34,1.6,.64,1); }
+.tk-check:active { transform: scale(0.88); }
+.tk-check.p1 { --pc: #DC2626; }
+.tk-check.p2 { --pc: #EA580C; }
+.tk-check.p3 { --pc: #2563EB; }
+.tk-check.p4 { --pc: #94A3B8; }
+.tk-task.is-done .tk-check,
+.tk-task.is-checking .tk-check { background: var(--pc); }
+.tk-task.is-done .tk-check svg,
+.tk-task.is-checking .tk-check svg { opacity: 1; transform: none; }
+.tk-task.is-unchecking .tk-check { background: transparent; }
+.tk-task.is-unchecking .tk-check svg { opacity: 0; }
+
+.tk-task-body {
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  align-items: flex-start;
+  gap: 3px;
+  padding: 0;
+  border: none;
+  background: none;
+  font-family: inherit;
+  text-align: right;
+  color: inherit;
+  cursor: pointer;
 }
-
-.todo-folder {
-  background: #fff;
-  border-radius: 16px;
-  border: 1px solid rgba(0,0,0,0.06);
-  box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+.tk-task-title {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.55;
+  color: var(--text);
+  word-break: break-word;
+}
+.tk-task-note {
+  font-size: 12.5px;
+  color: var(--text-mute);
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  border-right: 4px solid var(--fc, #3B82F6);
 }
-.todo-folder.is-open {
-  box-shadow: 0 6px 20px rgba(0,0,0,0.07);
+.tk-task.is-done .tk-task-title { color: #A8B0AD; text-decoration: line-through; }
+.tk-task.is-done .tk-task-note { opacity: .6; }
+.tk-task-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
+.tk-due, .tk-prio, .tk-folder-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(22, 63, 60, 0.06);
+  color: var(--text-mute);
+}
+.tk-due::before { content: "◷"; font-size: 11px; }
+.tk-due.is-today { background: var(--tk-accent-soft); color: var(--tk-accent); }
+.tk-due.is-late { background: var(--expense-soft); color: var(--expense); }
+.tk-prio.p1 { background: #FEF2F2; color: #DC2626; }
+.tk-prio.p2 { background: #FFF7ED; color: #EA580C; }
+.tk-folder-tag::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--fc);
 }
 
-.todo-folder-head {
+/* انجام‌شده */
+.tk-done-head {
   display: flex;
   align-items: center;
-  gap: 10px;
-  width: 100%;
-  padding: 14px 14px;
+  justify-content: space-between;
+  margin: 4px 2px 8px;
+}
+.tk-done-toggle, .tk-done-clear {
   border: none;
-  background: transparent;
+  background: none;
   font-family: inherit;
   cursor: pointer;
-  direction: rtl;
-  text-align: right;
-  -webkit-tap-highlight-color: transparent;
+  padding: 6px 4px;
 }
-.todo-folder-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: var(--fc, #3B82F6);
-  flex-shrink: 0;
-}
-.todo-folder-name {
-  flex: 1;
-  font-size: 15.5px;
+.tk-done-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
   font-weight: 800;
-  color: #111827;
+  color: var(--text-mute);
 }
-.todo-folder-meta {
-  font-size: 12px;
-  font-weight: 600;
-  color: #9ca3af;
+.tk-done-chev { font-size: 11px; width: 12px; }
+.tk-count {
+  font-size: 11px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: rgba(22, 63, 60, 0.07);
 }
-.todo-folder-chev {
-  font-size: 12px;
-  color: #9ca3af;
-  width: 16px;
-  text-align: center;
-}
+.tk-done-clear { font-size: 12.5px; font-weight: 700; color: var(--expense); }
 
-.todo-folder-body {
-  display: none;
-  padding: 0 10px 12px;
-  direction: rtl;
+/* حالت خالی */
+.tk-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--text-mute);
+  font-size: 13px;
 }
-.todo-folder.is-open .todo-folder-body {
-  display: block;
-  animation: todoBodyIn .35s ease both;
+.tk-empty strong { font-size: 15px; color: var(--text); }
+.tk-empty-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  margin-bottom: 6px;
+  font-size: 26px;
+  font-weight: 900;
+  color: var(--tk-accent);
+  background: var(--tk-accent-soft);
 }
-@keyframes todoBodyIn {
-  from { opacity: 0; transform: translateY(-6px); }
+.tk-empty-small { padding: 18px 20px 22px; }
+
+.tk-enter .tk-group,
+.tk-enter .tk-empty { animation: tkIn .38s cubic-bezier(.22,1,.36,1) both; }
+.tk-enter .tk-group:nth-child(2) { animation-delay: .05s; }
+.tk-enter .tk-group:nth-child(3) { animation-delay: .1s; }
+.tk-enter .tk-group:nth-child(n+4) { animation-delay: .14s; }
+@keyframes tkIn {
+  from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: none; }
 }
 
-.todo-task {
+/* شیت کار/پوشه */
+#piTaskSheet .field input,
+#piFolderSheet .field input { font-size: 16px; }
+.tk-opts { display: flex; flex-wrap: wrap; gap: 6px; }
+.tk-opt {
+  --fc: var(--green-deep);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .15s ease, color .15s ease, border-color .15s ease;
+}
+.tk-opt.active {
+  background: var(--green-deep);
+  border-color: var(--green-deep);
+  color: #FBF7F0;
+}
+.tk-opt-folder i { width: 8px; height: 8px; border-radius: 50%; background: var(--fc); }
+.tk-opt-folder.active { background: var(--fc); border-color: var(--fc); color: #fff; }
+.tk-opt-folder.active i { background: rgba(255,255,255,.85); }
+.tk-due-custom {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 11px 8px;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 4px;
   border-radius: 12px;
-  direction: rtl;
+  background: rgba(22, 63, 60, 0.06);
 }
-.todo-task:active { background: #f9fafb; }
-.todo-task.is-done .todo-task-title {
-  text-decoration: line-through;
-  color: #9ca3af;
-}
-.todo-check {
-  width: 24px;
-  height: 24px;
-  border-radius: 8px;
-  border: 2px solid #d1d5db;
-  background: #fff;
-  color: #fff;
-  font-size: 13px;
-  font-weight: 800;
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-  padding: 0;
-  cursor: pointer;
-}
-.todo-check.p1 { border-color: #ef4444; }
-.todo-check.p2 { border-color: #f59e0b; }
-.todo-check.p3 { border-color: #3b82f6; }
-.todo-check.p4 { border-color: #9ca3af; }
-.todo-task.is-done .todo-check,
-.todo-check:not(:empty) {
-  background: var(--fc, #3B82F6);
-  border-color: var(--fc, #3B82F6);
-}
-.todo-task-body { flex: 1; min-width: 0; text-align: right; }
-.todo-task-title {
-  font-size: 14.5px;
-  font-weight: 600;
-  color: #1f2937;
-  line-height: 1.4;
-}
-.todo-badge {
-  display: inline-block;
-  margin-top: 3px;
-  font-size: 10px;
-  font-weight: 700;
-  padding: 1px 7px;
-  border-radius: 6px;
-}
-.todo-badge.p1 { color: #ef4444; background: #fef2f2; }
-.todo-badge.p2 { color: #d97706; background: #fffbeb; }
-.todo-badge.p3 { color: #2563eb; background: #eff6ff; }
-.todo-badge.p4 { color: #6b7280; background: #f3f4f6; }
-
-.todo-del {
-  width: 28px;
-  height: 28px;
+.tk-due-custom span { font-size: 13px; font-weight: 700; color: var(--green-deep); }
+.tk-due-step {
+  width: 34px;
+  height: 34px;
   border: none;
-  border-radius: 8px;
-  background: transparent;
-  color: #d1d5db;
+  border-radius: 10px;
+  background: #fff;
+  color: var(--green-deep);
   font-size: 18px;
+  font-weight: 800;
   cursor: pointer;
-  flex-shrink: 0;
+  font-family: inherit;
 }
-.todo-del:active { color: #ef4444; background: #fef2f2; }
-
-.todo-empty {
-  text-align: center;
-  padding: 16px;
-  color: #9ca3af;
-  font-size: 13px;
-}
-.todo-add-row {
+.tk-due-step:active { transform: scale(0.92); }
+.tk-sheet-del {
   display: block;
   width: 100%;
-  margin-top: 6px;
-  padding: 12px;
-  border: 1.5px dashed #d1d5db;
-  border-radius: 12px;
-  background: #fafafa;
-  color: #6b7280;
+  margin-top: 12px;
+  padding: 10px;
+  border: none;
+  background: none;
+  color: var(--expense);
   font-family: inherit;
   font-size: 13.5px;
   font-weight: 700;
   cursor: pointer;
 }
-.todo-add-row:active { background: #f3f4f6; }
-
-.todo-field-label {
-  margin: 14px 0 8px;
-  font-size: 13px;
-  font-weight: 700;
-  color: #374151;
-  text-align: right;
-}
-.todo-prio-row {
-  display: flex;
-  gap: 8px;
-  direction: rtl;
-  flex-wrap: wrap;
-}
-.todo-prio {
-  flex: 1;
-  min-width: 64px;
-  padding: 10px 8px;
-  border: 1.5px solid #e5e7eb;
-  border-radius: 10px;
-  background: #fff;
-  font-family: inherit;
-  font-size: 12.5px;
-  font-weight: 700;
-  color: #6b7280;
+.tk-sheet-del[hidden] { display: none; }
+.tk-colors { display: flex; gap: 10px; flex-wrap: wrap; }
+.tk-color {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 3px solid #fff;
+  background: var(--fc);
+  box-shadow: 0 0 0 1px var(--border);
   cursor: pointer;
+  transition: transform .12s ease, box-shadow .15s ease;
 }
-.todo-prio.selected {
-  border-color: #3b82f6;
-  background: #eff6ff;
-  color: #1d4ed8;
+.tk-color.active { box-shadow: 0 0 0 2px var(--fc); transform: scale(1.08); }
+#piFolderName.error { border-color: #ef4444 !important; animation: todoShake .4s ease; }
+
+/* توست برگرداندن */
+.tk-toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(86px + env(safe-area-inset-bottom, 0px));
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  max-width: calc(100% - 32px);
+  padding: 10px 12px 10px 16px;
+  padding-right: 16px;
+  border-radius: 14px;
+  background: #1F2A28;
+  color: #FBF7F0;
+  font-size: 13.5px;
+  box-shadow: 0 10px 28px rgba(0,0,0,.25);
+  transform: translate(-50%, 16px);
+  opacity: 0;
+  transition: opacity .2s ease, transform .25s cubic-bezier(.22,1,.36,1);
 }
+.tk-toast.show { opacity: 1; transform: translate(-50%, 0); }
+.tk-toast[hidden] { display: none; }
+.tk-toast button {
+  border: none;
+  background: none;
+  color: #7DD3C8;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 800;
+  cursor: pointer;
+  padding: 4px 6px;
+}
+.tk-toast button[hidden] { display: none; }
+
 #piTaskTitle.error {
   border-color: #ef4444 !important;
   animation: todoShake .4s ease;
@@ -6327,537 +6556,4 @@ input:focus, select:focus {
 .fab-todo {
   background: linear-gradient(145deg, #3B82F6, #2563EB) !important;
   box-shadow: 0 8px 24px rgba(37, 99, 235, 0.4) !important;
-}
-
-
-
-/* ========== PlanIt folders (pk-*) — high specificity ========== */
-#tab-todo {
-  background: #e9edf2 !important;
-  min-height: 100% !important;
-  padding: 10px 14px calc(120px + env(safe-area-inset-bottom,0px)) !important;
-  display: none;
-}
-#tab-todo.tab.active {
-  display: block !important;
-}
-#tab-todo .pk-wrap {
-  max-width: 400px;
-  margin: 0 auto;
-  display: block !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-}
-#tab-todo .pk-head {
-  display: flex !important;
-  align-items: flex-start;
-  justify-content: space-between;
-  direction: rtl;
-  margin-bottom: 18px;
-}
-#tab-todo .pk-head-r { text-align: right; }
-#tab-todo .pk-title {
-  margin: 0 !important;
-  font-size: 28px !important;
-  font-weight: 800 !important;
-  color: #1a1a1a !important;
-  background: none !important;
-  -webkit-text-fill-color: #1a1a1a !important;
-  animation: none !important;
-}
-#tab-todo .pk-date {
-  margin: 5px 0 0 !important;
-  font-size: 13px;
-  color: #8e95a0;
-}
-#tab-todo .pk-addbtn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  border: none;
-  background: transparent;
-  color: #1a1a1a;
-  font-family: inherit;
-  font-size: 10px;
-  font-weight: 600;
-  line-height: 1.15;
-  cursor: pointer;
-  padding: 0;
-}
-#tab-todo .pk-add-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: #fff;
-  box-shadow: 0 2px 10px rgba(0,0,0,.1);
-  display: grid;
-  place-items: center;
-  font-size: 24px;
-  font-weight: 400;
-  line-height: 1;
-}
-#tab-todo .pk-stack {
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 0 !important;
-  min-height: 80px;
-  visibility: visible !important;
-  opacity: 1 !important;
-}
-#tab-todo .pk-folder {
-  position: relative;
-  z-index: var(--z, 1);
-  margin-top: -12px;
-  display: block !important;
-}
-#tab-todo .pk-folder:first-child { margin-top: 0; }
-#tab-todo .pk-folder.open {
-  z-index: 40;
-  margin-bottom: 8px;
-}
-#tab-todo .pk-card {
-  display: flex !important;
-  align-items: stretch;
-  direction: ltr;
-  filter: drop-shadow(0 7px 16px color-mix(in srgb, var(--c, #5B9FD4) 34%, transparent));
-}
-#tab-todo .pk-tab {
-  width: 54px;
-  flex-shrink: 0;
-  background: color-mix(in srgb, var(--c, #5B9FD4) 75%, #000 25%);
-  color: #fff;
-  font-size: 12px;
-  font-weight: 700;
-  text-align: center;
-  border-radius: 12px 0 0 12px;
-  display: flex !important;
-  align-items: center;
-  justify-content: center;
-  padding: 10px 4px;
-  line-height: 1.3;
-  align-self: flex-start;
-  min-height: 52px;
-}
-#tab-todo .pk-folder.open .pk-tab {
-  border-radius: 12px 0 0 0;
-}
-#tab-todo .pk-main {
-  flex: 1;
-  min-width: 0;
-  background: var(--c, #5B9FD4);
-  border-radius: 0 16px 14px 0;
-  overflow: hidden;
-}
-#tab-todo .pk-folder.open .pk-main {
-  border-radius: 0 16px 16px 12px;
-}
-#tab-todo .pk-bar {
-  display: flex !important;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  width: 100%;
-  min-height: 52px;
-  padding: 12px 16px 12px 12px;
-  border: none;
-  background: transparent;
-  color: #fff;
-  font-family: inherit;
-  cursor: pointer;
-  direction: rtl;
-  text-align: right;
-}
-#tab-todo .pk-name {
-  font-size: 16px;
-  font-weight: 800;
-}
-#tab-todo .pk-count {
-  font-size: 12.5px;
-  font-weight: 600;
-  opacity: .92;
-}
-#tab-todo .pk-paper {
-  margin: 0 8px 10px;
-  background: #fff !important;
-  border-radius: 12px;
-  padding: 4px 0 8px;
-  display: block !important;
-}
-#tab-todo .pk-row {
-  display: flex !important;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 11px 14px;
-  border-bottom: 1px solid #f0f1f3;
-  direction: ltr;
-}
-#tab-todo .pk-row:last-of-type { border-bottom: none; }
-#tab-todo .pk-row.done .pk-row-title {
-  text-decoration: line-through;
-  color: #a1a1aa;
-}
-#tab-todo .pk-check {
-  width: 22px;
-  height: 22px;
-  margin-top: 2px;
-  border-radius: 6px;
-  border: 2px solid #c5ccd4;
-  background: #fff;
-  color: #fff;
-  font-size: 12px;
-  font-weight: 800;
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-  padding: 0;
-  cursor: pointer;
-}
-#tab-todo .pk-check.on {
-  background: var(--c, #5B9FD4);
-  border-color: var(--c, #5B9FD4);
-}
-#tab-todo .pk-row-text {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 4px;
-  direction: rtl;
-  text-align: right;
-}
-#tab-todo .pk-row-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: #1f2937;
-  line-height: 1.4;
-  width: 100%;
-}
-#tab-todo .pk-tag {
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--tc, #3b82f6);
-  background: color-mix(in srgb, var(--tc, #3b82f6) 12%, #fff);
-  border: 1px solid color-mix(in srgb, var(--tc, #3b82f6) 20%, transparent);
-  border-radius: 5px;
-  padding: 1px 7px;
-  align-self: flex-start;
-}
-#tab-todo .pk-empty {
-  margin: 12px;
-  text-align: center;
-  color: #9ca3af;
-  font-size: 13px;
-}
-#tab-todo .pk-add-task {
-  display: block;
-  width: calc(100% - 20px);
-  margin: 6px 10px;
-  padding: 10px;
-  border: 1.5px dashed #d0d5db;
-  border-radius: 10px;
-  background: #fafbfc;
-  color: #6b7280;
-  font-family: inherit;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-}
-.fab-todo {
-  background: linear-gradient(145deg, #5B9FD4, #3B82F6) !important;
-  box-shadow: 0 8px 24px rgba(59,130,246,.4) !important;
-}
-.todo-prio.selected {
-  border-color: #3b82f6 !important;
-  background: #eff6ff !important;
-  color: #1d4ed8 !important;
-}
-
-
-
-/* =========================================================
-   تب کارها — لایه گرافیکی PlanIt (نسخه زیباتر)
-   ========================================================= */
-#tab-todo.tab.active {
-  background:
-    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(91,159,212,0.18), transparent 55%),
-    radial-gradient(ellipse 60% 40% at 100% 30%, rgba(233,162,74,0.1), transparent 50%),
-    linear-gradient(180deg, #e8eef5 0%, #f0f3f8 40%, #eef1f6 100%) !important;
-}
-#tab-todo .pk-wrap {
-  max-width: 400px;
-  margin: 0 auto;
-  padding: 4px 2px 8px;
-}
-#tab-todo .pk-head {
-  margin-bottom: 20px;
-  padding: 4px 4px 0;
-}
-#tab-todo .pk-title {
-  font-size: 30px !important;
-  font-weight: 800 !important;
-  letter-spacing: -0.04em !important;
-  color: #0f172a !important;
-  text-shadow: 0 1px 0 rgba(255,255,255,0.8);
-}
-#tab-todo .pk-date {
-  font-size: 13.5px;
-  color: #64748b;
-  font-weight: 500;
-}
-#tab-todo .pk-addbtn {
-  transition: transform 0.2s ease;
-}
-#tab-todo .pk-addbtn:active {
-  transform: scale(0.94);
-}
-#tab-todo .pk-add-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: linear-gradient(145deg, #ffffff, #f1f5f9);
-  box-shadow:
-    0 4px 14px rgba(15,23,42,0.12),
-    0 1px 0 rgba(255,255,255,0.9) inset,
-    0 -1px 0 rgba(15,23,42,0.04) inset;
-  font-size: 26px;
-  color: #0f172a;
-  transition: box-shadow 0.25s ease, transform 0.2s ease;
-}
-#tab-todo .pk-addbtn:active .pk-add-icon {
-  box-shadow: 0 2px 6px rgba(15,23,42,0.1);
-}
-#tab-todo .pk-add-txt {
-  margin-top: 4px;
-  font-size: 10px;
-  font-weight: 600;
-  color: #64748b;
-  line-height: 1.2;
-}
-
-/* پشته فولدر */
-#tab-todo .pk-stack {
-  gap: 0;
-  padding: 6px 2px 12px;
-}
-#tab-todo .pk-folder {
-  margin-top: -14px;
-  transition:
-    transform 0.45s cubic-bezier(.34,1.3,.64,1),
-    filter 0.4s ease;
-  will-change: transform;
-}
-#tab-todo .pk-folder:first-child {
-  margin-top: 0;
-  animation: pkFolderIn 0.5s cubic-bezier(.34,1.2,.64,1) both;
-}
-#tab-todo .pk-folder:nth-child(2) { animation: pkFolderIn 0.5s 0.05s cubic-bezier(.34,1.2,.64,1) both; }
-#tab-todo .pk-folder:nth-child(3) { animation: pkFolderIn 0.5s 0.1s cubic-bezier(.34,1.2,.64,1) both; }
-#tab-todo .pk-folder:nth-child(4) { animation: pkFolderIn 0.5s 0.15s cubic-bezier(.34,1.2,.64,1) both; }
-#tab-todo .pk-folder:nth-child(5) { animation: pkFolderIn 0.5s 0.2s cubic-bezier(.34,1.2,.64,1) both; }
-#tab-todo .pk-folder:nth-child(n+6) { animation: pkFolderIn 0.5s 0.22s cubic-bezier(.34,1.2,.64,1) both; }
-
-@keyframes pkFolderIn {
-  from {
-    opacity: 0;
-    transform: translateY(16px) scale(0.97);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-#tab-todo .pk-folder.open {
-  z-index: 50 !important;
-  transform: translateY(-6px) scale(1.01);
-  margin-bottom: 12px;
-  filter: drop-shadow(0 16px 32px color-mix(in srgb, var(--c, #5B9FD4) 40%, transparent));
-}
-
-#tab-todo .pk-card {
-  filter: drop-shadow(0 8px 18px color-mix(in srgb, var(--c, #5B9FD4) 32%, transparent));
-  transition: filter 0.35s ease;
-}
-
-/* زبانه فولدر — گرادیان + براق */
-#tab-todo .pk-tab {
-  width: 56px;
-  min-height: 54px;
-  padding: 12px 5px;
-  background:
-    linear-gradient(165deg,
-      color-mix(in srgb, var(--c, #5B9FD4) 70%, #fff 12%) 0%,
-      color-mix(in srgb, var(--c, #5B9FD4) 78%, #000 22%) 100%);
-  border-radius: 14px 0 0 14px;
-  font-size: 11.5px;
-  font-weight: 800;
-  letter-spacing: 0.01em;
-  text-shadow: 0 1px 1px rgba(0,0,0,0.18);
-  box-shadow:
-    inset 1px 1px 0 rgba(255,255,255,0.28),
-    inset -1px 0 0 rgba(0,0,0,0.06);
-  position: relative;
-  overflow: hidden;
-}
-#tab-todo .pk-tab::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, rgba(255,255,255,0.22), transparent 55%);
-  pointer-events: none;
-}
-#tab-todo .pk-folder.open .pk-tab {
-  border-radius: 14px 0 0 0;
-  min-height: 56px;
-}
-
-/* بدنه رنگی با گرادیان */
-#tab-todo .pk-main {
-  background:
-    linear-gradient(145deg,
-      color-mix(in srgb, var(--c, #5B9FD4) 88%, #fff 12%) 0%,
-      var(--c, #5B9FD4) 45%,
-      color-mix(in srgb, var(--c, #5B9FD4) 82%, #000 18%) 100%) !important;
-  border-radius: 0 18px 16px 0;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.25);
-}
-#tab-todo .pk-folder.open .pk-main {
-  border-radius: 0 18px 18px 14px;
-}
-#tab-todo .pk-folder:not(.open) .pk-main {
-  border-radius: 0 16px 16px 4px;
-}
-
-#tab-todo .pk-bar {
-  min-height: 56px;
-  padding: 14px 18px 14px 14px;
-  transition: background 0.2s ease;
-}
-#tab-todo .pk-bar:active {
-  background: rgba(0,0,0,0.06);
-}
-#tab-todo .pk-name {
-  font-size: 16.5px;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.12);
-}
-#tab-todo .pk-count {
-  font-size: 12.5px;
-  font-weight: 700;
-  background: rgba(255,255,255,0.22);
-  padding: 4px 10px;
-  border-radius: 999px;
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  border: 1px solid rgba(255,255,255,0.25);
-}
-
-/* کاغذ سفید داخل */
-#tab-todo .pk-paper {
-  margin: 0 9px 11px;
-  background: linear-gradient(180deg, #ffffff 0%, #fafbfc 100%) !important;
-  border-radius: 14px;
-  padding: 6px 0 10px;
-  box-shadow:
-    0 2px 8px rgba(15,23,42,0.06),
-    inset 0 1px 0 rgba(255,255,255,1);
-  animation: pkPaperIn 0.45s cubic-bezier(.33,1,.28,1) both;
-}
-@keyframes pkPaperIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px) scale(0.98);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-#tab-todo .pk-row {
-  padding: 12px 14px;
-  border-bottom: 1px solid rgba(15,23,42,0.05);
-  transition: background 0.15s ease;
-  animation: pkRowIn 0.35s cubic-bezier(.33,1,.28,1) both;
-}
-#tab-todo .pk-row:nth-child(1) { animation-delay: 0.04s; }
-#tab-todo .pk-row:nth-child(2) { animation-delay: 0.08s; }
-#tab-todo .pk-row:nth-child(3) { animation-delay: 0.12s; }
-#tab-todo .pk-row:nth-child(4) { animation-delay: 0.16s; }
-#tab-todo .pk-row:nth-child(5) { animation-delay: 0.2s; }
-#tab-todo .pk-row:nth-child(n+6) { animation-delay: 0.22s; }
-@keyframes pkRowIn {
-  from { opacity: 0; transform: translateX(-8px); }
-  to { opacity: 1; transform: none; }
-}
-#tab-todo .pk-row:active {
-  background: rgba(15,23,42,0.03);
-}
-#tab-todo .pk-row.done .pk-row-title {
-  opacity: 0.45;
-}
-
-#tab-todo .pk-check {
-  width: 24px;
-  height: 24px;
-  border-radius: 8px;
-  border: 2px solid #cbd5e1;
-  background: #fff;
-  box-shadow: 0 1px 3px rgba(15,23,42,0.06);
-  transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
-}
-#tab-todo .pk-check:active {
-  transform: scale(0.88);
-}
-#tab-todo .pk-check.on {
-  background: var(--c, #5B9FD4);
-  border-color: var(--c, #5B9FD4);
-  box-shadow: 0 2px 8px color-mix(in srgb, var(--c, #5B9FD4) 45%, transparent);
-}
-
-#tab-todo .pk-row-title {
-  font-size: 14.5px;
-  font-weight: 650;
-  color: #0f172a;
-  line-height: 1.45;
-}
-#tab-todo .pk-tag {
-  font-size: 10.5px;
-  font-weight: 800;
-  padding: 2px 8px;
-  border-radius: 6px;
-  letter-spacing: -0.01em;
-}
-
-#tab-todo .pk-add-task {
-  margin: 8px 12px 4px;
-  width: calc(100% - 24px);
-  padding: 12px;
-  border: 1.5px dashed color-mix(in srgb, var(--c, #5B9FD4) 35%, #cbd5e1);
-  border-radius: 12px;
-  background: color-mix(in srgb, var(--c, #5B9FD4) 6%, #f8fafc);
-  color: color-mix(in srgb, var(--c, #5B9FD4) 70%, #475569);
-  font-weight: 700;
-  transition: background 0.2s ease, border-color 0.2s ease;
-}
-#tab-todo .pk-add-task:active {
-  background: color-mix(in srgb, var(--c, #5B9FD4) 12%, #f1f5f9);
-}
-
-#tab-todo .pk-empty {
-  color: #94a3b8;
-  font-size: 13.5px;
-  padding: 16px 12px;
-}
-
-/* FAB گرافیکی‌تر */
-.fab-todo {
-  background: linear-gradient(145deg, #60a5fa, #2563eb) !important;
-  box-shadow:
-    0 10px 28px rgba(37, 99, 235, 0.45),
-    0 2px 0 rgba(255,255,255,0.25) inset !important;
-  border: 1px solid rgba(255,255,255,0.2) !important;
 }
