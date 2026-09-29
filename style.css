@@ -6561,3 +6561,209 @@ input:focus, select:focus {
 /* نوار پایین: مرورگر حرکت افقی را اسکرول حساب نکند تا درگ کپسول کار کند */
 .bottom-nav.meniscus-nav,
 .bottom-nav.meniscus-nav .nav-btn { touch-action: none !important; }
+
+/* =========================================================
+   هدر: واترمارک Nelin در حالت فشرده جابه‌جا نشود.
+   قبلاً چیدمان از ستونی به ردیفی عوض می‌شد و لوگو ناگهان
+   ~۳۶px به پهلو می‌پرید؛ حالا ستون می‌ماند و فقط دکمه‌ی تنظیمات
+   جمع می‌شود، پس لوگو نرم و عمودی جابه‌جا می‌شود.
+   ========================================================= */
+.app-header.is-compact .header-side {
+  flex-direction: column !important;
+  gap: 0 !important;
+}
+.app-header .header-side { transition: gap .3s ease !important; }
+
+/* =========================================================
+   تب آنالیز
+   ========================================================= */
+.ai-floating-star { display: none !important; }
+#tab-analysis .ai-card { transform: none !important; opacity: 1 !important; }
+
+.an-month {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 14px;
+}
+.an-month h2 { margin: 0; font-size: 18px; font-weight: 800; color: var(--green-deep); }
+.an-month .month-nav-btn:disabled { opacity: .35; pointer-events: none; }
+
+.an-kpis {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 14px 0;
+}
+.an-kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  padding: 14px;
+  border-radius: 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: 0 2px 10px rgba(22, 63, 60, 0.05);
+}
+.an-kpi-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-mute);
+}
+.an-kpi-label i { width: 8px; height: 8px; border-radius: 50%; }
+.an-kpi strong {
+  font-size: 18px;
+  font-weight: 900;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.an-kpi strong.is-neg { color: var(--expense); }
+.an-delta { font-size: 11px; color: var(--text-mute); line-height: 1.5; }
+.an-delta i { font-style: normal; font-size: 9px; margin-left: 3px; }
+.an-delta.is-good i { color: #00907C; }
+.an-delta.is-bad i { color: #C9482A; }
+
+.an-card h2 { margin: 0 0 4px; font-size: 16px; }
+.an-note { margin: 0 0 12px; font-size: 12.5px; line-height: 1.7; color: var(--text-mute); }
+.an-note b { color: var(--text); }
+.an-foot { margin: 10px 0 0; font-size: 11px; color: var(--text-mute); }
+.an-empty {
+  padding: 28px 12px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-mute);
+}
+
+.an-legend { display: flex; gap: 14px; margin: 0 0 8px; font-size: 12px; color: var(--text-mute); }
+.an-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.an-legend i { width: 10px; height: 10px; border-radius: 3px; }
+
+.an-plot { position: relative; direction: ltr; touch-action: pan-y; }
+.an-plot svg { display: block; width: 100%; height: auto; overflow: visible; font-family: inherit; }
+.an-grid { stroke: #ECE7DD; stroke-width: 1; }
+.an-axis { font-size: 10.5px; fill: #8A938F; }
+.an-axis-strong { fill: var(--text); font-weight: 700; }
+.an-cross { stroke: #9AA3A0; stroke-width: 1; }
+.an-trend-g { transition: opacity .15s ease; }
+.an-trend-g.is-dim { opacity: .35; }
+
+.an-tip {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #1F2A28;
+  color: #FBF7F0;
+  font-size: 11.5px;
+  line-height: 1.5;
+  direction: rtl;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity .12s ease, transform .12s ease;
+  box-shadow: 0 6px 18px rgba(0,0,0,.2);
+}
+.an-tip.show { opacity: 1; transform: none; }
+.an-tip b { font-size: 12px; }
+.an-tip span { display: inline-flex; align-items: center; gap: 6px; }
+.an-tip i { width: 8px; height: 8px; border-radius: 2px; }
+
+/* دسته‌ها */
+.an-cat { padding: 8px 0; }
+.an-cat + .an-cat { border-top: 1px solid #F1ECE2; }
+.an-cat-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.an-cat-name { font-size: 13.5px; font-weight: 700; color: var(--text); }
+.an-cat-val { font-size: 12.5px; font-weight: 700; color: var(--text); white-space: nowrap; }
+.an-cat-val em { font-style: normal; font-weight: 600; color: var(--text-mute); margin-right: 4px; }
+.an-cat-delta { font-size: 11px; font-weight: 600; color: var(--text-mute); margin-right: 6px; }
+.an-cat-delta.is-bad { color: #B03E23; }
+.an-cat-delta.is-good { color: #007A69; }
+.an-cat-track { height: 8px; border-radius: 4px; background: #F3EFE7; overflow: hidden; }
+.an-cat-bar {
+  height: 100%;
+  border-radius: 4px;
+  background: #C9482A;
+  transition: width .5s cubic-bezier(.22,1,.36,1);
+}
+
+/* روزهای هفته */
+.an-week {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+  height: 130px;
+}
+.an-week-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.an-week-col span { font-size: 11.5px; font-weight: 700; color: var(--text-mute); }
+.an-week-track { flex: 1; width: 100%; max-width: 26px; display: flex; align-items: flex-end; }
+.an-week-bar {
+  width: 100%;
+  border-radius: 4px 4px 0 0;
+  background: #D9DEDB;
+}
+.an-week-bar.is-max { background: #C9482A; }
+
+/* بزرگ‌ترین خرج‌ها */
+.an-top-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+}
+.an-top-row + .an-top-row { border-top: 1px solid #F1ECE2; }
+.an-top-icon {
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+}
+.an-top-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.an-top-body b {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.an-top-body small, .an-top-amt small { font-size: 11px; color: var(--text-mute); font-weight: 500; }
+.an-top-amt {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  font-size: 13.5px;
+  font-weight: 800;
+  color: var(--text);
+  white-space: nowrap;
+}
+.an-axis-y { direction: rtl; unicode-bidi: embed; }
+/* ارتفاع هدر هم نرم عوض شود تا واترمارک نپرد */
+.app-header .header-inner { transition: padding .35s cubic-bezier(.22,1,.36,1), min-height .35s cubic-bezier(.22,1,.36,1), border-radius .35s ease !important; }

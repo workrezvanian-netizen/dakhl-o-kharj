@@ -14,7 +14,7 @@
 <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css">
 <link href="https://cdn.jsdelivr.net/gh/rastikerdar/kamran@v1.0.0/dist/font-face.css" rel="stylesheet" type="text/css">
 <link href="https://cdn.jsdelivr.net/gh/rastikerdar/samim-font@v4.0.5/dist/font-face.css" rel="stylesheet" type="text/css">
-<link rel="stylesheet" href="style.css?v=140">
+<link rel="stylesheet" href="style.css?v=141">
 </head>
 <body>
 
@@ -227,6 +227,16 @@
 
   <!-- ANALYSIS -->
   <section id="tab-analysis" class="tab">
+    <div class="an-month">
+      <button type="button" class="month-nav-btn" id="anPrevMonth" aria-label="ماه قبل">
+        <span class="icon-mask" data-icon="chevron-right" style="width:18px;height:18px;color:var(--green-deep)"></span>
+      </button>
+      <h2 id="anMonthLabel">—</h2>
+      <button type="button" class="month-nav-btn" id="anNextMonth" aria-label="ماه بعد">
+        <span class="icon-mask" data-icon="chevron-left" style="width:18px;height:18px;color:var(--green-deep)"></span>
+      </button>
+    </div>
+
     <div class="ai-card" id="aiAnalysisCard">
       <button type="button" id="btnAiAnalyze" class="ai-card-button">
         <svg class="ai-card-watermark" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -247,98 +257,32 @@
       <div id="aiAnalysisResult" class="ai-result" style="display:none;"></div>
     </div>
 
-    <div class="settings-card daily-chart-card">
-      <div class="daily-chart-head combined">
-        <div class="daily-chart-head-item">
-          <span class="daily-chart-dot income-dot"></span>
-          <div class="daily-chart-head-text">
-            <span class="daily-chart-label">درآمد</span>
-            <strong id="incomeChartTotal" class="daily-chart-total income-color">۰ تومان</strong>
-          </div>
-        </div>
-        <div class="chart-period-toggle" id="dailyChartModeToggle" style="gap:4px;margin:0;">
-          <button type="button" class="chart-period-btn selected" data-mode="day" style="padding:6px 10px;flex:none;width:auto;">ماهانه</button>
-          <button type="button" class="chart-period-btn" data-mode="year" style="padding:6px 10px;flex:none;width:auto;">سالیانه</button>
-        </div>
-        <div class="daily-chart-head-item align-left">
-          <div class="daily-chart-head-text align-left">
-            <span class="daily-chart-label">مخارج</span>
-            <strong id="expenseChartTotal" class="daily-chart-total expense-color">۰ تومان</strong>
-          </div>
-          <span class="daily-chart-dot expense-dot"></span>
-        </div>
-      </div>
-      <div class="chart-carousel" data-carousel="daily">
-        <div class="chart-carousel-track" id="dailyChartTrack">
-          <div class="chart-carousel-page" data-page="0">
-            <div class="daily-chart-scroll" id="dailyChartScroll">
-              <div id="combinedDailyChart"></div>
-            </div>
-          </div>
-          <div class="chart-carousel-page" data-page="1">
-            <div id="combinedBarChart"></div>
-          </div>
-          <div class="chart-carousel-page" data-page="2">
-            <p class="chart-page-title">سهم دسته‌بندی مخارج</p>
-            <div id="catHBarChart"></div>
-          </div>
-          <div class="chart-carousel-page" data-page="3">
-            <p class="chart-page-title">نسبت پس‌انداز ماه</p>
-            <div id="savingsRingChart"></div>
-          </div>
-        </div>
-        <div class="chart-carousel-dots" id="dailyChartDots">
-          <span class="chart-carousel-dot active" data-i="0"></span>
-          <span class="chart-carousel-dot" data-i="1"></span>
-          <span class="chart-carousel-dot" data-i="2"></span>
-          <span class="chart-carousel-dot" data-i="3"></span>
-        </div>
-      </div>
+    <div class="an-kpis" id="anKpis"></div>
+
+    <div class="settings-card an-card">
+      <h2>روند خرج در طول ماه</h2>
+      <p class="an-note" id="anCumNote"></p>
+      <div id="anCumChart"></div>
     </div>
 
-    <div class="settings-card">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-        <h2 style="margin:0;">مقایسه درآمد و مخارج</h2>
-        <div class="chart-period-toggle" id="mainPeriodToggle" style="gap:4px;margin:0;">
-          <button type="button" class="chart-period-btn selected" data-period="month" style="padding:6px 10px;flex:none;width:auto;">ماهانه</button>
-          <button type="button" class="chart-period-btn" data-period="week" style="padding:6px 10px;flex:none;width:auto;">هفتگی</button>
-          <button type="button" class="chart-period-btn" data-period="all" style="padding:6px 10px;flex:none;width:auto;">کل بازه</button>
-        </div>
-      </div>
-      <div class="chart-carousel" data-carousel="compare">
-        <div class="chart-carousel-track" id="compareChartTrack">
-          <div class="chart-carousel-page" data-page="0">
-            <div id="incomeExpenseChart"></div>
-          </div>
-          <div class="chart-carousel-page" data-page="1">
-            <div id="incomeExpensePie"></div>
-          </div>
-          <div class="chart-carousel-page" data-page="2">
-            <p class="chart-page-title">نوار پیشرفت بودجه ماه</p>
-            <div id="budgetProgressChart"></div>
-          </div>
-          <div class="chart-carousel-page" data-page="3">
-            <p class="chart-page-title">شاخص‌های کلیدی</p>
-            <div id="kpiCardsChart"></div>
-          </div>
-        </div>
-        <div class="chart-carousel-dots" id="compareChartDots">
-          <span class="chart-carousel-dot active" data-i="0"></span>
-          <span class="chart-carousel-dot" data-i="1"></span>
-          <span class="chart-carousel-dot" data-i="2"></span>
-          <span class="chart-carousel-dot" data-i="3"></span>
-        </div>
-      </div>
+    <div class="settings-card an-card">
+      <h2>مخارج بر اساس دسته</h2>
+      <div id="anCatChart"></div>
     </div>
-    <div class="settings-card">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-        <h2 style="margin:0;">بزرگ‌ترین تراکنش‌های این ماه</h2>
-      </div>
-      <div id="topTransactionsList"></div>
+
+    <div class="settings-card an-card">
+      <h2>درآمد و مخارج ۶ ماه اخیر</h2>
+      <div id="anTrendChart"></div>
     </div>
-    <div class="settings-card">
-      <h2>تنوع مخارج</h2>
-      <div id="expenseDiversityChart"></div>
+
+    <div class="settings-card an-card">
+      <h2>خرج در روزهای هفته</h2>
+      <div id="anWeekChart"></div>
+    </div>
+
+    <div class="settings-card an-card">
+      <h2>بزرگ‌ترین خرج‌های ماه</h2>
+      <div id="anTopList"></div>
     </div>
   </section>
 
@@ -740,9 +684,6 @@
 <!-- دکمه‌های شناور بیرون از تب‌ها تا position:fixed درست کار کند -->
 <button type="button" id="fab" class="fab fab-installments" aria-label="افزودن قسط" hidden>+</button>
 <button type="button" id="piFab" class="fab fab-todo" aria-label="افزودن کار" hidden>+</button>
-<button type="button" id="aiFloatingStar" class="ai-floating-star" aria-label="تحلیل هوشمند">
-  <span class="icon-mask" data-icon="sparkles" style="width:22px;height:22px;color:#fff"></span>
-</button>
 
 <nav class="bottom-nav meniscus-nav" id="bottomNav" aria-label="منوی اصلی">
   <div class="meniscus-bead" id="navBead" aria-hidden="true"></div>
@@ -936,8 +877,8 @@ n  <!-- Progress -->
 </div>
 <!-- ═══════════════ END ONBOARDING ═══════════════ -->
 
-<script src="script.js?v=140"></script>
-<script src="installments.js?v=140"></script>
-<script src="three-scene.js?v=140"></script>
+<script src="script.js?v=141"></script>
+<script src="installments.js?v=141"></script>
+<script src="three-scene.js?v=141"></script>
 </body>
 </html>

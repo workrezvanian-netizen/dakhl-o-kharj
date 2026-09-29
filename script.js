@@ -698,22 +698,9 @@ function switchTab(tab, opts = {}) {
     requestAnimationFrame(() => renderDashboard());
   }
   if (tab === "analysis") {
-    const incEl = document.getElementById("incomeChartTotal");
-    const expEl = document.getElementById("expenseChartTotal");
-    if (incEl) incEl.textContent = "۰";
-    if (expEl) expEl.textContent = "۰";
+    // نمودارها عرض واقعی را فقط وقتی تب دیده می‌شود دارند
     requestAnimationFrame(() => {
-      try {
-        if (typeof initChartCarousels === "function") initChartCarousels();
-        renderAnalysis();
-      } catch (e) { console.warn("analysis", e); }
-      requestAnimationFrame(() => {
-        ["dailyChartTrack", "compareChartTrack"].forEach((id) => {
-          const tr = document.getElementById(id);
-          if (tr && tr._carousel && tr._carousel.refresh) tr._carousel.refresh();
-        });
-        if (typeof window._aiCollapseReset === "function") window._aiCollapseReset();
-      });
+      try { renderAnalysis(); } catch (e) { console.warn("analysis", e); }
     });
   }
   if (tab === "installments" && typeof window.refreshInstallments === "function") {
@@ -740,19 +727,6 @@ function switchTab(tab, opts = {}) {
   if (headerEl) {
     // Toggle compact state via JS-driven transform
     setHeaderCompact(tab !== "dashboard");
-  }
-
-  // Show/hide AI floating star (only on analysis tab)
-  const aiStar = document.getElementById("aiFloatingStar");
-  if (aiStar) {
-    if (tab === "analysis") {
-      aiStar.style.visibility = "visible";
-      aiStar.style.pointerEvents = "auto";
-    } else {
-      aiStar.style.opacity = "0";
-      aiStar.style.visibility = "hidden";
-      aiStar.style.pointerEvents = "none";
-    }
   }
 
   // دکمه شناور + اقساط فقط در تب اقساط
@@ -1627,8 +1601,8 @@ function renderDashboard() {
   }
 
   const bySource = {};
-  incomes.forEach((x) => { bySource[x.source] = (bySource[x.source] || 0) + x.amount; });
-  const usedSources = Array.from(new Set([...INCOME_SOURCES, ...state.incomes.map((x) => x.source)]));
+  incomes.forEach((x) => { const k = x.source || "سایر"; bySource[k] = (bySource[k] || 0) + x.amount; });
+  const usedSources = Array.from(new Set([...INCOME_SOURCES, ...state.incomes.map((x) => x.source || "سایر")]));
   const srcWrap = document.getElementById("incomeSourceGrid");
   srcWrap.innerHTML = usedSources.map((source, i) => {
     const palette = INCOME_CARD_PALETTE[i % INCOME_CARD_PALETTE.length];
@@ -1667,931 +1641,431 @@ function quickAddIncome(source) {
 }
 
 // ---------- Analysis charts ----------
-let analysisPeriod = "month"; // Used for main period selection
-const setupPeriodToggle = (toggleId, callback) => {
-  const toggle = document.getElementById(toggleId);
-  if (!toggle) return;
-  toggle.querySelectorAll(".chart-period-btn").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      analysisPeriod = btn.dataset.period;
-      toggle.querySelectorAll(".chart-period-btn").forEach((b) => b.classList.remove("selected"));
-      btn.classList.add("selected");
-      if (callback) callback();
-    });
-  });
-};
-setupPeriodToggle("mainPeriodToggle", renderAll);
+// =========================================================
+// تب آنالیز — شاخص‌ها، روند تجمعی خرج، دسته‌ها، ۶ ماه اخیر، روزهای هفته، بزرگ‌ترین خرج‌ها
+// همه‌چیز بر اساس ماهِ دیده‌شده (viewedMonth) و با SVG ساده، بدون کاروسل
+// =========================================================
+const AN_INCOME = "#00907C";
+const AN_EXPENSE = "#C9482A";
+const AN_CONTEXT = "#C9CFCC";
+const AN_WEEKDAYS = ["شنبه", "یکشنبه", "دوشنبه", "سه‌شنبه", "چهارشنبه", "پنجشنبه", "جمعه"];
+const AN_WEEKDAYS_SHORT = ["ش", "ی", "د", "س", "چ", "پ", "ج"];
 
-function getCompareData(period) {
-  let curData, prevData;
-  if (period === "month") {
-    const t = viewedMonth;
-    const p = addMonthsJalali(t.jy, t.jm, -1);
-    curData = computeMonthTotals(t.jy, t.jm);
-    prevData = computeMonthTotals(p.jy, p.jm);
-  } else if (period === "week") {
-    const today = new Date();
-    const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
-    const twoWeeksAgo = new Date(today.getTime() - 14 * 24 * 60 * 60 * 1000);
-
-    const getWeekData = (startDate, endDate) => {
-      const inRange = (dateStr) => {
-        const [gy, gm, gd] = dateStr.split("-").map(Number);
-        const d = new Date(gy, gm - 1, gd);
-        return d >= startDate && d < endDate;
-      };
-      const incomes = state.incomes.filter((x) => inRange(x.date));
-      const expenses = state.expenses.filter((x) => inRange(x.date));
-      const totalIncome = incomes.reduce((s, x) => s + x.amount, 0);
-      const totalExpense = expenses.reduce((s, x) => s + x.amount, 0);
-      return { totalIncome, totalExpense, categories: [] };
-    };
-
-    curData = getWeekData(weekAgo, today);
-    prevData = getWeekData(twoWeeksAgo, weekAgo);
-  } else {
-    curData = {
-      totalIncome: state.incomes.reduce((s, x) => s + x.amount, 0),
-      totalExpense: state.expenses.reduce((s, x) => s + x.amount, 0),
-      categories: []
-    };
-    prevData = { totalIncome: 0, totalExpense: 0, categories: [] };
-  }
-
-  const monthPrevJ = addMonthsJalali(viewedMonth.jy, viewedMonth.jm, -1);
-  const periodLegend = {
-    month: {
-      cur: isViewingCurrentMonth() ? "این ماه" : JALALI_MONTHS[viewedMonth.jm - 1],
-      prev: JALALI_MONTHS[monthPrevJ.jm - 1]
-    },
-    week: { cur: "این هفته", prev: "هفته قبل" },
-    all: { cur: "کل بازه", prev: "بدون مقایسه" }
-  }[period] || { cur: "دوره فعلی", prev: "دوره قبل" };
-
-  return { curData, prevData, periodLegend };
+function anJ(dateStr) {
+  const [gy, gm, gd] = String(dateStr || "").split("-").map(Number);
+  if (!gy || !gm || !gd) return null;
+  return toJalaali(gy, gm, gd);
 }
-
-function renderMonthCompareCard(containerId, period = "month") {
-  const wrap = document.getElementById(containerId);
-  if (!wrap) return;
-  const { curData, prevData, periodLegend } = getCompareData(period);
-
-  if (!curData.totalIncome && !curData.totalExpense && !prevData.totalIncome && !prevData.totalExpense) {
-    wrap.innerHTML = `<p class="empty-hint">داده‌ای برای مقایسه نیست</p>`;
-    return;
-  }
-
-  const defs = [
-    { key: "expense", label: "مخارج", curV: curData.totalExpense, prevV: prevData.totalExpense, goodWhenDown: true },
-    { key: "income", label: "درآمد", curV: curData.totalIncome, prevV: prevData.totalIncome, goodWhenDown: false }
-  ];
-
-  const overallMax = Math.max(...defs.map((d) => Math.max(d.curV, d.prevV))) || 1;
-
-  const gauges = defs.map((g) => {
-    const increased = g.curV > g.prevV;
-    const changePct = g.prevV > 0 ? Math.round(((g.curV - g.prevV) / g.prevV) * 100) : (g.curV > 0 ? 100 : 0);
-    const isGood = g.prevV === 0 && g.curV === 0 ? null : (g.goodWhenDown ? !increased : increased);
-
-    // رنگ ثابت هر متریک (بدون توجه به وضعیت خوب/بد): مخارج = قرمز/سبز، درآمد = آبی/زرد
-    let colorA, colorB, prevColor;
-    if (g.key === "expense") {
-      colorA = "#FF375F"; colorB = "#E01346";
-      prevColor = "#57B928";
-    } else {
-      colorA = "#2E9BFF"; colorB = "#0A6FDB";
-      prevColor = "#FFD426";
-    }
-
-    const outerPct = (g.curV / overallMax) * 100;
-    const innerPct = (g.prevV / overallMax) * 100;
-    return { ...g, outerPct, innerPct, changePct, colorA, colorB, prevColor };
-  });
-
-  const cx = 78, cy = 78;
-  const rOuter = 62, swOuter = 16;
-  const rInner = 40, swInner = 13;
-  const circOuter = 2 * Math.PI * rOuter;
-  const circInner = 2 * Math.PI * rInner;
-  const uid = Date.now();
-
-  const gaugeHTML = gauges.map((g, i) => {
-    const dashOuter = (g.outerPct / 100) * circOuter;
-    const dashInner = (g.innerPct / 100) * circInner;
-    return `
-      <div class="compare-gauge">
-        <svg viewBox="0 0 156 156" class="compare-gauge-svg">
-          <defs>
-            <linearGradient id="gaugeGrad-${uid}-${i}" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="${g.colorA}"/>
-              <stop offset="100%" stop-color="${g.colorB}"/>
-            </linearGradient>
-          </defs>
-          <circle cx="${cx}" cy="${cy}" r="${rOuter}" fill="none" stroke="var(--cream)" stroke-width="${swOuter}"/>
-          <circle class="compare-gauge-seg" id="gaugeOuter-${uid}-${i}" cx="${cx}" cy="${cy}" r="${rOuter}" fill="none"
-            stroke="url(#gaugeGrad-${uid}-${i})" stroke-width="${swOuter}" stroke-linecap="round"
-            stroke-dasharray="0 ${circOuter}" transform="rotate(-90 ${cx} ${cy})"
-            data-dash="${dashOuter}" data-circ="${circOuter}"/>
-          <circle cx="${cx}" cy="${cy}" r="${rInner}" fill="none" stroke="var(--cream)" stroke-width="${swInner}"/>
-          <circle class="compare-gauge-seg" id="gaugeInner-${uid}-${i}" cx="${cx}" cy="${cy}" r="${rInner}" fill="none"
-            stroke="${g.prevColor}" stroke-width="${swInner}" stroke-linecap="round"
-            stroke-dasharray="0 ${circInner}" transform="rotate(-90 ${cx} ${cy})"
-            data-dash="${dashInner}" data-circ="${circInner}"/>
-        </svg>
-        <div class="compare-gauge-center">
-          <span class="compare-gauge-pct">${g.changePct > 0 ? "+" : ""}${toPersianDigits(g.changePct)}٪</span>
-        </div>
-        <div class="compare-gauge-label">${g.label}</div>
-        <div class="compare-gauge-legend">
-          <span><i style="background:${g.colorB}"></i>${periodLegend.cur}: ${fmtAmount(g.curV)}</span>
-          <span><i style="background:${g.prevColor}"></i>${periodLegend.prev}: ${fmtAmount(g.prevV)}</span>
-        </div>
-      </div>`;
-  }).join("");
-
-  wrap.innerHTML = `<div class="compare-gauges-row">${gaugeHTML}</div>`;
-
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      gauges.forEach((g, i) => {
-        ["Outer", "Inner"].forEach((part) => {
-          const seg = document.getElementById(`gauge${part}-${uid}-${i}`);
-          if (!seg) return;
-          const dash = parseFloat(seg.dataset.dash);
-          const circ = parseFloat(seg.dataset.circ);
-          seg.setAttribute("stroke-dasharray", `${dash} ${circ - dash}`);
-        });
-      });
-    });
+function anMonthItems(list, jy, jm) {
+  return (list || []).filter((x) => {
+    const j = anJ(x.date);
+    return j && j.jy === jy && j.jm === jm;
   });
 }
-
-function renderIncomeExpensePieCompare(containerId, period = "month") {
-  const wrap = document.getElementById(containerId);
-  if (!wrap) return;
-  const { curData, periodLegend } = getCompareData(period);
-  const totalIncome = curData.totalIncome || 0;
-  const totalExpense = curData.totalExpense || 0;
-  const total = totalIncome + totalExpense;
-
-  if (!total) {
-    wrap.innerHTML = `<p class="empty-hint">داده‌ای برای این دوره نیست</p>`;
-    return;
-  }
-
-  const incomePct = (totalIncome / total) * 100;
-  const cx = 90, cy = 90, r = 68, sw = 24;
-  const circ = 2 * Math.PI * r;
-  const incomeDash = (incomePct / 100) * circ;
-  const balance = totalIncome - totalExpense;
-  const uid = Date.now();
-
-  wrap.innerHTML = `
-    <div class="pie-compare">
-      <svg viewBox="0 0 180 180" class="pie-compare-svg">
-        <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#C24A2E" stroke-width="${sw}"/>
-        <circle id="pieCompareIncome-${uid}" cx="${cx}" cy="${cy}" r="${r}" fill="none"
-          stroke="#2F7A72" stroke-width="${sw}" stroke-linecap="round"
-          stroke-dasharray="0 ${circ}" transform="rotate(-90 ${cx} ${cy})"
-          data-dash="${incomeDash}" data-circ="${circ}"/>
-      </svg>
-      <div class="pie-compare-center">
-        <span class="pie-compare-label">تراز ${periodLegend.cur}</span>
-        <strong class="pie-compare-balance ${balance >= 0 ? "income-color" : "expense-color"}">${balance >= 0 ? "+" : "−"}${fmtAmount(Math.abs(balance))}</strong>
-      </div>
-    </div>
-    <div class="pie-compare-legend">
-      <span><i style="background:#2F7A72"></i>درآمد: ${fmtAmount(totalIncome)} (${toPersianDigits(Math.round(incomePct))}٪)</span>
-      <span><i style="background:#C24A2E"></i>مخارج: ${fmtAmount(totalExpense)} (${toPersianDigits(Math.round(100 - incomePct))}٪)</span>
-    </div>`;
-
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      const seg = document.getElementById(`pieCompareIncome-${uid}`);
-      if (!seg) return;
-      const dash = parseFloat(seg.dataset.dash);
-      const c = parseFloat(seg.dataset.circ);
-      seg.setAttribute("stroke-dasharray", `${dash} ${c - dash}`);
-    });
-  });
+function anSum(list) { return list.reduce((s, x) => s + (Number(x.amount) || 0), 0); }
+function anFa(n) { return toPersianDigits(Math.round(n)); }
+// مبلغ کوتاه برای محورها و برچسب‌ها: ۱٫۲ میلیون، ۸۵۰ هزار
+function anShort(n) {
+  const a = Math.abs(n);
+  const sign = n < 0 ? "−" : "";
+  const fmt = (v) => toPersianDigits(v >= 10 ? Math.round(v) : Math.round(v * 10) / 10).replace(".", "٫");
+  if (a >= 1e9) return sign + fmt(a / 1e9) + " میلیارد";
+  if (a >= 1e6) return sign + fmt(a / 1e6) + " میلیون";
+  if (a >= 1e3) return sign + fmt(a / 1e3) + " هزار";
+  return sign + toPersianDigits(Math.round(a));
 }
-
-function renderPieChart(containerId, segments, chartType = "expense") {
-  const wrap = document.getElementById(containerId);
-  if (!wrap) return;
-  const total = (segments || []).reduce((s, x) => s + x.value, 0);
-  if (!total) {
-    wrap.innerHTML = `<p class="empty-hint">داده‌ای برای این بازه نیست</p>`;
-    return;
-  }
-  const visible = segments.filter((s) => s.value > 0);
-
-  // رنگ هر بخش از قبل با catColor() تعیین شده تا با داشبورد/تب ثبت/لیست مخارج یکسان بماند
-  const cx = 91, cy = 91, r = 72, sw = 30;
-  const circumference = 2 * Math.PI * r;
-  const uid = Date.now();
-
-  let cumulative = 0;
-  const segsHTML = visible.map((seg, i) => {
-    const dash = (seg.value / total) * circumference;
-    const offset = (cumulative / total) * circumference;
-    cumulative += seg.value;
-    return `<circle class="donut-seg" id="donutSeg-${uid}-${i}" cx="${cx}" cy="${cy}" r="${r}" fill="none"
-      stroke="${seg.color}" stroke-width="${sw}"
-      stroke-dasharray="0 ${circumference}" stroke-dashoffset="${-offset}"
-      transform="rotate(-90 ${cx} ${cy})" data-dash="${dash}" data-circ="${circumference}"/>`;
-  }).join("");
-
-  const legend = visible.map((seg) => {
-    const pct = Math.round((seg.value / total) * 100);
-    const iconHTML = seg.icon
-      ? `<span class="legend-icon" style="background:${seg.color}1f">${iconSpanHTML(seg.icon, `color:${seg.color}`)}</span>`
-      : `<span class="legend-dot" style="background:${seg.color}"></span>`;
-    return `
-      <div class="chart-legend-row">
-        ${iconHTML}
-        <span class="legend-label">${seg.label}</span>
-        <span class="legend-pct" style="background:${seg.color}1c;color:${seg.color}">${toPersianDigits(pct)}٪</span>
-        <span class="legend-amt">${fmtAmount(seg.value)}</span>
-      </div>`;
-  }).join("");
-
-  wrap.innerHTML = `
-    <div class="donut-wrap">
-      <svg viewBox="0 0 182 182" class="donut-svg">
-        <defs>
-          <filter id="pieShadow-${containerId}" x="-30%" y="-30%" width="160%" height="160%">
-            <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#163F3C" flood-opacity="0.18"/>
-          </filter>
-        </defs>
-        <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--cream)" stroke-width="${sw}"/>
-        <g style="filter:url(#pieShadow-${containerId})">${segsHTML}</g>
-      </svg>
-      <div class="donut-center">
-        <span class="donut-center-label">مجموع مخارج</span>
-        <span class="donut-center-amt">${fmtAmount(total)}</span>
-      </div>
-    </div>
-    <div class="chart-legend">${legend}</div>
-  `;
-
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      visible.forEach((seg, i) => {
-        const el = document.getElementById(`donutSeg-${uid}-${i}`);
-        if (!el) return;
-        const dash = parseFloat(el.dataset.dash);
-        const circ = parseFloat(el.dataset.circ);
-        el.setAttribute("stroke-dasharray", `${dash} ${circ - dash}`);
-      });
-    });
-  });
+function anEsc(s) {
+  return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
-
-// ---------- نمودار خطی ترکیبی درآمد/مخارج (روزانه قابل‌اسکرول + سالیانه) ----------
-function smoothPath(pts) {
-  if (pts.length < 2) return "";
-  if (pts.length === 2) return `M${pts[0].x.toFixed(1)},${pts[0].y.toFixed(1)} L${pts[1].x.toFixed(1)},${pts[1].y.toFixed(1)}`;
-  let d = `M${pts[0].x.toFixed(1)},${pts[0].y.toFixed(1)}`;
-  for (let i = 0; i < pts.length - 1; i += 1) {
-    const p0 = pts[i - 1] || pts[i];
-    const p1 = pts[i];
-    const p2 = pts[i + 1];
-    const p3 = pts[i + 2] || p2;
-    const cp1x = p1.x + (p2.x - p0.x) / 6;
-    const cp1y = p1.y + (p2.y - p0.y) / 6;
-    const cp2x = p2.x - (p3.x - p1.x) / 6;
-    const cp2y = p2.y - (p3.y - p1.y) / 6;
-    d += ` C${cp1x.toFixed(1)},${cp1y.toFixed(1)} ${cp2x.toFixed(1)},${cp2y.toFixed(1)} ${p2.x.toFixed(1)},${p2.y.toFixed(1)}`;
-  }
-  return d;
+// گام‌های «گرد» برای محور
+function anNiceMax(v) {
+  if (v <= 0) return 1;
+  const p = Math.pow(10, Math.floor(Math.log10(v)));
+  const m = v / p;
+  const step = m <= 1 ? 1 : m <= 2 ? 2 : m <= 2.5 ? 2.5 : m <= 5 ? 5 : 10;
+  return step * p;
 }
-
-const JALALI_MONTHS_SHORT = ["فرو", "ارد", "خرد", "تیر", "مرد", "شهر", "مهر", "آبا", "آذر", "دی", "بهم", "اسف"];
-let dailyChartMode = "day"; // 'day' | 'year'
-
-function buildDailyChartPool(days) {
-  const now = new Date();
-  const pool = [];
-  for (let i = days - 1; i >= 0; i -= 1) {
-    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
-    const gy = d.getFullYear(), gm = d.getMonth() + 1, gd = d.getDate();
-    const iso = `${gy}-${String(gm).padStart(2, "0")}-${String(gd).padStart(2, "0")}`;
-    const j = toJalaali(gy, gm, gd);
-    pool.push({ iso, jy: j.jy, jm: j.jm, jd: j.jd, income: 0, expense: 0 });
-  }
-  const idx = {};
-  pool.forEach((p, i) => { idx[p.iso] = i; });
-  state.incomes.forEach((x) => { if (idx[x.date] !== undefined) pool[idx[x.date]].income += x.amount; });
-  state.expenses.forEach((x) => { if (idx[x.date] !== undefined) pool[idx[x.date]].expense += x.amount; });
-  return pool;
+// درصد تغییر با جهت، برای متن زیر شاخص‌ها
+function anDelta(cur, prev, higherIsGood, prevName) {
+  if (!prev) return cur ? `<span class="an-delta">ماه قبل صفر بود</span>` : "";
+  const pct = Math.round(((cur - prev) / Math.abs(prev)) * 100);
+  if (pct === 0) return `<span class="an-delta">مثل ${prevName}</span>`;
+  const up = pct > 0;
+  const good = up === higherIsGood;
+  return `<span class="an-delta ${good ? "is-good" : "is-bad"}"><i>${up ? "▲" : "▼"}</i>${toPersianDigits(Math.abs(pct))}٪ ${up ? "بیشتر" : "کمتر"} از ${prevName}</span>`;
 }
+function anEmpty(msg) { return `<div class="an-empty">${msg}</div>`; }
 
-function buildYearlyChartPool(jy) {
-  const pool = [];
-  for (let m = 1; m <= 12; m += 1) pool.push({ jy, jm: m, income: 0, expense: 0 });
-  state.incomes.forEach((x) => {
-    const [gy, gm, gd] = x.date.split("-").map(Number);
-    const j = toJalaali(gy, gm, gd);
-    if (j.jy === jy) pool[j.jm - 1].income += x.amount;
-  });
-  state.expenses.forEach((x) => {
-    const [gy, gm, gd] = x.date.split("-").map(Number);
-    const j = toJalaali(gy, gm, gd);
-    if (j.jy === jy) pool[j.jm - 1].expense += x.amount;
-  });
-  return pool;
-}
-
-function renderCombinedDailyChart(containerId, incomeTotalElId, expenseTotalElId) {
-  const wrap = document.getElementById(containerId);
-  const scrollWrap = document.getElementById("dailyChartScroll");
-  const incomeTotalEl = document.getElementById(incomeTotalElId);
-  const expenseTotalEl = document.getElementById(expenseTotalElId);
-  const isYear = dailyChartMode === "year";
-
-  const pool = isYear ? buildYearlyChartPool(todayJalali().jy) : buildDailyChartPool(10);
-  const n = pool.length;
-
-  // مقدار بالای نمودار: متناسب با دکمه‌ی بازه‌ی انتخاب‌شده — سالیانه = کل سال جاری، ماهانه = فقط ماه جاری
-  const todayJHead = todayJalali();
-  let headerIncome = 0, headerExpense = 0;
-  state.incomes.forEach((x) => {
-    const [gy, gm, gd] = x.date.split("-").map(Number);
-    const j = toJalaali(gy, gm, gd);
-    if (isYear ? j.jy === todayJHead.jy : (j.jy === todayJHead.jy && j.jm === todayJHead.jm)) headerIncome += x.amount;
-  });
-  state.expenses.forEach((x) => {
-    const [gy, gm, gd] = x.date.split("-").map(Number);
-    const j = toJalaali(gy, gm, gd);
-    if (isYear ? j.jy === todayJHead.jy : (j.jy === todayJHead.jy && j.jm === todayJHead.jm)) headerExpense += x.amount;
-  });
-  if (incomeTotalEl) incomeTotalEl.textContent = fmtAmount(headerIncome);
-  if (expenseTotalEl) expenseTotalEl.textContent = fmtAmount(headerExpense);
-
-  const totalIncome = pool.reduce((s, p) => s + p.income, 0);
-  const totalExpense = pool.reduce((s, p) => s + p.expense, 0);
-  if (!totalIncome && !totalExpense) {
-    wrap.innerHTML = `<p class="empty-hint">داده‌ای برای این بازه نیست</p>`;
-    return;
+// تولتیپ مشترک
+function anTip(host, html, x, y) {
+  let tip = host.querySelector(".an-tip");
+  if (!tip) {
+    tip = document.createElement("div");
+    tip.className = "an-tip";
+    host.appendChild(tip);
   }
-
-  const maxIncome = Math.max(...pool.map((p) => p.income)) || 1;
-  const maxExpense = Math.max(...pool.map((p) => p.expense)) || 1;
-
-  const H = 200, PAD_TOP = 40, PAD_BOTTOM = 28, PAD_X = 18;
-  const chartH = H - PAD_TOP - PAD_BOTTOM;
-  const W = Math.max((scrollWrap && scrollWrap.clientWidth) || 320, 280);
-  const stepX = (W - PAD_X * 2) / (n - 1 || 1);
-
-  const buildPts = (key, maxVal) => pool.map((p, i) => ({
-    x: PAD_X + i * stepX,
-    y: PAD_TOP + chartH - (p[key] / maxVal) * chartH,
-    v: p[key],
-    meta: p,
-  }));
-  const incomePts = buildPts("income", maxIncome);
-  const expensePts = buildPts("expense", maxExpense);
-
-  const incomeLine = smoothPath(incomePts);
-  const expenseLine = smoothPath(expensePts);
-  const baseY = (PAD_TOP + chartH).toFixed(1);
-  const incomeArea = `${incomeLine} L${incomePts[incomePts.length - 1].x.toFixed(1)},${baseY} L${incomePts[0].x.toFixed(1)},${baseY} Z`;
-  const expenseArea = `${expenseLine} L${expensePts[expensePts.length - 1].x.toFixed(1)},${baseY} L${expensePts[0].x.toFixed(1)},${baseY} Z`;
-
-  const gridLines = [0.28, 0.62].map((f) => {
-    const y = PAD_TOP + chartH * f;
-    return `<line x1="${PAD_X}" y1="${y.toFixed(1)}" x2="${(W - PAD_X).toFixed(1)}" y2="${y.toFixed(1)}" class="daily-chart-grid"/>`;
-  }).join("");
-
-  const axisLabels = pool.map((p, i) => {
-    const x = PAD_X + i * stepX;
-    const label = isYear ? JALALI_MONTHS_SHORT[p.jm - 1] : toPersianDigits(p.jd);
-    return `<text x="${x.toFixed(1)}" y="${H - 8}" text-anchor="middle" class="daily-chart-axis-label">${label}</text>`;
-  }).join("");
-
-  const uid = `${containerId}-${Date.now()}`;
-  const todayJ = todayJalali();
-  const defaultIdx = isYear ? (todayJ.jm - 1) : (n - 1);
-
-  wrap.innerHTML = `
-    <svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" class="daily-chart-svg combined-chart-svg chart-graphic-enter" id="svg-${uid}" preserveAspectRatio="none">
-      <defs>
-        <linearGradient id="fillIncome-${uid}" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#2F7A72" stop-opacity="0.32"/>
-          <stop offset="100%" stop-color="#2F7A72" stop-opacity="0"/>
-        </linearGradient>
-        <linearGradient id="fillExpense-${uid}" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#C24A2E" stop-opacity="0.28"/>
-          <stop offset="100%" stop-color="#C24A2E" stop-opacity="0"/>
-        </linearGradient>
-        <filter id="lineGlow-${uid}" x="-30%" y="-60%" width="160%" height="220%">
-          <feDropShadow dx="0" dy="1.5" stdDeviation="2.2" flood-color="#163F3C" flood-opacity="0.18"/>
-        </filter>
-      </defs>
-      ${gridLines}
-      ${axisLabels}
-      <line id="scrubLine-${uid}" x1="0" y1="${PAD_TOP}" x2="0" y2="${baseY}" class="daily-chart-dashed"/>
-      <path d="${expenseArea}" fill="url(#fillExpense-${uid})" stroke="none"/>
-      <path d="${incomeArea}" fill="url(#fillIncome-${uid})" stroke="none"/>
-      <g filter="url(#lineGlow-${uid})">
-        <path id="lineExpense-${uid}" d="${expenseLine}" fill="none" stroke="#C24A2E" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
-        <path id="lineIncome-${uid}" d="${incomeLine}" fill="none" stroke="#2F7A72" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
-      </g>
-      <circle id="scrubDotExpense-${uid}" r="4" fill="#fff" stroke="#C24A2E" stroke-width="2.4"/>
-      <circle id="scrubDotIncome-${uid}" r="4" fill="#fff" stroke="#2F7A72" stroke-width="2.4"/>
-      <g id="scrubTooltip-${uid}">
-        <rect id="scrubTooltipBg-${uid}" y="2" height="34" rx="10" class="daily-chart-tooltip-bg"/>
-        <text id="scrubTooltipIncome-${uid}" y="13" text-anchor="middle" class="daily-chart-tooltip-val income-tooltip-val"></text>
-        <text id="scrubTooltipExpense-${uid}" y="24" text-anchor="middle" class="daily-chart-tooltip-val expense-tooltip-val"></text>
-        <text id="scrubTooltipDate-${uid}" y="34" text-anchor="middle" class="daily-chart-tooltip-date"></text>
-      </g>
-      <rect x="0" y="0" width="${W}" height="${H}" fill="transparent" id="scrubCatcher-${uid}"/>
-    </svg>
-  `;
-
-  const svg = document.getElementById(`svg-${uid}`);
-  const scrubLine = document.getElementById(`scrubLine-${uid}`);
-  const scrubDotIncome = document.getElementById(`scrubDotIncome-${uid}`);
-  const scrubDotExpense = document.getElementById(`scrubDotExpense-${uid}`);
-  const tooltipBg = document.getElementById(`scrubTooltipBg-${uid}`);
-  const tooltipIncomeText = document.getElementById(`scrubTooltipIncome-${uid}`);
-  const tooltipExpenseText = document.getElementById(`scrubTooltipExpense-${uid}`);
-  const tooltipDateText = document.getElementById(`scrubTooltipDate-${uid}`);
-  const catcher = document.getElementById(`scrubCatcher-${uid}`);
-
-  function moveToIndex(idx) {
-    idx = Math.min(Math.max(idx, 0), n - 1);
-    const ip = incomePts[idx];
-    const ep = expensePts[idx];
-    scrubLine.setAttribute("x1", ip.x.toFixed(1));
-    scrubLine.setAttribute("x2", ip.x.toFixed(1));
-    scrubDotIncome.setAttribute("cx", ip.x.toFixed(1));
-    scrubDotIncome.setAttribute("cy", ip.y.toFixed(1));
-    scrubDotExpense.setAttribute("cx", ep.x.toFixed(1));
-    scrubDotExpense.setAttribute("cy", ep.y.toFixed(1));
-
-    const p = ip.meta;
-    const dateStr = isYear ? `${JALALI_MONTHS[p.jm - 1]} ${toPersianDigits(p.jy)}` : `${toPersianDigits(p.jd)} ${JALALI_MONTHS[p.jm - 1]}`;
-    const incomeStr = `درآمد: ${fmtAmount(ip.v)}`;
-    const expenseStr = `مخارج: ${fmtAmount(ep.v)}`;
-    tooltipIncomeText.textContent = incomeStr;
-    tooltipExpenseText.textContent = expenseStr;
-    tooltipDateText.textContent = dateStr;
-
-    const maxLen = Math.max(incomeStr.length, expenseStr.length, dateStr.length);
-    const tw = Math.max(80, 14 + maxLen * 5.7);
-    let tx = ip.x - tw / 2;
-    tx = Math.min(Math.max(tx, PAD_X - 10), W - PAD_X + 10 - tw);
-    tooltipBg.setAttribute("x", tx.toFixed(1));
-    tooltipBg.setAttribute("width", tw.toFixed(1));
-    const tcx = (tx + tw / 2).toFixed(1);
-    tooltipIncomeText.setAttribute("x", tcx);
-    tooltipExpenseText.setAttribute("x", tcx);
-    tooltipDateText.setAttribute("x", tcx);
-  }
-
-  function xToIndex(clientX) {
-    const rect = svg.getBoundingClientRect();
-    const relX = ((clientX - rect.left) / rect.width) * W;
-    return Math.round((relX - PAD_X) / stepX);
-  }
-
-  // تپ ساده برای انتخاب روز/ماه — بدون preventDefault تا اسکرول افقی دست‌نخورده بمونه
-  let downX = null, downY = null, moved = false;
-  catcher.addEventListener("pointerdown", (e) => { downX = e.clientX; downY = e.clientY; moved = false; });
-  catcher.addEventListener("pointermove", (e) => {
-    if (downX === null) return;
-    if (Math.abs(e.clientX - downX) > 6 || Math.abs(e.clientY - downY) > 6) moved = true;
-  });
-  catcher.addEventListener("pointerup", (e) => {
-    if (!moved) moveToIndex(xToIndex(e.clientX));
-    downX = null;
-  });
-
-  // Line-drawing animation for income/expense paths with glow trail
-  const lineExpense = document.getElementById(`lineExpense-${uid}`);
-  const lineIncome = document.getElementById(`lineIncome-${uid}`);
-  [lineExpense, lineIncome].forEach((path, idx) => {
-    if (!path) return;
-    const len = path.getTotalLength();
-    path.style.strokeDasharray = len;
-    path.style.strokeDashoffset = len;
-    // Stagger: income draws first, expense follows 200ms later
-    const delay = idx === 0 ? '0s' : '0.2s';
-    path.style.transition = `stroke-dashoffset 1.4s cubic-bezier(.22,1,.36,1) ${delay}`;
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        path.style.strokeDashoffset = '0';
-      });
-    });
-  });
-
-  // Fade-in the area fills after lines finish drawing
-  const areaExpense = wrap.querySelector(`[fill="url(#fillExpense-${uid})"]`);
-  const areaIncome = wrap.querySelector(`[fill="url(#fillIncome-${uid})"]`);
-  [areaIncome, areaExpense].forEach((area, idx) => {
-    if (!area) return;
-    area.style.opacity = '0';
-    const delay = idx === 0 ? '0.8s' : '1.0s';
-    area.style.transition = `opacity .7s cubic-bezier(.22,1,.36,1) ${delay}`;
-    requestAnimationFrame(() => { area.style.opacity = '1'; });
-  });
-
-  // Pulse the scrub dots after animation completes
-  setTimeout(() => {
-    [lineExpense, lineIncome].forEach((path) => {
-      if (!path) return;
-      path.style.filter = 'drop-shadow(0 0 4px ' + (path === lineIncome ? 'rgba(47,122,114,0.4)' : 'rgba(194,74,46,0.4)') + ')';
-    });
-  }, 1600);
-
-  moveToIndex(defaultIdx);
-}
-
-(function setupDailyChartModeToggle() {
-  const toggle = document.getElementById("dailyChartModeToggle");
-  if (!toggle) return;
-  toggle.querySelectorAll(".chart-period-btn").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      toggle.querySelectorAll(".chart-period-btn").forEach((b) => b.classList.remove("selected"));
-      btn.classList.add("selected");
-      dailyChartMode = btn.dataset.mode;
-      renderCombinedDailyChart("combinedDailyChart", "incomeChartTotal", "expenseChartTotal");
-      renderCombinedBarChart("combinedBarChart");
-      renderCatHBarChart("catHBarChart");
-      renderSavingsRingChart("savingsRingChart");
-    });
-  });
-})();
-
-// -- نمای دوم (میله‌ای گروهی) همون داده‌ی نمودار ترکیبی — برای صفحه‌ی دومِ ورق‌زدنِ نمودار اول --
-function renderCombinedBarChart(containerId) {
-  const wrap = document.getElementById(containerId);
-  if (!wrap) return;
-  const isYear = dailyChartMode === "year";
-  const pool = isYear ? buildYearlyChartPool(todayJalali().jy) : buildDailyChartPool(10);
-
-  const max = Math.max(...pool.map((p) => Math.max(p.income, p.expense))) || 1;
-  const today = todayJalali();
-
-  const cols = pool.map((p) => {
-    const label = isYear ? JALALI_MONTHS_SHORT[p.jm - 1] : toPersianDigits(p.jd);
-    const isToday = !isYear && p.jy === today.jy && p.jm === today.jm && p.jd === today.jd;
-    const incomeH = Math.max((p.income / max) * 100, p.income > 0 ? 4 : 0);
-    const expenseH = Math.max((p.expense / max) * 100, p.expense > 0 ? 4 : 0);
-    return `
-      <div class="dual-vbar-col ${isToday ? "is-today" : ""}">
-        <div class="dual-vbar-bars">
-          <div class="bar income" style="height:0%" data-target="${incomeH}"></div>
-          <div class="bar expense" style="height:0%" data-target="${expenseH}"></div>
-        </div>
-        <span class="dual-vbar-label">${label}</span>
-      </div>`;
-  }).join("");
-
-  if (max === 0 || pool.every((p) => !p.income && !p.expense)) {
-    wrap.innerHTML = `<p class="empty-hint">داده‌ای برای این بازه نیست</p>`;
-    return;
-  }
-
-  wrap.innerHTML = `<div class="dual-vbar-chart chart-graphic-enter">${cols}</div>`;
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      wrap.querySelectorAll(".bar").forEach((el) => { el.style.height = el.dataset.target + "%"; });
-    });
-  });
-}
-
-// -- کاروسل نمودار: scroll-snap ساده و پایدار ---
-function setupChartCarousel(trackId, dotsId, onShow) {
-  const track = document.getElementById(trackId);
-  const dots = document.getElementById(dotsId);
-  if (!track || !dots) return null;
-
-  if (track._carousel && typeof track._carousel.destroy === "function") {
-    try { track._carousel.destroy(); } catch (_) {}
-  }
-
-  // ریست استایل‌های transform قبلی
-  track.style.transform = "";
-  track.style.width = "";
-  track.style.transition = "";
-  Array.from(track.children).forEach((p) => {
-    p.style.flex = "";
-    p.style.width = "";
-    p.style.minWidth = "";
-    p.style.maxWidth = "";
-  });
-
-  track.classList.add("chart-snap-track");
-  const pages = Array.from(track.querySelectorAll(":scope > .chart-carousel-page"));
-  const dotEls = Array.from(dots.querySelectorAll(".chart-carousel-dot"));
-  if (!pages.length) return null;
-
-  let activeIndex = 0;
-  let scrollTimer = null;
-
-  function setDots(i) {
-    activeIndex = Math.max(0, Math.min(pages.length - 1, i));
-    dots.style.direction = "ltr";
-    dotEls.forEach((d, di) => d.classList.toggle("active", di === activeIndex));
-  }
-
-  function goTo(index) {
-    index = Math.max(0, Math.min(pages.length - 1, index));
-    const page = pages[index];
-    if (!page) return;
-    const left = page.offsetLeft;
-    track.scrollTo({ left, behavior: "smooth" });
-    setDots(index);
-    if (typeof onShow === "function") {
-      try { onShow(index); } catch (e) { console.warn(e); }
-    }
-  }
-
-  function onScroll() {
-    clearTimeout(scrollTimer);
-    scrollTimer = setTimeout(() => {
-      const w = track.clientWidth || 1;
-      const i = Math.round(track.scrollLeft / w);
-      setDots(i);
-      if (typeof onShow === "function") {
-        try { onShow(i); } catch (e) {}
-      }
-    }, 60);
-  }
-
-  dotEls.forEach((dot, i) => {
-    dot.onclick = (e) => {
-      e.preventDefault();
-      goTo(i);
-    };
-  });
-
-  track.addEventListener("scroll", onScroll, { passive: true });
-
-  track._carousel = {
-    goTo,
-    refresh() {
-      if (typeof onShow === "function") {
-        try { onShow(activeIndex); } catch (e) {}
-      }
-      // stay
-      const page = pages[activeIndex];
-      if (page) track.scrollLeft = page.offsetLeft;
-    },
-    destroy() {
-      track.removeEventListener("scroll", onScroll);
-      clearTimeout(scrollTimer);
-    }
-  };
-
-  setDots(0);
-  requestAnimationFrame(() => {
-    track.scrollLeft = 0;
-    if (typeof onShow === "function") {
-      try { onShow(0); } catch (e) {}
-    }
-  });
-  return track._carousel;
-}
-
-function renderCatHBarChart(containerId) {
-  const wrap = document.getElementById(containerId);
-  if (!wrap) return;
-  const expenses = state.expenses.filter((x) => inViewedMonth(x.date));
-  const byCat = {};
-  expenses.forEach((x) => { byCat[x.category] = (byCat[x.category] || 0) + x.amount; });
-  const rows = Object.entries(byCat).sort((a, b) => b[1] - a[1]).slice(0, 6);
-  if (!rows.length) {
-    wrap.innerHTML = `<p class="empty-hint">مخارجی در این ماه نیست</p>`;
-    return;
-  }
-  const max = rows[0][1] || 1;
-  wrap.innerHTML = `<div class="cat-hbar-list">${rows.map(([name, amt]) => {
-    const color = catColor(name);
-    const pct = Math.max(6, (amt / max) * 100);
-    return `<div class="cat-hbar-row">
-      <div class="cat-hbar-meta"><span>${name}</span><span style="direction:ltr">${fmtAmount(amt)}</span></div>
-      <div class="cat-hbar-track"><div class="cat-hbar-fill" style="background:${color}" data-w="${pct}"></div></div>
-    </div>`;
-  }).join("")}</div>`;
-  requestAnimationFrame(() => {
-    wrap.querySelectorAll(".cat-hbar-fill").forEach((el) => { el.style.width = el.dataset.w + "%"; });
-  });
-}
-
-function renderSavingsRingChart(containerId) {
-  const wrap = document.getElementById(containerId);
-  if (!wrap) return;
-  const incomes = state.incomes.filter((x) => inViewedMonth(x.date));
-  const expenses = state.expenses.filter((x) => inViewedMonth(x.date));
-  const inc = incomes.reduce((s, x) => s + x.amount, 0);
-  const exp = expenses.reduce((s, x) => s + x.amount, 0);
-  const saved = Math.max(inc - exp, 0);
-  const rate = inc > 0 ? Math.min(100, Math.round((saved / inc) * 100)) : 0;
-  const r = 54, c = 2 * Math.PI * r;
-  const dash = (rate / 100) * c;
-  wrap.innerHTML = `<div class="savings-ring-wrap">
-    <svg class="savings-ring-svg" viewBox="0 0 140 140">
-      <circle cx="70" cy="70" r="${r}" fill="none" stroke="rgba(22,63,60,0.08)" stroke-width="12"/>
-      <circle cx="70" cy="70" r="${r}" fill="none" stroke="#2F7A72" stroke-width="12"
-        stroke-linecap="round"
-        stroke-dasharray="${dash} ${c}"
-        transform="rotate(-90 70 70)"
-        style="transition: stroke-dasharray .9s cubic-bezier(.22,1,.36,1)"/>
-      <text x="70" y="68" text-anchor="middle" class="savings-ring-center">${rate}٪</text>
-      <text x="70" y="86" text-anchor="middle" class="savings-ring-sub">نرخ پس‌انداز</text>
-    </svg>
-    <div class="savings-ring-legend">
-      <span><i style="background:#2F7A72"></i>پس‌انداز ${fmtAmount(saved)}</span>
-      <span><i style="background:#C24A2E"></i>مخارج ${fmtAmount(exp)}</span>
-    </div>
-  </div>`;
-}
-
-function renderBudgetProgressChart(containerId) {
-  const wrap = document.getElementById(containerId);
-  if (!wrap) return;
-  const expenses = state.expenses.filter((x) => inViewedMonth(x.date));
-  const byCat = {};
-  expenses.forEach((x) => { byCat[x.category] = (byCat[x.category] || 0) + x.amount; });
-  const cats = state.categories.slice(0, 5);
-  if (!cats.length) {
-    wrap.innerHTML = `<p class="empty-hint">دسته‌ای تعریف نشده</p>`;
-    return;
-  }
-  const maxSpend = Math.max(1, ...Object.values(byCat), 1);
-  wrap.innerHTML = `<div class="bp-list">${cats.map((c) => {
-    const name = c.name;
-    const spent = byCat[name] || 0;
-    const pct = Math.min(100, (spent / maxSpend) * 100);
-    const color = catColor(name);
-    return `<div class="bp-row">
-      <div class="bp-head"><span>${name}</span><span style="direction:ltr;color:${color}">${fmtAmount(spent)}</span></div>
-      <div class="bp-track"><div class="bp-fill" style="background:${color}" data-w="${pct}"></div></div>
-    </div>`;
-  }).join("")}</div>`;
-  requestAnimationFrame(() => {
-    wrap.querySelectorAll(".bp-fill").forEach((el) => { el.style.width = el.dataset.w + "%"; });
-  });
-}
-
-function renderKpiCardsChart(containerId) {
-  const wrap = document.getElementById(containerId);
-  if (!wrap) return;
-  const incomes = state.incomes.filter((x) => inViewedMonth(x.date));
-  const expenses = state.expenses.filter((x) => inViewedMonth(x.date));
-  const inc = incomes.reduce((s, x) => s + x.amount, 0);
-  const exp = expenses.reduce((s, x) => s + x.amount, 0);
-  const bal = inc - exp;
-  const avgExp = expenses.length ? Math.round(exp / Math.max(expenses.length, 1)) : 0;
-  const days = new Set(expenses.map((x) => x.date)).size || 1;
-  const dailyAvg = Math.round(exp / days);
-  wrap.innerHTML = `<div class="kpi-grid">
-    <div class="kpi-card ${bal < 0 ? "neg" : ""}">
-      <div class="kpi-label">مانده ماه</div>
-      <div class="kpi-value">${fmtAmount(bal)}</div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-label">میانگین هر خرج</div>
-      <div class="kpi-value">${fmtAmount(avgExp)}</div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-label">میانگین روزانه</div>
-      <div class="kpi-value">${fmtAmount(dailyAvg)}</div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-label">تعداد مخارج</div>
-      <div class="kpi-value">${expenses.length.toLocaleString("fa-IR")}</div>
-    </div>
-  </div>`;
-}
-
-function refreshDailyCarouselCharts() {
-  renderCombinedDailyChart("combinedDailyChart", "incomeChartTotal", "expenseChartTotal");
-  renderCombinedBarChart("combinedBarChart");
-  renderCatHBarChart("catHBarChart");
-  renderSavingsRingChart("savingsRingChart");
-}
-function refreshCompareCarouselCharts() {
-  renderMonthCompareCard("incomeExpenseChart", analysisPeriod);
-  renderIncomeExpensePieCompare("incomeExpensePie", analysisPeriod);
-  renderBudgetProgressChart("budgetProgressChart");
-  renderKpiCardsChart("kpiCardsChart");
-}
-function initChartCarousels() {
-  try {
-    setupChartCarousel("dailyChartTrack", "dailyChartDots", () => {
-      try { refreshDailyCarouselCharts(); } catch (e) { console.warn(e); }
-    });
-    setupChartCarousel("compareChartTrack", "compareChartDots", () => {
-      try { refreshCompareCarouselCharts(); } catch (e) { console.warn(e); }
-    });
-  } catch (e) {
-    console.warn("initChartCarousels", e);
-  }
-}
-// بعد از DOM — و با تأخیر کوتاه تا layout آماده شود
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", () => setTimeout(initChartCarousels, 0));
-} else {
-  setTimeout(initChartCarousels, 0);
-}
-
-function renderTopTransactionsList(containerId) {
-  const wrap = document.getElementById(containerId);
-  if (!wrap) return;
-
-  const incomeItems = state.incomes
-    .filter((x) => inViewedMonth(x.date))
-    .map((x) => ({
-      id: x.id, kind: "income", amount: x.amount, date: x.date,
-      title: x.source || "درآمد", note: x.note || "",
-      icon: INCOME_SOURCE_ICON[x.source] || "wallet",
-      color: "#2F7A72",
-    }));
-  const expenseItems = state.expenses
-    .filter((x) => inViewedMonth(x.date))
-    .map((x) => ({
-      id: x.id, kind: "expense", amount: x.amount, date: x.date,
-      title: x.category, note: x.note || "",
-      icon: catIcon(x.category),
-      color: catColor(x.category),
-    }));
-
-  const all = [...incomeItems, ...expenseItems].sort((a, b) => b.amount - a.amount).slice(0, 8);
-
-  if (!all.length) {
-    wrap.innerHTML = `<p class="empty-hint">تراکنشی برای این ماه نیست</p>`;
-    return;
-  }
-
-  const max = Math.max(...all.map((t) => t.amount)) || 1;
-  wrap.innerHTML = `
-    <div class="vbar-chart">
-      ${all.map((tx, i) => `
-        <div class="vbar-col">
-          <span class="vbar-value">${tx.kind === "income" ? "+" : "−"}${fmtAmount(tx.amount)}</span>
-          <div class="vbar" style="height:0%;background:${tx.color};" data-target="${Math.max((tx.amount / max) * 100, 6)}"></div>
-          <span class="vbar-label">${tx.title}</span>
-        </div>`).join("")}
-    </div>`;
-
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      wrap.querySelectorAll(".vbar").forEach((el) => { el.style.height = el.dataset.target + "%"; });
-    });
-  });
+  if (html == null) { tip.classList.remove("show"); return; }
+  tip.innerHTML = html;
+  tip.classList.add("show");
+  const w = tip.offsetWidth, hw = host.clientWidth;
+  tip.style.left = Math.max(0, Math.min(hw - w, x - w / 2)) + "px";
+  tip.style.top = Math.max(0, y - tip.offsetHeight - 10) + "px";
 }
 
 function renderAnalysis() {
-  if (typeof refreshDailyCarouselCharts === "function") refreshDailyCarouselCharts();
-  else {
-    renderCombinedDailyChart("combinedDailyChart", "incomeChartTotal", "expenseChartTotal");
-    renderCombinedBarChart("combinedBarChart");
-    renderCatHBarChart("catHBarChart");
-    renderSavingsRingChart("savingsRingChart");
-  }
-  if (typeof refreshCompareCarouselCharts === "function") refreshCompareCarouselCharts();
-  else {
-    renderBudgetProgressChart("budgetProgressChart");
-    renderKpiCardsChart("kpiCardsChart");
-  }
+  const tab = document.getElementById("tab-analysis");
+  if (!tab) return;
+  const vm = viewedMonth;
+  const pm = addMonthsJalali(vm.jy, vm.jm, -1);
+  const monthName = JALALI_MONTHS[vm.jm - 1];
+  const prevName = JALALI_MONTHS[pm.jm - 1];
+  const isCurrent = isViewingCurrentMonth();
 
-  const inPeriod = (dateStr) => {
-    if (analysisPeriod === "all") return true;
-    const [gy, gm, gd] = dateStr.split("-").map(Number);
-    const d = new Date(gy, gm - 1, gd);
-    const today = new Date();
-    const daysDiff = Math.floor((today - d) / (1000 * 60 * 60 * 24));
-    
-    if (analysisPeriod === "week") return daysDiff >= 0 && daysDiff < 7;
-    if (analysisPeriod === "month") return inViewedMonth(dateStr);
-    return true;
-  };
-  const expenses = state.expenses.filter((x) => inPeriod(x.date));
-  const incomes = state.incomes.filter((x) => inPeriod(x.date));
+  const label = document.getElementById("anMonthLabel");
+  if (label) label.textContent = `${monthName} ${toPersianDigits(vm.jy)}`;
+  const nextBtn = document.getElementById("anNextMonth");
+  if (nextBtn) nextBtn.disabled = isCurrent;
+  const aiTitle = document.querySelector(".ai-card-head h2");
+  if (aiTitle) aiTitle.textContent = `تحلیل هوشمند ${isCurrent ? "این ماه" : monthName}`;
 
-  // Update title based on period
-  const periodLabels = { "week": "این هفته", "month": isViewingCurrentMonth() ? "این ماه" : JALALI_MONTHS[viewedMonth.jm - 1], "all": "کل بازه" };
-  const analysisTitle = document.querySelector(".ai-card-head h2");
-  if (analysisTitle) {
-    analysisTitle.textContent = `تحلیل هوشمند ${periodLabels[analysisPeriod]}`;
-  }
+  const inc = anMonthItems(state.incomes, vm.jy, vm.jm);
+  const exp = anMonthItems(state.expenses, vm.jy, vm.jm);
+  const pInc = anMonthItems(state.incomes, pm.jy, pm.jm);
+  const pExp = anMonthItems(state.expenses, pm.jy, pm.jm);
+  // ماه جاری هنوز تمام نشده؛ با همان چند روزِ اولِ ماه قبل مقایسه کن تا درصدها گمراه‌کننده نباشند
+  const cutDay = isCurrent ? todayJalali().jd : 99;
+  const upToCut = (list) => list.filter((x) => { const j = anJ(x.date); return j && j.jd <= cutDay; });
+  const pIncSame = upToCut(pInc), pExpSame = upToCut(pExp);
+  const cmpName = isCurrent ? `${toPersianDigits(cutDay)} روز اول ${prevName}` : prevName;
+  const ctx = { vm, pm, monthName, prevName, isCurrent, inc, exp, pInc, pExp, pIncSame, pExpSame, cmpName };
 
-  renderMonthCompareCard("incomeExpenseChart", analysisPeriod);
-  renderIncomeExpensePieCompare("incomeExpensePie", analysisPeriod);
-  renderTopTransactionsList("topTransactionsList");
-
-  const byCat = {};
-  expenses.forEach((x) => { byCat[x.category] = (byCat[x.category] || 0) + x.amount; });
-  const expenseSegments = Object.entries(byCat)
-    .sort((a, b) => b[1] - a[1])
-    .map(([name, amt]) => ({ label: name, value: amt, color: catColor(name), icon: catIcon(name) }));
-  renderPieChart("expenseDiversityChart", expenseSegments, "expense");
+  const parts = [anRenderKpis, anRenderCumulative, anRenderCategories, anRenderTrend, anRenderWeekdays, anRenderTop];
+  parts.forEach((fn) => {
+    try { fn(ctx); } catch (e) { console.warn("analysis", fn.name, e); }
+  });
 }
+
+// ---- ۱) شاخص‌ها
+function anRenderKpis(c) {
+  const el = document.getElementById("anKpis");
+  if (!el) return;
+  const ti = anSum(c.inc), te = anSum(c.exp);
+  const pi = anSum(c.pIncSame), pe = anSum(c.pExpSame);
+  const bal = ti - te;
+  const rate = ti > 0 ? Math.round((bal / ti) * 100) : null;
+  const monthLen = jalaaliMonthLength(c.vm.jy, c.vm.jm);
+  const daysSoFar = c.isCurrent ? todayJalali().jd : monthLen;
+  const daily = daysSoFar ? te / daysSoFar : 0;
+  const forecast = c.isCurrent && daysSoFar < monthLen ? daily * monthLen : null;
+
+  el.innerHTML = `
+    <div class="an-kpi">
+      <span class="an-kpi-label"><i style="background:${AN_INCOME}"></i>درآمد</span>
+      <strong>${fmtAmount(ti)}</strong>
+      ${anDelta(ti, pi, true, c.cmpName)}
+    </div>
+    <div class="an-kpi">
+      <span class="an-kpi-label"><i style="background:${AN_EXPENSE}"></i>مخارج</span>
+      <strong>${fmtAmount(te)}</strong>
+      ${anDelta(te, pe, false, c.cmpName)}
+    </div>
+    <div class="an-kpi">
+      <span class="an-kpi-label">مانده</span>
+      <strong class="${bal < 0 ? "is-neg" : ""}">${fmtAmount(bal)}</strong>
+      <span class="an-delta">${rate == null ? "درآمدی ثبت نشده" : rate >= 0 ? `${toPersianDigits(rate)}٪ درآمد پس‌انداز شد` : "خرج بیشتر از درآمد"}</span>
+    </div>
+    <div class="an-kpi">
+      <span class="an-kpi-label">میانگین خرج روزانه</span>
+      <strong>${fmtAmount(daily)}</strong>
+      <span class="an-delta">${forecast ? `پیش‌بینی تا آخر ماه: ${anShort(forecast)}` : `در ${toPersianDigits(monthLen)} روز`}</span>
+    </div>`;
+}
+
+// ---- ۲) روند تجمعی خرج در ماه، در برابر ماه قبل
+function anCumulative(items, len) {
+  const perDay = new Array(len + 1).fill(0);
+  items.forEach((x) => { const j = anJ(x.date); if (j && j.jd <= len) perDay[j.jd] += Number(x.amount) || 0; });
+  const out = [0];
+  for (let d = 1; d <= len; d++) out[d] = out[d - 1] + perDay[d];
+  return out;
+}
+function anRenderCumulative(c) {
+  const host = document.getElementById("anCumChart");
+  const note = document.getElementById("anCumNote");
+  if (!host) return;
+  const len = jalaaliMonthLength(c.vm.jy, c.vm.jm);
+  const pLen = jalaaliMonthLength(c.pm.jy, c.pm.jm);
+  const upto = c.isCurrent ? todayJalali().jd : len;
+  const cur = anCumulative(c.exp, len);
+  const prev = anCumulative(c.pExp, pLen);
+  if (!c.exp.length && !c.pExp.length) {
+    host.innerHTML = anEmpty("برای این ماه و ماه قبل خرجی ثبت نشده");
+    if (note) note.textContent = "";
+    return;
+  }
+  const W = host.clientWidth || 320, H = 190;
+  const pad = { l: 8, r: 58, t: 14, b: 26 };
+  const maxDays = Math.max(len, pLen);
+  const maxV = anNiceMax(Math.max(cur[upto], prev[pLen], 1));
+  const x = (d) => pad.l + ((d - 1) / (maxDays - 1)) * (W - pad.l - pad.r);
+  const y = (v) => pad.t + (1 - v / maxV) * (H - pad.t - pad.b);
+  const line = (arr, n) => { let p = ""; for (let d = 1; d <= n; d++) p += (d === 1 ? "M" : "L") + x(d).toFixed(1) + " " + y(arr[d]).toFixed(1); return p; };
+
+  let grid = "";
+  [0, 0.5, 1].forEach((f) => {
+    const gy = y(maxV * f).toFixed(1);
+    grid += `<line x1="${pad.l}" x2="${W - pad.r}" y1="${gy}" y2="${gy}" class="an-grid"/>`;
+    grid += `<text x="${W}" y="${(+gy + 4).toFixed(1)}" class="an-axis an-axis-y" text-anchor="start">${f ? anShort(maxV * f) : "۰"}</text>`;
+  });
+  let ticks = "";
+  [1, 10, 20, maxDays].forEach((d) => {
+    ticks += `<text x="${x(d).toFixed(1)}" y="${H - 6}" class="an-axis" text-anchor="middle">${toPersianDigits(d)}</text>`;
+  });
+  const curPath = line(cur, upto);
+  const area = curPath + `L${x(upto).toFixed(1)} ${y(0).toFixed(1)}L${x(1).toFixed(1)} ${y(0).toFixed(1)}Z`;
+  const endX = x(upto), endY = y(cur[upto]);
+
+  host.innerHTML = `
+    <div class="an-legend">
+      <span><i style="background:${AN_EXPENSE}"></i>${c.isCurrent ? "این ماه" : c.monthName}</span>
+      <span><i style="background:${AN_CONTEXT}"></i>${c.prevName}</span>
+    </div>
+    <div class="an-plot">
+      <svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="روند تجمعی مخارج">
+        ${grid}${ticks}
+        <path d="${line(prev, pLen)}" fill="none" stroke="${AN_CONTEXT}" stroke-width="2" stroke-linejoin="round"/>
+        <path d="${area}" fill="${AN_EXPENSE}" opacity="0.08"/>
+        <path d="${curPath}" fill="none" stroke="${AN_EXPENSE}" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>
+        <circle cx="${endX.toFixed(1)}" cy="${endY.toFixed(1)}" r="4.5" fill="${AN_EXPENSE}" stroke="#fff" stroke-width="2"/>
+        <line class="an-cross" x1="0" x2="0" y1="${pad.t}" y2="${H - pad.b}" visibility="hidden"/>
+        <circle class="an-cross-dot" r="4" fill="${AN_EXPENSE}" stroke="#fff" stroke-width="2" visibility="hidden"/>
+        <rect class="an-hit" x="0" y="0" width="${W}" height="${H}" fill="transparent"/>
+      </svg>
+    </div>`;
+
+  // مقایسه با همین روز در ماه قبل
+  if (note) {
+    const same = prev[Math.min(upto, pLen)];
+    const now = cur[upto];
+    let txt = `${c.isCurrent ? "تا امروز" : "در کل ماه"} ${anShort(now)} تومان خرج شده`;
+    if (same > 0) {
+      const pct = Math.round(((now - same) / same) * 100);
+      txt += pct === 0 ? `؛ مثل ${c.prevName}.` : `؛ ${toPersianDigits(Math.abs(pct))}٪ ${pct > 0 ? "بیشتر" : "کمتر"} از ${c.isCurrent ? "همین موقع در " : ""}${c.prevName}.`;
+    } else txt += ".";
+    note.textContent = txt;
+  }
+
+  const svg = host.querySelector("svg");
+  const plot = host.querySelector(".an-plot");
+  const cross = svg.querySelector(".an-cross");
+  const dot = svg.querySelector(".an-cross-dot");
+  const onMove = (e) => {
+    const r = svg.getBoundingClientRect();
+    const px = (e.clientX - r.left) * (W / r.width);
+    let d = Math.round(1 + ((px - pad.l) / (W - pad.l - pad.r)) * (maxDays - 1));
+    d = Math.max(1, Math.min(maxDays, d));
+    const cx = x(d);
+    cross.setAttribute("x1", cx); cross.setAttribute("x2", cx); cross.setAttribute("visibility", "visible");
+    let html = `<b>روز ${toPersianDigits(d)}</b>`;
+    if (d <= upto) {
+      dot.setAttribute("cx", cx); dot.setAttribute("cy", y(cur[d])); dot.setAttribute("visibility", "visible");
+      html += `<span><i style="background:${AN_EXPENSE}"></i>${c.isCurrent ? "این ماه" : c.monthName}: ${fmtAmount(cur[d])}</span>`;
+    } else dot.setAttribute("visibility", "hidden");
+    if (d <= pLen) html += `<span><i style="background:${AN_CONTEXT}"></i>${c.prevName}: ${fmtAmount(prev[d])}</span>`;
+    anTip(plot, html, cx * (r.width / W), 0);
+  };
+  const onLeave = () => { cross.setAttribute("visibility", "hidden"); dot.setAttribute("visibility", "hidden"); anTip(plot, null); };
+  svg.addEventListener("pointermove", onMove);
+  svg.addEventListener("pointerdown", onMove);
+  svg.addEventListener("pointerleave", onLeave);
+}
+
+// ---- ۳) دسته‌ها: میله‌ی افقی، مرتب، با تغییر نسبت به ماه قبل
+function anRenderCategories(c) {
+  const host = document.getElementById("anCatChart");
+  if (!host) return;
+  const total = anSum(c.exp);
+  if (!total) { host.innerHTML = anEmpty("در این ماه خرجی ثبت نشده"); return; }
+  const by = {}, pby = {};
+  c.exp.forEach((x) => { const k = x.category || "سایر"; by[k] = (by[k] || 0) + (Number(x.amount) || 0); });
+  c.pExpSame.forEach((x) => { const k = x.category || "سایر"; pby[k] = (pby[k] || 0) + (Number(x.amount) || 0); });
+  let rows = Object.entries(by).sort((a, b) => b[1] - a[1]);
+  if (rows.length > 7) {
+    const rest = rows.slice(6).reduce((s, r) => s + r[1], 0);
+    const restPrev = rows.slice(6).reduce((s, r) => s + (pby[r[0]] || 0), 0);
+    rows = rows.slice(0, 6);
+    rows.push(["سایر دسته‌ها", rest]);
+    pby["سایر دسته‌ها"] = restPrev;
+  }
+  const max = rows[0][1];
+  host.innerHTML = rows.map(([name, amt]) => {
+    const pct = Math.round((amt / total) * 100);
+    const prev = pby[name] || 0;
+    let delta = "";
+    if (prev > 0) {
+      const d = Math.round(((amt - prev) / prev) * 100);
+      if (Math.abs(d) >= 5) delta = `<span class="an-cat-delta ${d > 0 ? "is-bad" : "is-good"}">${d > 0 ? "▲" : "▼"}${toPersianDigits(Math.abs(d))}٪</span>`;
+    } else delta = `<span class="an-cat-delta">جدید</span>`;
+    return `<div class="an-cat" title="${anEsc(name)}: ${fmtAmount(amt)} تومان — ماه قبل ${fmtAmount(prev)}">
+      <div class="an-cat-top">
+        <span class="an-cat-name">${anEsc(name)}</span>
+        <span class="an-cat-val">${anShort(amt)} <em>${toPersianDigits(pct)}٪</em>${delta}</span>
+      </div>
+      <div class="an-cat-track"><div class="an-cat-bar" style="width:${Math.max(2, (amt / max) * 100).toFixed(1)}%"></div></div>
+    </div>`;
+  }).join("") + `<p class="an-foot">▲▼ تغییر نسبت به ${c.cmpName}</p>`;
+}
+
+// ---- ۴) ۶ ماه اخیر: ستون‌های گروهی درآمد/مخارج
+function anRenderTrend(c) {
+  const host = document.getElementById("anTrendChart");
+  if (!host) return;
+  const months = [];
+  for (let i = 5; i >= 0; i--) {
+    const m = addMonthsJalali(c.vm.jy, c.vm.jm, -i);
+    months.push({ ...m, inc: anSum(anMonthItems(state.incomes, m.jy, m.jm)), exp: anSum(anMonthItems(state.expenses, m.jy, m.jm)) });
+  }
+  if (months.every((m) => !m.inc && !m.exp)) { host.innerHTML = anEmpty("در ۶ ماه اخیر تراکنشی ثبت نشده"); return; }
+  const W = host.clientWidth || 320, H = 200;
+  const pad = { l: 4, r: 54, t: 12, b: 26 };
+  const maxV = anNiceMax(Math.max(...months.map((m) => Math.max(m.inc, m.exp)), 1));
+  const plotW = W - pad.l - pad.r;
+  const gw = plotW / months.length;
+  const bw = Math.min(16, (gw - 14) / 2);
+  const y = (v) => pad.t + (1 - v / maxV) * (H - pad.t - pad.b);
+  const bar = (bx, v, color) => {
+    if (v <= 0) return "";
+    const top = y(v), base = y(0), h = Math.max(2, base - top), r = Math.min(4, bw / 2, h);
+    return `<path d="M${bx} ${base}V${base - h + r}Q${bx} ${base - h} ${bx + r} ${base - h}H${bx + bw - r}Q${bx + bw} ${base - h} ${bx + bw} ${base - h + r}V${base}Z" fill="${color}"/>`;
+  };
+  let svg = "";
+  [0, 0.5, 1].forEach((f) => {
+    const gy = y(maxV * f).toFixed(1);
+    svg += `<line x1="${pad.l}" x2="${W - pad.r}" y1="${gy}" y2="${gy}" class="an-grid"/>`;
+    svg += `<text x="${W}" y="${(+gy + 4).toFixed(1)}" class="an-axis an-axis-y" text-anchor="start">${f ? anShort(maxV * f) : "۰"}</text>`;
+  });
+  months.forEach((m, i) => {
+    const cx = pad.l + gw * i + gw / 2;
+    const isCur = i === months.length - 1;
+    svg += `<g class="an-trend-g ${isCur ? "is-cur" : ""}">`;
+    svg += bar(cx - bw - 1, m.inc, AN_INCOME);
+    svg += bar(cx + 1, m.exp, AN_EXPENSE);
+    svg += `<text x="${cx}" y="${H - 6}" class="an-axis ${isCur ? "an-axis-strong" : ""}" text-anchor="middle">${JALALI_MONTHS[m.jm - 1]}</text>`;
+    svg += `<rect class="an-hit" data-i="${i}" x="${pad.l + gw * i}" y="0" width="${gw}" height="${H}" fill="transparent"/></g>`;
+  });
+  host.innerHTML = `
+    <div class="an-legend">
+      <span><i style="background:${AN_INCOME}"></i>درآمد</span>
+      <span><i style="background:${AN_EXPENSE}"></i>مخارج</span>
+    </div>
+    <div class="an-plot"><svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="درآمد و مخارج ۶ ماه اخیر">${svg}</svg></div>`;
+  const plot = host.querySelector(".an-plot");
+  const svgEl = plot.querySelector("svg");
+  const show = (e) => {
+    const hit = e.target.closest(".an-hit");
+    if (!hit) return;
+    const i = +hit.getAttribute("data-i");
+    const m = months[i];
+    const bal = m.inc - m.exp;
+    svgEl.querySelectorAll(".an-trend-g").forEach((g, j) => g.classList.toggle("is-dim", j !== i));
+    const r = svgEl.getBoundingClientRect();
+    const cx = (pad.l + gw * i + gw / 2) * (r.width / W);
+    anTip(plot, `<b>${JALALI_MONTHS[m.jm - 1]} ${toPersianDigits(m.jy)}</b>
+      <span><i style="background:${AN_INCOME}"></i>درآمد: ${fmtAmount(m.inc)}</span>
+      <span><i style="background:${AN_EXPENSE}"></i>مخارج: ${fmtAmount(m.exp)}</span>
+      <span>مانده: ${fmtAmount(bal)}</span>`, cx, 0);
+  };
+  svgEl.addEventListener("pointerover", show);
+  svgEl.addEventListener("pointerdown", show);
+  svgEl.addEventListener("pointerleave", () => {
+    svgEl.querySelectorAll(".an-trend-g").forEach((g) => g.classList.remove("is-dim"));
+    anTip(plot, null);
+  });
+}
+
+// ---- ۵) خرج بر اساس روز هفته (۹۰ روز منتهی به ماه دیده‌شده)
+function anRenderWeekdays(c) {
+  const host = document.getElementById("anWeekChart");
+  if (!host) return;
+  const len = jalaaliMonthLength(c.vm.jy, c.vm.jm);
+  const endJ = c.isCurrent ? todayJalali() : { jy: c.vm.jy, jm: c.vm.jm, jd: len };
+  const g = toGregorian(endJ.jy, endJ.jm, endJ.jd);
+  const end = new Date(g.gy, g.gm - 1, g.gd);
+  const start = new Date(end.getFullYear(), end.getMonth(), end.getDate() - 89);
+  const sums = new Array(7).fill(0);
+  let n = 0;
+  (state.expenses || []).forEach((x) => {
+    const [gy, gm, gd] = String(x.date || "").split("-").map(Number);
+    if (!gy) return;
+    const d = new Date(gy, gm - 1, gd);
+    if (d < start || d > end) return;
+    sums[(d.getDay() + 1) % 7] += Number(x.amount) || 0; // 0 = شنبه
+    n++;
+  });
+  if (!n) { host.innerHTML = anEmpty("در ۹۰ روز اخیر خرجی ثبت نشده"); return; }
+  // هر روز هفته در ۹۰ روز تقریباً ۱۳ بار تکرار می‌شود ← میانگین هر روز
+  const counts = new Array(7).fill(0);
+  for (let i = 0; i < 90; i++) counts[(new Date(start.getFullYear(), start.getMonth(), start.getDate() + i).getDay() + 1) % 7]++;
+  const avg = sums.map((s, i) => (counts[i] ? s / counts[i] : 0));
+  const maxI = avg.indexOf(Math.max(...avg));
+  const max = avg[maxI] || 1;
+  host.innerHTML = `
+    <p class="an-note">بیشترین خرج معمولاً <b>${AN_WEEKDAYS[maxI]}</b>‌ها: میانگین ${anShort(avg[maxI])} تومان</p>
+    <div class="an-week">${avg.map((v, i) => `
+      <div class="an-week-col" title="${AN_WEEKDAYS[i]}: میانگین ${fmtAmount(v)} تومان">
+        <div class="an-week-track"><div class="an-week-bar ${i === maxI ? "is-max" : ""}" style="height:${Math.max(3, (v / max) * 100).toFixed(1)}%"></div></div>
+        <span>${AN_WEEKDAYS_SHORT[i]}</span>
+      </div>`).join("")}
+    </div>
+    <p class="an-foot">میانگین خرج هر روز هفته در ۹۰ روز اخیر</p>`;
+}
+
+// ---- ۶) بزرگ‌ترین خرج‌های ماه
+function anRenderTop(c) {
+  const host = document.getElementById("anTopList");
+  if (!host) return;
+  const top = c.exp.slice().sort((a, b) => (Number(b.amount) || 0) - (Number(a.amount) || 0)).slice(0, 5);
+  if (!top.length) { host.innerHTML = anEmpty("در این ماه خرجی ثبت نشده"); return; }
+  const total = anSum(c.exp);
+  host.innerHTML = top.map((x) => {
+    const j = anJ(x.date);
+    const cat = x.category || "سایر";
+    const color = typeof catColor === "function" ? catColor(cat) : AN_EXPENSE;
+    const icon = typeof catIcon === "function" ? catIcon(cat) : "wallet";
+    return `<div class="an-top-row">
+      <span class="an-top-icon" style="background:${color}22">${iconSpanHTML(icon, `color:${color}`)}</span>
+      <span class="an-top-body">
+        <b>${anEsc(x.note || cat)}</b>
+        <small>${x.note ? anEsc(cat) + " · " : ""}${j ? toPersianDigits(j.jd) + " " + JALALI_MONTHS[j.jm - 1] : ""}</small>
+      </span>
+      <span class="an-top-amt">${fmtAmount(x.amount)}<small>${toPersianDigits(Math.round((x.amount / total) * 100))}٪ از کل</small></span>
+    </div>`;
+  }).join("");
+}
+
+(function setupAnalysisNav() {
+  const prev = document.getElementById("anPrevMonth");
+  const next = document.getElementById("anNextMonth");
+  if (prev) prev.addEventListener("click", () => {
+    try { dashboardMode = "month"; } catch (_) {}
+    viewedMonth = addMonthsJalali(viewedMonth.jy, viewedMonth.jm, -1);
+    applyViewedMonthState();
+  });
+  if (next) next.addEventListener("click", () => {
+    if (isViewingCurrentMonth()) return;
+    try { dashboardMode = "month"; } catch (_) {}
+    viewedMonth = addMonthsJalali(viewedMonth.jy, viewedMonth.jm, 1);
+    applyViewedMonthState();
+  });
+  let rt = null;
+  window.addEventListener("resize", () => {
+    clearTimeout(rt);
+    rt = setTimeout(() => {
+      const t = document.getElementById("tab-analysis");
+      if (t && t.classList.contains("active")) renderAnalysis();
+    }, 150);
+  });
+})();
 
 // ---------- AI analysis ----------
 // مسیرها: 1) llm7.io رایگان بدون کلید (در دسترس از ایران)
@@ -3061,7 +2535,7 @@ async function initSync() {
 // ---------- Service worker ----------
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js?v=140").catch(() => {});
+    navigator.serviceWorker.register("sw.js?v=141").catch(() => {});
   });
 }
 
@@ -3074,80 +2548,6 @@ function setupAiCardToggle(btnId, resultId, insightsId) {
 
 
 // ---------- AI card scroll collapse (نرم و پیوسته با اسکرول، شبیه هدر) ----------
-function setupAiCardScrollCollapse(cardId, starId, btnId, resultId) {
-  const card = document.getElementById(cardId);
-  const star = document.getElementById(starId);
-  const btn = document.getElementById(btnId);
-  const result = document.getElementById(resultId);
-  const scrollRoot = document.querySelector(".app-scroll");
-  if (!card || !star || !scrollRoot) return;
-
-  const FINAL_SCALE = 0.12;
-  let dx = 0, dy = 0, collapseDistance = 160;
-
-  function measureTarget() {
-    const prevTransform = card.style.transform;
-    card.style.transform = "none";
-    const cardRect = card.getBoundingClientRect();
-    card.style.transform = prevTransform;
-    const starRect = star.getBoundingClientRect();
-    const shrunkCenterX = cardRect.right - (cardRect.width * FINAL_SCALE) / 2;
-    const shrunkCenterY = cardRect.top + (cardRect.height * FINAL_SCALE) / 2;
-    const starCenterX = starRect.left + starRect.width / 2;
-    const starCenterY = starRect.top + starRect.height / 2;
-    dx = starCenterX - shrunkCenterX;
-    dy = starCenterY - shrunkCenterY;
-    collapseDistance = Math.max(cardRect.height * 0.75, 80);
-  }
-  measureTarget();
-  window.addEventListener("resize", measureTarget);
-
-  // Smooth easing for collapse
-  function easeInOutCubic(t) { return t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2; }
-
-  const applyCollapse = (rawCollapse) => {
-    const collapse = easeInOutCubic(Math.min(Math.max(rawCollapse, 0), 1));
-    const scale = 1 - collapse * (1 - FINAL_SCALE);
-    const radius = 22 + collapse * 30;
-    const fade = Math.max(0, (collapse - 0.5) / 0.5);
-    const pull = Math.pow(collapse, 1.5);
-    card.style.opacity = String(Math.max(0, 1 - fade));
-    card.style.transform = `translate(${(dx * pull).toFixed(1)}px, ${(dy * pull).toFixed(1)}px) scale(${scale.toFixed(3)})`;
-    card.style.borderRadius = `${radius.toFixed(1)}px`;
-    card.style.pointerEvents = collapse > 0.6 ? "none" : "";
-    star.style.opacity = String(Math.min(collapse * 1.2, 0.95));
-    star.style.transform = `scale(${(0.4 + collapse * 0.6).toFixed(3)}) translateY(${((1 - collapse) * -8).toFixed(1)}px)`;
-    star.style.pointerEvents = collapse > 0.5 ? "auto" : "none";
-  };
-
-  let ticking = false;
-  function onScroll() {
-    if (ticking) return;
-    ticking = true;
-    requestAnimationFrame(() => {
-      applyCollapse(scrollRoot.scrollTop / collapseDistance);
-      ticking = false;
-    });
-  }
-  scrollRoot.addEventListener("scroll", onScroll, { passive: true });
-  applyCollapse(scrollRoot.scrollTop / collapseDistance);
-
-  star.addEventListener("click", () => {
-    scrollRoot.scrollTo({ top: 0, behavior: "smooth" });
-    if (typeof window._runAiAnalyze === "function") {
-      setTimeout(() => window._runAiAnalyze(), 280);
-    } else if (btn) {
-      btn.click();
-    }
-  });
-
-  // Expose for tab switch reset
-  window._aiCollapseReset = () => {
-    measureTarget();
-    applyCollapse(0);
-  };
-}
-setupAiCardScrollCollapse("aiAnalysisCard", "aiFloatingStar", "btnAiAnalyze", "aiAnalysisResult");
 
 // ---------- Profile card (avatar + name) ----------
 // Stored in state.profile so it travels with the sync code, not just this device.
