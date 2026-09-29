@@ -544,8 +544,9 @@ function moveNavBead(tab, opts = {}) {
   // اگر هنوز layout نشده، بعداً دوباره تلاش شود
   if (navRect.width < 20 || btnRect.width < 4) return false;
 
-  const beadW = Math.max(56, Math.min(76, Math.round(btnRect.width * 0.95)));
-  const beadH = 48;
+  // کپسول: پهن‌تر از ارتفاع، تقریباً هم‌عرض دکمه
+  const beadW = Math.max(60, Math.min(96, Math.round(btnRect.width * 1.02)));
+  const beadH = 46;
   // مرکز دکمه نسبت به نوار
   let centerX = btnRect.left + btnRect.width / 2 - navRect.left;
   if (!isFinite(centerX)) return false;
@@ -2779,7 +2780,7 @@ async function initSync() {
 // ---------- Service worker ----------
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js?v=143").catch(() => {});
+    navigator.serviceWorker.register("sw.js?v=144").catch(() => {});
   });
 }
 
