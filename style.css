@@ -6557,3 +6557,7 @@ input:focus, select:focus {
   background: linear-gradient(145deg, #3B82F6, #2563EB) !important;
   box-shadow: 0 8px 24px rgba(37, 99, 235, 0.4) !important;
 }
+
+/* نوار پایین: مرورگر حرکت افقی را اسکرول حساب نکند تا درگ کپسول کار کند */
+.bottom-nav.meniscus-nav,
+.bottom-nav.meniscus-nav .nav-btn { touch-action: none !important; }

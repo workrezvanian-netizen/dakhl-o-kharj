@@ -602,26 +602,26 @@ function setupMeniscusNavDrag() {
     bead.style.setProperty("--bead-x", x + "px");
   }
 
-  nav.addEventListener("pointerdown", (e) => {
-    // درگ از روی دانه یا نوار
-    if (e.target.closest(".nav-btn") && e.pointerType === "touch") {
-      // لمس روی آیکون = کلیک عادی (switchTab از handler خودش)
-      return;
-    }
-  });
-
-  // درگ دانه: pointer روی nav با نگه داشتن
+  // درگ دانه: فقط وقتی انگشت واقعاً جابه‌جا شد pointer capture می‌گیریم؛
+  // وگرنه capture زودهنگام باعث می‌شد کلیک به دکمه‌ی تب نرسد و تب عوض نشود.
   let longDrag = false;
+  let startX = 0;
+  let lastX = 0;
   nav.addEventListener("pointerdown", (e) => {
     if (e.button != null && e.button !== 0) return;
     dragging = true;
     longDrag = false;
+    startX = e.clientX;
+    lastX = e.clientX;
     pointerId = e.pointerId;
-    try { nav.setPointerCapture(pointerId); } catch (_) {}
   });
   nav.addEventListener("pointermove", (e) => {
     if (!dragging || (pointerId != null && e.pointerId !== pointerId)) return;
-    if (Math.abs(e.movementX) + Math.abs(e.movementY) > 2) longDrag = true;
+    if (!longDrag && Math.abs(e.clientX - startX) > 12) {
+      longDrag = true;
+      try { nav.setPointerCapture(pointerId); } catch (_) {}
+    }
+    lastX = e.clientX;
     if (!longDrag) return;
     bead.classList.add("is-dragging");
     setBeadXFromClient(e.clientX);
@@ -639,7 +639,7 @@ function setupMeniscusNavDrag() {
     try { nav.releasePointerCapture(pointerId); } catch (_) {}
     pointerId = null;
     if (!longDrag) return;
-    const near = nearestTab(e.clientX || 0);
+    const near = nearestTab(e.clientX || lastX);
     if (near && near.dataset.tab) {
       switchTab(near.dataset.tab);
     } else {
@@ -3061,7 +3061,7 @@ async function initSync() {
 // ---------- Service worker ----------
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js?v=139").catch(() => {});
+    navigator.serviceWorker.register("sw.js?v=140").catch(() => {});
   });
 }
 
